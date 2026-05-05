@@ -1,0 +1,236 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, "Malgun Gothic", sans-serif;
+  background: #edf6f0;
+  color: #21352c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.game-shell {
+  width: min(100%, 768px);
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.status-pill {
+  min-width: 112px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 3px solid #21352c;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 4px 0 #b9d8c2;
+  font-size: 18px;
+}
+
+.status-icon {
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.clean-progress {
+  display: grid;
+  grid-template-columns: repeat(5, 18px);
+  gap: 5px;
+  align-items: center;
+}
+
+.clean-progress span {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #21352c;
+  border-radius: 50%;
+  background: #313844;
+  box-shadow: inset 0 -3px 0 #101418;
+}
+
+.clean-progress span.is-cleaned {
+  border-color: #2f8f5b;
+  background: #fff3a3;
+  box-shadow: inset 0 -3px 0 #f2c94c;
+}
+
+.mission-count {
+  min-width: 44px;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.broom-pair {
+  display: grid;
+  grid-template-columns: repeat(2, 34px);
+  gap: 4px;
+  align-items: center;
+}
+
+.broom-pair img {
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  object-fit: contain;
+  opacity: 0.22;
+  filter: grayscale(1);
+  transform: scale(0.9);
+  transition: opacity 160ms ease, filter 160ms ease, transform 160ms ease;
+}
+
+.broom-pair img.is-active {
+  opacity: 1;
+  filter: none;
+  transform: scale(1);
+}
+
+.game-stage {
+  position: relative;
+}
+
+#game {
+  overflow: hidden;
+  border: 4px solid #21352c;
+  border-radius: 8px;
+  background: #9acb87;
+  box-shadow: 0 8px 0 #b9d8c2;
+}
+
+#game canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.complete-overlay {
+  position: absolute;
+  inset: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: rgba(237, 246, 240, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.complete-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.complete-bloom {
+  position: absolute;
+  width: 148px;
+  height: 148px;
+  display: grid;
+  place-items: center;
+  image-rendering: pixelated;
+}
+
+.complete-bloom span {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  border: 5px solid #2f8f5b;
+  border-radius: 8px;
+  background: #fff3a3;
+  box-shadow: inset 0 -8px 0 #f2c94c;
+}
+
+.complete-bloom span:nth-child(1) {
+  transform: translateY(-42px);
+}
+
+.complete-bloom span:nth-child(2) {
+  transform: translateX(42px);
+}
+
+.complete-bloom span:nth-child(3) {
+  transform: translateY(42px);
+}
+
+.complete-bloom span:nth-child(4) {
+  transform: translateX(-42px);
+}
+
+.complete-bloom span:nth-child(5) {
+  width: 48px;
+  height: 48px;
+  border-color: #f2994a;
+  background: #ffffff;
+  box-shadow: inset 0 -7px 0 #f2c94c;
+  z-index: 1;
+}
+
+.restart-button {
+  position: relative;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #21352c;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 6px 0 #b9d8c2;
+  color: #21352c;
+  cursor: pointer;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.restart-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #b9d8c2;
+}
+
+.touch-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+#sweepButton {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 64px;
+  border: 3px solid #21352c;
+  border-radius: 8px;
+  background: #ffd75a;
+  box-shadow: 0 5px 0 #c89d27;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+#sweepButton img {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+#sweepButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #c89d27;
+}

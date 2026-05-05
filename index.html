@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cleaning Samgakji Prototype</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <div class="game-header" aria-label="game status">
+        <div class="status-pill" title="cleaned trash monsters">
+          <img class="status-icon" src="./assets/trash-slime.png" alt="" aria-hidden="true" />
+          <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <strong id="missionCount" class="mission-count">0/20</strong>
+        </div>
+        <div class="status-pill" title="broom range">
+          <div id="broomStatus" class="broom-pair" aria-label="broom range">
+            <img class="is-active" src="./assets/big-broom.png" alt="" aria-hidden="true" />
+            <img src="./assets/big-broom.png" alt="" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+
+      <div class="game-stage">
+        <div id="game"></div>
+        <div id="completeOverlay" class="complete-overlay" aria-hidden="true">
+          <div class="complete-bloom" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <button id="restartButton" class="restart-button" type="button" aria-label="restart">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="touch-controls" aria-label="mobile controls">
+        <button id="sweepButton" type="button" aria-label="sweep">
+          <img src="./assets/big-broom.png" alt="" aria-hidden="true" />
+        </button>
+      </div>
+    </main>
+
+    <script src="./src/scenes/Preload.js?v=14"></script>
+    <script src="./src/scenes/PlayScene.js?v=14"></script>
+    <script src="./src/main.js?v=14"></script>
+  </body>
+</html>
