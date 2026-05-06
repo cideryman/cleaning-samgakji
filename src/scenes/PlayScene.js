@@ -24,8 +24,8 @@ class PlayScene extends Phaser.Scene {
     this.hasDroppedBroomUpgrade = false;
     this.isMissionComplete = false;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
-    this.touchTarget = null;
-    this.activeTouchId = null;
+    this.joystickVector = new Phaser.Math.Vector2(0, 0);
+    this.activeJoystickPointerId = null;
     this.canSweep = true;
     this.audioContext = null;
   }
@@ -35,6 +35,8 @@ class PlayScene extends Phaser.Scene {
     this.missionCountEl = document.querySelector("#missionCount");
     this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
     this.sweepButton = document.querySelector("#sweepButton");
+    this.movePad = document.querySelector("#movePad");
+    this.moveKnob = document.querySelector("#moveKnob");
     this.fullscreenButton = document.querySelector("#fullscreenButton");
     this.completeOverlay = document.querySelector("#completeOverlay");
     this.restartButton = document.querySelector("#restartButton");
@@ -43,15 +45,29 @@ class PlayScene extends Phaser.Scene {
       event?.preventDefault();
       this.trySweep();
     };
+    this.moveStartHandler = (event) => this.startJoystick(event);
+    this.moveUpdateHandler = (event) => this.updateJoystick(event);
+    this.moveStopHandler = (event) => this.stopJoystick(event);
     this.fullscreenHandler = (event) => this.toggleFullscreen(event);
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("click", this.sweepHandler);
+    this.movePad?.addEventListener("pointerdown", this.moveStartHandler);
+    window.addEventListener("pointermove", this.moveUpdateHandler);
+    window.addEventListener("pointerup", this.moveStopHandler);
+    window.addEventListener("pointercancel", this.moveStopHandler);
     this.fullscreenButton?.addEventListener("click", this.fullscreenHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
+    if (this.moveKnob) {
+      this.moveKnob.style.transform = "translate(0, 0)";
+    }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("click", this.sweepHandler);
+      this.movePad?.removeEventListener("pointerdown", this.moveStartHandler);
+      window.removeEventListener("pointermove", this.moveUpdateHandler);
+      window.removeEventListener("pointerup", this.moveStopHandler);
+      window.removeEventListener("pointercancel", this.moveStopHandler);
       this.fullscreenButton?.removeEventListener("click", this.fullscreenHandler);
     });
 
@@ -195,11 +211,6 @@ class PlayScene extends Phaser.Scene {
     });
 
     this.keys.sweep.on("down", () => this.trySweep());
-
-    this.input.on("pointerdown", (pointer) => this.startTouchMove(pointer));
-    this.input.on("pointermove", (pointer) => this.updateTouchMove(pointer));
-    this.input.on("pointerup", (pointer) => this.stopTouchMove(pointer));
-    this.input.on("pointerupoutside", (pointer) => this.stopTouchMove(pointer));
   }
 
   handleMovement() {
@@ -210,21 +221,12 @@ class PlayScene extends Phaser.Scene {
       Number(this.cursors.down.isDown || this.keys.down.isDown) -
       Number(this.cursors.up.isDown || this.keys.up.isDown);
 
-    const velocity = new Phaser.Math.Vector2(horizontal, vertical);
-    if (velocity.lengthSq() === 0 && this.touchTarget) {
-      const touchVector = new Phaser.Math.Vector2(
-        this.touchTarget.x - this.player.x,
-        this.touchTarget.y - this.player.y,
-      );
-
-      if (touchVector.length() > 18) {
-        touchVector.normalize();
-        horizontal = touchVector.x;
-        vertical = touchVector.y;
-        velocity.set(horizontal, vertical);
-      }
+    if (horizontal === 0 && vertical === 0 && this.joystickVector.lengthSq() > 0) {
+      horizontal = this.joystickVector.x;
+      vertical = this.joystickVector.y;
     }
 
+    const velocity = new Phaser.Math.Vector2(horizontal, vertical);
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       this.lastDirection.copy(velocity);
@@ -236,28 +238,43 @@ class PlayScene extends Phaser.Scene {
     );
   }
 
-  startTouchMove(pointer) {
-    if (this.isMissionComplete || !this.isTouchPointer(pointer)) return;
+  startJoystick(event) {
+    if (this.isMissionComplete || this.activeJoystickPointerId !== null) return;
 
-    this.activeTouchId = pointer.id;
-    this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+    event.preventDefault();
+    this.activeJoystickPointerId = event.pointerId;
+    this.movePad?.setPointerCapture?.(event.pointerId);
+    this.updateJoystick(event);
   }
 
-  updateTouchMove(pointer) {
-    if (this.activeTouchId !== pointer.id || !this.touchTarget) return;
+  updateJoystick(event) {
+    if (this.activeJoystickPointerId !== event.pointerId || !this.movePad) return;
 
-    this.touchTarget.set(pointer.x, pointer.y);
+    event.preventDefault();
+    const rect = this.movePad.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const radius = rect.width * 0.34;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    const distance = Math.min(Math.hypot(dx, dy), radius);
+    const angle = Math.atan2(dy, dx);
+    const knobX = Math.cos(angle) * distance;
+    const knobY = Math.sin(angle) * distance;
+
+    this.joystickVector.set(knobX / radius, knobY / radius);
+    this.moveKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
   }
 
-  stopTouchMove(pointer) {
-    if (this.activeTouchId !== pointer.id) return;
+  stopJoystick(event) {
+    if (this.activeJoystickPointerId !== event.pointerId) return;
 
-    this.activeTouchId = null;
-    this.touchTarget = null;
-  }
-
-  isTouchPointer(pointer) {
-    return pointer?.event?.pointerType === "touch" || this.sys.game.device.input.touch;
+    event.preventDefault();
+    this.activeJoystickPointerId = null;
+    this.joystickVector.set(0, 0);
+    if (this.moveKnob) {
+      this.moveKnob.style.transform = "translate(0, 0)";
+    }
   }
 
   trySweep() {
@@ -559,17 +576,26 @@ class PlayScene extends Phaser.Scene {
   toggleFullscreen(event) {
     event?.preventDefault();
 
-    const target = document.querySelector(".game-shell") || document.documentElement;
+    const target = document.documentElement;
     if (document.fullscreenElement) {
       document.exitFullscreen?.();
+      document.body.classList.remove("app-fit-mode");
       return;
     }
 
     if (target.requestFullscreen) {
-      target.requestFullscreen();
+      target.requestFullscreen().catch(() => this.toggleAppFitMode());
     } else if (target.webkitRequestFullscreen) {
       target.webkitRequestFullscreen();
+    } else {
+      this.toggleAppFitMode();
     }
+  }
+
+  toggleAppFitMode() {
+    document.body.classList.toggle("app-fit-mode");
+    window.scrollTo(0, 1);
+    this.scale.refresh();
   }
 
   showUpgradePulse() {

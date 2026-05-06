@@ -241,7 +241,8 @@ body {
 
 .touch-controls {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   margin-top: 12px;
   touch-action: none;
@@ -260,6 +261,51 @@ body {
   font-size: 30px;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.move-pad {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  border: 4px solid #21352c;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 6px 0 #b9d8c2;
+  touch-action: none;
+}
+
+.move-pad::before,
+.move-pad::after {
+  position: absolute;
+  content: "";
+  background: #d8c59a;
+}
+
+.move-pad::before {
+  width: 58px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.move-pad::after {
+  width: 8px;
+  height: 58px;
+  border-radius: 999px;
+}
+
+.move-knob {
+  position: relative;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  border: 4px solid #21352c;
+  border-radius: 50%;
+  background: #fff3a3;
+  box-shadow: inset 0 -6px 0 #f2c94c;
+  transform: translate(0, 0);
 }
 
 #sweepButton img {
@@ -349,4 +395,23 @@ body {
   .fullscreen-button {
     height: 54px;
   }
+
+  .move-pad {
+    width: 82px;
+    height: 82px;
+  }
+
+  .move-knob {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+body.app-fit-mode {
+  padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right))
+    max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+}
+
+body.app-fit-mode .game-shell {
+  width: min(100%, calc((100dvh - 104px) * 1.6));
 }
