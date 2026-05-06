@@ -1,4 +1,6 @@
 const GAME_CONFIG = {
+  worldWidth: 1536,
+  worldHeight: 960,
   playerSpeed: 135,
   waveSize: 5,
   totalGoal: 20,
@@ -31,6 +33,8 @@ class PlayScene extends Phaser.Scene {
   }
 
   create() {
+    this.resetRunState();
+
     this.cleanProgressEls = Array.from(document.querySelectorAll("#cleanProgress span"));
     this.missionCountEl = document.querySelector("#missionCount");
     this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
@@ -86,39 +90,103 @@ class PlayScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.walls);
   }
 
+  resetRunState() {
+    this.totalCleanedCount = 0;
+    this.waveCleanedCount = 0;
+    this.currentWave = 0;
+    this.hasBroomUpgrade = false;
+    this.hasDroppedBroomUpgrade = false;
+    this.isMissionComplete = false;
+    this.lastDirection.set(1, 0);
+    this.joystickVector.set(0, 0);
+    this.activeJoystickPointerId = null;
+    this.canSweep = true;
+  }
+
   update() {
     this.handleMovement();
   }
 
   createMap() {
-    this.add.rectangle(384, 240, 768, 480, 0x9acb87);
-    this.add.rectangle(384, 228, 640, 112, 0xd8c59a);
-    this.add.rectangle(548, 306, 96, 168, 0xd8c59a);
-    this.add.rectangle(548, 314, 280, 180, 0xc6e2a3);
-    this.add.rectangle(548, 314, 252, 152, 0xb2d18d);
+    this.physics.world.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
+    this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
+
+    this.add.rectangle(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, 0x6c7a55);
+    this.add.rectangle(768, 480, 1396, 820, 0x9acb87);
+
+    this.add.rectangle(585, 420, 980, 118, 0xd8c59a);
+    this.add.rectangle(652, 392, 122, 386, 0xd8c59a);
+    this.add.rectangle(835, 300, 760, 104, 0xd8c59a).setAngle(-18);
+    this.add.rectangle(1012, 512, 560, 78, 0xcbbd95).setAngle(-14);
+    this.add.rectangle(570, 625, 650, 82, 0xcbbd95).setAngle(-18);
+    this.add.ellipse(650, 420, 194, 154, 0xd8c59a);
+
+    this.add.rectangle(1090, 690, 410, 258, 0xb8c1bd);
+    this.add.rectangle(1090, 690, 342, 190, 0x8e9b98);
+    this.add.rectangle(1090, 575, 240, 18, 0xe8f3ef);
+    this.add.rectangle(1325, 480, 210, 860, 0x52645d);
+    this.add.rectangle(1364, 480, 80, 860, 0x303a37);
+    this.add.rectangle(1394, 480, 6, 820, 0xffffff).setAngle(-12);
+
+    this.add.rectangle(370, 226, 360, 86, 0x6c7a55);
+    this.add.rectangle(330, 710, 310, 82, 0x6c7a55);
+    this.add.rectangle(934, 226, 130, 52, 0x6c7a55);
+
+    this.add.rectangle(502, 350, 170, 84, 0xb2d18d);
+    this.add.rectangle(246, 526, 270, 148, 0xb2d18d);
+    this.add.rectangle(1030, 418, 310, 132, 0xb2d18d);
+    this.add.rectangle(1028, 496, 286, 110, 0xc6e2a3);
+
+    this.createTrees();
 
     this.walls = this.physics.add.staticGroup();
-    this.addWall(384, 28, 768, 56);
-    this.addWall(384, 452, 768, 56);
-    this.addWall(28, 240, 56, 480);
-    this.addWall(740, 240, 56, 480);
-    this.addWall(254, 118, 220, 40);
-    this.addWall(240, 376, 140, 40);
+    this.addWall(768, 30, GAME_CONFIG.worldWidth, 60);
+    this.addWall(768, 930, GAME_CONFIG.worldWidth, 60);
+    this.addWall(30, 480, 60, GAME_CONFIG.worldHeight);
+    this.addWall(1506, 480, 60, GAME_CONFIG.worldHeight);
+    this.addWall(370, 226, 360, 86);
+    this.addWall(330, 710, 310, 82);
+    this.addWall(1090, 690, 410, 258);
+    this.addWall(1325, 480, 210, 860);
+    this.addWall(934, 226, 130, 52);
   }
 
   addWall(x, y, width, height) {
     const wall = this.add.rectangle(x, y, width, height, 0x6c7a55);
+    wall.setVisible(false);
     this.physics.add.existing(wall, true);
     this.walls.add(wall);
   }
 
+  createTrees() {
+    const treePositions = [
+      [180, 205],
+      [225, 655],
+      [402, 566],
+      [516, 246],
+      [744, 210],
+      [806, 520],
+      [930, 370],
+      [1165, 330],
+      [1224, 560],
+      [690, 705],
+    ];
+
+    treePositions.forEach(([x, y]) => {
+      this.add.circle(x, y, 34, 0x5f8b57);
+      this.add.circle(x - 16, y + 8, 24, 0x4f7b4c);
+      this.add.rectangle(x, y + 32, 12, 24, 0x8d5a24);
+    });
+  }
+
   createPlayer() {
-    this.player = this.physics.add.sprite(108, 224, "player");
+    this.player = this.physics.add.sprite(170, 424, "player");
     this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(5);
     this.player.body.setSize(72, 76);
     this.player.body.setOffset(28, 30);
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
   }
 
   spawnTrashWave() {
@@ -160,10 +228,12 @@ class PlayScene extends Phaser.Scene {
   createRandomSlimePositions() {
     const positions = [];
     const spawnAreas = [
-      { left: 126, right: 708, top: 202, bottom: 264 },
-      { left: 126, right: 708, top: 294, bottom: 418 },
-      { left: 454, right: 676, top: 244, bottom: 392 },
-      { left: 126, right: 708, top: 104, bottom: 164 },
+      { left: 150, right: 1040, top: 360, bottom: 470 },
+      { left: 540, right: 760, top: 238, bottom: 610 },
+      { left: 680, right: 1250, top: 220, bottom: 356 },
+      { left: 300, right: 870, top: 570, bottom: 704 },
+      { left: 860, right: 1250, top: 460, bottom: 565 },
+      { left: 160, right: 460, top: 488, bottom: 620 },
     ];
 
     let attempts = 0;
@@ -194,10 +264,13 @@ class PlayScene extends Phaser.Scene {
 
   isBlockedSpawnPoint(x, y) {
     const blockedAreas = [
-      { left: 180, right: 424, top: 118, bottom: 168 },
-      { left: 206, right: 394, top: 334, bottom: 426 },
-      { left: 82, right: 132, top: 78, bottom: 428 },
-      { left: 716, right: 742, top: 78, bottom: 428 },
+      { left: 190, right: 550, top: 175, bottom: 277 },
+      { left: 175, right: 485, top: 665, bottom: 760 },
+      { left: 875, right: 1295, top: 558, bottom: 824 },
+      { left: 1210, right: 1435, top: 80, bottom: 900 },
+      { left: 865, right: 1002, top: 184, bottom: 278 },
+      { left: 48, right: 90, top: 70, bottom: 890 },
+      { left: 1446, right: 1490, top: 70, bottom: 890 },
     ];
 
     return blockedAreas.some((area) => {
@@ -443,7 +516,9 @@ class PlayScene extends Phaser.Scene {
   dropBroomUpgrade() {
     this.hasDroppedBroomUpgrade = true;
 
-    const item = this.physics.add.sprite(548, 314, "broom_item");
+    const itemX = 650;
+    const itemY = 420;
+    const item = this.physics.add.sprite(itemX, itemY, "broom_item");
     item.setDisplaySize(GAME_CONFIG.broomItemDisplaySize, GAME_CONFIG.broomItemDisplaySize);
     item.body.setSize(78, 78);
     item.body.setOffset(25, 25);
@@ -454,12 +529,12 @@ class PlayScene extends Phaser.Scene {
     item.setScale(itemScale * 0.35);
 
     for (let i = 0; i < 18; i += 1) {
-      const sparkle = this.add.circle(548, 314, Phaser.Math.Between(3, 6), 0xfff3a3, 1);
+      const sparkle = this.add.circle(itemX, itemY, Phaser.Math.Between(3, 6), 0xfff3a3, 1);
       sparkle.setDepth(7);
       this.tweens.add({
         targets: sparkle,
-        x: 548 + Phaser.Math.Between(-58, 58),
-        y: 314 + Phaser.Math.Between(-48, 48),
+        x: itemX + Phaser.Math.Between(-58, 58),
+        y: itemY + Phaser.Math.Between(-48, 48),
         alpha: 0,
         duration: 620,
         ease: "Cubic.easeOut",
@@ -478,7 +553,7 @@ class PlayScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: item,
-      y: 300,
+      y: itemY - 14,
       duration: 600,
       yoyo: true,
       repeat: -1,
@@ -503,15 +578,18 @@ class PlayScene extends Phaser.Scene {
     this.playMissionCompleteSound();
 
     const flowerPositions = [
-      [488, 270],
-      [548, 260],
-      [608, 274],
-      [504, 324],
-      [582, 320],
-      [654, 334],
-      [520, 382],
-      [598, 372],
-      [672, 390],
+      [820, 510],
+      [910, 486],
+      [1010, 500],
+      [1110, 522],
+      [930, 430],
+      [1048, 422],
+      [780, 610],
+      [910, 630],
+      [1040, 620],
+      [1170, 620],
+      [690, 420],
+      [610, 520],
     ];
 
     flowerPositions.forEach(([x, y], index) => {
@@ -532,8 +610,8 @@ class PlayScene extends Phaser.Scene {
 
     for (let i = 0; i < 38; i += 1) {
       const sparkle = this.add.circle(
-        Phaser.Math.Between(456, 684),
-        Phaser.Math.Between(252, 398),
+        Phaser.Math.Between(620, 1220),
+        Phaser.Math.Between(400, 675),
         Phaser.Math.Between(3, 6),
         0xfff3a3,
         1,
@@ -550,7 +628,7 @@ class PlayScene extends Phaser.Scene {
       });
     }
 
-    const pulse = this.add.rectangle(548, 314, 280, 180, 0xfff3a3, 0.18);
+    const pulse = this.add.rectangle(960, 540, 620, 310, 0xfff3a3, 0.18);
     pulse.setDepth(2);
     this.tweens.add({
       targets: pulse,
