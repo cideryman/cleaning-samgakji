@@ -49,6 +49,7 @@ class PlayScene extends Phaser.Scene {
     this.moveUpdateHandler = (event) => this.updateJoystick(event);
     this.moveStopHandler = (event) => this.stopJoystick(event);
     this.fullscreenHandler = (event) => this.toggleFullscreen(event);
+    this.fullscreenChangeHandler = () => this.handleFullscreenChange();
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("click", this.sweepHandler);
     this.movePad?.addEventListener("pointerdown", this.moveStartHandler);
@@ -56,6 +57,8 @@ class PlayScene extends Phaser.Scene {
     window.addEventListener("pointerup", this.moveStopHandler);
     window.addEventListener("pointercancel", this.moveStopHandler);
     this.fullscreenButton?.addEventListener("click", this.fullscreenHandler);
+    document.addEventListener("fullscreenchange", this.fullscreenChangeHandler);
+    document.addEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
     if (this.moveKnob) {
@@ -69,6 +72,8 @@ class PlayScene extends Phaser.Scene {
       window.removeEventListener("pointerup", this.moveStopHandler);
       window.removeEventListener("pointercancel", this.moveStopHandler);
       this.fullscreenButton?.removeEventListener("click", this.fullscreenHandler);
+      document.removeEventListener("fullscreenchange", this.fullscreenChangeHandler);
+      document.removeEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
     });
 
     this.createMap();
@@ -576,26 +581,62 @@ class PlayScene extends Phaser.Scene {
   toggleFullscreen(event) {
     event?.preventDefault();
 
-    const target = document.documentElement;
+    const target = document.querySelector(".game-shell") || document.documentElement;
     if (document.fullscreenElement) {
       document.exitFullscreen?.();
       document.body.classList.remove("app-fit-mode");
+      this.unlockScreenOrientation();
       return;
     }
 
     if (target.requestFullscreen) {
-      target.requestFullscreen().catch(() => this.toggleAppFitMode());
+      target
+        .requestFullscreen()
+        .then(() => this.lockLandscapeOrientation())
+        .catch(() => this.toggleAppFitMode());
     } else if (target.webkitRequestFullscreen) {
       target.webkitRequestFullscreen();
+      this.lockLandscapeOrientation();
     } else {
       this.toggleAppFitMode();
     }
   }
 
+  handleFullscreenChange() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      document.body.classList.remove("app-fit-mode");
+      this.unlockScreenOrientation();
+    }
+
+    this.time.delayedCall(80, () => this.scale.refresh());
+  }
+
   toggleAppFitMode() {
     document.body.classList.toggle("app-fit-mode");
+    if (document.body.classList.contains("app-fit-mode")) {
+      this.lockLandscapeOrientation();
+    } else {
+      this.unlockScreenOrientation();
+    }
+
     window.scrollTo(0, 1);
     this.scale.refresh();
+  }
+
+  lockLandscapeOrientation() {
+    const orientation = screen.orientation;
+    if (!orientation?.lock) return;
+
+    orientation.lock("landscape").catch(() => {
+      // Some mobile browsers, especially iOS Safari, do not allow web pages to lock orientation.
+    });
+  }
+
+  unlockScreenOrientation() {
+    const orientation = screen.orientation;
+    if (!orientation?.unlock) return;
+
+    orientation.unlock();
   }
 
   showUpgradePulse() {
