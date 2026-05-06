@@ -19,6 +19,17 @@ const config = {
 };
 
 function startGame() {
+  document.addEventListener("contextmenu", (event) => event.preventDefault());
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      if (event.target instanceof Element && event.target.closest(".game-shell")) {
+        event.preventDefault();
+      }
+    },
+    { passive: false },
+  );
+
   new Phaser.Game(config);
 }
 

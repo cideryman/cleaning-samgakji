@@ -3,18 +3,28 @@
   font-family: Arial, "Malgun Gothic", sans-serif;
   background: #edf6f0;
   color: #21352c;
+  touch-action: none;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .game-shell {
@@ -104,6 +114,7 @@ body {
 
 .game-stage {
   position: relative;
+  touch-action: none;
 }
 
 #game {
@@ -112,6 +123,7 @@ body {
   border-radius: 8px;
   background: #9acb87;
   box-shadow: 0 8px 0 #b9d8c2;
+  touch-action: none;
 }
 
 #game canvas {
@@ -119,6 +131,7 @@ body {
   width: 100%;
   height: auto;
   image-rendering: pixelated;
+  touch-action: none;
 }
 
 .complete-overlay {
@@ -204,13 +217,38 @@ body {
   box-shadow: 0 2px 0 #b9d8c2;
 }
 
+.restart-icon {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border: 5px solid #21352c;
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.restart-icon::after {
+  position: absolute;
+  right: -7px;
+  top: 1px;
+  width: 0;
+  height: 0;
+  content: "";
+  border-left: 13px solid #21352c;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  transform: rotate(-28deg);
+}
+
 .touch-controls {
   display: flex;
   justify-content: center;
+  gap: 12px;
   margin-top: 12px;
+  touch-action: none;
 }
 
-#sweepButton {
+#sweepButton,
+.fullscreen-button {
   display: grid;
   place-items: center;
   width: 88px;
@@ -221,6 +259,7 @@ body {
   box-shadow: 0 5px 0 #c89d27;
   font-size: 30px;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 #sweepButton img {
@@ -230,7 +269,84 @@ body {
   object-fit: contain;
 }
 
-#sweepButton:active {
+#sweepButton:active,
+.fullscreen-button:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 #c89d27;
+}
+
+.fullscreen-button {
+  width: 64px;
+  background: #ffffff;
+  box-shadow: 0 5px 0 #b9d8c2;
+}
+
+.fullscreen-button span {
+  position: relative;
+  width: 34px;
+  height: 34px;
+}
+
+.fullscreen-button span::before,
+.fullscreen-button span::after {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  content: "";
+}
+
+.fullscreen-button span::before {
+  left: 0;
+  top: 0;
+  border-left: 4px solid #21352c;
+  border-top: 4px solid #21352c;
+  box-shadow: 19px 0 0 -4px #ffffff, 19px 0 0 0 #21352c;
+}
+
+.fullscreen-button span::after {
+  right: 0;
+  bottom: 0;
+  border-right: 4px solid #21352c;
+  border-bottom: 4px solid #21352c;
+  box-shadow: -19px 0 0 -4px #ffffff, -19px 0 0 0 #21352c;
+}
+
+@media (max-width: 820px) {
+  body {
+    align-items: start;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .game-shell {
+    width: min(100%, 768px);
+  }
+
+  .game-header {
+    margin-bottom: 6px;
+  }
+
+  .status-pill {
+    min-height: 40px;
+    padding: 6px 10px;
+  }
+
+  .touch-controls {
+    margin-top: 8px;
+  }
+}
+
+@media (max-height: 620px) {
+  .game-shell {
+    width: min(100%, calc((100dvh - 116px) * 1.6));
+  }
+
+  .touch-controls {
+    margin-top: 6px;
+  }
+
+  #sweepButton,
+  .fullscreen-button {
+    height: 54px;
+  }
 }

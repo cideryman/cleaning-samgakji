@@ -2,7 +2,10 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <title>Cleaning Samgakji Prototype</title>
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -40,7 +43,7 @@
             <span></span>
           </div>
           <button id="restartButton" class="restart-button" type="button" aria-label="restart">
-            <span aria-hidden="true">↻</span>
+            <span class="restart-icon" aria-hidden="true"></span>
           </button>
         </div>
       </div>
@@ -49,11 +52,14 @@
         <button id="sweepButton" type="button" aria-label="sweep">
           <img src="./assets/big-broom.png" alt="" aria-hidden="true" />
         </button>
+        <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="fullscreen">
+          <span aria-hidden="true"></span>
+        </button>
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=14"></script>
-    <script src="./src/scenes/PlayScene.js?v=14"></script>
-    <script src="./src/main.js?v=14"></script>
+    <script src="./src/scenes/Preload.js?v=15"></script>
+    <script src="./src/scenes/PlayScene.js?v=15"></script>
+    <script src="./src/main.js?v=15"></script>
   </body>
 </html>

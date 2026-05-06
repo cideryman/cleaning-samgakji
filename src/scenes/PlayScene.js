@@ -24,6 +24,8 @@ class PlayScene extends Phaser.Scene {
     this.hasDroppedBroomUpgrade = false;
     this.isMissionComplete = false;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
+    this.touchTarget = null;
+    this.activeTouchId = null;
     this.canSweep = true;
     this.audioContext = null;
   }
@@ -33,14 +35,24 @@ class PlayScene extends Phaser.Scene {
     this.missionCountEl = document.querySelector("#missionCount");
     this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
     this.sweepButton = document.querySelector("#sweepButton");
+    this.fullscreenButton = document.querySelector("#fullscreenButton");
     this.completeOverlay = document.querySelector("#completeOverlay");
     this.restartButton = document.querySelector("#restartButton");
     this.restartHandler = () => this.restartGame();
+    this.sweepHandler = (event) => {
+      event?.preventDefault();
+      this.trySweep();
+    };
+    this.fullscreenHandler = (event) => this.toggleFullscreen(event);
     this.restartButton?.addEventListener("click", this.restartHandler);
+    this.sweepButton?.addEventListener("click", this.sweepHandler);
+    this.fullscreenButton?.addEventListener("click", this.fullscreenHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
+      this.sweepButton?.removeEventListener("click", this.sweepHandler);
+      this.fullscreenButton?.removeEventListener("click", this.fullscreenHandler);
     });
 
     this.createMap();
@@ -183,18 +195,36 @@ class PlayScene extends Phaser.Scene {
     });
 
     this.keys.sweep.on("down", () => this.trySweep());
-    this.sweepButton?.addEventListener("click", () => this.trySweep());
+
+    this.input.on("pointerdown", (pointer) => this.startTouchMove(pointer));
+    this.input.on("pointermove", (pointer) => this.updateTouchMove(pointer));
+    this.input.on("pointerup", (pointer) => this.stopTouchMove(pointer));
+    this.input.on("pointerupoutside", (pointer) => this.stopTouchMove(pointer));
   }
 
   handleMovement() {
-    const horizontal =
+    let horizontal =
       Number(this.cursors.right.isDown || this.keys.right.isDown) -
       Number(this.cursors.left.isDown || this.keys.left.isDown);
-    const vertical =
+    let vertical =
       Number(this.cursors.down.isDown || this.keys.down.isDown) -
       Number(this.cursors.up.isDown || this.keys.up.isDown);
 
     const velocity = new Phaser.Math.Vector2(horizontal, vertical);
+    if (velocity.lengthSq() === 0 && this.touchTarget) {
+      const touchVector = new Phaser.Math.Vector2(
+        this.touchTarget.x - this.player.x,
+        this.touchTarget.y - this.player.y,
+      );
+
+      if (touchVector.length() > 18) {
+        touchVector.normalize();
+        horizontal = touchVector.x;
+        vertical = touchVector.y;
+        velocity.set(horizontal, vertical);
+      }
+    }
+
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       this.lastDirection.copy(velocity);
@@ -204,6 +234,30 @@ class PlayScene extends Phaser.Scene {
       velocity.x * GAME_CONFIG.playerSpeed,
       velocity.y * GAME_CONFIG.playerSpeed,
     );
+  }
+
+  startTouchMove(pointer) {
+    if (this.isMissionComplete || !this.isTouchPointer(pointer)) return;
+
+    this.activeTouchId = pointer.id;
+    this.touchTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
+  }
+
+  updateTouchMove(pointer) {
+    if (this.activeTouchId !== pointer.id || !this.touchTarget) return;
+
+    this.touchTarget.set(pointer.x, pointer.y);
+  }
+
+  stopTouchMove(pointer) {
+    if (this.activeTouchId !== pointer.id) return;
+
+    this.activeTouchId = null;
+    this.touchTarget = null;
+  }
+
+  isTouchPointer(pointer) {
+    return pointer?.event?.pointerType === "touch" || this.sys.game.device.input.touch;
   }
 
   trySweep() {
@@ -500,6 +554,22 @@ class PlayScene extends Phaser.Scene {
     this.completeOverlay?.setAttribute("aria-hidden", "true");
     this.restartButton?.removeEventListener("click", this.restartHandler);
     this.scene.restart();
+  }
+
+  toggleFullscreen(event) {
+    event?.preventDefault();
+
+    const target = document.querySelector(".game-shell") || document.documentElement;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+      return;
+    }
+
+    if (target.requestFullscreen) {
+      target.requestFullscreen();
+    } else if (target.webkitRequestFullscreen) {
+      target.webkitRequestFullscreen();
+    }
   }
 
   showUpgradePulse() {
