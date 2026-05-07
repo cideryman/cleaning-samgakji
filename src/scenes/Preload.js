@@ -9,7 +9,13 @@ const EXTERNAL_ASSETS = [
   { key: "building_tile", path: "assets/tiles/building.png", fallback: "createBuildingTileTexture" },
   { key: "garden_tile", path: "assets/tiles/garden.png", fallback: "createGardenTileTexture" },
   { key: "road_tile", path: "assets/tiles/road.png", fallback: "createRoadTileTexture" },
+  { key: "samgakji_tiles", path: "assets/tilesets/samgakji-tiles.png" },
 ];
+
+const TILED_MAP = {
+  key: "samgakji_map",
+  path: "assets/maps/samgakji-map.json",
+};
 
 class Preload extends Phaser.Scene {
   constructor() {
@@ -20,6 +26,7 @@ class Preload extends Phaser.Scene {
     EXTERNAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
     });
+    this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
   }
 
   create() {
@@ -32,7 +39,7 @@ class Preload extends Phaser.Scene {
 
   createMissingExternalTextures() {
     EXTERNAL_ASSETS.forEach((asset) => {
-      if (!this.textures.exists(asset.key)) {
+      if (asset.fallback && !this.textures.exists(asset.key)) {
         this[asset.fallback]();
       }
     });

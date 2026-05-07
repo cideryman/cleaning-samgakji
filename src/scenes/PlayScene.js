@@ -16,6 +16,15 @@ const GAME_CONFIG = {
   slimeSpawnMinDistance: 72,
 };
 
+const TILED_MAP_CONFIG = {
+  key: "samgakji_map",
+  tilesetName: "samgakji_tiles",
+  tilesetImageKey: "samgakji_tiles",
+  visibleLayers: ["ground", "objects"],
+  collisionLayer: "collision",
+  objectLayer: "spawn",
+};
+
 class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
@@ -30,6 +39,10 @@ class PlayScene extends Phaser.Scene {
     this.activeJoystickPointerId = null;
     this.canSweep = true;
     this.audioContext = null;
+    this.playerStart = { x: 170, y: 424 };
+    this.broomSpawn = { x: 650, y: 420 };
+    this.slimeSpawnPoints = [];
+    this.finalFlowerPositions = null;
   }
 
   create() {
@@ -101,6 +114,10 @@ class PlayScene extends Phaser.Scene {
     this.joystickVector.set(0, 0);
     this.activeJoystickPointerId = null;
     this.canSweep = true;
+    this.playerStart = { x: 170, y: 424 };
+    this.broomSpawn = { x: 650, y: 420 };
+    this.slimeSpawnPoints = [];
+    this.finalFlowerPositions = null;
   }
 
   update() {
@@ -108,6 +125,90 @@ class PlayScene extends Phaser.Scene {
   }
 
   createMap() {
+    if (this.createTiledMap()) {
+      return;
+    }
+
+    this.createFallbackMap();
+  }
+
+  createTiledMap() {
+    if (!this.cache.tilemap.exists(TILED_MAP_CONFIG.key) || !this.textures.exists(TILED_MAP_CONFIG.tilesetImageKey)) {
+      return false;
+    }
+
+    const map = this.make.tilemap({ key: TILED_MAP_CONFIG.key });
+    const sourceTileset = this.findTiledTileset(map);
+    if (!sourceTileset) {
+      return false;
+    }
+
+    const tileset = map.addTilesetImage(sourceTileset.name, TILED_MAP_CONFIG.tilesetImageKey);
+    if (!tileset) {
+      return false;
+    }
+
+    const worldWidth = map.widthInPixels || GAME_CONFIG.worldWidth;
+    const worldHeight = map.heightInPixels || GAME_CONFIG.worldHeight;
+    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+
+    TILED_MAP_CONFIG.visibleLayers.forEach((layerName, index) => {
+      const layer = map.getLayer(layerName);
+      if (layer) {
+        map.createLayer(layerName, tileset, 0, 0).setDepth(index);
+      }
+    });
+
+    const collisionSource = map.getLayer(TILED_MAP_CONFIG.collisionLayer);
+    if (collisionSource) {
+      this.walls = map.createLayer(TILED_MAP_CONFIG.collisionLayer, tileset, 0, 0);
+      this.walls.setVisible(false);
+      this.walls.setCollisionByExclusion([-1]);
+    } else {
+      this.walls = this.physics.add.staticGroup();
+    }
+
+    this.applyTiledObjects(map);
+    return true;
+  }
+
+  findTiledTileset(map) {
+    return map.tilesets.find((tileset) => {
+      return tileset.name === TILED_MAP_CONFIG.tilesetName || tileset.name === TILED_MAP_CONFIG.tilesetImageKey;
+    }) || map.tilesets[0];
+  }
+
+  applyTiledObjects(map) {
+    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.objectLayer);
+    if (!objectLayer) {
+      return;
+    }
+
+    const slimeSpawnPoints = [];
+    const flowerPositions = [];
+
+    objectLayer.objects.forEach((object) => {
+      const objectType = object.type || object.name;
+      const x = object.x + (object.width || 0) / 2;
+      const y = object.y + (object.height || 0) / 2;
+
+      if (objectType === "player_start") {
+        this.playerStart = { x, y };
+      } else if (objectType === "broom_upgrade") {
+        this.broomSpawn = { x, y };
+      } else if (objectType === "slime_spawn") {
+        slimeSpawnPoints.push([x, y]);
+      } else if (objectType === "flower") {
+        flowerPositions.push([x, y]);
+      }
+    });
+
+    this.slimeSpawnPoints = slimeSpawnPoints;
+    this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
+  }
+
+  createFallbackMap() {
     this.physics.world.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
     this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
 
@@ -186,7 +287,7 @@ class PlayScene extends Phaser.Scene {
   }
 
   createPlayer() {
-    this.player = this.physics.add.sprite(170, 424, "player");
+    this.player = this.physics.add.sprite(this.playerStart.x, this.playerStart.y, "player");
     this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(5);
@@ -232,6 +333,10 @@ class PlayScene extends Phaser.Scene {
   }
 
   createRandomSlimePositions() {
+    if (this.slimeSpawnPoints.length > 0) {
+      return Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints]).slice(0, GAME_CONFIG.waveSize);
+    }
+
     const positions = [];
     const spawnAreas = [
       { left: 150, right: 1040, top: 360, bottom: 470 },
@@ -522,8 +627,8 @@ class PlayScene extends Phaser.Scene {
   dropBroomUpgrade() {
     this.hasDroppedBroomUpgrade = true;
 
-    const itemX = 650;
-    const itemY = 420;
+    const itemX = this.broomSpawn.x;
+    const itemY = this.broomSpawn.y;
     const item = this.physics.add.sprite(itemX, itemY, "broom_item");
     item.setDisplaySize(GAME_CONFIG.broomItemDisplaySize, GAME_CONFIG.broomItemDisplaySize);
     item.body.setSize(78, 78);
@@ -583,7 +688,7 @@ class PlayScene extends Phaser.Scene {
     this.player.setVelocity(0, 0);
     this.playMissionCompleteSound();
 
-    const flowerPositions = [
+    const flowerPositions = this.finalFlowerPositions ?? [
       [820, 510],
       [910, 486],
       [1010, 500],
