@@ -112,30 +112,30 @@ class PlayScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
 
     this.add.rectangle(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, 0x6c7a55);
-    this.add.rectangle(768, 480, 1396, 820, 0x9acb87);
+    this.addTiledRect(768, 480, 1396, 820, "grass_tile");
 
-    this.add.rectangle(585, 420, 980, 118, 0xd8c59a);
-    this.add.rectangle(652, 392, 122, 386, 0xd8c59a);
-    this.add.rectangle(835, 300, 760, 104, 0xd8c59a).setAngle(-18);
-    this.add.rectangle(1012, 512, 560, 78, 0xcbbd95).setAngle(-14);
-    this.add.rectangle(570, 625, 650, 82, 0xcbbd95).setAngle(-18);
+    this.addTiledRect(585, 420, 980, 118, "path_tile");
+    this.addTiledRect(652, 392, 122, 386, "path_tile");
+    this.addTiledRect(835, 300, 760, 104, "path_tile", -18);
+    this.addTiledRect(1012, 512, 560, 78, "sidewalk_tile", -14);
+    this.addTiledRect(570, 625, 650, 82, "sidewalk_tile", -18);
     this.add.ellipse(650, 420, 194, 154, 0xd8c59a);
 
-    this.add.rectangle(1090, 690, 410, 258, 0xb8c1bd);
-    this.add.rectangle(1090, 690, 342, 190, 0x8e9b98);
+    this.add.rectangle(1090, 690, 426, 274, 0xb8c1bd);
+    this.addTiledRect(1090, 690, 342, 190, "building_tile");
     this.add.rectangle(1090, 575, 240, 18, 0xe8f3ef);
     this.add.rectangle(1325, 480, 210, 860, 0x52645d);
-    this.add.rectangle(1364, 480, 80, 860, 0x303a37);
+    this.addTiledRect(1364, 480, 80, 860, "road_tile");
     this.add.rectangle(1394, 480, 6, 820, 0xffffff).setAngle(-12);
 
-    this.add.rectangle(370, 226, 360, 86, 0x6c7a55);
-    this.add.rectangle(330, 710, 310, 82, 0x6c7a55);
-    this.add.rectangle(934, 226, 130, 52, 0x6c7a55);
+    this.add.rectangle(370, 226, 370, 96, 0x60704c);
+    this.add.rectangle(330, 710, 320, 92, 0x60704c);
+    this.add.rectangle(934, 226, 140, 62, 0x60704c);
 
-    this.add.rectangle(502, 350, 170, 84, 0xb2d18d);
-    this.add.rectangle(246, 526, 270, 148, 0xb2d18d);
-    this.add.rectangle(1030, 418, 310, 132, 0xb2d18d);
-    this.add.rectangle(1028, 496, 286, 110, 0xc6e2a3);
+    this.addTiledRect(502, 350, 170, 84, "garden_tile");
+    this.addTiledRect(246, 526, 270, 148, "garden_tile");
+    this.addTiledRect(1030, 418, 310, 132, "garden_tile");
+    this.addTiledRect(1028, 496, 286, 110, "grass_tile");
 
     this.createTrees();
 
@@ -156,6 +156,12 @@ class PlayScene extends Phaser.Scene {
     wall.setVisible(false);
     this.physics.add.existing(wall, true);
     this.walls.add(wall);
+  }
+
+  addTiledRect(x, y, width, height, texture, angle = 0) {
+    const tile = this.add.tileSprite(x, y, width, height, texture);
+    tile.setAngle(angle);
+    return tile;
   }
 
   createTrees() {
