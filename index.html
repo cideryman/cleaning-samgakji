@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=29" />
+    <link rel="stylesheet" href="./styles.css?v=30" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body>
@@ -22,16 +22,33 @@
       <div class="game-stage">
         <div id="game"></div>
         <div class="game-header" aria-label="game status">
-          <div class="status-pill" title="cleaned trash monsters">
-            <img class="status-icon" src="./assets/sprites/trash-slime.png" alt="" aria-hidden="true" />
-            <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
+          <div class="status-stack">
+            <div class="status-pill" title="cleaned trash monsters">
+              <img class="status-icon" src="./assets/sprites/trash-slime.png" alt="" aria-hidden="true" />
+              <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <strong id="missionCount" class="mission-count">0/30</strong>
             </div>
-            <strong id="missionCount" class="mission-count">0/20</strong>
+            <div class="status-pill can-pill" title="cleaned cans">
+              <img class="status-icon" src="./assets/sprites/trash-can.png" alt="" aria-hidden="true" />
+              <div id="canProgress" class="can-progress" aria-label="cleaned cans">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
           </div>
           <div class="status-pill" title="broom range">
             <div id="broomStatus" class="broom-pair" aria-label="broom range">
@@ -52,6 +69,10 @@
             <span class="restart-icon" aria-hidden="true"></span>
           </button>
         </div>
+        <div id="specialToast" class="special-toast" aria-hidden="true">
+          <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
+          <span>고마워</span>
+        </div>
 
         <div class="touch-controls" aria-label="mobile controls">
           <button id="specialButton" class="special-button" type="button" aria-label="sangcheori item" hidden>
@@ -71,8 +92,8 @@
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=27"></script>
-    <script src="./src/scenes/PlayScene.js?v=27"></script>
+    <script src="./src/scenes/Preload.js?v=28"></script>
+    <script src="./src/scenes/PlayScene.js?v=28"></script>
     <script src="./src/main.js?v=26"></script>
     <script src="./src/pwa.js?v=1"></script>
   </body>

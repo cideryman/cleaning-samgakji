@@ -18,6 +18,10 @@ const TILED_MAP = {
   path: "assets/maps/samgakji-map.json",
 };
 
+const AUDIO_ASSETS = [
+  { key: "thanks_voice", path: "assets/audio/thanks.mp3" },
+];
+
 class Preload extends Phaser.Scene {
   constructor() {
     super("Preload");
@@ -26,6 +30,9 @@ class Preload extends Phaser.Scene {
   preload() {
     EXTERNAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
+    });
+    AUDIO_ASSETS.forEach((asset) => {
+      this.load.audio(asset.key, asset.path);
     });
     this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
   }

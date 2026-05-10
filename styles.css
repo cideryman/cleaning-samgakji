@@ -43,6 +43,11 @@ body {
   pointer-events: auto;
 }
 
+.status-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .status-pill {
   min-width: 112px;
   min-height: 44px;
@@ -59,6 +64,11 @@ body {
   pointer-events: none;
 }
 
+.can-pill {
+  min-width: 216px;
+  justify-content: flex-start;
+}
+
 .status-icon {
   width: 30px;
   height: 30px;
@@ -73,7 +83,15 @@ body {
   align-items: center;
 }
 
-.clean-progress span {
+.can-progress {
+  display: grid;
+  grid-template-columns: repeat(10, 14px);
+  gap: 4px;
+  align-items: center;
+}
+
+.clean-progress span,
+.can-progress span {
   width: 18px;
   height: 18px;
   border: 3px solid #21352c;
@@ -82,10 +100,23 @@ body {
   box-shadow: inset 0 -3px 0 #101418;
 }
 
-.clean-progress span.is-cleaned {
+.can-progress span {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  background: #7f9499;
+  box-shadow: inset 0 -2px 0 #52656b;
+}
+
+.clean-progress span.is-cleaned,
+.can-progress span.is-cleaned {
   border-color: #2f8f5b;
   background: #fff3a3;
   box-shadow: inset 0 -3px 0 #f2c94c;
+}
+
+.can-progress span.is-cleaned {
+  box-shadow: inset 0 -2px 0 #f2c94c;
 }
 
 .mission-count {
@@ -156,6 +187,60 @@ body {
 .complete-overlay.is-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+.special-toast {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 14;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.5);
+}
+
+.special-toast img {
+  width: 112px;
+  height: 112px;
+  border: 4px solid #21352c;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 8px 0 rgba(89, 126, 95, 0.45);
+}
+
+.special-toast span {
+  padding: 8px 16px;
+  border: 3px solid #21352c;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 5px 0 rgba(89, 126, 95, 0.45);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.special-toast.is-visible {
+  animation: special-pop 1350ms ease-out forwards;
+}
+
+@keyframes special-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+
+  18%,
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.86);
+  }
 }
 
 .complete-bloom {
@@ -402,6 +487,20 @@ body {
     padding: 6px 10px;
   }
 
+  .can-pill {
+    min-width: 188px;
+  }
+
+  .can-progress {
+    grid-template-columns: repeat(10, 12px);
+    gap: 3px;
+  }
+
+  .can-progress span {
+    width: 12px;
+    height: 12px;
+  }
+
 }
 
 @media (max-height: 620px) and (min-width: 821px) {
@@ -492,6 +591,19 @@ body.app-fit-mode #game canvas {
     padding: 5px 8px;
   }
 
+  .can-pill {
+    min-width: 176px;
+  }
+
+  .special-toast img {
+    width: 96px;
+    height: 96px;
+  }
+
+  .special-toast span {
+    font-size: 20px;
+  }
+
   .fullscreen-button {
     top: 68px;
   }
@@ -535,6 +647,24 @@ body.app-fit-mode #game canvas {
   .status-pill {
     min-height: 40px;
     padding: 6px 10px;
+  }
+
+  .status-stack {
+    gap: 5px;
+  }
+
+  .can-pill {
+    min-width: 178px;
+  }
+
+  .can-progress {
+    grid-template-columns: repeat(10, 12px);
+    gap: 3px;
+  }
+
+  .can-progress span {
+    width: 12px;
+    height: 12px;
   }
 
   .game-stage {

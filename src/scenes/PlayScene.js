@@ -58,6 +58,7 @@ class PlayScene extends Phaser.Scene {
     this.resetRunState();
 
     this.cleanProgressEls = Array.from(document.querySelectorAll("#cleanProgress span"));
+    this.canProgressEls = Array.from(document.querySelectorAll("#canProgress span"));
     this.missionCountEl = document.querySelector("#missionCount");
     this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
     this.sweepButton = document.querySelector("#sweepButton");
@@ -66,6 +67,7 @@ class PlayScene extends Phaser.Scene {
     this.moveKnob = document.querySelector("#moveKnob");
     this.fullscreenButton = document.querySelector("#fullscreenButton");
     this.completeOverlay = document.querySelector("#completeOverlay");
+    this.specialToast = document.querySelector("#specialToast");
     this.restartButton = document.querySelector("#restartButton");
     this.restartHandler = () => this.restartGame();
     this.sweepHandler = (event) => {
@@ -98,6 +100,8 @@ class PlayScene extends Phaser.Scene {
     window.addEventListener("orientationchange", this.resizeHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
+    this.specialToast?.classList.remove("is-visible");
+    this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
@@ -866,7 +870,22 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = true;
     this.specialButton.hidden = false;
     this.specialButton.setAttribute("aria-hidden", "false");
+    this.showSangcheoriUnlockToast();
+    this.playThanksVoice();
     this.showCleanFeedback(this.player.x, this.player.y);
+  }
+
+  showSangcheoriUnlockToast() {
+    if (!this.specialToast) return;
+
+    this.specialToast.classList.remove("is-visible");
+    this.specialToast.setAttribute("aria-hidden", "false");
+    void this.specialToast.offsetWidth;
+    this.specialToast.classList.add("is-visible");
+    window.setTimeout(() => {
+      this.specialToast?.classList.remove("is-visible");
+      this.specialToast?.setAttribute("aria-hidden", "true");
+    }, 1400);
   }
 
   useSangcheoriItem() {
@@ -1062,6 +1081,12 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
+  playThanksVoice() {
+    if (this.sound?.get("thanks_voice")) {
+      this.sound.play("thanks_voice", { volume: 0.95 });
+    }
+  }
+
   updateHud() {
     const visibleWaveCount = this.isMissionComplete
       ? this.cleanProgressEls.length
@@ -1069,6 +1094,10 @@ class PlayScene extends Phaser.Scene {
 
     this.cleanProgressEls?.forEach((dot, index) => {
       dot.classList.toggle("is-cleaned", index < visibleWaveCount);
+    });
+
+    this.canProgressEls?.forEach((dot, index) => {
+      dot.classList.toggle("is-cleaned", index < this.cleanedCanCount);
     });
 
     if (this.missionCountEl) {
