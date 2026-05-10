@@ -255,6 +255,7 @@ body {
 }
 
 #sweepButton,
+.special-button,
 .fullscreen-button {
   display: grid;
   place-items: center;
@@ -274,6 +275,23 @@ body {
   bottom: max(18px, env(safe-area-inset-bottom));
   width: 86px;
   height: 86px;
+}
+
+.special-button {
+  right: calc(max(18px, env(safe-area-inset-right)) + 98px);
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 86px;
+  height: 86px;
+  background: #ffffff;
+  box-shadow: 0 5px 0 #b9d8c2;
+  opacity: 0;
+  transform: translateY(8px) scale(0.9);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.special-button:not([hidden]) {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .move-pad {
@@ -308,7 +326,8 @@ body {
   transform: translate(-50%, -50%);
 }
 
-#sweepButton img {
+#sweepButton img,
+.special-button img {
   width: 52px;
   height: 52px;
   image-rendering: pixelated;
@@ -316,6 +335,7 @@ body {
 }
 
 #sweepButton:active,
+.special-button:active,
 .fullscreen-button:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 #c89d27;
@@ -481,6 +501,12 @@ body.app-fit-mode #game canvas {
     height: 82px;
   }
 
+  .special-button {
+    right: calc(max(18px, env(safe-area-inset-right)) + 94px);
+    width: 82px;
+    height: 82px;
+  }
+
   .move-knob {
     width: 48px;
     height: 48px;
@@ -534,7 +560,14 @@ body.app-fit-mode #game canvas {
     height: 74px;
   }
 
-  #sweepButton img {
+  .special-button {
+    right: calc(max(18px, env(safe-area-inset-right)) + 86px);
+    width: 74px;
+    height: 74px;
+  }
+
+  #sweepButton img,
+  .special-button img {
     width: 46px;
     height: 46px;
   }

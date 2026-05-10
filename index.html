@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=28" />
+    <link rel="stylesheet" href="./styles.css?v=29" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body>
@@ -54,6 +54,9 @@
         </div>
 
         <div class="touch-controls" aria-label="mobile controls">
+          <button id="specialButton" class="special-button" type="button" aria-label="sangcheori item" hidden>
+            <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
+          </button>
           <button id="sweepButton" type="button" aria-label="sweep">
             <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
           </button>
@@ -68,8 +71,8 @@
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=26"></script>
-    <script src="./src/scenes/PlayScene.js?v=26"></script>
+    <script src="./src/scenes/Preload.js?v=27"></script>
+    <script src="./src/scenes/PlayScene.js?v=27"></script>
     <script src="./src/main.js?v=26"></script>
     <script src="./src/pwa.js?v=1"></script>
   </body>

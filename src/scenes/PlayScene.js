@@ -2,8 +2,11 @@ const GAME_CONFIG = {
   worldWidth: 1536,
   worldHeight: 960,
   playerSpeed: 135,
-  waveSize: 5,
-  totalGoal: 20,
+  waveSize: 30,
+  totalGoal: 30,
+  canCount: 10,
+  sangcheoriCanGoal: 10,
+  sangcheoriRemoveCount: 10,
   broomUpgradeGoal: 10,
   playerDisplaySize: 50,
   slimeDisplaySize: 54,
@@ -35,6 +38,9 @@ class PlayScene extends Phaser.Scene {
     this.currentWave = 0;
     this.hasBroomUpgrade = false;
     this.hasDroppedBroomUpgrade = false;
+    this.cleanedCanCount = 0;
+    this.hasUnlockedSangcheori = false;
+    this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
@@ -55,6 +61,7 @@ class PlayScene extends Phaser.Scene {
     this.missionCountEl = document.querySelector("#missionCount");
     this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
     this.sweepButton = document.querySelector("#sweepButton");
+    this.specialButton = document.querySelector("#specialButton");
     this.movePad = document.querySelector("#movePad");
     this.moveKnob = document.querySelector("#moveKnob");
     this.fullscreenButton = document.querySelector("#fullscreenButton");
@@ -66,6 +73,11 @@ class PlayScene extends Phaser.Scene {
       event?.stopPropagation();
       this.trySweep();
     };
+    this.specialHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.useSangcheoriItem();
+    };
     this.moveStartHandler = (event) => this.startFloatingJoystick(event);
     this.moveUpdateHandler = (event) => this.updateJoystick(event);
     this.moveStopHandler = (event) => this.stopJoystick(event);
@@ -74,6 +86,7 @@ class PlayScene extends Phaser.Scene {
     this.resizeHandler = () => this.updateCameraZoom();
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
+    this.specialButton?.addEventListener("pointerdown", this.specialHandler);
     window.addEventListener("pointerdown", this.moveStartHandler);
     window.addEventListener("pointermove", this.moveUpdateHandler);
     window.addEventListener("pointerup", this.moveStopHandler);
@@ -89,6 +102,7 @@ class PlayScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
+      this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
       window.removeEventListener("pointerdown", this.moveStartHandler);
       window.removeEventListener("pointermove", this.moveUpdateHandler);
       window.removeEventListener("pointerup", this.moveStopHandler);
@@ -117,6 +131,9 @@ class PlayScene extends Phaser.Scene {
     this.currentWave = 0;
     this.hasBroomUpgrade = false;
     this.hasDroppedBroomUpgrade = false;
+    this.cleanedCanCount = 0;
+    this.hasUnlockedSangcheori = false;
+    this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
     this.lastDirection.set(1, 0);
     this.joystickVector.set(0, 0);
@@ -322,13 +339,21 @@ class PlayScene extends Phaser.Scene {
     this.waveCleanedCount = 0;
     this.currentWave += 1;
     const positions = this.createRandomSlimePositions();
+    const canIndexes = new Set(Phaser.Utils.Array.Shuffle(
+      Array.from({ length: positions.length }, (_, index) => index),
+    ).slice(0, Math.min(GAME_CONFIG.canCount, positions.length)));
 
-    positions.forEach(([x, y]) => {
-      const slime = this.trashSlimes.create(x, y, "trash_slime");
-      slime.setDisplaySize(GAME_CONFIG.slimeDisplaySize, GAME_CONFIG.slimeDisplaySize);
+    positions.forEach(([x, y], index) => {
+      const isCan = canIndexes.has(index);
+      const slime = this.trashSlimes.create(x, y, isCan ? "trash_can" : "trash_slime");
+      slime.setDisplaySize(
+        isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+        isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+      );
       slime.refreshBody();
       slime.setDepth(4);
       slime.setData("cleaned", false);
+      slime.setData("trashType", isCan ? "can" : "slime");
       slime.setAlpha(0);
       slime.setScale(0.35);
       this.tweens.add({
@@ -356,9 +381,19 @@ class PlayScene extends Phaser.Scene {
 
   createRandomSlimePositions() {
     if (this.slimeSpawnPoints.length > 0) {
-      return Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints]).slice(0, GAME_CONFIG.waveSize);
+      const positions = Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints]);
+      if (positions.length >= GAME_CONFIG.waveSize) {
+        return positions.slice(0, GAME_CONFIG.waveSize);
+      }
+
+      const extraPositions = this.createFallbackSlimePositions(GAME_CONFIG.waveSize - positions.length, positions);
+      return [...positions, ...extraPositions];
     }
 
+    return this.createFallbackSlimePositions(GAME_CONFIG.waveSize);
+  }
+
+  createFallbackSlimePositions(count, existingPositions = []) {
     const positions = [];
     const spawnAreas = [
       { left: 150, right: 1040, top: 360, bottom: 470 },
@@ -368,23 +403,25 @@ class PlayScene extends Phaser.Scene {
       { left: 860, right: 1250, top: 460, bottom: 565 },
       { left: 160, right: 460, top: 488, bottom: 620 },
     ];
+    const allPositions = [...existingPositions];
 
     let attempts = 0;
-    while (positions.length < GAME_CONFIG.waveSize && attempts < 200) {
+    while (positions.length < count && attempts < 600) {
       attempts += 1;
       const area = spawnAreas[attempts % spawnAreas.length];
       const x = Phaser.Math.Between(area.left, area.right);
       const y = Phaser.Math.Between(area.top, area.bottom);
-      const isFarEnough = positions.every(([otherX, otherY]) => {
+      const isFarEnough = allPositions.every(([otherX, otherY]) => {
         return Phaser.Math.Distance.Between(x, y, otherX, otherY) >= GAME_CONFIG.slimeSpawnMinDistance;
       });
 
       if (isFarEnough && !this.isBlockedSpawnPoint(x, y)) {
         positions.push([x, y]);
+        allPositions.push([x, y]);
       }
     }
 
-    while (positions.length < GAME_CONFIG.waveSize) {
+    while (positions.length < count) {
       const area = spawnAreas[Phaser.Math.Between(0, spawnAreas.length - 1)];
       positions.push([
         Phaser.Math.Between(area.left, area.right),
@@ -470,7 +507,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     const blockedTarget = event.target.closest?.(
-      "#sweepButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay",
+      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay",
     );
     return !blockedTarget;
   }
@@ -613,11 +650,15 @@ class PlayScene extends Phaser.Scene {
     slime.body.enable = false;
     this.totalCleanedCount += 1;
     this.waveCleanedCount += 1;
+    if (slime.getData("trashType") === "can") {
+      this.cleanedCanCount += 1;
+    }
 
     this.playCleanSound();
     this.showSlimePop(slime);
     this.showCleanFeedback(slimeX, slimeY);
     this.updateHud();
+    this.checkSangcheoriUnlock();
 
     if (
       this.totalCleanedCount === GAME_CONFIG.broomUpgradeGoal &&
@@ -631,9 +672,6 @@ class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.waveCleanedCount >= GAME_CONFIG.waveSize) {
-      this.time.delayedCall(720, () => this.spawnTrashWave());
-    }
   }
 
   showSlimePop(slime) {
@@ -816,6 +854,67 @@ class PlayScene extends Phaser.Scene {
     this.completeOverlay?.setAttribute("aria-hidden", "false");
   }
 
+  checkSangcheoriUnlock() {
+    if (
+      this.hasUnlockedSangcheori ||
+      this.hasUsedSangcheori ||
+      this.cleanedCanCount < GAME_CONFIG.sangcheoriCanGoal
+    ) {
+      return;
+    }
+
+    this.hasUnlockedSangcheori = true;
+    this.specialButton.hidden = false;
+    this.specialButton.setAttribute("aria-hidden", "false");
+    this.showCleanFeedback(this.player.x, this.player.y);
+  }
+
+  useSangcheoriItem() {
+    if (!this.hasUnlockedSangcheori || this.hasUsedSangcheori || this.isMissionComplete) {
+      return;
+    }
+
+    this.hasUsedSangcheori = true;
+    this.hasUnlockedSangcheori = false;
+    this.specialButton.hidden = true;
+    this.specialButton.setAttribute("aria-hidden", "true");
+    this.playMissionCompleteSound();
+
+    const remainingTrash = this.trashSlimes
+      .getChildren()
+      .filter((trash) => trash.active && !trash.getData("cleaned"));
+    const targets = Phaser.Utils.Array.Shuffle(remainingTrash).slice(
+      0,
+      GAME_CONFIG.sangcheoriRemoveCount,
+    );
+
+    targets.forEach((trash, index) => {
+      this.time.delayedCall(index * 80, () => {
+        this.autoCleanTrash(trash);
+      });
+    });
+  }
+
+  autoCleanTrash(trash) {
+    if (!trash.active || trash.getData("cleaned")) return;
+
+    trash.setData("cleaned", true);
+    trash.body.enable = false;
+    this.totalCleanedCount += 1;
+    this.waveCleanedCount += 1;
+    if (trash.getData("trashType") === "can") {
+      this.cleanedCanCount += 1;
+    }
+
+    this.showCleanFeedback(trash.x, trash.y);
+    this.showSlimePop(trash);
+    this.updateHud();
+
+    if (this.totalCleanedCount >= GAME_CONFIG.totalGoal) {
+      this.time.delayedCall(360, () => this.showMissionComplete());
+    }
+  }
+
   restartGame() {
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
@@ -965,8 +1064,8 @@ class PlayScene extends Phaser.Scene {
 
   updateHud() {
     const visibleWaveCount = this.isMissionComplete
-      ? GAME_CONFIG.waveSize
-      : this.waveCleanedCount;
+      ? this.cleanProgressEls.length
+      : Math.floor((this.totalCleanedCount / GAME_CONFIG.totalGoal) * this.cleanProgressEls.length);
 
     this.cleanProgressEls?.forEach((dot, index) => {
       dot.classList.toggle("is-cleaned", index < visibleWaveCount);
@@ -979,5 +1078,9 @@ class PlayScene extends Phaser.Scene {
     this.broomRangeEls?.forEach((bar, index) => {
       bar.classList.toggle("is-active", index === 0 || this.hasBroomUpgrade);
     });
+
+    if (this.specialButton) {
+      this.specialButton.hidden = !this.hasUnlockedSangcheori || this.hasUsedSangcheori;
+    }
   }
 }

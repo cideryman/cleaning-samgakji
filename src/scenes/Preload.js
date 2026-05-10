@@ -1,6 +1,7 @@
 const EXTERNAL_ASSETS = [
   { key: "player", path: "assets/sprites/player.png", fallback: "createPlayerTexture" },
   { key: "trash_slime", path: "assets/sprites/trash-slime.png", fallback: "createTrashSlimeTexture" },
+  { key: "trash_can", path: "assets/sprites/trash-can.png", fallback: "createTrashCanTexture" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },
   { key: "grass_tile", path: "assets/tiles/grass.png", fallback: "createGrassTileTexture" },
@@ -134,6 +135,25 @@ class Preload extends Phaser.Scene {
     this.drawRect(g, 84, 100, 8, 16, "#c46d2d");
     this.drawRect(g, 52, 88, 52, 8, "#ffe34d");
     g.generateTexture("broom_item", 128, 128);
+    g.destroy();
+  }
+
+  createTrashCanTexture() {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    this.drawRect(g, 26, 28, 76, 14, "#21352c");
+    this.drawRect(g, 18, 42, 92, 66, "#21352c");
+    this.drawRect(g, 26, 108, 76, 10, "#21352c");
+    this.drawRect(g, 30, 34, 68, 12, "#d8e5e8");
+    this.drawRect(g, 24, 48, 80, 58, "#b9ccd1");
+    this.drawRect(g, 32, 54, 12, 46, "#8ea4aa");
+    this.drawRect(g, 50, 52, 30, 10, "#e9f3f4");
+    this.drawRect(g, 86, 54, 10, 46, "#6f878d");
+    this.drawRect(g, 36, 72, 18, 18, "#f2c94c");
+    this.drawRect(g, 58, 70, 22, 22, "#2f80ed");
+    this.drawRect(g, 82, 72, 12, 18, "#eb5757");
+    this.drawRect(g, 48, 98, 34, 6, "#6fcf97");
+    this.drawRect(g, 28, 112, 72, 6, "#101418");
+    g.generateTexture("trash_can", 128, 128);
     g.destroy();
   }
 
