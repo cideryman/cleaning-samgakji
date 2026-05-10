@@ -56,6 +56,7 @@ class PlayScene extends Phaser.Scene {
     this.thanksAudioBuffer = null;
     this.collectCansAudioBuffer = null;
     this.helpAudioBuffer = null;
+    this.clearSlimeAudioBuffer = null;
     this.bgmAudio = null;
     this.bgmIndex = 1;
     this.bgmObjectUrl = null;
@@ -172,6 +173,7 @@ class PlayScene extends Phaser.Scene {
     this.thanksAudioBuffer = null;
     this.collectCansAudioBuffer = null;
     this.helpAudioBuffer = null;
+    this.clearSlimeAudioBuffer = null;
     this.hasStartedAudioLoad = false;
     this.playerStart = { x: 170, y: 424 };
     this.broomSpawn = { x: 650, y: 420 };
@@ -566,7 +568,15 @@ class PlayScene extends Phaser.Scene {
   showFirstGuide() {
     if (this.isMissionComplete || !this.sangcheoriNpc) return;
 
-    this.showNpcSpeech("슬라임을 치우자");
+    this.playClearSlimeVoice();
+    this.showSangcheoriCenterMessage("슬라임을 치우자", {
+      panelWidth: 202,
+      holdMs: 1050,
+      sparkleCount: 18,
+      flashColor: 0xbfe8a6,
+      strokeColor: 0x2f8f5b,
+      faceOnly: true,
+    });
   }
 
   handleMovement() {
@@ -1113,26 +1123,46 @@ class PlayScene extends Phaser.Scene {
   }
 
   showSangcheoriCleanCutscene() {
+    this.showSangcheoriCenterMessage("내가 도울께");
+  }
+
+  showSangcheoriCenterMessage(
+    caption,
+    {
+      panelWidth = 164,
+      holdMs = 780,
+      sparkleCount = 28,
+      flashColor = 0xfff3a3,
+      strokeColor = 0xf2c94c,
+      faceOnly = false,
+    } = {},
+  ) {
     const npc = this.add.image(384, 220, "sangcheori_npc");
     npc.setScrollFactor(0);
-    npc.setDisplaySize(112, 112);
+    const npcFinalScale = faceOnly ? 1.7 : 1;
+    if (faceOnly) {
+      npc.setCrop(28, 0, 72, 60);
+      npc.y = 224;
+    } else {
+      npc.setDisplaySize(112, 112);
+    }
     npc.setDepth(50);
     npc.setAlpha(0);
     npc.setScale(0.35);
 
-    const flash = this.add.ellipse(384, 240, 230, 160, 0xfff3a3, 0.36);
+    const flash = this.add.ellipse(384, 240, 230, 160, flashColor, 0.36);
     flash.setScrollFactor(0);
-    flash.setStrokeStyle(6, 0xf2c94c, 0.92);
+    flash.setStrokeStyle(6, strokeColor, 0.92);
     flash.setDepth(49);
     flash.setAlpha(0);
 
-    const captionPanel = this.add.rectangle(384, 132, 164, 42, 0xffffff, 0.96);
+    const captionPanel = this.add.rectangle(384, 132, panelWidth, 42, 0xffffff, 0.96);
     captionPanel.setScrollFactor(0);
     captionPanel.setStrokeStyle(4, 0x21352c);
     captionPanel.setDepth(51);
     captionPanel.setAlpha(0);
 
-    const captionText = this.add.text(384, 131, "내가 도울께", {
+    const captionText = this.add.text(384, 131, caption, {
       fontFamily: "Arial",
       fontSize: "22px",
       color: "#21352c",
@@ -1144,7 +1174,15 @@ class PlayScene extends Phaser.Scene {
     captionText.setAlpha(0);
 
     this.tweens.add({
-      targets: [npc, flash, captionPanel, captionText],
+      targets: npc,
+      alpha: 1,
+      scaleX: npcFinalScale,
+      scaleY: npcFinalScale,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+    this.tweens.add({
+      targets: [flash, captionPanel, captionText],
       alpha: 1,
       scaleX: 1,
       scaleY: 1,
@@ -1152,12 +1190,12 @@ class PlayScene extends Phaser.Scene {
       ease: "Back.easeOut",
     });
 
-    for (let i = 0; i < 28; i += 1) {
+    for (let i = 0; i < sparkleCount; i += 1) {
       const sparkle = this.add.circle(
         384,
         240,
         Phaser.Math.Between(3, 6),
-        i % 2 === 0 ? 0xffffff : 0xfff3a3,
+        i % 2 === 0 ? 0xffffff : flashColor,
         0.95,
       );
       sparkle.setScrollFactor(0);
@@ -1173,12 +1211,10 @@ class PlayScene extends Phaser.Scene {
       });
     }
 
-    this.time.delayedCall(780, () => {
+    this.time.delayedCall(holdMs, () => {
       this.tweens.add({
         targets: [npc, flash, captionPanel, captionText],
         alpha: 0,
-        scaleX: 1.08,
-        scaleY: 1.08,
         duration: 220,
         onComplete: () => {
           npc.destroy();
@@ -1489,6 +1525,22 @@ class PlayScene extends Phaser.Scene {
       .catch(() => {
         this.playTone({ frequency: 523, duration: 0.14, type: "triangle", volume: 0.06 });
         this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
+      });
+  }
+
+  playClearSlimeVoice() {
+    if (!this.isSoundEnabled()) return;
+
+    this.unlockAudio();
+    if (this.playAudioBuffer(this.clearSlimeAudioBuffer)) {
+      return;
+    }
+
+    this.loadAudioBuffer("assets/audio/clear-slime.mp3", "clearSlimeAudioBuffer")
+      .then(() => this.playClearSlimeVoice())
+      .catch(() => {
+        this.playTone({ frequency: 440, duration: 0.14, type: "triangle", volume: 0.06 });
+        this.playTone({ frequency: 587, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
       });
   }
 

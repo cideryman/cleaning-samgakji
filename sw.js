@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260510-10";
+const CACHE_NAME = "cleaning-samgakji-v20260510-12";
 
 const PRECACHE_URLS = [
   "./",
@@ -8,9 +8,9 @@ const PRECACHE_URLS = [
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=1",
   "./src/main.js?v=27",
-  "./src/scenes/Preload.js?v=32",
+  "./src/scenes/Preload.js?v=34",
   "./src/scenes/StartScene.js?v=1",
-  "./src/scenes/PlayScene.js?v=32",
+  "./src/scenes/PlayScene.js?v=34",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",
@@ -24,6 +24,7 @@ const PRECACHE_URLS = [
   "./assets/audio/thanks.mp3",
   "./assets/audio/collect-cans.mp3",
   "./assets/audio/i-will-help.mp3",
+  "./assets/audio/clear-slime.mp3",
   "./assets/audio/chapter1.mp3",
   "./assets/icons/icon-180.png",
   "./assets/icons/icon-192.png",

@@ -24,6 +24,7 @@ const AUDIO_ASSETS = [
   { key: "thanks_voice", path: "assets/audio/thanks.mp3" },
   { key: "collect_cans_voice", path: "assets/audio/collect-cans.mp3" },
   { key: "help_voice", path: "assets/audio/i-will-help.mp3" },
+  { key: "clear_slime_voice", path: "assets/audio/clear-slime.mp3" },
   { key: "chapter1_bgm", path: "assets/audio/chapter1.mp3" },
 ];
 
