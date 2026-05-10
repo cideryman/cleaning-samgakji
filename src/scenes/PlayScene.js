@@ -17,6 +17,7 @@ const GAME_CONFIG = {
   upgradedSweepMultiplier: 2,
   sweepCooldownMs: 420,
   feedbackSparkleCount: 14,
+  canFeedbackSparkleCount: 18,
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.24,
   joystickRadius: 78,
@@ -79,6 +80,9 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenButton = document.querySelector("#fullscreenButton");
     this.completeOverlay = document.querySelector("#completeOverlay");
     this.specialToast = document.querySelector("#specialToast");
+    this.resultTrashCountEl = document.querySelector("#resultTrashCount");
+    this.resultCanCountEl = document.querySelector("#resultCanCount");
+    this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
     this.restartButton = document.querySelector("#restartButton");
     this.restartHandler = () => this.restartGame();
     this.sweepHandler = (event) => {
@@ -147,6 +151,7 @@ class PlayScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.walls);
     this.startChapterMusic();
+    this.time.delayedCall(800, () => this.showFirstGuide());
   }
 
   resetRunState() {
@@ -558,6 +563,12 @@ class PlayScene extends Phaser.Scene {
     ) < 120;
   }
 
+  showFirstGuide() {
+    if (this.isMissionComplete || !this.sangcheoriNpc) return;
+
+    this.showNpcSpeech("슬라임을 치우자");
+  }
+
   handleMovement() {
     let horizontal =
       Number(this.cursors.right.isDown || this.keys.right.isDown) -
@@ -770,13 +781,18 @@ class PlayScene extends Phaser.Scene {
     slime.body.enable = false;
     this.totalCleanedCount += 1;
     this.waveCleanedCount += 1;
-    if (slime.getData("trashType") === "can") {
+    const isCanTrash = slime.getData("trashType") === "can";
+    if (isCanTrash) {
       this.cleanedCanCount += 1;
     }
 
-    this.playCleanSound();
+    if (isCanTrash) {
+      this.playCanCleanSound();
+    } else {
+      this.playCleanSound();
+    }
     this.showSlimePop(slime);
-    this.showCleanFeedback(slimeX, slimeY);
+    this.showCleanFeedback(slimeX, slimeY, isCanTrash);
     this.updateHud();
     this.checkSangcheoriUnlock();
 
@@ -810,9 +826,9 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
-  showCleanFeedback(x, y) {
+  showCleanFeedback(x, y, isCanFeedback = false) {
     const cleanRing = this.add.circle(x, y, 8, 0xffffff, 0);
-    cleanRing.setStrokeStyle(4, 0xffffff, 0.95);
+    cleanRing.setStrokeStyle(4, isCanFeedback ? 0x9fd1ff : 0xffffff, 0.95);
     cleanRing.setDepth(6);
 
     this.tweens.add({
@@ -824,8 +840,10 @@ class PlayScene extends Phaser.Scene {
       onComplete: () => cleanRing.destroy(),
     });
 
-    for (let i = 0; i < GAME_CONFIG.feedbackSparkleCount; i += 1) {
-      const sparkle = this.add.circle(x, y, Phaser.Math.Between(3, 5), 0xfff3a3, 1);
+    const sparkleCount = isCanFeedback ? GAME_CONFIG.canFeedbackSparkleCount : GAME_CONFIG.feedbackSparkleCount;
+    const sparkleColor = isCanFeedback ? 0x9fd1ff : 0xfff3a3;
+    for (let i = 0; i < sparkleCount; i += 1) {
+      const sparkle = this.add.circle(x, y, Phaser.Math.Between(3, 5), sparkleColor, 1);
       sparkle.setDepth(7);
       this.tweens.add({
         targets: sparkle,
@@ -971,6 +989,15 @@ class PlayScene extends Phaser.Scene {
   }
 
   showCompleteOverlay() {
+    if (this.resultTrashCountEl) {
+      this.resultTrashCountEl.textContent = `쓰레기 ${this.totalCleanedCount}개`;
+    }
+    if (this.resultCanCountEl) {
+      this.resultCanCountEl.textContent = `캔 ${this.cleanedCanCount}개`;
+    }
+    if (this.resultHelpUsedEl) {
+      this.resultHelpUsedEl.textContent = this.hasUsedSangcheori ? "상처리 도움 완료" : "상처리 도움 미사용";
+    }
     this.completeOverlay?.classList.add("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "false");
   }
@@ -987,6 +1014,7 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = true;
     this.specialButton.hidden = false;
     this.specialButton.setAttribute("aria-hidden", "false");
+    this.specialButton.classList.add("is-ready");
     this.playItemPickupSound();
     this.showSangcheoriUnlockToast();
     this.playThanksVoice();
@@ -1006,16 +1034,18 @@ class PlayScene extends Phaser.Scene {
     }, 1400);
   }
 
-  showNpcSpeech() {
+  showNpcSpeech(message = "캔을 모으자") {
     if (!this.sangcheoriNpc) return;
 
-    this.playCollectCansVoice();
+    if (message === "캔을 모으자") {
+      this.playCollectCansVoice();
+    }
 
     this.npcSpeechGroup?.destroy(true);
     const bubble = this.add.container(this.sangcheoriNpc.x, this.sangcheoriNpc.y - 62);
     const panel = this.add.rectangle(0, 0, 146, 42, 0xffffff, 0.96);
     panel.setStrokeStyle(4, 0x21352c);
-    const text = this.add.text(0, -1, "캔을 모으자", {
+    const text = this.add.text(0, -1, message, {
       fontFamily: "Arial",
       fontSize: "20px",
       color: "#21352c",
@@ -1062,6 +1092,7 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = false;
     this.specialButton.hidden = true;
     this.specialButton.setAttribute("aria-hidden", "true");
+    this.specialButton.classList.remove("is-ready");
     this.playHelpVoice();
     this.playSpecialUseSound();
     this.showSangcheoriCleanCutscene();
@@ -1384,6 +1415,11 @@ class PlayScene extends Phaser.Scene {
     this.playTone({ frequency: 980, duration: 0.12, type: "triangle", volume: 0.055, delay: 0.06 });
   }
 
+  playCanCleanSound() {
+    this.playTone({ frequency: 880, duration: 0.07, type: "square", volume: 0.045 });
+    this.playTone({ frequency: 1175, duration: 0.1, type: "triangle", volume: 0.05, delay: 0.05 });
+  }
+
   playItemPickupSound() {
     this.playTone({ frequency: 660, duration: 0.08, type: "triangle", volume: 0.055 });
     this.playTone({ frequency: 880, duration: 0.1, type: "triangle", volume: 0.06, delay: 0.06 });
@@ -1569,6 +1605,7 @@ class PlayScene extends Phaser.Scene {
 
     if (this.specialButton) {
       this.specialButton.hidden = !this.hasUnlockedSangcheori || this.hasUsedSangcheori;
+      this.specialButton.classList.toggle("is-ready", this.hasUnlockedSangcheori && !this.hasUsedSangcheori);
     }
   }
 }

@@ -1,16 +1,16 @@
-const CACHE_NAME = "cleaning-samgakji-v20260510-9";
+const CACHE_NAME = "cleaning-samgakji-v20260510-10";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=35",
+  "./styles.css?v=36",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=1",
   "./src/main.js?v=27",
-  "./src/scenes/Preload.js?v=31",
+  "./src/scenes/Preload.js?v=32",
   "./src/scenes/StartScene.js?v=1",
-  "./src/scenes/PlayScene.js?v=31",
+  "./src/scenes/PlayScene.js?v=32",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",

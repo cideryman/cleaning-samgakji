@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=35" />
+    <link rel="stylesheet" href="./styles.css?v=36" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body class="start-screen">
@@ -59,6 +59,12 @@
             <span></span>
             <span></span>
           </div>
+          <div class="complete-result" aria-label="result">
+            <strong>오늘 청소 완료</strong>
+            <span id="resultTrashCount">쓰레기 30개</span>
+            <span id="resultCanCount">캔 10개</span>
+            <span id="resultHelpUsed">상처리 도움 완료</span>
+          </div>
           <button id="restartButton" class="restart-button" type="button" aria-label="restart">
             <span class="restart-icon" aria-hidden="true"></span>
           </button>
@@ -86,9 +92,9 @@
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=31"></script>
+    <script src="./src/scenes/Preload.js?v=32"></script>
     <script src="./src/scenes/StartScene.js?v=1"></script>
-    <script src="./src/scenes/PlayScene.js?v=31"></script>
+    <script src="./src/scenes/PlayScene.js?v=32"></script>
     <script src="./src/main.js?v=27"></script>
     <script src="./src/pwa.js?v=1"></script>
   </body>
