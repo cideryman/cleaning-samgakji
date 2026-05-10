@@ -11,7 +11,7 @@ const config = {
       debug: false,
     },
   },
-  scene: [Preload, PlayScene],
+  scene: [Preload, StartScene, PlayScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

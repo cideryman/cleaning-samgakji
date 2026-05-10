@@ -1,7 +1,7 @@
 {
-  "name": "Cleaning Samgakji",
-  "short_name": "Samgakji",
-  "description": "A small mobile cleaning game prototype set around Samgakji.",
+  "name": "삼각지 대청소",
+  "short_name": "삼각지 대청소",
+  "description": "삼각지 주변을 깨끗하게 치우는 모바일 청소 게임 프로토타입입니다.",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",

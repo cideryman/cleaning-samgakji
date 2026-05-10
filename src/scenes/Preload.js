@@ -2,6 +2,7 @@ const EXTERNAL_ASSETS = [
   { key: "player", path: "assets/sprites/player.png", fallback: "createPlayerTexture" },
   { key: "trash_slime", path: "assets/sprites/trash-slime.png", fallback: "createTrashSlimeTexture" },
   { key: "trash_can", path: "assets/sprites/trash-can.png", fallback: "createTrashCanTexture" },
+  { key: "sangcheori_npc", path: "assets/sprites/sangcheori-npc.png", fallback: "createSangcheoriNpcTexture" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },
   { key: "grass_tile", path: "assets/tiles/grass.png", fallback: "createGrassTileTexture" },
@@ -10,16 +11,20 @@ const EXTERNAL_ASSETS = [
   { key: "building_tile", path: "assets/tiles/building.png", fallback: "createBuildingTileTexture" },
   { key: "garden_tile", path: "assets/tiles/garden.png", fallback: "createGardenTileTexture" },
   { key: "road_tile", path: "assets/tiles/road.png", fallback: "createRoadTileTexture" },
+  { key: "bench_tile", path: "assets/tiles/bench.png" },
   { key: "samgakji_tiles", path: "assets/tilesets/samgakji-tiles.png" },
 ];
 
 const TILED_MAP = {
-  key: "samgakji_map",
-  path: "assets/maps/samgakji-map.json",
+  key: "chapter1_map",
+  path: "assets/maps/chapter1-samgakji-map.json",
 };
 
 const AUDIO_ASSETS = [
   { key: "thanks_voice", path: "assets/audio/thanks.mp3" },
+  { key: "collect_cans_voice", path: "assets/audio/collect-cans.mp3" },
+  { key: "help_voice", path: "assets/audio/i-will-help.mp3" },
+  { key: "chapter1_bgm", path: "assets/audio/chapter1.mp3" },
 ];
 
 class Preload extends Phaser.Scene {
@@ -42,7 +47,7 @@ class Preload extends Phaser.Scene {
     this.createBlockTexture("clean_tile", 32, 32, "#f6fff3", "#6fcf97");
     this.createBlockTexture("sweep_hitbox", 96, 72, "#fff3a3", "#f2c94c");
 
-    this.scene.start("PlayScene");
+    this.scene.start("StartScene");
   }
 
   createMissingExternalTextures() {
@@ -161,6 +166,24 @@ class Preload extends Phaser.Scene {
     this.drawRect(g, 48, 98, 34, 6, "#6fcf97");
     this.drawRect(g, 28, 112, 72, 6, "#101418");
     g.generateTexture("trash_can", 128, 128);
+    g.destroy();
+  }
+
+  createSangcheoriNpcTexture() {
+    const g = this.make.graphics({ x: 0, y: 0 }, false);
+    this.drawEllipse(g, 14, 14, 100, 100, "#ffffff");
+    this.drawEllipse(g, 22, 24, 84, 84, "#f0b27f");
+    this.drawRect(g, 30, 20, 68, 24, "#3a332c");
+    this.drawRect(g, 28, 44, 74, 6, "#21352c");
+    this.drawRect(g, 36, 50, 22, 12, "#f7dcc8");
+    this.drawRect(g, 72, 50, 22, 12, "#f7dcc8");
+    this.drawRect(g, 42, 48, 12, 4, "#21352c");
+    this.drawRect(g, 78, 48, 12, 4, "#21352c");
+    this.drawRect(g, 58, 66, 12, 6, "#d89064");
+    this.drawRect(g, 60, 80, 18, 6, "#6b2f2f");
+    this.drawRect(g, 42, 76, 10, 6, "#eaa086");
+    this.drawRect(g, 82, 76, 10, 6, "#eaa086");
+    g.generateTexture("sangcheori_npc", 128, 128);
     g.destroy();
   }
 

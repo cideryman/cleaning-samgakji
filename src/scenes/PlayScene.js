@@ -11,6 +11,7 @@ const GAME_CONFIG = {
   playerDisplaySize: 50,
   slimeDisplaySize: 54,
   broomItemDisplaySize: 52,
+  sangcheoriNpcDisplaySize: 72,
   baseSweepWidth: 112,
   baseSweepHeight: 84,
   upgradedSweepMultiplier: 2,
@@ -22,7 +23,10 @@ const GAME_CONFIG = {
 };
 
 const TILED_MAP_CONFIG = {
-  key: "samgakji_map",
+  key: "chapter1_map",
+  chapter: 1,
+  title: "챕터 1",
+  mapName: "삼각지 복지관",
   tilesetName: "samgakji_tiles",
   tilesetImageKey: "samgakji_tiles",
   visibleLayers: ["ground", "objects"],
@@ -48,6 +52,13 @@ class PlayScene extends Phaser.Scene {
     this.joystickBase = { x: 0, y: 0 };
     this.canSweep = true;
     this.audioContext = null;
+    this.thanksAudioBuffer = null;
+    this.collectCansAudioBuffer = null;
+    this.helpAudioBuffer = null;
+    this.bgmAudio = null;
+    this.bgmIndex = 1;
+    this.bgmObjectUrl = null;
+    this.hasStartedAudioLoad = false;
     this.playerStart = { x: 170, y: 424 };
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
@@ -56,11 +67,11 @@ class PlayScene extends Phaser.Scene {
 
   create() {
     this.resetRunState();
+    document.body.classList.remove("start-screen");
 
     this.cleanProgressEls = Array.from(document.querySelectorAll("#cleanProgress span"));
     this.canProgressEls = Array.from(document.querySelectorAll("#canProgress span"));
     this.missionCountEl = document.querySelector("#missionCount");
-    this.broomRangeEls = Array.from(document.querySelectorAll("#broomStatus img"));
     this.sweepButton = document.querySelector("#sweepButton");
     this.specialButton = document.querySelector("#specialButton");
     this.movePad = document.querySelector("#movePad");
@@ -86,9 +97,12 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenHandler = (event) => this.toggleFullscreen(event);
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
     this.resizeHandler = () => this.updateCameraZoom();
+    this.audioUnlockHandler = () => this.unlockAudio();
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
     this.specialButton?.addEventListener("pointerdown", this.specialHandler);
+    window.addEventListener("pointerdown", this.audioUnlockHandler, { passive: true });
+    window.addEventListener("keydown", this.audioUnlockHandler);
     window.addEventListener("pointerdown", this.moveStartHandler);
     window.addEventListener("pointermove", this.moveUpdateHandler);
     window.addEventListener("pointerup", this.moveStopHandler);
@@ -104,9 +118,12 @@ class PlayScene extends Phaser.Scene {
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.stopChapterMusic();
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
       this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
+      window.removeEventListener("pointerdown", this.audioUnlockHandler);
+      window.removeEventListener("keydown", this.audioUnlockHandler);
       window.removeEventListener("pointerdown", this.moveStartHandler);
       window.removeEventListener("pointermove", this.moveUpdateHandler);
       window.removeEventListener("pointerup", this.moveStopHandler);
@@ -119,6 +136,8 @@ class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.createLargeBenchOverlays();
+    this.createSangcheoriNpc();
     this.createPlayer();
     this.trashSlimes = this.physics.add.staticGroup();
     this.spawnTrashWave();
@@ -127,6 +146,7 @@ class PlayScene extends Phaser.Scene {
     this.updateCameraZoom();
 
     this.physics.add.collider(this.player, this.walls);
+    this.startChapterMusic();
   }
 
   resetRunState() {
@@ -144,6 +164,10 @@ class PlayScene extends Phaser.Scene {
     this.activeJoystickPointerId = null;
     this.joystickBase = { x: 0, y: 0 };
     this.canSweep = true;
+    this.thanksAudioBuffer = null;
+    this.collectCansAudioBuffer = null;
+    this.helpAudioBuffer = null;
+    this.hasStartedAudioLoad = false;
     this.playerStart = { x: 170, y: 424 };
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
@@ -238,6 +262,52 @@ class PlayScene extends Phaser.Scene {
     this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
   }
 
+  createLargeBenchOverlays() {
+    const benchPositions = [
+      [585, 592],
+      [990, 374],
+    ];
+
+    benchPositions.forEach(([x, y]) => {
+      const bench = this.add.image(x, y, "bench_tile");
+      bench.setDisplaySize(96, 54);
+      bench.setDepth(2.5);
+    });
+  }
+
+  createSangcheoriNpc() {
+    const positions = [
+      [420, 226],
+      [756, 310],
+      [1028, 354],
+      [560, 650],
+      [1120, 602],
+      [310, 760],
+    ].filter(([x, y]) => !this.isBlockedSpawnPoint(x, y));
+    const [x, y] = Phaser.Utils.Array.GetRandom(positions);
+
+    this.sangcheoriNpc = this.add.image(x, y, "sangcheori_npc");
+    this.sangcheoriNpc.setDisplaySize(
+      GAME_CONFIG.sangcheoriNpcDisplaySize,
+      GAME_CONFIG.sangcheoriNpcDisplaySize,
+    );
+    this.sangcheoriNpc.setDepth(3.5);
+    this.sangcheoriNpc.setInteractive({ useHandCursor: true });
+    this.sangcheoriNpc.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      this.showNpcSpeech();
+    });
+    this.tweens.add({
+      targets: this.sangcheoriNpc,
+      y: y - 5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
   createFallbackMap() {
     this.physics.world.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
     this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
@@ -323,6 +393,7 @@ class PlayScene extends Phaser.Scene {
   createPlayer() {
     this.player = this.physics.add.sprite(this.playerStart.x, this.playerStart.y, "player");
     this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
+    this.playerBaseScale = { x: this.player.scaleX, y: this.player.scaleY };
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(5);
     this.player.body.setSize(72, 76);
@@ -460,9 +531,31 @@ class PlayScene extends Phaser.Scene {
       left: Phaser.Input.Keyboard.KeyCodes.A,
       right: Phaser.Input.Keyboard.KeyCodes.D,
       sweep: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      specialEnter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
-    this.keys.sweep.on("down", () => this.trySweep());
+    this.keys.sweep.on("down", () => this.handleSpaceAction());
+    this.keys.specialEnter.on("down", () => this.useSangcheoriItem());
+  }
+
+  handleSpaceAction() {
+    if (this.isPlayerNearSangcheoriNpc()) {
+      this.showNpcSpeech();
+      return;
+    }
+
+    this.trySweep();
+  }
+
+  isPlayerNearSangcheoriNpc() {
+    if (!this.player || !this.sangcheoriNpc) return false;
+
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.sangcheoriNpc.x,
+      this.sangcheoriNpc.y,
+    ) < 120;
   }
 
   handleMovement() {
@@ -482,12 +575,34 @@ class PlayScene extends Phaser.Scene {
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       this.lastDirection.copy(velocity);
+      this.updatePlayerDirection(velocity);
     }
 
     this.player.setVelocity(
       velocity.x * GAME_CONFIG.playerSpeed,
       velocity.y * GAME_CONFIG.playerSpeed,
     );
+  }
+
+  updatePlayerDirection(velocity) {
+    if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
+      this.player.setFlipX(velocity.x < 0);
+      this.player.setScale(
+        this.playerBaseScale.x,
+        this.playerBaseScale.y * 0.98,
+      );
+      this.player.clearTint();
+      return;
+    }
+
+    this.player.setFlipX(false);
+    if (velocity.y < 0) {
+      this.player.setScale(this.playerBaseScale.x * 0.94, this.playerBaseScale.y * 1.06);
+      this.player.setTint(0xd8ecff);
+    } else {
+      this.player.setScale(this.playerBaseScale.x, this.playerBaseScale.y);
+      this.player.clearTint();
+    }
   }
 
   startFloatingJoystick(event) {
@@ -565,6 +680,7 @@ class PlayScene extends Phaser.Scene {
 
   trySweep() {
     if (!this.canSweep || this.isMissionComplete) return;
+    this.unlockAudio();
 
     this.canSweep = false;
     this.time.delayedCall(GAME_CONFIG.sweepCooldownMs, () => {
@@ -773,6 +889,7 @@ class PlayScene extends Phaser.Scene {
       if (this.hasBroomUpgrade) return;
       this.hasBroomUpgrade = true;
       item.destroy();
+      this.playItemPickupSound();
       this.showCleanFeedback(this.player.x, this.player.y);
       this.showUpgradePulse();
       this.updateHud();
@@ -870,6 +987,7 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = true;
     this.specialButton.hidden = false;
     this.specialButton.setAttribute("aria-hidden", "false");
+    this.playItemPickupSound();
     this.showSangcheoriUnlockToast();
     this.playThanksVoice();
     this.showCleanFeedback(this.player.x, this.player.y);
@@ -888,6 +1006,53 @@ class PlayScene extends Phaser.Scene {
     }, 1400);
   }
 
+  showNpcSpeech() {
+    if (!this.sangcheoriNpc) return;
+
+    this.playCollectCansVoice();
+
+    this.npcSpeechGroup?.destroy(true);
+    const bubble = this.add.container(this.sangcheoriNpc.x, this.sangcheoriNpc.y - 62);
+    const panel = this.add.rectangle(0, 0, 146, 42, 0xffffff, 0.96);
+    panel.setStrokeStyle(4, 0x21352c);
+    const text = this.add.text(0, -1, "캔을 모으자", {
+      fontFamily: "Arial",
+      fontSize: "20px",
+      color: "#21352c",
+      fontStyle: "bold",
+    }).setOrigin(0.5);
+    const tail = this.add.rectangle(0, 24, 16, 12, 0xffffff, 0.96);
+    tail.setStrokeStyle(3, 0x21352c);
+    tail.setAngle(45);
+    bubble.add([panel, text, tail]);
+    bubble.setDepth(8);
+    bubble.setAlpha(0);
+    this.npcSpeechGroup = bubble;
+
+    this.tweens.add({
+      targets: bubble,
+      alpha: 1,
+      y: bubble.y - 8,
+      duration: 160,
+      ease: "Back.easeOut",
+    });
+
+    this.time.delayedCall(1600, () => {
+      this.tweens.add({
+        targets: bubble,
+        alpha: 0,
+        y: bubble.y - 8,
+        duration: 180,
+        onComplete: () => {
+          bubble.destroy(true);
+          if (this.npcSpeechGroup === bubble) {
+            this.npcSpeechGroup = null;
+          }
+        },
+      });
+    });
+  }
+
   useSangcheoriItem() {
     if (!this.hasUnlockedSangcheori || this.hasUsedSangcheori || this.isMissionComplete) {
       return;
@@ -897,7 +1062,9 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = false;
     this.specialButton.hidden = true;
     this.specialButton.setAttribute("aria-hidden", "true");
-    this.playMissionCompleteSound();
+    this.playHelpVoice();
+    this.playSpecialUseSound();
+    this.showSangcheoriCleanCutscene();
 
     const remainingTrash = this.trashSlimes
       .getChildren()
@@ -910,6 +1077,84 @@ class PlayScene extends Phaser.Scene {
     targets.forEach((trash, index) => {
       this.time.delayedCall(index * 80, () => {
         this.autoCleanTrash(trash);
+      });
+    });
+  }
+
+  showSangcheoriCleanCutscene() {
+    const npc = this.add.image(384, 220, "sangcheori_npc");
+    npc.setScrollFactor(0);
+    npc.setDisplaySize(112, 112);
+    npc.setDepth(50);
+    npc.setAlpha(0);
+    npc.setScale(0.35);
+
+    const flash = this.add.ellipse(384, 240, 230, 160, 0xfff3a3, 0.36);
+    flash.setScrollFactor(0);
+    flash.setStrokeStyle(6, 0xf2c94c, 0.92);
+    flash.setDepth(49);
+    flash.setAlpha(0);
+
+    const captionPanel = this.add.rectangle(384, 132, 164, 42, 0xffffff, 0.96);
+    captionPanel.setScrollFactor(0);
+    captionPanel.setStrokeStyle(4, 0x21352c);
+    captionPanel.setDepth(51);
+    captionPanel.setAlpha(0);
+
+    const captionText = this.add.text(384, 131, "내가 도울께", {
+      fontFamily: "Arial",
+      fontSize: "22px",
+      color: "#21352c",
+      fontStyle: "bold",
+    });
+    captionText.setOrigin(0.5);
+    captionText.setScrollFactor(0);
+    captionText.setDepth(52);
+    captionText.setAlpha(0);
+
+    this.tweens.add({
+      targets: [npc, flash, captionPanel, captionText],
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+
+    for (let i = 0; i < 28; i += 1) {
+      const sparkle = this.add.circle(
+        384,
+        240,
+        Phaser.Math.Between(3, 6),
+        i % 2 === 0 ? 0xffffff : 0xfff3a3,
+        0.95,
+      );
+      sparkle.setScrollFactor(0);
+      sparkle.setDepth(51);
+      this.tweens.add({
+        targets: sparkle,
+        x: 384 + Phaser.Math.Between(-150, 150),
+        y: 240 + Phaser.Math.Between(-95, 105),
+        alpha: 0,
+        duration: Phaser.Math.Between(520, 820),
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
+
+    this.time.delayedCall(780, () => {
+      this.tweens.add({
+        targets: [npc, flash, captionPanel, captionText],
+        alpha: 0,
+        scaleX: 1.08,
+        scaleY: 1.08,
+        duration: 220,
+        onComplete: () => {
+          npc.destroy();
+          flash.destroy();
+          captionPanel.destroy();
+          captionText.destroy();
+        },
       });
     });
   }
@@ -1039,9 +1284,79 @@ class PlayScene extends Phaser.Scene {
     return this.audioContext;
   }
 
-  playTone({ frequency, duration, type = "sine", volume = 0.08, delay = 0 }) {
+  isSoundEnabled() {
+    return this.registry.get("soundEnabled") !== false;
+  }
+
+  unlockAudio() {
+    if (!this.isSoundEnabled()) return;
+
+    const context = this.getAudioContext();
+    if (context?.state === "suspended") {
+      context.resume();
+    }
+
+    if (this.sound?.context?.state === "suspended") {
+      this.sound.context.resume();
+    }
+
+    this.loadThanksAudioBuffer();
+  }
+
+  loadThanksAudioBuffer() {
+    if (!this.isSoundEnabled()) return;
+    if (this.hasStartedAudioLoad || this.thanksAudioBuffer) return;
+
     const context = this.getAudioContext();
     if (!context) return;
+
+    this.hasStartedAudioLoad = true;
+    fetch(new URL("assets/audio/thanks.mp3", window.location.href))
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => context.decodeAudioData(buffer))
+      .then((decodedBuffer) => {
+        this.thanksAudioBuffer = decodedBuffer;
+      })
+      .catch(() => {
+        this.hasStartedAudioLoad = false;
+      });
+  }
+
+  loadAudioBuffer(path, assign) {
+    const context = this.getAudioContext();
+    if (!context) return Promise.reject(new Error("AudioContext unavailable"));
+
+    return fetch(new URL(path, window.location.href))
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => context.decodeAudioData(buffer))
+      .then((decodedBuffer) => {
+        this[assign] = decodedBuffer;
+        return decodedBuffer;
+      });
+  }
+
+  playAudioBuffer(buffer) {
+    const context = this.getAudioContext();
+    if (!this.isSoundEnabled() || !context || !buffer) return false;
+
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = buffer;
+    gain.gain.value = 0.95;
+    source.connect(gain);
+    gain.connect(context.destination);
+    source.start();
+    return true;
+  }
+
+  playTone({ frequency, duration, type = "sine", volume = 0.08, delay = 0 }) {
+    if (!this.isSoundEnabled()) return;
+
+    const context = this.getAudioContext();
+    if (!context) return;
+    if (context.state === "suspended") {
+      context.resume();
+    }
 
     const startTime = context.currentTime + delay;
     const oscillator = context.createOscillator();
@@ -1069,6 +1384,18 @@ class PlayScene extends Phaser.Scene {
     this.playTone({ frequency: 980, duration: 0.12, type: "triangle", volume: 0.055, delay: 0.06 });
   }
 
+  playItemPickupSound() {
+    this.playTone({ frequency: 660, duration: 0.08, type: "triangle", volume: 0.055 });
+    this.playTone({ frequency: 880, duration: 0.1, type: "triangle", volume: 0.06, delay: 0.06 });
+    this.playTone({ frequency: 1320, duration: 0.12, type: "sine", volume: 0.045, delay: 0.13 });
+  }
+
+  playSpecialUseSound() {
+    this.playTone({ frequency: 392, duration: 0.16, type: "triangle", volume: 0.06 });
+    this.playTone({ frequency: 784, duration: 0.22, type: "triangle", volume: 0.07, delay: 0.08 });
+    this.playTone({ frequency: 1175, duration: 0.24, type: "sine", volume: 0.055, delay: 0.18 });
+  }
+
   playMissionCompleteSound() {
     [523, 659, 784, 1046].forEach((frequency, index) => {
       this.playTone({
@@ -1082,8 +1409,142 @@ class PlayScene extends Phaser.Scene {
   }
 
   playThanksVoice() {
-    if (this.sound?.get("thanks_voice")) {
-      this.sound.play("thanks_voice", { volume: 0.95 });
+    if (!this.isSoundEnabled()) return;
+
+    this.unlockAudio();
+    if (this.playAudioBuffer(this.thanksAudioBuffer)) {
+      return;
+    }
+
+    this.loadAudioBuffer("assets/audio/thanks.mp3", "thanksAudioBuffer")
+      .then(() => this.playThanksVoice())
+      .catch(() => {
+        this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.07 });
+        this.playTone({ frequency: 880, duration: 0.18, type: "triangle", volume: 0.07, delay: 0.12 });
+      });
+  }
+
+  playCollectCansVoice() {
+    if (!this.isSoundEnabled()) return;
+
+    this.unlockAudio();
+    if (this.playAudioBuffer(this.collectCansAudioBuffer)) {
+      return;
+    }
+
+    this.loadAudioBuffer("assets/audio/collect-cans.mp3", "collectCansAudioBuffer")
+      .then(() => this.playCollectCansVoice())
+      .catch(() => {
+        this.playTone({ frequency: 392, duration: 0.14, type: "triangle", volume: 0.06 });
+        this.playTone({ frequency: 523, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
+      });
+  }
+
+  playHelpVoice() {
+    if (!this.isSoundEnabled()) return;
+
+    this.unlockAudio();
+    if (this.playAudioBuffer(this.helpAudioBuffer)) {
+      return;
+    }
+
+    this.loadAudioBuffer("assets/audio/i-will-help.mp3", "helpAudioBuffer")
+      .then(() => this.playHelpVoice())
+      .catch(() => {
+        this.playTone({ frequency: 523, duration: 0.14, type: "triangle", volume: 0.06 });
+        this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
+      });
+  }
+
+  startChapterMusic() {
+    if (!this.isSoundEnabled()) return;
+
+    this.stopChapterMusic();
+    this.bgmIndex = TILED_MAP_CONFIG.chapter;
+    this.playNextChapterTrack();
+  }
+
+  playNextChapterTrack() {
+    if (!this.isSoundEnabled()) return;
+
+    const cachedKey = `chapter${this.bgmIndex}_bgm`;
+    if (this.cache.audio.exists(cachedKey)) {
+      this.bgmAudio = this.sound.add(cachedKey, { volume: 0.32 });
+      this.bgmAudio.once("complete", () => {
+        this.bgmIndex += 1;
+        this.playNextChapterTrack();
+      });
+      this.bgmAudio.play();
+      return;
+    }
+
+    const trackPaths = [
+      `assets/audio/chapter${this.bgmIndex}.mp3`,
+      `assets/chapter${this.bgmIndex}.mp3`,
+    ];
+    this.fetchFirstExistingTrack(trackPaths)
+      .then((response) => {
+        if (!response) {
+          if (this.bgmIndex !== TILED_MAP_CONFIG.chapter) {
+            this.bgmIndex = TILED_MAP_CONFIG.chapter;
+            this.playNextChapterTrack();
+          }
+          return null;
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        if (!blob) return;
+
+        this.bgmObjectUrl = URL.createObjectURL(blob);
+        this.bgmAudio = new Audio(this.bgmObjectUrl);
+        this.bgmAudio.volume = 0.32;
+        this.bgmAudio.addEventListener(
+          "ended",
+          () => {
+            this.cleanupBgmObjectUrl();
+            this.bgmIndex += 1;
+            this.playNextChapterTrack();
+          },
+          { once: true },
+        );
+        this.bgmAudio.play().catch(() => {});
+      })
+      .catch(() => {});
+  }
+
+  fetchFirstExistingTrack(paths) {
+    const [path, ...rest] = paths;
+    if (!path) {
+      return Promise.resolve(null);
+    }
+
+    return fetch(new URL(path, window.location.href), { cache: "no-store" }).then((response) => {
+      if (response.ok) {
+        return response;
+      }
+      return this.fetchFirstExistingTrack(rest);
+    });
+  }
+
+  stopChapterMusic() {
+    if (this.bgmAudio) {
+      if (typeof this.bgmAudio.stop === "function") {
+        this.bgmAudio.stop();
+        this.bgmAudio.destroy?.();
+      } else {
+        this.bgmAudio.pause();
+        this.bgmAudio.removeAttribute("src");
+      }
+      this.bgmAudio = null;
+    }
+    this.cleanupBgmObjectUrl();
+  }
+
+  cleanupBgmObjectUrl() {
+    if (this.bgmObjectUrl) {
+      URL.revokeObjectURL(this.bgmObjectUrl);
+      this.bgmObjectUrl = null;
     }
   }
 
@@ -1104,9 +1565,7 @@ class PlayScene extends Phaser.Scene {
       this.missionCountEl.textContent = `${this.totalCleanedCount}/${GAME_CONFIG.totalGoal}`;
     }
 
-    this.broomRangeEls?.forEach((bar, index) => {
-      bar.classList.toggle("is-active", index === 0 || this.hasBroomUpgrade);
-    });
+    this.sweepButton?.classList.toggle("is-upgraded", this.hasBroomUpgrade);
 
     if (this.specialButton) {
       this.specialButton.hidden = !this.hasUnlockedSangcheori || this.hasUsedSangcheori;
