@@ -14,6 +14,8 @@ const GAME_CONFIG = {
   sweepCooldownMs: 420,
   feedbackSparkleCount: 14,
   slimeSpawnMinDistance: 72,
+  wideCameraZoom: 1.24,
+  joystickRadius: 46,
 };
 
 const TILED_MAP_CONFIG = {
@@ -37,6 +39,7 @@ class PlayScene extends Phaser.Scene {
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
     this.activeJoystickPointerId = null;
+    this.joystickBase = { x: 0, y: 0 };
     this.canSweep = true;
     this.audioContext = null;
     this.playerStart = { x: 170, y: 424 };
@@ -62,35 +65,38 @@ class PlayScene extends Phaser.Scene {
       event?.preventDefault();
       this.trySweep();
     };
-    this.moveStartHandler = (event) => this.startJoystick(event);
+    this.moveStartHandler = (event) => this.startFloatingJoystick(event);
     this.moveUpdateHandler = (event) => this.updateJoystick(event);
     this.moveStopHandler = (event) => this.stopJoystick(event);
     this.fullscreenHandler = (event) => this.toggleFullscreen(event);
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
+    this.resizeHandler = () => this.updateCameraZoom();
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("click", this.sweepHandler);
-    this.movePad?.addEventListener("pointerdown", this.moveStartHandler);
+    window.addEventListener("pointerdown", this.moveStartHandler);
     window.addEventListener("pointermove", this.moveUpdateHandler);
     window.addEventListener("pointerup", this.moveStopHandler);
     window.addEventListener("pointercancel", this.moveStopHandler);
     this.fullscreenButton?.addEventListener("click", this.fullscreenHandler);
     document.addEventListener("fullscreenchange", this.fullscreenChangeHandler);
     document.addEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
+    window.addEventListener("resize", this.resizeHandler);
+    window.addEventListener("orientationchange", this.resizeHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
-    if (this.moveKnob) {
-      this.moveKnob.style.transform = "translate(0, 0)";
-    }
+    this.hideJoystick();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("click", this.sweepHandler);
-      this.movePad?.removeEventListener("pointerdown", this.moveStartHandler);
+      window.removeEventListener("pointerdown", this.moveStartHandler);
       window.removeEventListener("pointermove", this.moveUpdateHandler);
       window.removeEventListener("pointerup", this.moveStopHandler);
       window.removeEventListener("pointercancel", this.moveStopHandler);
       this.fullscreenButton?.removeEventListener("click", this.fullscreenHandler);
       document.removeEventListener("fullscreenchange", this.fullscreenChangeHandler);
       document.removeEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
+      window.removeEventListener("resize", this.resizeHandler);
+      window.removeEventListener("orientationchange", this.resizeHandler);
     });
 
     this.createMap();
@@ -99,6 +105,7 @@ class PlayScene extends Phaser.Scene {
     this.spawnTrashWave();
     this.createInput();
     this.updateHud();
+    this.updateCameraZoom();
 
     this.physics.add.collider(this.player, this.walls);
   }
@@ -113,6 +120,7 @@ class PlayScene extends Phaser.Scene {
     this.lastDirection.set(1, 0);
     this.joystickVector.set(0, 0);
     this.activeJoystickPointerId = null;
+    this.joystickBase = { x: 0, y: 0 };
     this.canSweep = true;
     this.playerStart = { x: 170, y: 424 };
     this.broomSpawn = { x: 650, y: 420 };
@@ -213,26 +221,30 @@ class PlayScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
 
     this.add.rectangle(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, 0x6c7a55);
-    this.addTiledRect(768, 480, 1396, 820, "grass_tile");
+    this.addTiledRect(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, "grass_tile");
 
-    this.addTiledRect(585, 420, 980, 118, "path_tile");
+    this.addTiledRect(475, 420, 1200, 118, "path_tile");
     this.addTiledRect(652, 392, 122, 386, "path_tile");
-    this.addTiledRect(835, 300, 760, 104, "path_tile", -18);
-    this.addTiledRect(1012, 512, 560, 78, "sidewalk_tile", -14);
-    this.addTiledRect(570, 625, 650, 82, "sidewalk_tile", -18);
+    this.addTiledRect(870, 300, 910, 104, "path_tile", -18);
+    this.addTiledRect(1012, 512, 690, 78, "sidewalk_tile", -14);
+    this.addTiledRect(480, 625, 830, 82, "sidewalk_tile", -18);
+    this.addTiledRect(176, 650, 352, 82, "path_tile");
+    this.addTiledRect(168, 760, 336, 88, "sidewalk_tile", -18);
     this.add.ellipse(650, 420, 194, 154, 0xd8c59a);
 
     this.add.rectangle(1090, 690, 426, 274, 0xb8c1bd);
     this.addTiledRect(1090, 690, 342, 190, "building_tile");
     this.add.rectangle(1090, 575, 240, 18, 0xe8f3ef);
-    this.add.rectangle(1325, 480, 210, 860, 0x52645d);
-    this.addTiledRect(1364, 480, 80, 860, "road_tile");
-    this.add.rectangle(1394, 480, 6, 820, 0xffffff).setAngle(-12);
+    this.add.rectangle(1390, 480, 292, GAME_CONFIG.worldHeight, 0x52645d);
+    this.addTiledRect(1442, 480, 112, GAME_CONFIG.worldHeight, "road_tile");
+    this.add.rectangle(1478, 480, 6, 900, 0xffffff).setAngle(-12);
 
-    this.add.rectangle(370, 226, 370, 96, 0x60704c);
-    this.add.rectangle(330, 710, 320, 92, 0x60704c);
+    this.add.rectangle(310, 226, 500, 96, 0x60704c);
+    this.add.rectangle(260, 710, 460, 92, 0x60704c);
     this.add.rectangle(934, 226, 140, 62, 0x60704c);
 
+    this.addTiledRect(158, 342, 316, 172, "garden_tile");
+    this.addTiledRect(180, 540, 360, 128, "garden_tile");
     this.addTiledRect(502, 350, 170, 84, "garden_tile");
     this.addTiledRect(246, 526, 270, 148, "garden_tile");
     this.addTiledRect(1030, 418, 310, 132, "garden_tile");
@@ -248,7 +260,7 @@ class PlayScene extends Phaser.Scene {
     this.addWall(370, 226, 360, 86);
     this.addWall(330, 710, 310, 82);
     this.addWall(1090, 690, 410, 258);
-    this.addWall(1325, 480, 210, 860);
+    this.addWall(1390, 480, 292, GAME_CONFIG.worldHeight);
     this.addWall(934, 226, 130, 52);
   }
 
@@ -294,6 +306,15 @@ class PlayScene extends Phaser.Scene {
     this.player.body.setSize(72, 76);
     this.player.body.setOffset(28, 30);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+  }
+
+  updateCameraZoom() {
+    const width = window.innerWidth || this.scale.width;
+    const height = window.innerHeight || this.scale.height;
+    const isWideView = width / Math.max(height, 1) > 1.35;
+    const zoom = isWideView ? GAME_CONFIG.wideCameraZoom : 1;
+
+    this.cameras.main.setZoom(zoom);
   }
 
   spawnTrashWave() {
@@ -427,25 +448,39 @@ class PlayScene extends Phaser.Scene {
     );
   }
 
-  startJoystick(event) {
+  startFloatingJoystick(event) {
     if (this.isMissionComplete || this.activeJoystickPointerId !== null) return;
+    if (!this.isJoystickStartEvent(event)) return;
 
     event.preventDefault();
     this.activeJoystickPointerId = event.pointerId;
-    this.movePad?.setPointerCapture?.(event.pointerId);
+    this.joystickBase = { x: event.clientX, y: event.clientY };
+    this.showJoystick(event.clientX, event.clientY);
     this.updateJoystick(event);
+  }
+
+  isJoystickStartEvent(event) {
+    if (event.pointerType === "mouse") {
+      return false;
+    }
+
+    if (event.clientX > window.innerWidth / 2) {
+      return false;
+    }
+
+    const blockedTarget = event.target.closest?.(
+      "#sweepButton, #fullscreenButton, #restartButton, .touch-controls, .complete-overlay",
+    );
+    return !blockedTarget;
   }
 
   updateJoystick(event) {
     if (this.activeJoystickPointerId !== event.pointerId || !this.movePad) return;
 
     event.preventDefault();
-    const rect = this.movePad.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const radius = rect.width * 0.34;
-    const dx = event.clientX - centerX;
-    const dy = event.clientY - centerY;
+    const radius = GAME_CONFIG.joystickRadius;
+    const dx = event.clientX - this.joystickBase.x;
+    const dy = event.clientY - this.joystickBase.y;
     const distance = Math.min(Math.hypot(dx, dy), radius);
     const angle = Math.atan2(dy, dx);
     const knobX = Math.cos(angle) * distance;
@@ -461,6 +496,24 @@ class PlayScene extends Phaser.Scene {
     event.preventDefault();
     this.activeJoystickPointerId = null;
     this.joystickVector.set(0, 0);
+    this.hideJoystick();
+  }
+
+  showJoystick(x, y) {
+    if (!this.movePad || !this.moveKnob) return;
+
+    this.movePad.style.left = `${x}px`;
+    this.movePad.style.top = `${y}px`;
+    this.movePad.classList.add("is-visible");
+    this.movePad.setAttribute("aria-hidden", "false");
+    this.moveKnob.style.transform = "translate(0, 0)";
+  }
+
+  hideJoystick() {
+    if (!this.movePad) return;
+
+    this.movePad.classList.remove("is-visible");
+    this.movePad.setAttribute("aria-hidden", "true");
     if (this.moveKnob) {
       this.moveKnob.style.transform = "translate(0, 0)";
     }

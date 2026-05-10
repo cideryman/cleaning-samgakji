@@ -241,7 +241,7 @@ body {
 
 .touch-controls {
   position: relative;
-  min-height: 96px;
+  min-height: 72px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -266,19 +266,26 @@ body {
 }
 
 .move-pad {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 96px;
-  height: 96px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 120px;
+  height: 120px;
+  display: none;
   transform: translate(-50%, -50%);
-  display: grid;
   place-items: center;
   border: 4px solid #21352c;
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 6px 0 #b9d8c2;
+  opacity: 0.9;
+  pointer-events: none;
   touch-action: none;
+  z-index: 20;
+}
+
+.move-pad.is-visible {
+  display: grid;
 }
 
 .move-pad::before,
@@ -289,14 +296,14 @@ body {
 }
 
 .move-pad::before {
-  width: 58px;
+  width: 72px;
   height: 8px;
   border-radius: 999px;
 }
 
 .move-pad::after {
   width: 8px;
-  height: 58px;
+  height: 72px;
   border-radius: 999px;
 }
 
@@ -386,14 +393,14 @@ body {
   }
 }
 
-@media (max-height: 620px) {
+@media (max-height: 620px) and (min-width: 821px) {
   .game-shell {
     width: min(100%, calc((100dvh - 116px) * 1.6));
   }
 
   .touch-controls {
     margin-top: 6px;
-    min-height: 82px;
+    min-height: 64px;
   }
 
   #sweepButton,
@@ -402,13 +409,8 @@ body {
   }
 
   .move-pad {
-    width: 82px;
-    height: 82px;
-  }
-
-  .move-knob {
-    width: 36px;
-    height: 36px;
+    width: 112px;
+    height: 112px;
   }
 }
 
@@ -452,7 +454,7 @@ body.app-fit-mode #game {
 body.app-fit-mode #game canvas {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .game-shell:fullscreen .touch-controls,
@@ -468,12 +470,11 @@ body.app-fit-mode .touch-controls {
 
   .game-shell {
     width: 100vw;
-    height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
-      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      max(28px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   }
 
   .game-stage {
@@ -497,7 +498,7 @@ body.app-fit-mode .touch-controls {
   .touch-controls {
     align-self: end;
     margin-top: 8px;
-    min-height: 96px;
+    min-height: 72px;
   }
 
   #sweepButton {
@@ -509,6 +510,71 @@ body.app-fit-mode .touch-controls {
   }
 
   .move-pad {
-    left: 50%;
+    width: 120px;
+    height: 120px;
+  }
+
+  .move-knob {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  body {
+    padding: 0;
+  }
+
+  .game-shell {
+    width: 100vw;
+    height: 100svh;
+    max-width: none;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .game-header {
+    margin-bottom: 6px;
+  }
+
+  .status-pill {
+    min-height: 40px;
+    padding: 6px 10px;
+  }
+
+  .game-stage {
+    min-height: 0;
+    display: grid;
+  }
+
+  #game {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+  }
+
+  #game canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .touch-controls {
+    min-height: 64px;
+    margin-top: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .move-pad {
+    width: 120px;
+    height: 120px;
+  }
+
+  .move-knob {
+    width: 48px;
+    height: 48px;
   }
 }
