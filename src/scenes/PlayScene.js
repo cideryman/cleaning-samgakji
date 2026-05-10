@@ -15,7 +15,7 @@ const GAME_CONFIG = {
   feedbackSparkleCount: 14,
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.24,
-  joystickRadius: 46,
+  joystickRadius: 78,
 };
 
 const TILED_MAP_CONFIG = {
@@ -63,6 +63,7 @@ class PlayScene extends Phaser.Scene {
     this.restartHandler = () => this.restartGame();
     this.sweepHandler = (event) => {
       event?.preventDefault();
+      event?.stopPropagation();
       this.trySweep();
     };
     this.moveStartHandler = (event) => this.startFloatingJoystick(event);
@@ -72,7 +73,7 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
     this.resizeHandler = () => this.updateCameraZoom();
     this.restartButton?.addEventListener("click", this.restartHandler);
-    this.sweepButton?.addEventListener("click", this.sweepHandler);
+    this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
     window.addEventListener("pointerdown", this.moveStartHandler);
     window.addEventListener("pointermove", this.moveUpdateHandler);
     window.addEventListener("pointerup", this.moveStopHandler);
@@ -87,7 +88,7 @@ class PlayScene extends Phaser.Scene {
     this.hideJoystick();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.restartButton?.removeEventListener("click", this.restartHandler);
-      this.sweepButton?.removeEventListener("click", this.sweepHandler);
+      this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
       window.removeEventListener("pointerdown", this.moveStartHandler);
       window.removeEventListener("pointermove", this.moveUpdateHandler);
       window.removeEventListener("pointerup", this.moveStopHandler);
@@ -469,7 +470,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     const blockedTarget = event.target.closest?.(
-      "#sweepButton, #fullscreenButton, #restartButton, .touch-controls, .complete-overlay",
+      "#sweepButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay",
     );
     return !blockedTarget;
   }
@@ -487,7 +488,9 @@ class PlayScene extends Phaser.Scene {
     const knobY = Math.sin(angle) * distance;
 
     this.joystickVector.set(knobX / radius, knobY / radius);
-    this.moveKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+    this.movePad.style.left = `${event.clientX}px`;
+    this.movePad.style.top = `${event.clientY}px`;
+    this.moveKnob.style.transform = "translate(-50%, -50%)";
   }
 
   stopJoystick(event) {
@@ -506,7 +509,7 @@ class PlayScene extends Phaser.Scene {
     this.movePad.style.top = `${y}px`;
     this.movePad.classList.add("is-visible");
     this.movePad.setAttribute("aria-hidden", "false");
-    this.moveKnob.style.transform = "translate(0, 0)";
+    this.moveKnob.style.transform = "translate(-50%, -50%)";
   }
 
   hideJoystick() {
@@ -515,7 +518,7 @@ class PlayScene extends Phaser.Scene {
     this.movePad.classList.remove("is-visible");
     this.movePad.setAttribute("aria-hidden", "true");
     if (this.moveKnob) {
-      this.moveKnob.style.transform = "translate(0, 0)";
+      this.moveKnob.style.transform = "translate(-50%, -50%)";
     }
   }
 

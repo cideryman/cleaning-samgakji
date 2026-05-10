@@ -7,33 +7,39 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <title>Cleaning Samgakji Prototype</title>
-    <link rel="stylesheet" href="./styles.css?v=27" />
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <meta name="theme-color" content="#9acb87" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Samgakji" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
+    <link rel="stylesheet" href="./styles.css?v=28" />
+    <script src="./vendor/phaser.min.js"></script>
   </head>
   <body>
     <main class="game-shell">
-      <div class="game-header" aria-label="game status">
-        <div class="status-pill" title="cleaned trash monsters">
-          <img class="status-icon" src="./assets/sprites/trash-slime.png" alt="" aria-hidden="true" />
-          <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <strong id="missionCount" class="mission-count">0/20</strong>
-        </div>
-        <div class="status-pill" title="broom range">
-          <div id="broomStatus" class="broom-pair" aria-label="broom range">
-            <img class="is-active" src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
-            <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
-
       <div class="game-stage">
         <div id="game"></div>
+        <div class="game-header" aria-label="game status">
+          <div class="status-pill" title="cleaned trash monsters">
+            <img class="status-icon" src="./assets/sprites/trash-slime.png" alt="" aria-hidden="true" />
+            <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <strong id="missionCount" class="mission-count">0/20</strong>
+          </div>
+          <div class="status-pill" title="broom range">
+            <div id="broomStatus" class="broom-pair" aria-label="broom range">
+              <img class="is-active" src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
+              <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
         <div id="completeOverlay" class="complete-overlay" aria-hidden="true">
           <div class="complete-bloom" aria-hidden="true">
             <span></span>
@@ -46,15 +52,15 @@
             <span class="restart-icon" aria-hidden="true"></span>
           </button>
         </div>
-      </div>
 
-      <div class="touch-controls" aria-label="mobile controls">
-        <button id="sweepButton" type="button" aria-label="sweep">
-          <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
-        </button>
-        <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="fullscreen">
-          <span aria-hidden="true"></span>
-        </button>
+        <div class="touch-controls" aria-label="mobile controls">
+          <button id="sweepButton" type="button" aria-label="sweep">
+            <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
+          </button>
+          <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="fullscreen">
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
 
       <div id="movePad" class="move-pad" aria-label="move control" role="application" aria-hidden="true">
@@ -62,8 +68,9 @@
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=25"></script>
-    <script src="./src/scenes/PlayScene.js?v=25"></script>
-    <script src="./src/main.js?v=25"></script>
+    <script src="./src/scenes/Preload.js?v=26"></script>
+    <script src="./src/scenes/PlayScene.js?v=26"></script>
+    <script src="./src/main.js?v=26"></script>
+    <script src="./src/pwa.js?v=1"></script>
   </body>
 </html>
