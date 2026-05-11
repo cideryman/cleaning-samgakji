@@ -13,7 +13,7 @@ const config = {
   },
   scene: [Preload, StartScene, PlayScene],
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.FIT,        // ← COVER → FIT 변경 (이 줄만)
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 };
