@@ -663,8 +663,8 @@ body.app-fit-mode #game canvas {
     max-width: none;
     display: grid;
     grid-template-rows: minmax(0, 1fr);
-    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
-      max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    padding: max(0px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right))
+      max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
   }
 
   .game-header {
