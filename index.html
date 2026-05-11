@@ -73,7 +73,14 @@
           <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
           <span>고마워</span>
         </div>
-
+        <!-- 대화창 모달 -->
+        <div id="dialogModal" class="dialog-modal" style="display: none;">
+          <div class="dialog-panel">
+            <div class="dialog-name"></div>
+            <div class="dialog-text"></div>
+            <div class="dialog-next">▼</div>
+          </div>
+        </div>
         <div class="touch-controls" aria-label="mobile controls">
           <button id="specialButton" class="special-button" type="button" aria-label="sangcheori item" hidden>
             <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
@@ -97,5 +104,7 @@
     <script src="./src/scenes/PlayScene.js?v=34"></script>
     <script src="./src/main.js?v=27"></script>
     <script src="./src/pwa.js?v=1"></script>
+    <script src="./src/systems/DialogueSystem.js"></script>
+    <script src="./src/scenes/PlayScene.js?v=34"></script>
   </body>
 </html>

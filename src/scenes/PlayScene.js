@@ -122,6 +122,8 @@ class PlayScene extends Phaser.Scene {
     this.specialToast?.classList.remove("is-visible");
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
+    this.dialogueSystem = new DialogueSystem(this);
+    this.isInDialogue = false;
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopChapterMusic();
       this.restartButton?.removeEventListener("click", this.restartHandler);
@@ -300,11 +302,18 @@ class PlayScene extends Phaser.Scene {
     );
     this.sangcheoriNpc.setDepth(3.5);
     this.sangcheoriNpc.setInteractive({ useHandCursor: true });
-    this.sangcheoriNpc.on("pointerdown", (pointer) => {
-      pointer.event?.preventDefault();
-      pointer.event?.stopPropagation();
-      this.showNpcSpeech();
-    });
+      this.sangcheoriNpc.on("pointerdown", (pointer) => {
+    pointer.event?.preventDefault();
+    pointer.event?.stopPropagation();
+    if (this.isInDialogue) return;
+    
+    const dialogue = [
+      { name: "상처리", text: "안녕! 여기 더러워졌네. 청소 좀 도와줄래?" },
+      { name: "상처리", text: "쓰레기를 모으면 돈을 줄 거야!" },
+      { name: "상처리", text: "화이팅! 💪" }
+    ];
+    this.dialogueSystem.start(dialogue);
+     });
     this.tweens.add({
       targets: this.sangcheoriNpc,
       y: y - 5,
@@ -546,13 +555,20 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleSpaceAction() {
-    if (this.isPlayerNearSangcheoriNpc()) {
-      this.showNpcSpeech();
-      return;
-    }
-
-    this.trySweep();
+  // NPC 근처에 있고 대화 중이 아니면 대화창 열기
+  if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
+    const dialogue = [
+      { name: "상처리", text: "안녕! 여기 더러워졌네. 청소 좀 도와줄래?" },
+      { name: "상처리", text: "쓰레기를 모으면 돈을 줄 거야!" },
+      { name: "상처리", text: "화이팅! 💪" }
+    ];
+    this.dialogueSystem.start(dialogue, () => {
+      console.log("대화 완료!");
+    });
+    return;
   }
+  this.trySweep();
+} 
 
   isPlayerNearSangcheoriNpc() {
     if (!this.player || !this.sangcheoriNpc) return false;
@@ -567,19 +583,21 @@ class PlayScene extends Phaser.Scene {
 
   showFirstGuide() {
     if (this.isMissionComplete || !this.sangcheoriNpc) return;
-
     this.playClearSlimeVoice();
-    this.showSangcheoriCenterMessage("슬라임을 치우자", {
-      panelWidth: 202,
-      holdMs: 1050,
-      sparkleCount: 18,
-      flashColor: 0xbfe8a6,
-      strokeColor: 0x2f8f5b,
-      faceOnly: true,
-    });
+    
+    // 대화창으로 첫 가이드 표시
+    const dialogue = [
+      { name: "알림", text: "슬라임을 빗자루로 치우세요!" },
+      { name: "알림", text: "캔을 모으면 특별한 도움을 받을 수 있어요." }
+    ];
+    this.dialogueSystem.start(dialogue);
   }
 
   handleMovement() {
+     if (this.isInDialogue) {
+    this.player.setVelocity(0, 0);
+    return;
+  }
     let horizontal =
       Number(this.cursors.right.isDown || this.keys.right.isDown) -
       Number(this.cursors.left.isDown || this.keys.left.isDown);
@@ -1044,54 +1062,7 @@ class PlayScene extends Phaser.Scene {
     }, 1400);
   }
 
-  showNpcSpeech(message = "캔을 모으자") {
-    if (!this.sangcheoriNpc) return;
 
-    if (message === "캔을 모으자") {
-      this.playCollectCansVoice();
-    }
-
-    this.npcSpeechGroup?.destroy(true);
-    const bubble = this.add.container(this.sangcheoriNpc.x, this.sangcheoriNpc.y - 62);
-    const panel = this.add.rectangle(0, 0, 146, 42, 0xffffff, 0.96);
-    panel.setStrokeStyle(4, 0x21352c);
-    const text = this.add.text(0, -1, message, {
-      fontFamily: "Arial",
-      fontSize: "20px",
-      color: "#21352c",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-    const tail = this.add.rectangle(0, 24, 16, 12, 0xffffff, 0.96);
-    tail.setStrokeStyle(3, 0x21352c);
-    tail.setAngle(45);
-    bubble.add([panel, text, tail]);
-    bubble.setDepth(8);
-    bubble.setAlpha(0);
-    this.npcSpeechGroup = bubble;
-
-    this.tweens.add({
-      targets: bubble,
-      alpha: 1,
-      y: bubble.y - 8,
-      duration: 160,
-      ease: "Back.easeOut",
-    });
-
-    this.time.delayedCall(1600, () => {
-      this.tweens.add({
-        targets: bubble,
-        alpha: 0,
-        y: bubble.y - 8,
-        duration: 180,
-        onComplete: () => {
-          bubble.destroy(true);
-          if (this.npcSpeechGroup === bubble) {
-            this.npcSpeechGroup = null;
-          }
-        },
-      });
-    });
-  }
 
   useSangcheoriItem() {
     if (!this.hasUnlockedSangcheori || this.hasUsedSangcheori || this.isMissionComplete) {
