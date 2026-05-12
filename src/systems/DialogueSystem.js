@@ -6,82 +6,174 @@ class DialogueSystem {
     this.dialogueLines = [];
     this.onComplete = null;
     this.typingInterval = null;
-    
+    this.activeChoices = null;
+    this.selectedChoiceIndex = 0;
+
     this.dialogModal = document.querySelector("#dialogModal");
     this.dialogName = document.querySelector(".dialog-name");
     this.dialogText = document.querySelector(".dialog-text");
     this.dialogNext = document.querySelector(".dialog-next");
-    
+    this.dialogChoices = document.querySelector(".dialog-choices");
+
     this.setupEventListeners();
   }
-  
+
   setupEventListeners() {
-    this.dialogModal.addEventListener("click", () => this.nextLine());
+    this.dialogModal?.addEventListener("click", () => this.nextLine());
     this.scene.input.keyboard.on("keydown-SPACE", () => {
-      if (this.isInDialogue) this.nextLine();
+      if (this.isInDialogue && !this.activeChoices) this.nextLine();
     });
+    this.scene.input.keyboard.on("keydown-ENTER", () => {
+      if (!this.isInDialogue) return;
+      if (this.activeChoices) {
+        this.choose(this.selectedChoiceIndex);
+        return;
+      }
+      this.nextLine();
+    });
+    this.scene.input.keyboard.on("keydown-LEFT", () => this.moveChoice(-1));
+    this.scene.input.keyboard.on("keydown-RIGHT", () => this.moveChoice(1));
   }
-  
+
   start(dialogueLines, onComplete = null) {
-    if (this.isInDialogue) return;
-    
+    if (this.isInDialogue) return false;
+
     this.isInDialogue = true;
     this.dialogueIndex = 0;
     this.dialogueLines = dialogueLines;
     this.onComplete = onComplete;
-    
+
     this.scene.isInDialogue = true;
     if (this.scene.player) this.scene.player.setVelocity(0, 0);
-    
+
     this.dialogModal.style.display = "flex";
     this.showLine();
+    return true;
   }
-  
+
   showLine() {
     const line = this.dialogueLines[this.dialogueIndex];
+    this.activeChoices = null;
+    this.clearChoices();
+    this.dialogNext.style.opacity = "0";
     this.dialogName.textContent = line.name || "???";
-    this.typewrite(line.text);
+    this.typewrite(line.text, line.choices || null);
   }
-  
-  typewrite(fullText) {
+
+  typewrite(fullText, choices = null) {
     if (this.typingInterval) clearInterval(this.typingInterval);
     this.dialogText.textContent = "";
     let i = 0;
     this.typingInterval = setInterval(() => {
       if (i < fullText.length) {
         this.dialogText.textContent += fullText[i];
-        i++;
+        i += 1;
       } else {
-        clearInterval(this.typingInterval);
-        this.typingInterval = null;
-        this.dialogNext.style.opacity = "1";
+        this.finishTyping(choices);
       }
     }, 40);
   }
-  
-  nextLine() {
+
+  finishTyping(choices = null) {
     if (this.typingInterval) {
       clearInterval(this.typingInterval);
       this.typingInterval = null;
-      this.dialogText.textContent = this.dialogueLines[this.dialogueIndex].text;
-      this.dialogNext.style.opacity = "1";
+    }
+
+    if (choices?.length) {
+      this.showChoices(choices);
       return;
     }
-    
-    this.dialogueIndex++;
+
+    this.dialogNext.style.opacity = "1";
+  }
+
+  showChoices(choices) {
+    this.activeChoices = choices;
+    this.selectedChoiceIndex = 0;
+    this.dialogNext.style.opacity = "0";
+    this.dialogChoices.innerHTML = "";
+    this.dialogChoices.setAttribute("aria-hidden", "false");
+    this.dialogChoices.classList.add("is-visible");
+
+    choices.forEach((choice, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "dialog-choice";
+      button.textContent = choice.label;
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.choose(index);
+      });
+      this.dialogChoices.appendChild(button);
+    });
+    this.updateChoiceSelection();
+  }
+
+  clearChoices() {
+    if (!this.dialogChoices) return;
+
+    this.dialogChoices.innerHTML = "";
+    this.dialogChoices.classList.remove("is-visible");
+    this.dialogChoices.setAttribute("aria-hidden", "true");
+  }
+
+  moveChoice(direction) {
+    if (!this.activeChoices?.length) return;
+
+    this.selectedChoiceIndex =
+      (this.selectedChoiceIndex + direction + this.activeChoices.length) % this.activeChoices.length;
+    this.updateChoiceSelection();
+  }
+
+  updateChoiceSelection() {
+    const buttons = Array.from(this.dialogChoices.querySelectorAll(".dialog-choice"));
+    buttons.forEach((button, index) => {
+      const isSelected = index === this.selectedChoiceIndex;
+      button.classList.toggle("is-selected", isSelected);
+      if (isSelected) button.focus({ preventScroll: true });
+    });
+  }
+
+  choose(index) {
+    if (!this.activeChoices?.[index]) return;
+
+    const choice = this.activeChoices[index];
+    this.activeChoices = null;
+    this.clearChoices();
+    this.close(false);
+    choice.onSelect?.();
+  }
+
+  nextLine() {
+    if (!this.isInDialogue || this.activeChoices) return;
+
+    const currentLine = this.dialogueLines[this.dialogueIndex];
+    if (this.typingInterval) {
+      this.dialogText.textContent = currentLine.text;
+      this.finishTyping(currentLine.choices || null);
+      return;
+    }
+
+    this.dialogueIndex += 1;
     if (this.dialogueIndex < this.dialogueLines.length) {
-      this.dialogNext.style.opacity = "0";
       this.showLine();
     } else {
       this.close();
     }
   }
-  
-  close() {
+
+  close(runComplete = true) {
     if (this.typingInterval) clearInterval(this.typingInterval);
+    this.typingInterval = null;
+    this.clearChoices();
     this.dialogModal.style.display = "none";
     this.isInDialogue = false;
     this.scene.isInDialogue = false;
-    if (this.onComplete) this.onComplete();
+
+    const onComplete = this.onComplete;
+    this.onComplete = null;
+    if (runComplete) onComplete?.();
   }
 }

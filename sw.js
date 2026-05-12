@@ -1,16 +1,19 @@
-const CACHE_NAME = "cleaning-samgakji-v20260510-12";
+const CACHE_NAME = "cleaning-samgakji-v20260512-6";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=36",
+  "./styles.css?v=39",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=1",
   "./src/main.js?v=27",
   "./src/scenes/Preload.js?v=34",
   "./src/scenes/StartScene.js?v=1",
-  "./src/scenes/PlayScene.js?v=34",
+  "./src/systems/DialogueSystem.js?v=2",
+  "./src/systems/MoneySystem.js?v=3",
+  "./src/systems/QuestManager.js?v=3",
+  "./src/scenes/PlayScene.js?v=39",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",
@@ -21,6 +24,10 @@ const PRECACHE_URLS = [
   "./assets/sprites/flower.png",
   "./assets/ui/broom-button.png",
   "./assets/ui/sangcheori-button.png",
+  "./assets/ui/10000won.png",
+  "./assets/ui/1000won.png",
+  "./assets/ui/500WON.png",
+  "./assets/ui/100WON.png",
   "./assets/audio/thanks.mp3",
   "./assets/audio/collect-cans.mp3",
   "./assets/audio/i-will-help.mp3",

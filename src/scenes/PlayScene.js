@@ -4,8 +4,7 @@ const GAME_CONFIG = {
   playerSpeed: 135,
   waveSize: 30,
   totalGoal: 30,
-  canCount: 10,
-  sangcheoriCanGoal: 10,
+  canCount: 20,
   sangcheoriRemoveCount: 10,
   broomUpgradeGoal: 10,
   playerDisplaySize: 50,
@@ -21,6 +20,12 @@ const GAME_CONFIG = {
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.24,
   joystickRadius: 78,
+  // 새로운 경제 시스템 설정
+  slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
+  maxSlimes: 25,                 // 동시 최대 슬라임 수
+  rewardPerSlime: 100,           // 슬라임당 100원
+  bonusPerCan: 200,              // 캔 추가 보너스 200원
+  chapter1TargetMoney: 100000,   // 챕터1 목표 금액
 };
 
 const TILED_MAP_CONFIG = {
@@ -65,6 +70,9 @@ class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    // 챕터 및 경제 시스템 관련
+    this.currentChapter = 1;
+    this.isChapterComplete = false;
   }
 
   create() {
@@ -103,6 +111,10 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
     this.resizeHandler = () => this.updateCameraZoom();
     this.audioUnlockHandler = () => this.unlockAudio();
+    this.pageAudioStopHandler = () => this.stopAudioForPageExit();
+    this.visibilityChangeHandler = () => {
+      if (document.hidden) this.stopAudioForPageExit();
+    };
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
     this.specialButton?.addEventListener("pointerdown", this.specialHandler);
@@ -117,13 +129,24 @@ class PlayScene extends Phaser.Scene {
     document.addEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
     window.addEventListener("resize", this.resizeHandler);
     window.addEventListener("orientationchange", this.resizeHandler);
+    window.addEventListener("pagehide", this.pageAudioStopHandler);
+    window.addEventListener("beforeunload", this.pageAudioStopHandler);
+    document.addEventListener("visibilitychange", this.visibilityChangeHandler);
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
     this.specialToast?.classList.remove("is-visible");
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
+    
+    // ===== 시스템 초기화 =====
     this.dialogueSystem = new DialogueSystem(this);
+    this.moneySystem = new MoneySystem(this);
+    this.questManager = new QuestManager(this);
     this.isInDialogue = false;
+    this.isContractActive = false;   // 챕터2에서 사용
+    this.currentChapter = 1;
+    this.isChapterComplete = false;
+    
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopChapterMusic();
       this.restartButton?.removeEventListener("click", this.restartHandler);
@@ -140,6 +163,9 @@ class PlayScene extends Phaser.Scene {
       document.removeEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
       window.removeEventListener("resize", this.resizeHandler);
       window.removeEventListener("orientationchange", this.resizeHandler);
+      window.removeEventListener("pagehide", this.pageAudioStopHandler);
+      window.removeEventListener("beforeunload", this.pageAudioStopHandler);
+      document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
     });
 
     this.createMap();
@@ -167,6 +193,7 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
+    this.isChapterComplete = false;
     this.lastDirection.set(1, 0);
     this.joystickVector.set(0, 0);
     this.activeJoystickPointerId = null;
@@ -184,8 +211,11 @@ class PlayScene extends Phaser.Scene {
   }
 
   update() {
-    this.handleMovement();
+  this.handleMovement();
+  if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
+    this.completeChapter1();
   }
+}
 
   createMap() {
     if (this.createTiledMap()) {
@@ -302,18 +332,11 @@ class PlayScene extends Phaser.Scene {
     );
     this.sangcheoriNpc.setDepth(3.5);
     this.sangcheoriNpc.setInteractive({ useHandCursor: true });
-      this.sangcheoriNpc.on("pointerdown", (pointer) => {
-    pointer.event?.preventDefault();
-    pointer.event?.stopPropagation();
-    if (this.isInDialogue) return;
-    
-    const dialogue = [
-      { name: "상처리", text: "안녕! 여기 더러워졌네. 청소 좀 도와줄래?" },
-      { name: "상처리", text: "쓰레기를 모으면 돈을 줄 거야!" },
-      { name: "상처리", text: "화이팅! 💪" }
-    ];
-    this.dialogueSystem.start(dialogue);
-     });
+    this.sangcheoriNpc.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      this.showSangcheoriQuestDialogue();
+    });
     this.tweens.add({
       targets: this.sangcheoriNpc,
       y: y - 5,
@@ -469,6 +492,20 @@ class PlayScene extends Phaser.Scene {
 
     this.updateHud();
   }
+  
+    completeChapter1() {
+    if (this.isChapterComplete) return;
+    this.isChapterComplete = true;
+    this.dialogueSystem.start([
+      { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney}원을 달성했습니다!` },
+      { name: "알림", text: "다음 챕터로 이동합니다." }
+    ]);
+    // 추가로 챕터 전환 로직 (예: 2초 후 새 맵 로드)
+    this.time.delayedCall(2000, () => {
+      // this.scene.restart() 또는 다음 챕터로 이동하는 코드
+      console.log("챕터2로 전환 예정");
+    });
+  }
 
   createRandomSlimePositions() {
     if (this.slimeSpawnPoints.length > 0) {
@@ -555,20 +592,63 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleSpaceAction() {
-  // NPC 근처에 있고 대화 중이 아니면 대화창 열기
-  if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
-    const dialogue = [
-      { name: "상처리", text: "안녕! 여기 더러워졌네. 청소 좀 도와줄래?" },
-      { name: "상처리", text: "쓰레기를 모으면 돈을 줄 거야!" },
-      { name: "상처리", text: "화이팅! 💪" }
-    ];
-    this.dialogueSystem.start(dialogue, () => {
-      console.log("대화 완료!");
-    });
-    return;
+    if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
+      this.showSangcheoriQuestDialogue();
+      return;
+    }
+
+    this.trySweep();
   }
-  this.trySweep();
-} 
+
+  showSangcheoriQuestDialogue() {
+    if (this.isInDialogue || !this.dialogueSystem || !this.questManager) return;
+
+    const questState = this.questManager.getQuestState();
+    if (questState === "inactive") {
+      this.dialogueSystem.start([
+        {
+          name: "상처리",
+          text: "안녕! 혹시 나 좀 도와줄 수 있어?",
+          choices: [
+            {
+              label: "예",
+              onSelect: () => {
+                this.dialogueSystem.start(
+                  [
+                    {
+                      name: "상처리",
+                      text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!",
+                    },
+                  ],
+                  () => this.questManager.startQuest(),
+                );
+              },
+            },
+            {
+              label: "아니오",
+              onSelect: () => {
+                this.dialogueSystem.start([
+                  { name: "상처리", text: "아... 그래. 다음에 꼭 부탁할게." },
+                ]);
+              },
+            },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    if (questState === "active") {
+      this.dialogueSystem.start([
+        { name: "상처리", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
+      ]);
+      return;
+    }
+
+    this.dialogueSystem.start([
+      { name: "상처리", text: "오늘도 고마워! 깨끗한 거리를 같이 만들자." },
+    ]);
+  }
 
   isPlayerNearSangcheoriNpc() {
     if (!this.player || !this.sangcheoriNpc) return false;
@@ -812,7 +892,17 @@ class PlayScene extends Phaser.Scene {
     const isCanTrash = slime.getData("trashType") === "can";
     if (isCanTrash) {
       this.cleanedCanCount += 1;
+      this.questManager?.updateQuestProgress(1);
     }
+
+    // ===== 돈 보상 시스템 =====
+    let reward = GAME_CONFIG.rewardPerSlime; // 기본 100원
+    if (isCanTrash) {
+      reward += GAME_CONFIG.bonusPerCan; // 캔이면 +200원
+    }
+    // 나중에 MoneySystem 추가 시: this.moneySystem.addMoney(reward);
+    console.log(`획득: ${reward}원 (총: ${this.totalCleanedCount}개)`);
+    this.moneySystem.addMoney(reward);
 
     if (isCanTrash) {
       this.playCanCleanSound();
@@ -822,7 +912,6 @@ class PlayScene extends Phaser.Scene {
     this.showSlimePop(slime);
     this.showCleanFeedback(slimeX, slimeY, isCanTrash);
     this.updateHud();
-    this.checkSangcheoriUnlock();
 
     if (
       this.totalCleanedCount === GAME_CONFIG.broomUpgradeGoal &&
@@ -831,11 +920,50 @@ class PlayScene extends Phaser.Scene {
       this.dropBroomUpgrade();
     }
 
-    if (this.totalCleanedCount >= GAME_CONFIG.totalGoal) {
-      this.time.delayedCall(360, () => this.showMissionComplete());
-      return;
-    }
+    // ===== 슬라임 리스폰 시스템 =====
+    this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
+      if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
+        this.respawnSlime();
+      }
+    });
+  }
 
+  respawnSlime() {
+    const positions = this.createRandomSlimePositions();
+    if (positions.length === 0) return;
+    const [x, y] = positions[0];
+
+    const isCan = Math.random() < 0.2; // 20% 확률로 캔
+    const slime = this.trashSlimes.create(x, y, isCan ? "trash_can" : "trash_slime");
+    slime.setDisplaySize(
+      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+    );
+    slime.refreshBody();
+    slime.setDepth(4);
+    slime.setData("cleaned", false);
+    slime.setData("trashType", isCan ? "can" : "slime");
+    slime.setAlpha(0);
+    slime.setScale(0.35);
+    
+    this.tweens.add({
+      targets: slime,
+      alpha: 1,
+      scaleX: GAME_CONFIG.slimeDisplaySize / slime.width,
+      scaleY: GAME_CONFIG.slimeDisplaySize / slime.height,
+      duration: 220,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: slime,
+          y: y - 5,
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      },
+    });
   }
 
   showSlimePop(slime) {
@@ -1030,25 +1158,6 @@ class PlayScene extends Phaser.Scene {
     this.completeOverlay?.setAttribute("aria-hidden", "false");
   }
 
-  checkSangcheoriUnlock() {
-    if (
-      this.hasUnlockedSangcheori ||
-      this.hasUsedSangcheori ||
-      this.cleanedCanCount < GAME_CONFIG.sangcheoriCanGoal
-    ) {
-      return;
-    }
-
-    this.hasUnlockedSangcheori = true;
-    this.specialButton.hidden = false;
-    this.specialButton.setAttribute("aria-hidden", "false");
-    this.specialButton.classList.add("is-ready");
-    this.playItemPickupSound();
-    this.showSangcheoriUnlockToast();
-    this.playThanksVoice();
-    this.showCleanFeedback(this.player.x, this.player.y);
-  }
-
   showSangcheoriUnlockToast() {
     if (!this.specialToast) return;
 
@@ -1060,6 +1169,28 @@ class PlayScene extends Phaser.Scene {
       this.specialToast?.classList.remove("is-visible");
       this.specialToast?.setAttribute("aria-hidden", "true");
     }, 1400);
+  }
+
+  showQuestToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "quest-toast";
+    toast.textContent = message;
+    document.querySelector(".game-stage")?.appendChild(toast);
+    window.setTimeout(() => toast.remove(), 1700);
+  }
+
+  showMoneyRewardAnimation(amount) {
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    const reward = document.createElement("div");
+    reward.className = "money-reward-pop";
+    reward.innerHTML = `
+      <img src="./assets/ui/10000won.png" alt="만원 선물" />
+      <strong>선물 ${amount.toLocaleString()}원</strong>
+    `;
+    stage.appendChild(reward);
+    window.setTimeout(() => reward.remove(), 1650);
   }
 
 
@@ -1206,15 +1337,13 @@ class PlayScene extends Phaser.Scene {
     this.waveCleanedCount += 1;
     if (trash.getData("trashType") === "can") {
       this.cleanedCanCount += 1;
+      this.questManager?.updateQuestProgress(1);
     }
 
     this.showCleanFeedback(trash.x, trash.y);
     this.showSlimePop(trash);
     this.updateHud();
 
-    if (this.totalCleanedCount >= GAME_CONFIG.totalGoal) {
-      this.time.delayedCall(360, () => this.showMissionComplete());
-    }
   }
 
   restartGame() {
@@ -1433,6 +1562,13 @@ class PlayScene extends Phaser.Scene {
     this.playTone({ frequency: 1320, duration: 0.12, type: "sine", volume: 0.045, delay: 0.13 });
   }
 
+  playMoneyRewardSound() {
+    this.playTone({ frequency: 523, duration: 0.1, type: "triangle", volume: 0.06 });
+    this.playTone({ frequency: 784, duration: 0.12, type: "triangle", volume: 0.07, delay: 0.08 });
+    this.playTone({ frequency: 1046, duration: 0.16, type: "sine", volume: 0.06, delay: 0.18 });
+    this.playTone({ frequency: 1568, duration: 0.2, type: "sine", volume: 0.05, delay: 0.3 });
+  }
+
   playSpecialUseSound() {
     this.playTone({ frequency: 392, duration: 0.16, type: "triangle", volume: 0.06 });
     this.playTone({ frequency: 784, duration: 0.22, type: "triangle", volume: 0.07, delay: 0.08 });
@@ -1598,6 +1734,11 @@ class PlayScene extends Phaser.Scene {
       this.bgmAudio = null;
     }
     this.cleanupBgmObjectUrl();
+  }
+
+  stopAudioForPageExit() {
+    this.stopChapterMusic();
+    this.sound?.stopAll?.();
   }
 
   cleanupBgmObjectUrl() {

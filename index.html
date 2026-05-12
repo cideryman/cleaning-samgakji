@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=36" />
+    <link rel="stylesheet" href="./styles.css?v=39" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body class="start-screen">
@@ -22,34 +22,31 @@
       <div class="game-stage">
         <div id="game"></div>
         <div class="game-header" aria-label="game status">
-          <div class="status-stack">
-            <div class="status-pill" title="cleaned trash monsters">
-              <img class="status-icon" src="./assets/sprites/trash-slime.png" alt="" aria-hidden="true" />
-              <div id="cleanProgress" class="clean-progress" aria-label="cleaned trash monsters">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-              <strong id="missionCount" class="mission-count">0/30</strong>
-            </div>
-            <div class="status-pill can-pill" title="cleaned cans">
-              <img class="status-icon" src="./assets/sprites/trash-can.png" alt="" aria-hidden="true" />
-              <div id="canProgress" class="can-progress" aria-label="cleaned cans">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
+        
+        </div>
+        <!-- 돈 UI -->
+        <div class="money-ui">
+          <div class="money-item">
+            <img src="./assets/ui/10000won.png" alt="만원" class="money-icon icon-10000">
+            <span id="count10000">0</span>
           </div>
+          <div class="money-item">
+            <img src="./assets/ui/1000won.png" alt="천원" class="money-icon icon-1000">
+            <span id="count1000">0</span>
+          </div>
+          <div class="money-item coin-item">
+            <img src="./assets/ui/500WON.png" alt="오백원" class="money-icon coin-icon icon-500">
+            <span id="count500">0</span>
+          </div>
+          <div class="money-item coin-item">
+            <img src="./assets/ui/100WON.png" alt="백원" class="money-icon coin-icon icon-100">
+            <span id="count100">0</span>
+          </div>
+          <div class="money-total" id="totalMoney">￦0</div>
+        </div>
+        <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
+          <div class="can-quest-label" id="canQuestLabel">퀘스트 없음</div>
+          <div class="can-quest-bar" id="canQuestBar" aria-label="can quest progress"></div>
         </div>
         <div id="completeOverlay" class="complete-overlay" aria-hidden="true">
           <div class="complete-bloom" aria-hidden="true">
@@ -62,7 +59,7 @@
           <div class="complete-result" aria-label="result">
             <strong>오늘 청소 완료</strong>
             <span id="resultTrashCount">쓰레기 30개</span>
-            <span id="resultCanCount">캔 10개</span>
+            <span id="resultCanCount">캔 20개</span>
             <span id="resultHelpUsed">상처리 도움 완료</span>
           </div>
           <button id="restartButton" class="restart-button" type="button" aria-label="restart">
@@ -78,6 +75,7 @@
           <div class="dialog-panel">
             <div class="dialog-name"></div>
             <div class="dialog-text"></div>
+            <div class="dialog-choices" aria-hidden="true"></div>
             <div class="dialog-next">▼</div>
           </div>
         </div>
@@ -99,12 +97,13 @@
       </div>
     </main>
 
-    <script src="./src/scenes/Preload.js?v=34"></script>
+        <script src="./src/scenes/Preload.js?v=34"></script>
     <script src="./src/scenes/StartScene.js?v=1"></script>
-    <script src="./src/scenes/PlayScene.js?v=34"></script>
+    <script src="./src/systems/DialogueSystem.js?v=2"></script>
+    <script src="./src/systems/MoneySystem.js?v=3"></script>
+    <script src="./src/systems/QuestManager.js?v=3"></script>
+    <script src="./src/scenes/PlayScene.js?v=39"></script>
     <script src="./src/main.js?v=27"></script>
     <script src="./src/pwa.js?v=1"></script>
-    <script src="./src/systems/DialogueSystem.js"></script>
-    <script src="./src/scenes/PlayScene.js?v=34"></script>
   </body>
 </html>
