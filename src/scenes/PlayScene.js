@@ -21,6 +21,12 @@ const GAME_CONFIG = {
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.24,
   joystickRadius: 78,
+  // 새로운 경제 시스템 설정
+  slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
+  maxSlimes: 25,                 // 동시 최대 슬라임 수
+  rewardPerSlime: 100,           // 슬라임당 100원
+  bonusPerCan: 200,              // 캔 추가 보너스 200원
+  chapter1TargetMoney: 5000,     // 챕터1 목표 금액
 };
 
 const TILED_MAP_CONFIG = {
@@ -65,6 +71,9 @@ class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    // 챕터 및 경제 시스템 관련
+    this.currentChapter = 1;
+    this.isChapterComplete = false;
   }
 
   create() {
@@ -122,8 +131,16 @@ class PlayScene extends Phaser.Scene {
     this.specialToast?.classList.remove("is-visible");
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
+    
+    // ===== 시스템 초기화 =====
     this.dialogueSystem = new DialogueSystem(this);
+    this.moneySystem = new MoneySystem(this);
+    this.questManager = new QuestManager(this);
     this.isInDialogue = false;
+    this.isContractActive = false;   // 챕터2에서 사용
+    this.currentChapter = 1;
+    this.isChapterComplete = false;
+    
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.stopChapterMusic();
       this.restartButton?.removeEventListener("click", this.restartHandler);
@@ -167,6 +184,7 @@ class PlayScene extends Phaser.Scene {
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
+    this.isChapterComplete = false;
     this.lastDirection.set(1, 0);
     this.joystickVector.set(0, 0);
     this.activeJoystickPointerId = null;
@@ -184,8 +202,11 @@ class PlayScene extends Phaser.Scene {
   }
 
   update() {
-    this.handleMovement();
+  this.handleMovement();
+  if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
+    this.completeChapter1();
   }
+}
 
   createMap() {
     if (this.createTiledMap()) {
@@ -468,6 +489,20 @@ class PlayScene extends Phaser.Scene {
     });
 
     this.updateHud();
+  }
+  
+    completeChapter1() {
+    if (this.isChapterComplete) return;
+    this.isChapterComplete = true;
+    this.dialogueSystem.start([
+      { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney}원을 달성했습니다!` },
+      { name: "알림", text: "다음 챕터로 이동합니다." }
+    ]);
+    // 추가로 챕터 전환 로직 (예: 2초 후 새 맵 로드)
+    this.time.delayedCall(2000, () => {
+      // this.scene.restart() 또는 다음 챕터로 이동하는 코드
+      console.log("챕터2로 전환 예정");
+    });
   }
 
   createRandomSlimePositions() {
@@ -814,6 +849,15 @@ class PlayScene extends Phaser.Scene {
       this.cleanedCanCount += 1;
     }
 
+    // ===== 돈 보상 시스템 =====
+    let reward = GAME_CONFIG.rewardPerSlime; // 기본 100원
+    if (isCanTrash) {
+      reward += GAME_CONFIG.bonusPerCan; // 캔이면 +200원
+    }
+    // 나중에 MoneySystem 추가 시: this.moneySystem.addMoney(reward);
+    console.log(`획득: ${reward}원 (총: ${this.totalCleanedCount}개)`);
+    this.moneySystem.addMoney(reward);
+
     if (isCanTrash) {
       this.playCanCleanSound();
     } else {
@@ -836,6 +880,50 @@ class PlayScene extends Phaser.Scene {
       return;
     }
 
+    // ===== 슬라임 리스폰 시스템 =====
+    this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
+      if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
+        this.respawnSlime();
+      }
+    });
+  }
+
+  respawnSlime() {
+    const positions = this.createRandomSlimePositions();
+    if (positions.length === 0) return;
+    const [x, y] = positions[0];
+
+    const isCan = Math.random() < 0.2; // 20% 확률로 캔
+    const slime = this.trashSlimes.create(x, y, isCan ? "trash_can" : "trash_slime");
+    slime.setDisplaySize(
+      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
+    );
+    slime.refreshBody();
+    slime.setDepth(4);
+    slime.setData("cleaned", false);
+    slime.setData("trashType", isCan ? "can" : "slime");
+    slime.setAlpha(0);
+    slime.setScale(0.35);
+    
+    this.tweens.add({
+      targets: slime,
+      alpha: 1,
+      scaleX: GAME_CONFIG.slimeDisplaySize / slime.width,
+      scaleY: GAME_CONFIG.slimeDisplaySize / slime.height,
+      duration: 220,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: slime,
+          y: y - 5,
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      },
+    });
   }
 
   showSlimePop(slime) {

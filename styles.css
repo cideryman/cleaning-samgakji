@@ -800,3 +800,41 @@ body.app-fit-mode #game canvas {
     min-height: 50px;
   }
 }
+/* 돈 UI */
+.money-ui {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 12px;
+  background: rgba(0,0,0,0.6);
+  padding: 6px 12px;
+  border-radius: 24px;
+  backdrop-filter: blur(4px);
+  z-index: 20;
+  font-weight: bold;
+  color: #ffd966;
+}
+.money-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.money-icon {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+.money-count {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}
+.money-total {
+  border-left: 1px solid rgba(255,255,255,0.3);
+  padding-left: 12px;
+  font-size: 18px;
+}
+body.start-screen .money-ui {
+  display: none;
+}
