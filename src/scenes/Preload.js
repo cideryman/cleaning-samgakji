@@ -1,7 +1,13 @@
 const EXTERNAL_ASSETS = [
   { key: "player", path: "assets/sprites/player.png", fallback: "createPlayerTexture" },
+  { key: "player_left", path: "assets/sprites/playerleft.png" },
+  { key: "player_right", path: "assets/sprites/playerright.png" },
+  { key: "player_back", path: "assets/sprites/playerback.png" },
   { key: "trash_slime", path: "assets/sprites/trash-slime.png", fallback: "createTrashSlimeTexture" },
+  { key: "trash_slime_2", path: "assets/sprites/trash-slime2.png" },
   { key: "trash_can", path: "assets/sprites/trash-can.png", fallback: "createTrashCanTexture" },
+  { key: "trash_can_2", path: "assets/sprites/trash-can2.png" },
+  { key: "trash_can_3", path: "assets/sprites/trash-can3.png" },
   { key: "sangcheori_npc", path: "assets/sprites/sangcheori-npc.png", fallback: "createSangcheoriNpcTexture" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },

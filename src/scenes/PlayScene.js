@@ -7,9 +7,9 @@ const GAME_CONFIG = {
   canCount: 20,
   sangcheoriRemoveCount: 10,
   broomUpgradeGoal: 10,
-  playerDisplaySize: 50,
-  slimeDisplaySize: 54,
-  broomItemDisplaySize: 52,
+  playerDisplaySize: 64,
+  slimeDisplaySize: 42,
+  broomItemDisplaySize: 44,
   sangcheoriNpcDisplaySize: 72,
   baseSweepWidth: 112,
   baseSweepHeight: 84,
@@ -38,6 +38,18 @@ const TILED_MAP_CONFIG = {
   visibleLayers: ["ground", "objects"],
   collisionLayer: "collision",
   objectLayer: "spawn",
+};
+
+const PLAYER_TEXTURES = {
+  down: "player",
+  left: "player_left",
+  right: "player_right",
+  up: "player_back",
+};
+
+const TRASH_TEXTURES = {
+  can: ["trash_can", "trash_can_2", "trash_can_3"],
+  slime: ["trash_slime", "trash_slime_2"],
 };
 
 class PlayScene extends Phaser.Scene {
@@ -433,6 +445,7 @@ class PlayScene extends Phaser.Scene {
     this.player = this.physics.add.sprite(this.playerStart.x, this.playerStart.y, "player");
     this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
     this.playerBaseScale = { x: this.player.scaleX, y: this.player.scaleY };
+    this.playerDirectionKey = "down";
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(5);
     this.player.body.setSize(72, 76);
@@ -459,35 +472,7 @@ class PlayScene extends Phaser.Scene {
 
     positions.forEach(([x, y], index) => {
       const isCan = canIndexes.has(index);
-      const slime = this.trashSlimes.create(x, y, isCan ? "trash_can" : "trash_slime");
-      slime.setDisplaySize(
-        isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
-        isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
-      );
-      slime.refreshBody();
-      slime.setDepth(4);
-      slime.setData("cleaned", false);
-      slime.setData("trashType", isCan ? "can" : "slime");
-      slime.setAlpha(0);
-      slime.setScale(0.35);
-      this.tweens.add({
-        targets: slime,
-        alpha: 1,
-        scaleX: GAME_CONFIG.slimeDisplaySize / slime.width,
-        scaleY: GAME_CONFIG.slimeDisplaySize / slime.height,
-        duration: 220,
-        ease: "Back.easeOut",
-        onComplete: () => {
-          this.tweens.add({
-            targets: slime,
-            y: y - 5,
-            duration: 900,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut",
-          });
-        },
-      });
+      this.createTrashSprite(x, y, isCan);
     });
 
     this.updateHud();
@@ -705,23 +690,32 @@ class PlayScene extends Phaser.Scene {
 
   updatePlayerDirection(velocity) {
     if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
-      this.player.setFlipX(velocity.x < 0);
-      this.player.setScale(
-        this.playerBaseScale.x,
-        this.playerBaseScale.y * 0.98,
-      );
+      this.setPlayerDirectionTexture(velocity.x < 0 ? "left" : "right");
+      this.player.setScale(this.playerBaseScale.x, this.playerBaseScale.y * 0.98);
       this.player.clearTint();
       return;
     }
 
     this.player.setFlipX(false);
     if (velocity.y < 0) {
+      this.setPlayerDirectionTexture("up");
       this.player.setScale(this.playerBaseScale.x * 0.94, this.playerBaseScale.y * 1.06);
-      this.player.setTint(0xd8ecff);
     } else {
+      this.setPlayerDirectionTexture("down");
       this.player.setScale(this.playerBaseScale.x, this.playerBaseScale.y);
-      this.player.clearTint();
     }
+    this.player.clearTint();
+  }
+
+  setPlayerDirectionTexture(directionKey) {
+    const textureKey = PLAYER_TEXTURES[directionKey] || PLAYER_TEXTURES.down;
+    if (this.playerDirectionKey === directionKey || !this.textures.exists(textureKey)) return;
+
+    this.playerDirectionKey = directionKey;
+    this.player.setTexture(textureKey);
+    this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
+    this.playerBaseScale = { x: this.player.scaleX, y: this.player.scaleY };
+    this.player.setFlipX(false);
   }
 
   startFloatingJoystick(event) {
@@ -833,7 +827,7 @@ class PlayScene extends Phaser.Scene {
     sweepFlash.setDepth(6);
 
     const broomGhost = this.add.image(x, y, "broom_item");
-    broomGhost.setDisplaySize(58, 58);
+    broomGhost.setDisplaySize(48, 48);
     broomGhost.setAlpha(0.75);
     broomGhost.setDepth(7);
     broomGhost.setRotation(this.lastDirection.angle() + 0.8);
@@ -934,11 +928,14 @@ class PlayScene extends Phaser.Scene {
     const [x, y] = positions[0];
 
     const isCan = Math.random() < 0.2; // 20% 확률로 캔
-    const slime = this.trashSlimes.create(x, y, isCan ? "trash_can" : "trash_slime");
-    slime.setDisplaySize(
-      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
-      isCan ? GAME_CONFIG.slimeDisplaySize * 0.88 : GAME_CONFIG.slimeDisplaySize,
-    );
+    this.createTrashSprite(x, y, isCan);
+  }
+
+  createTrashSprite(x, y, isCan) {
+    const textureKey = this.getRandomTrashTexture(isCan);
+    const slime = this.trashSlimes.create(x, y, textureKey);
+    const displaySize = this.getTrashDisplaySize(textureKey, isCan);
+    slime.setDisplaySize(displaySize.width, displaySize.height);
     slime.refreshBody();
     slime.setDepth(4);
     slime.setData("cleaned", false);
@@ -949,8 +946,8 @@ class PlayScene extends Phaser.Scene {
     this.tweens.add({
       targets: slime,
       alpha: 1,
-      scaleX: GAME_CONFIG.slimeDisplaySize / slime.width,
-      scaleY: GAME_CONFIG.slimeDisplaySize / slime.height,
+      scaleX: displaySize.width / slime.width,
+      scaleY: displaySize.height / slime.height,
       duration: 220,
       ease: "Back.easeOut",
       onComplete: () => {
@@ -964,6 +961,28 @@ class PlayScene extends Phaser.Scene {
         });
       },
     });
+    return slime;
+  }
+
+  getRandomTrashTexture(isCan) {
+    const textureKeys = isCan ? TRASH_TEXTURES.can : TRASH_TEXTURES.slime;
+    const availableKeys = textureKeys.filter((key) => this.textures.exists(key));
+    return Phaser.Utils.Array.GetRandom(availableKeys.length > 0 ? availableKeys : [isCan ? "trash_can" : "trash_slime"]);
+  }
+
+  getTrashDisplaySize(textureKey, isCan) {
+    if (!isCan) {
+      return {
+        width: GAME_CONFIG.slimeDisplaySize,
+        height: GAME_CONFIG.slimeDisplaySize,
+      };
+    }
+
+    if (textureKey === "trash_can_2") {
+      return { width: 24, height: 32 };
+    }
+
+    return { width: 34, height: 23 };
   }
 
   showSlimePop(slime) {
@@ -1019,8 +1038,8 @@ class PlayScene extends Phaser.Scene {
     const itemY = this.broomSpawn.y;
     const item = this.physics.add.sprite(itemX, itemY, "broom_item");
     item.setDisplaySize(GAME_CONFIG.broomItemDisplaySize, GAME_CONFIG.broomItemDisplaySize);
-    item.body.setSize(78, 78);
-    item.body.setOffset(25, 25);
+    item.body.setSize(66, 66);
+    item.body.setOffset(31, 31);
     item.setImmovable(true);
     item.setDepth(4);
     item.setAlpha(0);
