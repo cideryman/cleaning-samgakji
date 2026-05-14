@@ -25,11 +25,11 @@ const GAME_CONFIG = {
   rewardPerSlime: 100,           // 슬라임당 100원
   bonusPerCan: 200,              // 캔 추가 보너스 200원
   recycleMasterBonus: 200,
-  recycleQuestUnlockMoney: 30000,
+  recycleQuestUnlockMoney: 25000,
   chapter1TargetMoney: 100000,   // 챕터1 목표 금액
   recyclingCenter: { x: 1180, y: 430 },
-  recycleBinHitboxWidth: 72,
-  recycleBinHitboxHeight: 76,
+  recycleBinHitboxWidth: 82,
+  recycleBinHitboxHeight: 90,
 };
 
 const TILED_MAP_CONFIG = {
@@ -58,9 +58,9 @@ const TRASH_TEXTURES = {
 };
 
 const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -72, yOffset: 18, label: "캔/고철" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 18, label: "종이/일반" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 72, yOffset: 18, label: "플라스틱" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
 ];
 
 class PlayScene extends Phaser.Scene {
@@ -257,8 +257,8 @@ class PlayScene extends Phaser.Scene {
     if (!didUnlock) return;
 
     this.moveSangcheoriToRecyclingCenter();
-    this.showQuestToast("상처리 아저씨가 분리수거장에서 기다리고 있어!");
-    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!");
+    this.showQuestToast("상처리 아저씨가 분리수거장에서 기다리고 있어!", 10000);
+    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
   }
 
   createMap() {
@@ -362,22 +362,22 @@ class PlayScene extends Phaser.Scene {
     const center = GAME_CONFIG.recyclingCenter;
     this.recycleBins = [];
 
-    const centerSign = this.add.image(center.x, center.y - 58, "recycling_center");
-    centerSign.setDisplaySize(160, 72);
+    const centerSign = this.add.image(center.x, center.y - 76, "recycling_center");
+    centerSign.setDisplaySize(226, 118);
     centerSign.setDepth(3);
 
-    const vendingMachine = this.add.image(center.x + 142, center.y + 2, "recycle_vending_machine");
-    vendingMachine.setDisplaySize(46, 74);
+    const vendingMachine = this.add.image(center.x + 174, center.y + 18, "recycle_vending_machine");
+    vendingMachine.setDisplaySize(78, 86);
     vendingMachine.setDepth(3.2);
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
       const x = center.x + binConfig.xOffset;
       const y = center.y + binConfig.yOffset;
       const bin = this.add.image(x, y, binConfig.texture);
-      bin.setDisplaySize(58, 64);
+      bin.setDisplaySize(70, 78);
       bin.setDepth(3.4);
 
-      const label = this.add.text(x, y + 48, binConfig.label, {
+      const label = this.add.text(x, y + 58, binConfig.label, {
         fontFamily: "Arial",
         fontSize: "13px",
         color: "#21352c",
@@ -402,8 +402,8 @@ class PlayScene extends Phaser.Scene {
 
   getSangcheoriRecyclePosition() {
     return {
-      x: GAME_CONFIG.recyclingCenter.x - 170,
-      y: GAME_CONFIG.recyclingCenter.y + 18,
+      x: GAME_CONFIG.recyclingCenter.x - 270,
+      y: GAME_CONFIG.recyclingCenter.y + 28,
     };
   }
 
@@ -704,7 +704,7 @@ class PlayScene extends Phaser.Scene {
         },
         {
           name: "상처리",
-          text: "여기 분리수거장 보이지? 일반 쓰레기 30개랑 캔 10개를 딱 맞춰서 통에 넣어봐. 그럼 내가 특별 수당을 줄게!",
+          text: "여기 분리수거장 보이지? 일반 쓰레기 30개, 캔 10개, 플라스틱 10개를 딱 맞춰서 통에 넣어봐. 그럼 내가 특별 수당을 줄게!",
           choices: [
             {
               label: "해볼게!",
@@ -721,7 +721,7 @@ class PlayScene extends Phaser.Scene {
       this.dialogueSystem.start([
         {
           name: "상처리",
-          text: `좋아! 일반 ${quest.current.normal}/${quest.target.normal}, 캔 ${quest.current.can}/${quest.target.can}이야. 통 앞에서 빗자루 버튼을 눌러!`,
+          text: `좋아! 일반 ${quest.current.normal}/${quest.target.normal}, 캔 ${quest.current.can}/${quest.target.can}, 플라스틱 ${quest.current.plastic}/${quest.target.plastic}이야. 통 앞에서 빗자루 버튼을 눌러!`,
         },
       ]);
       return;
@@ -981,6 +981,24 @@ class PlayScene extends Phaser.Scene {
     };
     const color = colorByType[type] || 0xffffff;
     this.showSpeechBubble(target, "쏙!");
+
+    const itemTexture = this.getRandomTrashTexture(type);
+    if (this.textures.exists(itemTexture)) {
+      const item = this.add.image(target.x, target.y - 88, itemTexture);
+      const itemSize = this.getTrashDisplaySize(itemTexture, type);
+      item.setDepth(8);
+      item.setDisplaySize(itemSize.width, itemSize.height);
+      this.tweens.add({
+        targets: item,
+        y: target.y - 18,
+        scaleX: item.scaleX * 0.35,
+        scaleY: item.scaleY * 0.35,
+        alpha: 0,
+        duration: 360,
+        ease: "Cubic.easeIn",
+        onComplete: () => item.destroy(),
+      });
+    }
 
     for (let i = 0; i < 12; i += 1) {
       const sparkle = this.add.circle(target.x, target.y, Phaser.Math.Between(3, 5), color, 0.95);
@@ -1438,15 +1456,16 @@ class PlayScene extends Phaser.Scene {
     }, 1400);
   }
 
-  showQuestToast(message) {
+  showQuestToast(message, duration = 1700) {
     const toast = document.createElement("div");
     toast.className = "quest-toast";
     toast.textContent = message;
+    toast.style.setProperty("--toast-duration", `${duration}ms`);
     document.querySelector(".game-stage")?.appendChild(toast);
-    window.setTimeout(() => toast.remove(), 1700);
+    window.setTimeout(() => toast.remove(), duration + 80);
   }
 
-  showSpeechBubble(target, message) {
+  showSpeechBubble(target, message, duration = 1050) {
     if (!target || !message) return;
 
     const bubble = this.add.text(target.x, target.y - 58, message, {
@@ -1464,7 +1483,7 @@ class PlayScene extends Phaser.Scene {
       targets: bubble,
       y: bubble.y - 18,
       alpha: 0,
-      duration: 1050,
+      duration,
       ease: "Cubic.easeOut",
       onComplete: () => bubble.destroy(),
     });
@@ -1481,7 +1500,7 @@ class PlayScene extends Phaser.Scene {
       <strong>선물 ${amount.toLocaleString()}원</strong>
     `;
     stage.appendChild(reward);
-    window.setTimeout(() => reward.remove(), 1650);
+    window.setTimeout(() => reward.remove(), 3600);
   }
 
 

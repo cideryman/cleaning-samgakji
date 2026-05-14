@@ -15,8 +15,8 @@ class QuestManager {
       id: "recycle_master",
       name: "분리수거 전문가",
       type: "recycle",
-      target: { normal: 30, can: 10 },
-      current: { normal: 0, can: 0 },
+      target: { normal: 30, can: 10, plastic: 10 },
+      current: { normal: 0, can: 0, plastic: 0 },
       reward: 0,
       isUnlocked: false,
       isActive: false,
@@ -40,6 +40,40 @@ class QuestManager {
     }
   }
 
+  renderRecycleGauge() {
+    if (!this.uiElements.bar) return;
+
+    const typeConfig = [
+      { type: "normal", icon: "assets/sprites/trash-slime2.png", label: "일반" },
+      { type: "can", icon: "assets/sprites/trash-can2.png", label: "캔" },
+      { type: "plastic", icon: "assets/sprites/plastic.png", label: "플라스틱" },
+    ];
+    this.uiElements.bar.innerHTML = "";
+    this.uiElements.bar.classList.add("is-recycle");
+
+    typeConfig.forEach(({ type, icon, label }) => {
+      const row = document.createElement("div");
+      row.className = "recycle-gauge-row";
+      row.dataset.type = type;
+
+      const image = document.createElement("img");
+      image.src = icon;
+      image.alt = label;
+      image.className = "recycle-gauge-icon";
+
+      const track = document.createElement("div");
+      track.className = "recycle-gauge-track";
+
+      for (let i = 0; i < this.recycleQuest.target[type]; i += 1) {
+        track.appendChild(document.createElement("span"));
+      }
+
+      row.appendChild(image);
+      row.appendChild(track);
+      this.uiElements.bar.appendChild(row);
+    });
+  }
+
   startQuest() {
     const quest = this.canQuest;
     if (quest.isCompleted) return;
@@ -47,6 +81,7 @@ class QuestManager {
     quest.isActive = true;
     this.uiElements.root?.classList.remove("is-poofing");
     this.renderGauge(quest.target);
+    this.uiElements.bar?.classList.remove("is-recycle");
     this.updateUI();
     this.scene.showQuestToast?.("상처리 퀘스트: 캔 20개 모으기!");
     this.scene.playItemPickupSound?.();
@@ -105,7 +140,7 @@ class QuestManager {
 
     quest.isActive = true;
     this.uiElements.root?.classList.remove("is-poofing");
-    this.renderGauge(this.getRecycleTargetTotal());
+    this.renderRecycleGauge();
     this.updateUI();
     this.scene.showQuestToast?.("분리수거 퀘스트 시작!");
     this.scene.playItemPickupSound?.();
@@ -136,6 +171,7 @@ class QuestManager {
     quest.isCompleted = true;
     quest.current.normal = quest.target.normal;
     quest.current.can = quest.target.can;
+    quest.current.plastic = quest.target.plastic;
     this.updateUI();
     this.scene.activateRecycleMasterReward?.();
     this.hideQuestGaugeWithPoof();
@@ -193,19 +229,27 @@ class QuestManager {
       root.classList.toggle("is-hidden", false);
       root.classList.toggle("is-complete", recycleQuest.isCompleted);
       root.setAttribute("aria-hidden", "false");
-      if (bar.children.length !== target) {
-        this.renderGauge(target);
+      if (!bar.classList.contains("is-recycle")) {
+        this.renderRecycleGauge();
       }
       label.textContent = recycleQuest.isCompleted
         ? "분리수거 전문가 완료"
-        : `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · 캔 ${recycleQuest.current.can}/${recycleQuest.target.can}`;
-      Array.from(bar.children).forEach((dot, index) => {
-        dot.classList.toggle("is-filled", index < current);
+        : `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · 캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · 플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
+      Array.from(bar.querySelectorAll(".recycle-gauge-row")).forEach((row) => {
+        const type = row.dataset.type;
+        const filled = Math.min(recycleQuest.current[type], recycleQuest.target[type]);
+        Array.from(row.querySelectorAll("span")).forEach((dot, index) => {
+          dot.classList.toggle("is-filled", index < filled);
+        });
       });
       return;
     }
 
     const quest = this.canQuest;
+    if (bar.classList.contains("is-recycle")) {
+      this.renderGauge(quest.target);
+      bar.classList.remove("is-recycle");
+    }
     root.classList.toggle("is-hidden", !quest.isActive && !quest.isCompleted);
     root.classList.toggle("is-complete", quest.isCompleted);
     root.setAttribute("aria-hidden", String(!quest.isActive && !quest.isCompleted));
