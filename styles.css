@@ -365,12 +365,12 @@ body.start-screen .special-toast {
 }
 
 #sweepButton {
-  left: 18px;
-  right: auto;
-  top: 74px;
-  bottom: auto;
-  width: 62px;
-  height: 62px;
+  left: auto;
+  right: max(18px, env(safe-area-inset-right));
+  top: auto;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 86px;
+  height: 86px;
   background: #ffffff;
   box-shadow: 0 5px 0 #b9d8c2;
 }
@@ -447,8 +447,8 @@ body.start-screen .special-toast {
 
 #sweepButton img,
 .special-button img {
-  width: 42px;
-  height: 42px;
+  width: 52px;
+  height: 52px;
   image-rendering: pixelated;
   object-fit: contain;
 }
