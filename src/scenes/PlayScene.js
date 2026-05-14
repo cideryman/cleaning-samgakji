@@ -6,7 +6,6 @@ const GAME_CONFIG = {
   totalGoal: 30,
   canCount: 20,
   sangcheoriRemoveCount: 10,
-  broomUpgradeGoal: 10,
   playerDisplaySize: 64,
   slimeDisplaySize: 42,
   broomItemDisplaySize: 44,
@@ -25,7 +24,12 @@ const GAME_CONFIG = {
   maxSlimes: 25,                 // 동시 최대 슬라임 수
   rewardPerSlime: 100,           // 슬라임당 100원
   bonusPerCan: 200,              // 캔 추가 보너스 200원
+  recycleMasterBonus: 200,
+  recycleQuestUnlockMoney: 30000,
   chapter1TargetMoney: 100000,   // 챕터1 목표 금액
+  recyclingCenter: { x: 1180, y: 430 },
+  recycleBinHitboxWidth: 72,
+  recycleBinHitboxHeight: 76,
 };
 
 const TILED_MAP_CONFIG = {
@@ -49,8 +53,15 @@ const PLAYER_TEXTURES = {
 
 const TRASH_TEXTURES = {
   can: ["trash_can", "trash_can_2", "trash_can_3"],
-  slime: ["trash_slime", "trash_slime_2"],
+  normal: ["trash_slime", "trash_slime_2"],
+  plastic: ["trash_plastic"],
 };
+
+const RECYCLE_BIN_CONFIG = [
+  { type: "can", texture: "recycle_bin_can", xOffset: -72, yOffset: 18, label: "캔/고철" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 18, label: "종이/일반" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 72, yOffset: 18, label: "플라스틱" },
+];
 
 class PlayScene extends Phaser.Scene {
   constructor() {
@@ -61,6 +72,9 @@ class PlayScene extends Phaser.Scene {
     this.hasBroomUpgrade = false;
     this.hasDroppedBroomUpgrade = false;
     this.cleanedCanCount = 0;
+    this.recyclingInventory = { normal: 0, can: 0, plastic: 0 };
+    this.isRecycleMaster = false;
+    this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
@@ -109,7 +123,7 @@ class PlayScene extends Phaser.Scene {
     this.sweepHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      this.trySweep();
+      this.handlePrimaryAction();
     };
     this.specialHandler = (event) => {
       event?.preventDefault();
@@ -182,6 +196,7 @@ class PlayScene extends Phaser.Scene {
 
     this.createMap();
     this.createLargeBenchOverlays();
+    this.createRecyclingCenter();
     this.createSangcheoriNpc();
     this.createPlayer();
     this.trashSlimes = this.physics.add.staticGroup();
@@ -202,6 +217,9 @@ class PlayScene extends Phaser.Scene {
     this.hasBroomUpgrade = false;
     this.hasDroppedBroomUpgrade = false;
     this.cleanedCanCount = 0;
+    this.recyclingInventory = { normal: 0, can: 0, plastic: 0 };
+    this.isRecycleMaster = false;
+    this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
     this.isMissionComplete = false;
@@ -223,11 +241,25 @@ class PlayScene extends Phaser.Scene {
   }
 
   update() {
-  this.handleMovement();
-  if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
-    this.completeChapter1();
+    this.handleMovement();
+    this.checkRecycleQuestUnlock();
+    if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
+      this.completeChapter1();
+    }
   }
-}
+
+  checkRecycleQuestUnlock() {
+    if (!this.moneySystem || !this.questManager || this.hasAnnouncedRecycleQuest) return;
+    if (this.moneySystem.money < GAME_CONFIG.recycleQuestUnlockMoney) return;
+
+    this.hasAnnouncedRecycleQuest = true;
+    const didUnlock = this.questManager.unlockRecycleQuest();
+    if (!didUnlock) return;
+
+    this.moveSangcheoriToRecyclingCenter();
+    this.showQuestToast("상처리 아저씨가 분리수거장에서 기다리고 있어!");
+    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!");
+  }
 
   createMap() {
     if (this.createTiledMap()) {
@@ -326,6 +358,55 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
+  createRecyclingCenter() {
+    const center = GAME_CONFIG.recyclingCenter;
+    this.recycleBins = [];
+
+    const centerSign = this.add.image(center.x, center.y - 58, "recycling_center");
+    centerSign.setDisplaySize(160, 72);
+    centerSign.setDepth(3);
+
+    const vendingMachine = this.add.image(center.x + 142, center.y + 2, "recycle_vending_machine");
+    vendingMachine.setDisplaySize(46, 74);
+    vendingMachine.setDepth(3.2);
+
+    RECYCLE_BIN_CONFIG.forEach((binConfig) => {
+      const x = center.x + binConfig.xOffset;
+      const y = center.y + binConfig.yOffset;
+      const bin = this.add.image(x, y, binConfig.texture);
+      bin.setDisplaySize(58, 64);
+      bin.setDepth(3.4);
+
+      const label = this.add.text(x, y + 48, binConfig.label, {
+        fontFamily: "Arial",
+        fontSize: "13px",
+        color: "#21352c",
+        fontStyle: "bold",
+        backgroundColor: "rgba(255,255,255,0.78)",
+        padding: { left: 5, right: 5, top: 2, bottom: 2 },
+      });
+      label.setOrigin(0.5);
+      label.setDepth(3.5);
+
+      const zone = this.add.zone(
+        x,
+        y + 28,
+        GAME_CONFIG.recycleBinHitboxWidth,
+        GAME_CONFIG.recycleBinHitboxHeight,
+      );
+      this.physics.add.existing(zone, true);
+      zone.setData("recycleType", binConfig.type);
+      this.recycleBins.push({ ...binConfig, x, y, bin, label, zone });
+    });
+  }
+
+  getSangcheoriRecyclePosition() {
+    return {
+      x: GAME_CONFIG.recyclingCenter.x - 170,
+      y: GAME_CONFIG.recyclingCenter.y + 18,
+    };
+  }
+
   createSangcheoriNpc() {
     const positions = [
       [420, 226],
@@ -352,6 +433,23 @@ class PlayScene extends Phaser.Scene {
     this.tweens.add({
       targets: this.sangcheoriNpc,
       y: y - 5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  moveSangcheoriToRecyclingCenter() {
+    if (!this.sangcheoriNpc) return;
+
+    const position = this.getSangcheoriRecyclePosition();
+    this.tweens.killTweensOf(this.sangcheoriNpc);
+    this.sangcheoriNpc.setPosition(position.x, position.y);
+    this.sangcheoriNpc.setDepth(3.6);
+    this.tweens.add({
+      targets: this.sangcheoriNpc,
+      y: position.y - 5,
       duration: 900,
       yoyo: true,
       repeat: -1,
@@ -471,8 +569,8 @@ class PlayScene extends Phaser.Scene {
     ).slice(0, Math.min(GAME_CONFIG.canCount, positions.length)));
 
     positions.forEach(([x, y], index) => {
-      const isCan = canIndexes.has(index);
-      this.createTrashSprite(x, y, isCan);
+      const trashType = canIndexes.has(index) ? "can" : this.getRandomNonCanTrashType();
+      this.createTrashSprite(x, y, trashType);
     });
 
     this.updateHud();
@@ -552,6 +650,7 @@ class PlayScene extends Phaser.Scene {
       { left: 875, right: 1295, top: 558, bottom: 824 },
       { left: 1210, right: 1435, top: 80, bottom: 900 },
       { left: 865, right: 1002, top: 184, bottom: 278 },
+      { left: 1070, right: 1348, top: 330, bottom: 520 },
       { left: 48, right: 90, top: 70, bottom: 890 },
       { left: 1446, right: 1490, top: 70, bottom: 890 },
     ];
@@ -577,8 +676,16 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleSpaceAction() {
+    this.handlePrimaryAction();
+  }
+
+  handlePrimaryAction() {
     if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
       this.showSangcheoriQuestDialogue();
+      return;
+    }
+
+    if (this.tryDepositNearestRecycleBin()) {
       return;
     }
 
@@ -587,6 +694,45 @@ class PlayScene extends Phaser.Scene {
 
   showSangcheoriQuestDialogue() {
     if (this.isInDialogue || !this.dialogueSystem || !this.questManager) return;
+
+    const recycleState = this.questManager.getRecycleQuestState();
+    if (recycleState === "unlocked") {
+      this.dialogueSystem.start([
+        {
+          name: "상처리",
+          text: "오! 해냄이, 캔 줍는 실력이 대단한데? 하지만 진짜 전문가는 '나눠서 버릴 줄' 알아야 해!",
+        },
+        {
+          name: "상처리",
+          text: "여기 분리수거장 보이지? 일반 쓰레기 30개랑 캔 10개를 딱 맞춰서 통에 넣어봐. 그럼 내가 특별 수당을 줄게!",
+          choices: [
+            {
+              label: "해볼게!",
+              onSelect: () => this.questManager.startRecycleQuest(),
+            },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    if (recycleState === "active") {
+      const quest = this.questManager.recycleQuest;
+      this.dialogueSystem.start([
+        {
+          name: "상처리",
+          text: `좋아! 일반 ${quest.current.normal}/${quest.target.normal}, 캔 ${quest.current.can}/${quest.target.can}이야. 통 앞에서 빗자루 버튼을 눌러!`,
+        },
+      ]);
+      return;
+    }
+
+    if (recycleState === "completed") {
+      this.dialogueSystem.start([
+        { name: "상처리", text: "역시 해냄이야! 이제부터 쓰레기 하나를 치울 때마다 돈을 더 줄게." },
+      ]);
+      return;
+    }
 
     const questState = this.questManager.getQuestState();
     if (questState === "inactive") {
@@ -648,7 +794,6 @@ class PlayScene extends Phaser.Scene {
 
   showFirstGuide() {
     if (this.isMissionComplete || !this.sangcheoriNpc) return;
-    this.playClearSlimeVoice();
     
     // 대화창으로 첫 가이드 표시
     const dialogue = [
@@ -791,6 +936,67 @@ class PlayScene extends Phaser.Scene {
     }
   }
 
+  tryDepositNearestRecycleBin() {
+    if (!this.player || !this.recycleBins?.length) return false;
+
+    const nearest = this.recycleBins.find(({ zone }) => {
+      const bounds = zone.getBounds();
+      return Phaser.Geom.Rectangle.Contains(bounds, this.player.x, this.player.y);
+    });
+    if (!nearest) return false;
+
+    this.depositRecycleItem(nearest.type, nearest.bin);
+    return true;
+  }
+
+  depositRecycleItem(type, binSprite) {
+    const inventoryCount = this.recyclingInventory[type] || 0;
+    if (inventoryCount <= 0) {
+      const message = type === "plastic"
+        ? "플라스틱을 아직 안 주웠어!"
+        : "잉? 이건 여기가 아니야!";
+      this.showSpeechBubble(this.player, message);
+      this.playTone({ frequency: 220, duration: 0.09, type: "square", volume: 0.035 });
+      return;
+    }
+
+    const recycleState = this.questManager?.getRecycleQuestState();
+    if (recycleState === "locked" || recycleState === "unlocked") {
+      this.showSpeechBubble(this.player, "상처리 아저씨에게 먼저 물어보자!");
+      return;
+    }
+
+    this.recyclingInventory[type] -= 1;
+    this.questManager?.depositRecycleItem(type);
+    this.showRecycleDepositEffect(binSprite || this.player, type);
+    this.playItemPickupSound();
+    this.updateHud();
+  }
+
+  showRecycleDepositEffect(target, type) {
+    const colorByType = {
+      can: 0x6fcf97,
+      normal: 0x79c6ff,
+      plastic: 0xf2c94c,
+    };
+    const color = colorByType[type] || 0xffffff;
+    this.showSpeechBubble(target, "쏙!");
+
+    for (let i = 0; i < 12; i += 1) {
+      const sparkle = this.add.circle(target.x, target.y, Phaser.Math.Between(3, 5), color, 0.95);
+      sparkle.setDepth(7);
+      this.tweens.add({
+        targets: sparkle,
+        x: target.x + Phaser.Math.Between(-32, 32),
+        y: target.y + Phaser.Math.Between(-42, 16),
+        alpha: 0,
+        duration: 420,
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
+  }
+
   trySweep() {
     if (!this.canSweep || this.isMissionComplete) return;
     this.unlockAudio();
@@ -883,16 +1089,21 @@ class PlayScene extends Phaser.Scene {
     slime.body.enable = false;
     this.totalCleanedCount += 1;
     this.waveCleanedCount += 1;
-    const isCanTrash = slime.getData("trashType") === "can";
+    const trashType = slime.getData("trashType") || "normal";
+    const isCanTrash = trashType === "can";
     if (isCanTrash) {
       this.cleanedCanCount += 1;
       this.questManager?.updateQuestProgress(1);
     }
+    this.addTrashToRecycleInventory(trashType);
 
     // ===== 돈 보상 시스템 =====
     let reward = GAME_CONFIG.rewardPerSlime; // 기본 100원
     if (isCanTrash) {
       reward += GAME_CONFIG.bonusPerCan; // 캔이면 +200원
+    }
+    if (this.isRecycleMaster) {
+      reward += GAME_CONFIG.recycleMasterBonus;
     }
     // 나중에 MoneySystem 추가 시: this.moneySystem.addMoney(reward);
     console.log(`획득: ${reward}원 (총: ${this.totalCleanedCount}개)`);
@@ -907,13 +1118,6 @@ class PlayScene extends Phaser.Scene {
     this.showCleanFeedback(slimeX, slimeY, isCanTrash);
     this.updateHud();
 
-    if (
-      this.totalCleanedCount === GAME_CONFIG.broomUpgradeGoal &&
-      !this.hasDroppedBroomUpgrade
-    ) {
-      this.dropBroomUpgrade();
-    }
-
     // ===== 슬라임 리스폰 시스템 =====
     this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
       if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
@@ -922,24 +1126,39 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
+  addTrashToRecycleInventory(type) {
+    const normalizedType = type === "slime" ? "normal" : type;
+    if (!(normalizedType in this.recyclingInventory)) return;
+
+    this.recyclingInventory[normalizedType] += 1;
+    const labelByType = {
+      normal: "일반 쓰레기",
+      can: "캔",
+      plastic: "플라스틱",
+    };
+    this.showSpeechBubble(this.player, `${labelByType[normalizedType]} +1`);
+  }
+
   respawnSlime() {
     const positions = this.createRandomSlimePositions();
     if (positions.length === 0) return;
     const [x, y] = positions[0];
 
-    const isCan = Math.random() < 0.2; // 20% 확률로 캔
-    this.createTrashSprite(x, y, isCan);
+    const trashType = Math.random() < 0.2 ? "can" : this.getRandomNonCanTrashType();
+    this.createTrashSprite(x, y, trashType);
   }
 
-  createTrashSprite(x, y, isCan) {
-    const textureKey = this.getRandomTrashTexture(isCan);
+  createTrashSprite(x, y, trashType = "normal") {
+    const normalizedType = trashType === "slime" ? "normal" : trashType;
+    const isCan = normalizedType === "can";
+    const textureKey = this.getRandomTrashTexture(normalizedType);
     const slime = this.trashSlimes.create(x, y, textureKey);
-    const displaySize = this.getTrashDisplaySize(textureKey, isCan);
+    const displaySize = this.getTrashDisplaySize(textureKey, normalizedType);
     slime.setDisplaySize(displaySize.width, displaySize.height);
     slime.refreshBody();
     slime.setDepth(4);
     slime.setData("cleaned", false);
-    slime.setData("trashType", isCan ? "can" : "slime");
+    slime.setData("trashType", normalizedType);
     slime.setAlpha(0);
     slime.setScale(0.35);
     
@@ -964,14 +1183,23 @@ class PlayScene extends Phaser.Scene {
     return slime;
   }
 
-  getRandomTrashTexture(isCan) {
-    const textureKeys = isCan ? TRASH_TEXTURES.can : TRASH_TEXTURES.slime;
-    const availableKeys = textureKeys.filter((key) => this.textures.exists(key));
-    return Phaser.Utils.Array.GetRandom(availableKeys.length > 0 ? availableKeys : [isCan ? "trash_can" : "trash_slime"]);
+  getRandomNonCanTrashType() {
+    return Math.random() < 0.18 && this.textures.exists("trash_plastic") ? "plastic" : "normal";
   }
 
-  getTrashDisplaySize(textureKey, isCan) {
-    if (!isCan) {
+  getRandomTrashTexture(trashType) {
+    const textureKeys = TRASH_TEXTURES[trashType] || TRASH_TEXTURES.normal;
+    const fallback = trashType === "can" ? "trash_can" : "trash_slime";
+    const availableKeys = textureKeys.filter((key) => this.textures.exists(key));
+    return Phaser.Utils.Array.GetRandom(availableKeys.length > 0 ? availableKeys : [fallback]);
+  }
+
+  getTrashDisplaySize(textureKey, trashType) {
+    if (trashType === "plastic") {
+      return { width: 30, height: 34 };
+    }
+
+    if (trashType !== "can") {
       return {
         width: GAME_CONFIG.slimeDisplaySize,
         height: GAME_CONFIG.slimeDisplaySize,
@@ -1031,11 +1259,31 @@ class PlayScene extends Phaser.Scene {
     }
   }
 
+  activateRecycleMasterReward() {
+    if (this.isRecycleMaster) return;
+
+    this.isRecycleMaster = true;
+    this.playMoneyRewardSound();
+    this.showCleanFeedback(this.player.x, this.player.y, true);
+    this.showQuestToast("분리수거 전문가! 모든 쓰레기 수거 보너스 +200원");
+    this.dialogueSystem?.start([
+      {
+        name: "상처리",
+        text: "역시 해냄이야! 이제부터는 쓰레기 하나를 치울 때마다 돈을 더 줄게. 우리 삼각지가 반짝반짝해지겠는걸?",
+      },
+      {
+        name: "상처리",
+        text: "그리고 약속한 멋진 빗자루야. 이걸로 더 넓게 쓸어보자!",
+      },
+    ]);
+    this.dropBroomUpgrade();
+  }
+
   dropBroomUpgrade() {
     this.hasDroppedBroomUpgrade = true;
 
-    const itemX = this.broomSpawn.x;
-    const itemY = this.broomSpawn.y;
+    const itemX = this.player ? this.player.x + 38 : this.broomSpawn.x;
+    const itemY = this.player ? this.player.y : this.broomSpawn.y;
     const item = this.physics.add.sprite(itemX, itemY, "broom_item");
     item.setDisplaySize(GAME_CONFIG.broomItemDisplaySize, GAME_CONFIG.broomItemDisplaySize);
     item.body.setSize(66, 66);
@@ -1198,6 +1446,30 @@ class PlayScene extends Phaser.Scene {
     window.setTimeout(() => toast.remove(), 1700);
   }
 
+  showSpeechBubble(target, message) {
+    if (!target || !message) return;
+
+    const bubble = this.add.text(target.x, target.y - 58, message, {
+      fontFamily: "Arial",
+      fontSize: "15px",
+      color: "#21352c",
+      fontStyle: "bold",
+      backgroundColor: "rgba(255,255,255,0.94)",
+      padding: { left: 8, right: 8, top: 5, bottom: 5 },
+    });
+    bubble.setOrigin(0.5);
+    bubble.setDepth(20);
+
+    this.tweens.add({
+      targets: bubble,
+      y: bubble.y - 18,
+      alpha: 0,
+      duration: 1050,
+      ease: "Cubic.easeOut",
+      onComplete: () => bubble.destroy(),
+    });
+  }
+
   showMoneyRewardAnimation(amount) {
     const stage = document.querySelector(".game-stage");
     if (!stage) return;
@@ -1354,10 +1626,17 @@ class PlayScene extends Phaser.Scene {
     trash.body.enable = false;
     this.totalCleanedCount += 1;
     this.waveCleanedCount += 1;
-    if (trash.getData("trashType") === "can") {
+    const trashType = trash.getData("trashType") || "normal";
+    if (trashType === "can") {
       this.cleanedCanCount += 1;
       this.questManager?.updateQuestProgress(1);
     }
+    this.addTrashToRecycleInventory(trashType);
+
+    let reward = GAME_CONFIG.rewardPerSlime;
+    if (trashType === "can") reward += GAME_CONFIG.bonusPerCan;
+    if (this.isRecycleMaster) reward += GAME_CONFIG.recycleMasterBonus;
+    this.moneySystem.addMoney(reward);
 
     this.showCleanFeedback(trash.x, trash.y);
     this.showSlimePop(trash);

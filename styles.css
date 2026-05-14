@@ -365,6 +365,7 @@ body.start-screen .special-toast {
 }
 
 #sweepButton {
+  display: none;
   right: max(18px, env(safe-area-inset-right));
   bottom: max(18px, env(safe-area-inset-bottom));
   width: 86px;
@@ -379,6 +380,7 @@ body.start-screen .special-toast {
 }
 
 .special-button {
+  display: none;
   right: calc(max(18px, env(safe-area-inset-right)) + 98px);
   bottom: max(18px, env(safe-area-inset-bottom));
   width: 86px;
@@ -498,6 +500,15 @@ body.start-screen .special-toast {
 }
 
 @media (max-width: 820px) {
+  #sweepButton,
+  .special-button {
+    display: grid;
+  }
+
+  .fullscreen-button {
+    display: none;
+  }
+
   body {
     align-items: start;
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
@@ -653,6 +664,15 @@ body.app-fit-mode #game canvas {
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
+  #sweepButton,
+  .special-button {
+    display: grid;
+  }
+
+  .fullscreen-button {
+    display: none;
+  }
+
   body {
     padding: 0;
   }
