@@ -29,19 +29,20 @@ const GAME_CONFIG = {
   drinkPrice: 1000,
   speedBuffMultiplier: 1.35,
   speedBuffDurationMs: 60000,
-  jjookFollowDurationMs: 300000,
+  jjookFollowDurationMs: 60000,
   chapter1TargetMoney: 100000,   // 챕터1 목표 금액
-  recyclingCenter: { x: 585, y: 495 },
+  recyclingCenter: { x: 1210, y: 420 },
+  vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 685, y: 545 },
-  walletSpawn: { x: 598, y: 612 },
+  walletSpawn: { x: 250, y: 735 },
   recycleBinHitboxWidth: 82,
   recycleBinHitboxHeight: 90,
 };
 
 const DRINK_OPTIONS = [
-  { key: "cola", label: "콜라", texture: "drink_cola" },
   { key: "cider", label: "사이다", texture: "drink_cider" },
-  { key: "water", label: "물", texture: "drink_water" },
+  { key: "cola", label: "콜라", texture: "drink_cola" },
+  { key: "water", label: "생수", texture: "drink_water" },
 ];
 
 const TILED_MAP_CONFIG = {
@@ -96,6 +97,14 @@ class PlayScene extends Phaser.Scene {
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
     this.jjookFollowEndsAt = 0;
+    this.jjookStateBeforeVending = null;
+    this.shouldCompleteJjookAfterDrink = false;
+    this.speedBuffTimer = null;
+    this.speedBuffIconGroup = null;
+    this.questMarkers = {};
+    this.vendingMenuOptions = [];
+    this.selectedVendingIndex = 0;
+    this.vendingMenuInputLockedUntil = 0;
     this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
@@ -137,6 +146,7 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenButton = document.querySelector("#fullscreenButton");
     this.completeOverlay = document.querySelector("#completeOverlay");
     this.specialToast = document.querySelector("#specialToast");
+    this.speedBuffHudEl = document.querySelector("#speedBuffHud");
     this.resultTrashCountEl = document.querySelector("#resultTrashCount");
     this.resultCanCountEl = document.querySelector("#resultCanCount");
     this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
@@ -162,6 +172,7 @@ class PlayScene extends Phaser.Scene {
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
     this.resizeHandler = () => this.updateCameraZoom();
     this.audioUnlockHandler = () => this.unlockAudio();
+    this.devKeyHandler = (event) => this.handleDevKeydown(event);
     this.pageAudioStopHandler = () => this.stopAudioForPageExit();
     this.visibilityChangeHandler = () => {
       if (document.hidden) this.stopAudioForPageExit();
@@ -171,6 +182,7 @@ class PlayScene extends Phaser.Scene {
     this.specialButton?.addEventListener("pointerdown", this.specialHandler);
     window.addEventListener("pointerdown", this.audioUnlockHandler, { passive: true });
     window.addEventListener("keydown", this.audioUnlockHandler);
+    window.addEventListener("keydown", this.devKeyHandler, true);
     window.addEventListener("pointerdown", this.moveStartHandler);
     window.addEventListener("pointermove", this.moveUpdateHandler);
     window.addEventListener("pointerup", this.moveStopHandler);
@@ -205,6 +217,7 @@ class PlayScene extends Phaser.Scene {
       this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
       window.removeEventListener("pointerdown", this.audioUnlockHandler);
       window.removeEventListener("keydown", this.audioUnlockHandler);
+      window.removeEventListener("keydown", this.devKeyHandler, true);
       window.removeEventListener("pointerdown", this.moveStartHandler);
       window.removeEventListener("pointermove", this.moveUpdateHandler);
       window.removeEventListener("pointerup", this.moveStopHandler);
@@ -254,6 +267,18 @@ class PlayScene extends Phaser.Scene {
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
     this.jjookFollowEndsAt = 0;
+    this.jjookStateBeforeVending = null;
+    this.shouldCompleteJjookAfterDrink = false;
+    this.speedBuffTimer?.remove(false);
+    this.speedBuffTimer = null;
+    this.speedBuffIconGroup?.clear(true, true);
+    this.speedBuffIconGroup = null;
+    Object.values(this.questMarkers || {}).forEach((marker) => marker.text?.destroy());
+    this.questMarkers = {};
+    this.vendingMenuOptions = [];
+    this.selectedVendingIndex = 0;
+    this.vendingMenuInputLockedUntil = 0;
+    this.speedBuffHudEl?.classList.remove("is-visible");
     this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
@@ -276,14 +301,63 @@ class PlayScene extends Phaser.Scene {
   }
 
   update() {
+    this.handleVendingMenuKeyboard();
     this.handleMovement();
     this.checkRecycleQuestUnlock();
     this.checkJjookQuestUnlock();
     this.checkWalletPickup();
     this.updateJjookFollower();
+    this.updateQuestMarkers();
     if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
     }
+  }
+
+  setQuestMarker(key, target, symbol = "!") {
+    if (!key || !target) return;
+
+    const existing = this.questMarkers[key];
+    if (existing) {
+      existing.target = target;
+      existing.text.setText(symbol);
+      existing.text.setVisible(true);
+      return;
+    }
+
+    const text = this.add.text(target.x, target.y - 64, symbol, {
+      fontFamily: "Arial",
+      fontSize: "28px",
+      color: "#fff3a3",
+      fontStyle: "bold",
+      stroke: "#21352c",
+      strokeThickness: 6,
+    });
+    text.setOrigin(0.5);
+    text.setDepth(12);
+    this.questMarkers[key] = { target, text, offset: Phaser.Math.Between(0, 628) };
+  }
+
+  clearQuestMarker(key) {
+    const marker = this.questMarkers?.[key];
+    if (!marker) return;
+
+    marker.text?.destroy();
+    delete this.questMarkers[key];
+  }
+
+  updateQuestMarkers() {
+    if (!this.questMarkers) return;
+
+    Object.values(this.questMarkers).forEach((marker) => {
+      if (!marker.target?.active || !marker.text?.active) {
+        return;
+      }
+      const bob = Math.sin((this.time.now + marker.offset) / 220) * 4;
+      marker.text.setPosition(
+        marker.target.x,
+        marker.target.y - marker.target.displayHeight / 2 - 20 + bob,
+      );
+    });
   }
 
   checkRecycleQuestUnlock() {
@@ -295,7 +369,8 @@ class PlayScene extends Phaser.Scene {
     if (!didUnlock) return;
 
     this.moveSangcheoriToRecyclingCenter();
-    this.showQuestToast("상처리 아저씨가 분리수거장에서 기다리고 있어!", 10000);
+    this.setQuestMarker("recycleQuest", this.sangcheoriNpc, "!");
+    this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
     this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
   }
 
@@ -307,6 +382,7 @@ class PlayScene extends Phaser.Scene {
     this.hasAnnouncedJjookQuest = true;
     this.jjookQuestState = "wallet_missing";
     this.createJjookQuestObjects();
+    this.setQuestMarker("jjookQuest", this.jjookNpc, "?");
     this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
     this.showSpeechBubble(this.jjookNpc, "내 지갑 어디 갔지?", 10000);
   }
@@ -412,9 +488,19 @@ class PlayScene extends Phaser.Scene {
     const center = GAME_CONFIG.recyclingCenter;
     this.recycleBins = [];
 
-    const vendingMachine = this.add.image(center.x + 96, center.y + 16, "vending_machine_full");
-    vendingMachine.setDisplaySize(78, 96);
+    const vendingMachine = this.add.image(
+      GAME_CONFIG.vendingMachine.x,
+      GAME_CONFIG.vendingMachine.y,
+      "vending_machine_full",
+    );
+    vendingMachine.setDisplaySize(96, 118);
     vendingMachine.setDepth(3.2);
+    vendingMachine.setInteractive({ useHandCursor: true });
+    vendingMachine.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      this.handleVendingMachineInteraction();
+    });
     this.vendingMachine = vendingMachine;
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
@@ -476,12 +562,32 @@ class PlayScene extends Phaser.Scene {
       });
     }
 
-    if (!this.walletItem) {
-      this.spawnWalletItem();
+  }
+
+  handleVendingMachineInteraction() {
+    if (this.isInDialogue || this.vendingMenuGroup) return;
+
+    if (this.jjookQuestState === "completed") {
+      this.openVendingMenu({ completeQuestOnSelect: false });
+      return;
     }
+
+    if (this.jjookQuestState === "wallet_found") {
+      this.handleJjookInteraction();
+      return;
+    }
+
+    this.dialogueSystem?.start([
+      {
+        name: "해냄이",
+        text: "아냐, 돈을 더 모아야 해.",
+      },
+    ]);
   }
 
   spawnWalletItem() {
+    if (this.walletItem?.active) return;
+
     const { x, y } = GAME_CONFIG.walletSpawn;
     this.walletItem = this.physics.add.image(x, y, "wallet_item");
     this.walletItem.setDisplaySize(42, 34);
@@ -537,6 +643,7 @@ class PlayScene extends Phaser.Scene {
     this.walletItem?.destroy();
     this.walletItem = null;
     this.playItemPickupSound();
+    this.setQuestMarker("jjookQuest", this.jjookNpc, "!");
     this.showQuestToast("갈색 지갑을 찾았다!");
     this.showSpeechBubble(this.player, "지갑 찾았다!");
   }
@@ -817,13 +924,52 @@ class PlayScene extends Phaser.Scene {
       right: Phaser.Input.Keyboard.KeyCodes.D,
       sweep: Phaser.Input.Keyboard.KeyCodes.SPACE,
       specialEnter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      devMoney: Phaser.Input.Keyboard.KeyCodes.F2,
+      devTrash: Phaser.Input.Keyboard.KeyCodes.F3,
     });
 
     this.keys.sweep.on("down", () => this.handleSpaceAction());
     this.keys.specialEnter.on("down", () => this.useSangcheoriItem());
   }
 
+  isDevMode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("dev") === "1"
+      || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  }
+
+  handleDevKeydown(event) {
+    if (!this.isDevMode()) return;
+    if (event.code !== "F2" && event.code !== "F3") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.code === "F2") {
+      this.addDevMoney();
+    } else {
+      this.addDevTrashInventory();
+    }
+  }
+
+  addDevMoney() {
+    this.moneySystem?.addMoney(10000);
+    this.showQuestToast("개발 치트: 10,000원 추가");
+  }
+
+  addDevTrashInventory() {
+    this.recyclingInventory.normal += 20;
+    this.recyclingInventory.can += 20;
+    this.recyclingInventory.plastic += 20;
+    this.updateHud();
+    this.showQuestToast("개발 치트: 쓰레기 20개씩 추가");
+  }
+
   handleSpaceAction() {
+    if (this.vendingMenuGroup) {
+      this.selectHighlightedVendingOption();
+      return;
+    }
+
     this.handlePrimaryAction();
   }
 
@@ -834,6 +980,16 @@ class PlayScene extends Phaser.Scene {
 
     if (this.hasTrashInSweepRange()) {
       this.trySweep();
+      return;
+    }
+
+    if (this.shouldPrioritizeJjookDialogue()) {
+      this.handleJjookInteraction();
+      return;
+    }
+
+    if (this.isPlayerNearVendingMachine() && !this.isInDialogue) {
+      this.handleVendingMachineInteraction();
       return;
     }
 
@@ -861,6 +1017,24 @@ class PlayScene extends Phaser.Scene {
     ) < 120;
   }
 
+  shouldPrioritizeJjookDialogue() {
+    return !this.isInDialogue
+      && this.jjookQuestState !== "locked"
+      && this.jjookQuestState !== "completed"
+      && this.isPlayerNearJjookNpc();
+  }
+
+  isPlayerNearVendingMachine() {
+    if (!this.player || !this.vendingMachine) return false;
+
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.vendingMachine.x,
+      this.vendingMachine.y,
+    ) < 130;
+  }
+
   handleJjookInteraction() {
     if (this.isInDialogue || !this.dialogueSystem || this.jjookQuestState === "locked") return;
 
@@ -878,7 +1052,11 @@ class PlayScene extends Phaser.Scene {
           frame: 2,
           text: "혹시 근처 수풀이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야!",
         },
-      ]);
+      ], () => {
+        if (!this.walletItem?.active && !this.hasWallet) {
+          this.spawnWalletItem();
+        }
+      });
       return;
     }
 
@@ -890,7 +1068,7 @@ class PlayScene extends Phaser.Scene {
           frame: 1,
           text: "지갑을 찾아줘서 정말 고마워! 내가 보답으로 시원한 음료수 하나 사줄게. 해냄아, 뭐 마실래?",
         },
-      ], () => this.openVendingMenu());
+      ], () => this.openVendingMenu({ completeQuestOnSelect: true }));
       return;
     }
 
@@ -900,7 +1078,7 @@ class PlayScene extends Phaser.Scene {
           name: "쭉쭉이",
           portraitKey: "jjookface",
           frame: 1,
-          text: "나랑 같이 뛰자! 플로깅은 같이 하면 더 신나!",
+          text: "나랑 같이 뛰자! 음료수가 필요하면 자판기 앞에서 골라줘.",
         },
       ]);
     }
@@ -925,15 +1103,15 @@ class PlayScene extends Phaser.Scene {
     if (recycleState === "unlocked") {
       this.dialogueSystem.start([
         {
-          name: "상처리",
+          name: "여비",
           text: "오! 해냄이, 청소 실력이 대단한데? 이제 진짜 전문가는 '나눠서 버릴 줄' 알아야 해!",
         },
         {
-          name: "상처리",
+          name: "여비",
           text: "쓰레기를 치우면 바로 100원을 받고, 퀘스트를 끝낸 뒤 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어.",
         },
         {
-          name: "상처리",
+          name: "여비",
           text: "여기 분리수거장 보이지? 일반 쓰레기 30개, 캔 10개, 플라스틱 10개를 딱 맞춰서 통에 넣어봐. 그럼 분리수거 수당을 열어줄게!",
           choices: [
             {
@@ -950,7 +1128,7 @@ class PlayScene extends Phaser.Scene {
       const quest = this.questManager.recycleQuest;
       this.dialogueSystem.start([
         {
-          name: "상처리",
+          name: "여비",
           text: `좋아! 일반 ${quest.current.normal}/${quest.target.normal}, 캔 ${quest.current.can}/${quest.target.can}, 플라스틱 ${quest.current.plastic}/${quest.target.plastic}이야. 통 앞에서 빗자루 버튼을 눌러!`,
         },
       ]);
@@ -959,7 +1137,7 @@ class PlayScene extends Phaser.Scene {
 
     if (recycleState === "completed") {
       this.dialogueSystem.start([
-        { name: "상처리", text: "이제 모아둔 쓰레기를 맞는 통에 넣어봐. 하나 넣을 때마다 분리수거 수당 100원을 받을 수 있어!" },
+        { name: "여비", text: "이제 모아둔 쓰레기를 맞는 통에 넣어봐. 하나 넣을 때마다 분리수거 수당 100원을 받을 수 있어!" },
       ]);
       return;
     }
@@ -968,7 +1146,7 @@ class PlayScene extends Phaser.Scene {
     if (questState === "inactive") {
       this.dialogueSystem.start([
         {
-          name: "상처리",
+          name: "여비",
           text: "안녕! 혹시 나 좀 도와줄 수 있어?",
           choices: [
             {
@@ -977,7 +1155,7 @@ class PlayScene extends Phaser.Scene {
                 this.dialogueSystem.start(
                   [
                     {
-                      name: "상처리",
+                      name: "여비",
                       text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!",
                     },
                   ],
@@ -989,7 +1167,7 @@ class PlayScene extends Phaser.Scene {
               label: "아니오",
               onSelect: () => {
                 this.dialogueSystem.start([
-                  { name: "상처리", text: "아... 그래. 다음에 꼭 부탁할게." },
+                  { name: "여비", text: "아... 그래. 다음에 꼭 부탁할게." },
                 ]);
               },
             },
@@ -1001,13 +1179,13 @@ class PlayScene extends Phaser.Scene {
 
     if (questState === "active") {
       this.dialogueSystem.start([
-        { name: "상처리", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
+        { name: "여비", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
       ]);
       return;
     }
 
     this.dialogueSystem.start([
-      { name: "상처리", text: "오늘도 고마워! 깨끗한 거리를 같이 만들자." },
+      { name: "여비", text: "오늘도 고마워! 깨끗한 거리를 같이 만들자." },
     ]);
   }
 
@@ -1035,10 +1213,10 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleMovement() {
-     if (this.isInDialogue) {
-    this.player.setVelocity(0, 0);
-    return;
-  }
+    if (this.isInDialogue || this.vendingMenuGroup) {
+      this.player.setVelocity(0, 0);
+      return;
+    }
     let horizontal =
       Number(this.cursors.right.isDown || this.keys.right.isDown) -
       Number(this.cursors.left.isDown || this.keys.left.isDown);
@@ -1212,7 +1390,7 @@ class PlayScene extends Phaser.Scene {
 
     const recycleState = this.questManager?.getRecycleQuestState();
     if (recycleState === "locked" || recycleState === "unlocked") {
-      this.showSpeechBubble(this.player, "상처리 아저씨에게 먼저 물어보자!");
+      this.showSpeechBubble(this.player, "여비 아저씨에게 먼저 물어보자!");
       return;
     }
 
@@ -1234,10 +1412,15 @@ class PlayScene extends Phaser.Scene {
     this.updateHud();
   }
 
-  openVendingMenu() {
+  openVendingMenu({ completeQuestOnSelect = false } = {}) {
     if (this.vendingMenuGroup) return;
 
+    this.jjookStateBeforeVending = this.jjookQuestState;
+    this.shouldCompleteJjookAfterDrink = completeQuestOnSelect;
     this.jjookQuestState = "choosing_drink";
+    this.selectedVendingIndex = 0;
+    this.vendingMenuOptions = [];
+    this.vendingMenuInputLockedUntil = this.time.now + 260;
     const group = this.add.group();
     this.vendingMenuGroup = group;
 
@@ -1246,38 +1429,54 @@ class PlayScene extends Phaser.Scene {
     dim.setDepth(60);
     group.add(dim);
 
-    const panel = this.add.image(384, 230, "vending_menu");
-    panel.setScrollFactor(0);
-    panel.setDisplaySize(430, 235);
-    panel.setDepth(61);
-    group.add(panel);
-
-    const title = this.add.text(384, 125, "마실 음료를 골라줘", {
+    const title = this.add.text(384, 128, "마실 음료를 골라줘", {
       fontFamily: "Arial",
       fontSize: "24px",
-      color: "#21352c",
+      color: "#fff3a3",
       fontStyle: "bold",
+      stroke: "#21352c",
+      strokeThickness: 6,
     });
     title.setOrigin(0.5);
     title.setScrollFactor(0);
     title.setDepth(62);
     group.add(title);
 
-    DRINK_OPTIONS.forEach((drink, index) => {
-      const x = 270 + index * 114;
-      const button = this.add.rectangle(x, 235, 92, 112, 0xffffff, 0.94);
+    const menuOptions = [
+      ...DRINK_OPTIONS,
+      { key: "cancel", label: "안 산다", isCancel: true },
+    ];
+
+    menuOptions.forEach((drink, index) => {
+      const x = 204 + index * 120;
+      const button = this.add.rectangle(x, 236, 96, 122, 0xffffff, 0.9);
       button.setStrokeStyle(4, 0x21352c);
       button.setScrollFactor(0);
       button.setDepth(62);
       button.setInteractive({ useHandCursor: true });
-      button.on("pointerdown", () => this.selectDrink(drink));
+      button.on("pointerdown", () => this.selectVendingOption(index));
       group.add(button);
 
-      const icon = this.add.image(x, 215, drink.texture);
-      icon.setDisplaySize(54, 54);
-      icon.setScrollFactor(0);
-      icon.setDepth(63);
-      group.add(icon);
+      if (!drink.isCancel) {
+        const icon = this.add.image(x, 220, drink.texture);
+        icon.setDisplaySize(68, 68);
+        icon.setScrollFactor(0);
+        icon.setDepth(63);
+        group.add(icon);
+      } else {
+        const cancelMark = this.add.text(x, 218, "X", {
+          fontFamily: "Arial",
+          fontSize: "42px",
+          color: "#d45b5b",
+          fontStyle: "bold",
+          stroke: "#21352c",
+          strokeThickness: 5,
+        });
+        cancelMark.setOrigin(0.5);
+        cancelMark.setScrollFactor(0);
+        cancelMark.setDepth(63);
+        group.add(cancelMark);
+      }
 
       const label = this.add.text(x, 280, drink.label, {
         fontFamily: "Arial",
@@ -1289,16 +1488,83 @@ class PlayScene extends Phaser.Scene {
       label.setScrollFactor(0);
       label.setDepth(63);
       group.add(label);
+
+      const price = this.add.text(x, 312, `${GAME_CONFIG.drinkPrice.toLocaleString()}원`, {
+        fontFamily: "Arial",
+        fontSize: "17px",
+        color: "#ffd966",
+        fontStyle: "bold",
+        stroke: "#21352c",
+        strokeThickness: 4,
+      });
+      price.setText(drink.isCancel ? "닫기" : `${GAME_CONFIG.drinkPrice.toLocaleString()}원`);
+      price.setOrigin(0.5);
+      price.setScrollFactor(0);
+      price.setDepth(63);
+      group.add(price);
+
+      this.vendingMenuOptions.push({ drink, button });
     });
+    this.updateVendingSelection();
   }
 
   closeVendingMenu() {
     this.vendingMenuGroup?.clear(true, true);
     this.vendingMenuGroup = null;
+    this.vendingMenuOptions = [];
+    if (this.jjookQuestState === "choosing_drink") {
+      this.jjookQuestState = this.jjookStateBeforeVending || "completed";
+    }
+  }
+
+  handleVendingMenuKeyboard() {
+    if (!this.vendingMenuGroup || !this.cursors || !this.keys) return;
+    if (this.time.now < this.vendingMenuInputLockedUntil) return;
+
+    if (Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
+      this.selectedVendingIndex = Phaser.Math.Wrap(this.selectedVendingIndex - 1, 0, this.vendingMenuOptions.length);
+      this.updateVendingSelection();
+    } else if (Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
+      this.selectedVendingIndex = Phaser.Math.Wrap(this.selectedVendingIndex + 1, 0, this.vendingMenuOptions.length);
+      this.updateVendingSelection();
+    }
+  }
+
+  updateVendingSelection() {
+    this.vendingMenuOptions.forEach((option, index) => {
+      const isSelected = index === this.selectedVendingIndex;
+      option.button.setStrokeStyle(isSelected ? 6 : 4, isSelected ? 0xffd84f : 0x21352c);
+      option.button.setScale(isSelected ? 1.08 : 1);
+    });
+  }
+
+  selectVendingOption(index) {
+    this.selectedVendingIndex = index;
+    this.updateVendingSelection();
+    this.selectHighlightedVendingOption();
+  }
+
+  selectHighlightedVendingOption() {
+    if (this.time.now < this.vendingMenuInputLockedUntil) return;
+
+    const selected = this.vendingMenuOptions[this.selectedVendingIndex];
+    if (!selected) return;
+    this.selectDrink(selected.drink);
   }
 
   selectDrink(drink) {
     if (!drink || this.jjookQuestState !== "choosing_drink") return;
+
+    if (drink.isCancel) {
+      const shouldFinishQuest = this.shouldCompleteJjookAfterDrink;
+      this.closeVendingMenu();
+      if (shouldFinishQuest) {
+        this.finishJjookQuestWithoutDrink();
+      } else {
+        this.showQuestToast("다음에 마시자!");
+      }
+      return;
+    }
 
     if (!this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
       this.showQuestToast("돈이 1,000원 필요해!");
@@ -1362,21 +1628,54 @@ class PlayScene extends Phaser.Scene {
       onComplete: () => {
         this.time.delayedCall(520, () => {
           can.destroy();
-          this.finishJjookQuest();
+          if (this.shouldCompleteJjookAfterDrink) {
+            this.finishJjookQuest();
+          } else {
+            this.finishPurchasedDrink(drink);
+          }
         });
       },
     });
   }
 
+  finishPurchasedDrink(drink) {
+    this.jjookQuestState = this.jjookStateBeforeVending || "completed";
+    this.drinkInventory.push(drink.key);
+    this.showQuestToast(`${drink.label}을 마셨다! 이동 속도 UP`);
+    this.activateDrinkSpeedBuff();
+    this.selectedDrink = null;
+    this.shouldCompleteJjookAfterDrink = false;
+  }
+
+  finishJjookQuestWithoutDrink() {
+    this.jjookQuestState = "completed";
+    this.hasWallet = false;
+    this.clearQuestMarker("jjookQuest");
+    this.activateJjookFollower();
+    this.shouldCompleteJjookAfterDrink = false;
+    this.selectedDrink = null;
+    this.dialogueSystem?.start([
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjookface",
+        frame: 2,
+        text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!",
+      },
+    ]);
+  }
+
   finishJjookQuest() {
     this.jjookQuestState = "completed";
     this.hasWallet = false;
+    this.clearQuestMarker("jjookQuest");
     if (this.selectedDrink) {
       this.drinkInventory.push(this.selectedDrink.key);
       this.showQuestToast(`${this.selectedDrink.label}을 마셨다! 이동 속도 UP`);
     }
     this.activateDrinkSpeedBuff();
     this.activateJjookFollower();
+    this.shouldCompleteJjookAfterDrink = false;
+    this.selectedDrink = null;
     this.dialogueSystem?.start([
       {
         name: "해냄이",
@@ -1393,8 +1692,9 @@ class PlayScene extends Phaser.Scene {
 
   activateDrinkSpeedBuff() {
     this.isSpeedBuffActive = true;
+    this.speedBuffTimer?.remove(false);
     this.showBuffIcon("speed_buff_icon", "이동 속도 UP", GAME_CONFIG.speedBuffDurationMs);
-    this.time.delayedCall(GAME_CONFIG.speedBuffDurationMs, () => {
+    this.speedBuffTimer = this.time.delayedCall(GAME_CONFIG.speedBuffDurationMs, () => {
       this.isSpeedBuffActive = false;
       this.showQuestToast("음료수 속도 효과가 끝났어.");
     });
@@ -1403,43 +1703,23 @@ class PlayScene extends Phaser.Scene {
   activateJjookFollower() {
     this.isJjookFollowActive = true;
     this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
-    this.showQuestToast("쭉쭉이가 5분 동안 플로깅을 도와줘!");
+    this.showQuestToast("쭉쭉이가 1분 동안 플로깅을 도와줘!");
     this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
       this.isJjookFollowActive = false;
-      this.showQuestToast("쭉쭉이가 잠깐 쉬러 갔어.");
+      this.showQuestToast("쭉쭉이: 그럼 다음에 또 봐!");
+      if (this.jjookNpc?.active) {
+        this.showSpeechBubble(this.jjookNpc, "그럼 다음에 또 봐!", 3600);
+      }
     });
   }
 
   showBuffIcon(textureKey, label, duration) {
-    const icon = this.add.image(708, 88, textureKey);
-    icon.setScrollFactor(0);
-    icon.setDisplaySize(42, 42);
-    icon.setDepth(55);
-    icon.setAlpha(0);
-    const text = this.add.text(708, 122, label, {
-      fontFamily: "Arial",
-      fontSize: "13px",
-      color: "#21352c",
-      fontStyle: "bold",
-      backgroundColor: "rgba(255,255,255,0.9)",
-      padding: { left: 5, right: 5, top: 2, bottom: 2 },
-    });
-    text.setOrigin(0.5);
-    text.setScrollFactor(0);
-    text.setDepth(55);
-    text.setAlpha(0);
+    if (this.speedBuffHudEl) {
+      this.speedBuffHudEl.classList.add("is-visible");
+    }
 
-    this.tweens.add({ targets: [icon, text], alpha: 1, duration: 180 });
     this.time.delayedCall(duration, () => {
-      this.tweens.add({
-        targets: [icon, text],
-        alpha: 0,
-        duration: 240,
-        onComplete: () => {
-          icon.destroy();
-          text.destroy();
-        },
-      });
+      this.speedBuffHudEl?.classList.remove("is-visible");
     });
   }
 
@@ -1501,12 +1781,22 @@ class PlayScene extends Phaser.Scene {
     const sweepX = this.player.x + this.lastDirection.x * offset;
     const sweepY = this.player.y + this.lastDirection.y * offset;
 
-    const sweepZone = this.add.zone(sweepX, sweepY, width, height);
+    this.playSweepSound();
+    this.performSweepAt(sweepX, sweepY, width, height, this.lastDirection);
+
+    if (this.isJjookFollowActive && this.jjookNpc?.active) {
+      const jjookWidth = width * 0.92;
+      const jjookHeight = height * 0.92;
+      this.performSweepAt(this.jjookNpc.x, this.jjookNpc.y + 8, jjookWidth, jjookHeight, null);
+    }
+  }
+
+  performSweepAt(x, y, width, height, direction = null) {
+    const sweepZone = this.add.zone(x, y, width, height);
     this.physics.add.existing(sweepZone);
     sweepZone.body.setAllowGravity(false);
 
-    this.playSweepSound();
-    this.showSweepEffect(sweepX, sweepY, width, height);
+    this.showSweepEffect(x, y, width, height, direction);
 
     this.physics.overlap(sweepZone, this.trashSlimes, (_, slime) => {
       this.cleanTrash(slime);
@@ -1515,7 +1805,7 @@ class PlayScene extends Phaser.Scene {
     this.time.delayedCall(80, () => sweepZone.destroy());
   }
 
-  showSweepEffect(x, y, width, height) {
+  showSweepEffect(x, y, width, height, direction = this.lastDirection) {
     const sweepFlash = this.add.ellipse(x, y, width, height, 0xfff3a3, 0.42);
     sweepFlash.setStrokeStyle(5, 0xf2c94c, 0.9);
     sweepFlash.setDepth(6);
@@ -1524,7 +1814,7 @@ class PlayScene extends Phaser.Scene {
     broomGhost.setDisplaySize(48, 48);
     broomGhost.setAlpha(0.75);
     broomGhost.setDepth(7);
-    broomGhost.setRotation(this.lastDirection.angle() + 0.8);
+    broomGhost.setRotation((direction || this.lastDirection).angle() + 0.8);
     const broomGhostScale = broomGhost.scaleX;
 
     this.tweens.add({
@@ -1752,11 +2042,11 @@ class PlayScene extends Phaser.Scene {
     this.showQuestToast("분리수거 수당 개방! 맞는 통에 넣으면 100원");
     this.dialogueSystem?.start([
       {
-        name: "상처리",
+        name: "여비",
         text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에서 맞는 통에 넣으면 100원을 더 받을 수 있어.",
       },
       {
-        name: "상처리",
+        name: "여비",
         text: "그리고 약속한 멋진 빗자루야. 이걸로 더 넓게 쓸어보자!",
       },
     ]);
@@ -1903,7 +2193,7 @@ class PlayScene extends Phaser.Scene {
       this.resultCanCountEl.textContent = `캔 ${this.cleanedCanCount}개`;
     }
     if (this.resultHelpUsedEl) {
-      this.resultHelpUsedEl.textContent = this.hasUsedSangcheori ? "상처리 도움 완료" : "상처리 도움 미사용";
+      this.resultHelpUsedEl.textContent = this.hasUsedSangcheori ? "여비 도움 완료" : "여비 도움 미사용";
     }
     this.completeOverlay?.classList.add("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "false");

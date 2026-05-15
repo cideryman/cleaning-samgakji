@@ -19,7 +19,7 @@ const EXTERNAL_ASSETS = [
   { key: "recycle_vending_machine", path: "assets/objects/vending machine.png" },
   { key: "jjook_npc", path: "assets/objects/jjookf.png" },
   { key: "jjook_face", path: "assets/objects/jjookface.png" },
-  { key: "vending_machine_full", path: "assets/objects/vmf.png" },
+  { key: "vending_machine_full", path: "assets/objects/vms.png" },
   { key: "vending_menu", path: "assets/objects/vmmenu.png" },
   { key: "wallet_item", path: "assets/objects/wallet.png" },
   { key: "drink_cola", path: "assets/objects/cola.png" },

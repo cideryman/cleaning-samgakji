@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=48" />
+    <link rel="stylesheet" href="./styles.css?v=51" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body class="start-screen">
@@ -58,6 +58,9 @@
             </div>
           </div>
         </div>
+        <div id="speedBuffHud" class="speed-buff-hud" aria-hidden="true">
+          <img src="./assets/objects/acceleration.png" alt="" aria-hidden="true" />
+        </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
           <div class="can-quest-label" id="canQuestLabel">퀘스트 없음</div>
           <div class="can-quest-bar" id="canQuestBar" aria-label="can quest progress"></div>
@@ -74,7 +77,7 @@
             <strong>오늘 청소 완료</strong>
             <span id="resultTrashCount">쓰레기 30개</span>
             <span id="resultCanCount">캔 20개</span>
-            <span id="resultHelpUsed">상처리 도움 완료</span>
+            <span id="resultHelpUsed">여비 도움 완료</span>
           </div>
           <button id="restartButton" class="restart-button" type="button" aria-label="restart">
             <span class="restart-icon" aria-hidden="true"></span>
@@ -95,7 +98,7 @@
           </div>
         </div>
         <div class="touch-controls" aria-label="mobile controls">
-          <button id="specialButton" class="special-button" type="button" aria-label="sangcheori item" hidden>
+          <button id="specialButton" class="special-button" type="button" aria-label="yebi item" hidden>
             <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
           </button>
           <button id="sweepButton" type="button" aria-label="sweep">
@@ -112,12 +115,12 @@
       </div>
     </main>
 
-        <script src="./src/scenes/Preload.js?v=37"></script>
+    <script src="./src/scenes/Preload.js?v=38"></script>
     <script src="./src/scenes/StartScene.js?v=1"></script>
     <script src="./src/systems/DialogueSystem.js?v=3"></script>
     <script src="./src/systems/MoneySystem.js?v=3"></script>
-    <script src="./src/systems/QuestManager.js?v=7"></script>
-    <script src="./src/scenes/PlayScene.js?v=51"></script>
+    <script src="./src/systems/QuestManager.js?v=8"></script>
+    <script src="./src/scenes/PlayScene.js?v=59"></script>
     <script src="./src/main.js?v=27"></script>
     <script src="./src/pwa.js?v=1"></script>
   </body>

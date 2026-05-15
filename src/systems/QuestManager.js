@@ -83,7 +83,8 @@ class QuestManager {
     this.renderGauge(quest.target);
     this.uiElements.bar?.classList.remove("is-recycle");
     this.updateUI();
-    this.scene.showQuestToast?.("상처리 퀘스트: 캔 20개 모으기!");
+    this.scene.setQuestMarker?.("canQuest", this.scene.sangcheoriNpc, "!");
+    this.scene.showQuestToast?.("여비 퀘스트: 캔 20개 모으기!");
     this.scene.playItemPickupSound?.();
   }
 
@@ -116,11 +117,12 @@ class QuestManager {
       this.scene.showCleanFeedback?.(this.scene.player.x, this.scene.player.y, true);
     }
     this.hideQuestGaugeWithPoof();
+    this.scene.clearQuestMarker?.("canQuest");
 
     this.scene.time.delayedCall(180, () => {
       this.scene.dialogueSystem?.start([
         {
-          name: "상처리",
+          name: "여비",
           text: "고마워! 캔 20개를 모으다니, 역시 해냄이야!",
         },
       ]);
@@ -139,6 +141,7 @@ class QuestManager {
     if (!quest.isUnlocked || quest.isCompleted) return;
 
     quest.isActive = true;
+    this.scene.setQuestMarker?.("recycleQuest", this.scene.sangcheoriNpc, "!");
     this.uiElements.root?.classList.remove("is-poofing");
     this.renderRecycleGauge();
     this.updateUI();
@@ -177,6 +180,7 @@ class QuestManager {
     this.updateUI();
     this.scene.activateRecycleMasterReward?.();
     this.hideQuestGaugeWithPoof();
+    this.scene.clearQuestMarker?.("recycleQuest");
   }
 
   isRecycleQuestReadyToComplete() {
