@@ -22,19 +22,19 @@ class DialogueSystem {
 
   setupEventListeners() {
     this.dialogModal?.addEventListener("click", () => this.nextLine());
-    this.scene.input.keyboard.on("keydown-SPACE", () => {
-      if (this.isInDialogue && !this.activeChoices) this.nextLine();
-    });
-    this.scene.input.keyboard.on("keydown-ENTER", () => {
+    this.scene.input.keyboard.on("keydown-SPACE", () => this.confirm());
+    this.scene.input.keyboard.on("keydown-ENTER", () => this.confirm());
+    this.scene.input.keyboard.on("keydown-LEFT", () => this.moveChoice(-1));
+    this.scene.input.keyboard.on("keydown-RIGHT", () => this.moveChoice(1));
+  }
+
+  confirm() {
       if (!this.isInDialogue) return;
       if (this.activeChoices) {
         this.choose(this.selectedChoiceIndex);
         return;
       }
       this.nextLine();
-    });
-    this.scene.input.keyboard.on("keydown-LEFT", () => this.moveChoice(-1));
-    this.scene.input.keyboard.on("keydown-RIGHT", () => this.moveChoice(1));
   }
 
   start(dialogueLines, onComplete = null) {

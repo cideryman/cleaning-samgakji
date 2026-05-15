@@ -807,12 +807,8 @@ class PlayScene extends Phaser.Scene {
   }
 
   updateCameraZoom() {
-    const width = window.innerWidth || this.scale.width;
-    const height = window.innerHeight || this.scale.height;
-    const isWideView = width / Math.max(height, 1) > 1.35;
-    const zoom = isWideView ? GAME_CONFIG.wideCameraZoom : 1;
-
-    this.cameras.main.setZoom(zoom);
+    this.cameras.main.setViewport(0, 0, this.scale.width, this.scale.height);
+    this.cameras.main.setZoom(1);
   }
 
   spawnTrashWave() {
@@ -965,6 +961,10 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleSpaceAction() {
+    if (this.isInDialogue) {
+      return;
+    }
+
     if (this.vendingMenuGroup) {
       this.selectHighlightedVendingOption();
       return;

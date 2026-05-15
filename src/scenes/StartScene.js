@@ -9,23 +9,26 @@ class StartScene extends Phaser.Scene {
     document.body.classList.add("start-screen");
     this.registry.set("soundEnabled", this.registry.get("soundEnabled") !== false);
 
-    this.add.rectangle(384, 240, 768, 480, 0x9acb87);
-    this.add.rectangle(384, 240, 620, 340, 0xedf6f0, 0.94).setStrokeStyle(5, 0x21352c);
-    this.add.text(384, 120, "삼각지 대청소", {
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+
+    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x9acb87);
+    this.add.rectangle(centerX, centerY, 620, 340, 0xedf6f0, 0.94).setStrokeStyle(5, 0x21352c);
+    this.add.text(centerX, centerY - 120, "삼각지 대청소", {
       fontFamily: "Arial",
       fontSize: "42px",
       color: "#21352c",
       fontStyle: "bold",
     }).setOrigin(0.5);
-    this.add.text(384, 170, "챕터 1  삼각지 복지관", {
+    this.add.text(centerX, centerY - 70, "챕터 1  삼각지 복지관", {
       fontFamily: "Arial",
       fontSize: "20px",
       color: "#315545",
     }).setOrigin(0.5);
 
     this.options = [
-      this.createOption(384, 250, "시작하기", () => this.startGame()),
-      this.createOption(384, 318, this.getSoundLabel(), () => this.toggleSound()),
+      this.createOption(centerX, centerY + 10, "시작하기", () => this.startGame()),
+      this.createOption(centerX, centerY + 78, this.getSoundLabel(), () => this.toggleSound()),
     ];
 
     this.input.keyboard.on("keydown-UP", () => this.moveSelection(-1));
