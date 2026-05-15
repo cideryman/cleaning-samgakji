@@ -10,6 +10,8 @@ class DialogueSystem {
     this.selectedChoiceIndex = 0;
 
     this.dialogModal = document.querySelector("#dialogModal");
+    this.dialogPanel = document.querySelector(".dialog-panel");
+    this.dialogPortrait = document.querySelector(".dialog-portrait");
     this.dialogName = document.querySelector(".dialog-name");
     this.dialogText = document.querySelector(".dialog-text");
     this.dialogNext = document.querySelector(".dialog-next");
@@ -57,7 +59,23 @@ class DialogueSystem {
     this.clearChoices();
     this.dialogNext.style.opacity = "0";
     this.dialogName.textContent = line.name || "???";
+    this.updatePortrait(line);
     this.typewrite(line.text, line.choices || null);
+  }
+
+  updatePortrait(line) {
+    if (!this.dialogPanel || !this.dialogPortrait) return;
+
+    if (!line.portraitKey) {
+      this.dialogPanel.classList.remove("has-portrait");
+      this.dialogPortrait.style.backgroundImage = "";
+      return;
+    }
+
+    const frame = Math.max(0, Math.min(2, line.frame || 0));
+    this.dialogPanel.classList.add("has-portrait");
+    this.dialogPortrait.style.backgroundImage = `url("./assets/objects/${line.portraitKey}.png")`;
+    this.dialogPortrait.style.backgroundPosition = `${frame * 50}% 50%`;
   }
 
   typewrite(fullText, choices = null) {
@@ -169,6 +187,7 @@ class DialogueSystem {
     this.typingInterval = null;
     this.clearChoices();
     this.dialogModal.style.display = "none";
+    this.dialogPanel?.classList.remove("has-portrait");
     this.isInDialogue = false;
     this.scene.isInDialogue = false;
 

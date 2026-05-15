@@ -23,14 +23,26 @@ const GAME_CONFIG = {
   slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
   maxSlimes: 25,                 // 동시 최대 슬라임 수
   rewardPerSlime: 100,           // 슬라임당 100원
-  bonusPerCan: 200,              // 캔 추가 보너스 200원
-  recycleMasterBonus: 200,
+  recycleDepositReward: 100,
   recycleQuestUnlockMoney: 25000,
+  jjookQuestUnlockMoney: 45000,
+  drinkPrice: 1000,
+  speedBuffMultiplier: 1.35,
+  speedBuffDurationMs: 60000,
+  jjookFollowDurationMs: 300000,
   chapter1TargetMoney: 100000,   // 챕터1 목표 금액
-  recyclingCenter: { x: 1180, y: 430 },
+  recyclingCenter: { x: 585, y: 495 },
+  jjookSpawn: { x: 685, y: 545 },
+  walletSpawn: { x: 598, y: 612 },
   recycleBinHitboxWidth: 82,
   recycleBinHitboxHeight: 90,
 };
+
+const DRINK_OPTIONS = [
+  { key: "cola", label: "콜라", texture: "drink_cola" },
+  { key: "cider", label: "사이다", texture: "drink_cider" },
+  { key: "water", label: "물", texture: "drink_water" },
+];
 
 const TILED_MAP_CONFIG = {
   key: "chapter1_map",
@@ -74,6 +86,16 @@ class PlayScene extends Phaser.Scene {
     this.cleanedCanCount = 0;
     this.recyclingInventory = { normal: 0, can: 0, plastic: 0 };
     this.isRecycleMaster = false;
+    this.inventoryCaptionQueue = [];
+    this.isShowingInventoryCaption = false;
+    this.jjookQuestState = "locked";
+    this.hasAnnouncedJjookQuest = false;
+    this.hasWallet = false;
+    this.selectedDrink = null;
+    this.drinkInventory = [];
+    this.isSpeedBuffActive = false;
+    this.isJjookFollowActive = false;
+    this.jjookFollowEndsAt = 0;
     this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
@@ -118,6 +140,9 @@ class PlayScene extends Phaser.Scene {
     this.resultTrashCountEl = document.querySelector("#resultTrashCount");
     this.resultCanCountEl = document.querySelector("#resultCanCount");
     this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
+    this.inventoryNormalCountEl = document.querySelector("#inventoryNormalCount");
+    this.inventoryPlasticCountEl = document.querySelector("#inventoryPlasticCount");
+    this.inventoryCanCountEl = document.querySelector("#inventoryCanCount");
     this.restartButton = document.querySelector("#restartButton");
     this.restartHandler = () => this.restartGame();
     this.sweepHandler = (event) => {
@@ -219,6 +244,16 @@ class PlayScene extends Phaser.Scene {
     this.cleanedCanCount = 0;
     this.recyclingInventory = { normal: 0, can: 0, plastic: 0 };
     this.isRecycleMaster = false;
+    this.inventoryCaptionQueue = [];
+    this.isShowingInventoryCaption = false;
+    this.jjookQuestState = "locked";
+    this.hasAnnouncedJjookQuest = false;
+    this.hasWallet = false;
+    this.selectedDrink = null;
+    this.drinkInventory = [];
+    this.isSpeedBuffActive = false;
+    this.isJjookFollowActive = false;
+    this.jjookFollowEndsAt = 0;
     this.hasAnnouncedRecycleQuest = false;
     this.hasUnlockedSangcheori = false;
     this.hasUsedSangcheori = false;
@@ -243,6 +278,9 @@ class PlayScene extends Phaser.Scene {
   update() {
     this.handleMovement();
     this.checkRecycleQuestUnlock();
+    this.checkJjookQuestUnlock();
+    this.checkWalletPickup();
+    this.updateJjookFollower();
     if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
     }
@@ -259,6 +297,18 @@ class PlayScene extends Phaser.Scene {
     this.moveSangcheoriToRecyclingCenter();
     this.showQuestToast("상처리 아저씨가 분리수거장에서 기다리고 있어!", 10000);
     this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
+  }
+
+  checkJjookQuestUnlock() {
+    if (!this.moneySystem || !this.questManager || this.hasAnnouncedJjookQuest) return;
+    if (this.questManager.getRecycleQuestState() !== "completed") return;
+    if (this.moneySystem.money < GAME_CONFIG.jjookQuestUnlockMoney) return;
+
+    this.hasAnnouncedJjookQuest = true;
+    this.jjookQuestState = "wallet_missing";
+    this.createJjookQuestObjects();
+    this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
+    this.showSpeechBubble(this.jjookNpc, "내 지갑 어디 갔지?", 10000);
   }
 
   createMap() {
@@ -362,17 +412,14 @@ class PlayScene extends Phaser.Scene {
     const center = GAME_CONFIG.recyclingCenter;
     this.recycleBins = [];
 
-    const centerSign = this.add.image(center.x, center.y - 76, "recycling_center");
-    centerSign.setDisplaySize(226, 118);
-    centerSign.setDepth(3);
-
-    const vendingMachine = this.add.image(center.x + 174, center.y + 18, "recycle_vending_machine");
-    vendingMachine.setDisplaySize(78, 86);
+    const vendingMachine = this.add.image(center.x + 96, center.y + 16, "vending_machine_full");
+    vendingMachine.setDisplaySize(78, 96);
     vendingMachine.setDepth(3.2);
+    this.vendingMachine = vendingMachine;
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
       const x = center.x + binConfig.xOffset;
-      const y = center.y + binConfig.yOffset;
+      const y = center.y + binConfig.yOffset + 76;
       const bin = this.add.image(x, y, binConfig.texture);
       bin.setDisplaySize(70, 78);
       bin.setDepth(3.4);
@@ -407,6 +454,107 @@ class PlayScene extends Phaser.Scene {
     };
   }
 
+  createJjookQuestObjects() {
+    if (!this.jjookNpc) {
+      const { x, y } = GAME_CONFIG.jjookSpawn;
+      this.jjookNpc = this.add.image(x, y, "jjook_npc");
+      this.jjookNpc.setDisplaySize(48, 96);
+      this.jjookNpc.setDepth(4.2);
+      this.jjookNpc.setInteractive({ useHandCursor: true });
+      this.jjookNpc.on("pointerdown", (pointer) => {
+        pointer.event?.preventDefault();
+        pointer.event?.stopPropagation();
+        this.handleJjookInteraction();
+      });
+      this.tweens.add({
+        targets: this.jjookNpc,
+        y: y - 5,
+        duration: 780,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+    }
+
+    if (!this.walletItem) {
+      this.spawnWalletItem();
+    }
+  }
+
+  spawnWalletItem() {
+    const { x, y } = GAME_CONFIG.walletSpawn;
+    this.walletItem = this.physics.add.image(x, y, "wallet_item");
+    this.walletItem.setDisplaySize(42, 34);
+    this.walletItem.setDepth(4.1);
+    this.walletItem.body.setSize(110, 82);
+    this.walletItem.body.setOffset(170, 145);
+
+    this.tweens.add({
+      targets: this.walletItem,
+      y: y - 7,
+      duration: 640,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.walletSparkles = this.time.addEvent({
+      delay: 360,
+      loop: true,
+      callback: () => this.showWalletSparkle(),
+    });
+
+    this.physics.add.overlap(this.player, this.walletItem, () => this.collectWallet());
+  }
+
+  showWalletSparkle() {
+    if (!this.walletItem?.active) return;
+
+    const sparkle = this.add.circle(
+      this.walletItem.x + Phaser.Math.Between(-26, 26),
+      this.walletItem.y + Phaser.Math.Between(-22, 20),
+      Phaser.Math.Between(3, 5),
+      0x79c6ff,
+      0.95,
+    );
+    sparkle.setDepth(7);
+    this.tweens.add({
+      targets: sparkle,
+      y: sparkle.y - 22,
+      alpha: 0,
+      duration: 520,
+      ease: "Cubic.easeOut",
+      onComplete: () => sparkle.destroy(),
+    });
+  }
+
+  collectWallet() {
+    if (this.hasWallet || this.jjookQuestState !== "wallet_missing") return;
+
+    this.hasWallet = true;
+    this.jjookQuestState = "wallet_found";
+    this.walletSparkles?.remove(false);
+    this.walletItem?.destroy();
+    this.walletItem = null;
+    this.playItemPickupSound();
+    this.showQuestToast("갈색 지갑을 찾았다!");
+    this.showSpeechBubble(this.player, "지갑 찾았다!");
+  }
+
+  checkWalletPickup() {
+    if (!this.walletItem?.active || !this.player || this.jjookQuestState !== "wallet_missing") return;
+
+    const distance = Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.walletItem.x,
+      this.walletItem.y,
+    );
+    if (distance < 58) {
+      this.collectWallet();
+    }
+  }
+
   createSangcheoriNpc() {
     const positions = [
       [420, 226],
@@ -428,7 +576,7 @@ class PlayScene extends Phaser.Scene {
     this.sangcheoriNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
-      this.showSangcheoriQuestDialogue();
+      this.handlePrimaryAction();
     });
     this.tweens.add({
       targets: this.sangcheoriNpc,
@@ -650,7 +798,7 @@ class PlayScene extends Phaser.Scene {
       { left: 875, right: 1295, top: 558, bottom: 824 },
       { left: 1210, right: 1435, top: 80, bottom: 900 },
       { left: 865, right: 1002, top: 184, bottom: 278 },
-      { left: 1070, right: 1348, top: 330, bottom: 520 },
+      { left: 470, right: 760, top: 460, bottom: 650 },
       { left: 48, right: 90, top: 70, bottom: 890 },
       { left: 1446, right: 1490, top: 70, bottom: 890 },
     ];
@@ -680,16 +828,94 @@ class PlayScene extends Phaser.Scene {
   }
 
   handlePrimaryAction() {
+    if (this.tryDepositNearestRecycleBin()) {
+      return;
+    }
+
+    if (this.hasTrashInSweepRange()) {
+      this.trySweep();
+      return;
+    }
+
+    if (this.isPlayerNearJjookNpc() && !this.isInDialogue) {
+      this.handleJjookInteraction();
+      return;
+    }
+
     if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
       this.showSangcheoriQuestDialogue();
       return;
     }
 
-    if (this.tryDepositNearestRecycleBin()) {
+    this.trySweep();
+  }
+
+  isPlayerNearJjookNpc() {
+    if (!this.player || !this.jjookNpc) return false;
+
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.jjookNpc.x,
+      this.jjookNpc.y,
+    ) < 120;
+  }
+
+  handleJjookInteraction() {
+    if (this.isInDialogue || !this.dialogueSystem || this.jjookQuestState === "locked") return;
+
+    if (this.jjookQuestState === "wallet_missing") {
+      this.dialogueSystem.start([
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjookface",
+          frame: 0,
+          text: "아... 운동하다 지갑을 잃어버렸어... 목도 너무 마른데 어떡하지?",
+        },
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjookface",
+          frame: 2,
+          text: "혹시 근처 수풀이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야!",
+        },
+      ]);
       return;
     }
 
-    this.trySweep();
+    if (this.jjookQuestState === "wallet_found") {
+      this.dialogueSystem.start([
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjookface",
+          frame: 1,
+          text: "지갑을 찾아줘서 정말 고마워! 내가 보답으로 시원한 음료수 하나 사줄게. 해냄아, 뭐 마실래?",
+        },
+      ], () => this.openVendingMenu());
+      return;
+    }
+
+    if (this.jjookQuestState === "completed") {
+      this.dialogueSystem.start([
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjookface",
+          frame: 1,
+          text: "나랑 같이 뛰자! 플로깅은 같이 하면 더 신나!",
+        },
+      ]);
+    }
+  }
+
+  hasTrashInSweepRange() {
+    if (!this.player || !this.trashSlimes) return false;
+
+    const multiplier = this.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
+    const range = 112 * multiplier;
+    return this.trashSlimes.getChildren().some((trash) => {
+      return trash.active
+        && !trash.getData("cleaned")
+        && Phaser.Math.Distance.Between(this.player.x, this.player.y, trash.x, trash.y) <= range;
+    });
   }
 
   showSangcheoriQuestDialogue() {
@@ -700,11 +926,15 @@ class PlayScene extends Phaser.Scene {
       this.dialogueSystem.start([
         {
           name: "상처리",
-          text: "오! 해냄이, 캔 줍는 실력이 대단한데? 하지만 진짜 전문가는 '나눠서 버릴 줄' 알아야 해!",
+          text: "오! 해냄이, 청소 실력이 대단한데? 이제 진짜 전문가는 '나눠서 버릴 줄' 알아야 해!",
         },
         {
           name: "상처리",
-          text: "여기 분리수거장 보이지? 일반 쓰레기 30개, 캔 10개, 플라스틱 10개를 딱 맞춰서 통에 넣어봐. 그럼 내가 특별 수당을 줄게!",
+          text: "쓰레기를 치우면 바로 100원을 받고, 퀘스트를 끝낸 뒤 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어.",
+        },
+        {
+          name: "상처리",
+          text: "여기 분리수거장 보이지? 일반 쓰레기 30개, 캔 10개, 플라스틱 10개를 딱 맞춰서 통에 넣어봐. 그럼 분리수거 수당을 열어줄게!",
           choices: [
             {
               label: "해볼게!",
@@ -729,7 +959,7 @@ class PlayScene extends Phaser.Scene {
 
     if (recycleState === "completed") {
       this.dialogueSystem.start([
-        { name: "상처리", text: "역시 해냄이야! 이제부터 쓰레기 하나를 치울 때마다 돈을 더 줄게." },
+        { name: "상처리", text: "이제 모아둔 쓰레기를 맞는 통에 넣어봐. 하나 넣을 때마다 분리수거 수당 100원을 받을 수 있어!" },
       ]);
       return;
     }
@@ -797,8 +1027,9 @@ class PlayScene extends Phaser.Scene {
     
     // 대화창으로 첫 가이드 표시
     const dialogue = [
-      { name: "알림", text: "슬라임을 빗자루로 치우세요!" },
-      { name: "알림", text: "캔을 모으면 특별한 도움을 받을 수 있어요." }
+      { name: "알림", text: "여행을 가려면 돈이 조금 부족해요." },
+      { name: "엄마", text: "삼각지 청소를 도와주면 청소 수당을 줄게." },
+      { name: "알림", text: "쓰레기를 빗자루로 치우고 수당을 모아보세요!" }
     ];
     this.dialogueSystem.start(dialogue);
   }
@@ -827,10 +1058,29 @@ class PlayScene extends Phaser.Scene {
       this.updatePlayerDirection(velocity);
     }
 
+    const speed = this.getPlayerSpeed();
     this.player.setVelocity(
-      velocity.x * GAME_CONFIG.playerSpeed,
-      velocity.y * GAME_CONFIG.playerSpeed,
+      velocity.x * speed,
+      velocity.y * speed,
     );
+  }
+
+  getPlayerSpeed() {
+    return this.isSpeedBuffActive
+      ? GAME_CONFIG.playerSpeed * GAME_CONFIG.speedBuffMultiplier
+      : GAME_CONFIG.playerSpeed;
+  }
+
+  updateJjookFollower() {
+    if (!this.isJjookFollowActive || !this.jjookNpc || !this.player) return;
+
+    const distance = Phaser.Math.Distance.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
+    if (distance <= 88) return;
+
+    const step = (this.game.loop.delta / 1000) * 118;
+    const angle = Phaser.Math.Angle.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
+    this.jjookNpc.x += Math.cos(angle) * Math.min(step, distance - 88);
+    this.jjookNpc.y += Math.sin(angle) * Math.min(step, distance - 88);
   }
 
   updatePlayerDirection(velocity) {
@@ -966,11 +1216,231 @@ class PlayScene extends Phaser.Scene {
       return;
     }
 
+    if (recycleState === "active") {
+      const didDepositForQuest = this.questManager?.depositRecycleItem(type);
+      if (!didDepositForQuest) return;
+
+      this.recyclingInventory[type] -= 1;
+      this.showRecycleDepositEffect(binSprite || this.player, type);
+      this.playItemPickupSound();
+      this.updateHud();
+      return;
+    }
+
     this.recyclingInventory[type] -= 1;
-    this.questManager?.depositRecycleItem(type);
     this.showRecycleDepositEffect(binSprite || this.player, type);
+    this.moneySystem?.addMoney(GAME_CONFIG.recycleDepositReward);
     this.playItemPickupSound();
     this.updateHud();
+  }
+
+  openVendingMenu() {
+    if (this.vendingMenuGroup) return;
+
+    this.jjookQuestState = "choosing_drink";
+    const group = this.add.group();
+    this.vendingMenuGroup = group;
+
+    const dim = this.add.rectangle(384, 240, 768, 480, 0x000000, 0.45);
+    dim.setScrollFactor(0);
+    dim.setDepth(60);
+    group.add(dim);
+
+    const panel = this.add.image(384, 230, "vending_menu");
+    panel.setScrollFactor(0);
+    panel.setDisplaySize(430, 235);
+    panel.setDepth(61);
+    group.add(panel);
+
+    const title = this.add.text(384, 125, "마실 음료를 골라줘", {
+      fontFamily: "Arial",
+      fontSize: "24px",
+      color: "#21352c",
+      fontStyle: "bold",
+    });
+    title.setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(62);
+    group.add(title);
+
+    DRINK_OPTIONS.forEach((drink, index) => {
+      const x = 270 + index * 114;
+      const button = this.add.rectangle(x, 235, 92, 112, 0xffffff, 0.94);
+      button.setStrokeStyle(4, 0x21352c);
+      button.setScrollFactor(0);
+      button.setDepth(62);
+      button.setInteractive({ useHandCursor: true });
+      button.on("pointerdown", () => this.selectDrink(drink));
+      group.add(button);
+
+      const icon = this.add.image(x, 215, drink.texture);
+      icon.setDisplaySize(54, 54);
+      icon.setScrollFactor(0);
+      icon.setDepth(63);
+      group.add(icon);
+
+      const label = this.add.text(x, 280, drink.label, {
+        fontFamily: "Arial",
+        fontSize: "17px",
+        color: "#21352c",
+        fontStyle: "bold",
+      });
+      label.setOrigin(0.5);
+      label.setScrollFactor(0);
+      label.setDepth(63);
+      group.add(label);
+    });
+  }
+
+  closeVendingMenu() {
+    this.vendingMenuGroup?.clear(true, true);
+    this.vendingMenuGroup = null;
+  }
+
+  selectDrink(drink) {
+    if (!drink || this.jjookQuestState !== "choosing_drink") return;
+
+    if (!this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
+      this.showQuestToast("돈이 1,000원 필요해!");
+      return;
+    }
+
+    this.selectedDrink = drink;
+    this.closeVendingMenu();
+    this.playVendingPaymentAnimation(drink);
+  }
+
+  playVendingPaymentAnimation(drink) {
+    const bill = this.add.image(384, 250, "bill_1000");
+    bill.setScrollFactor(0);
+    bill.setDisplaySize(156, 78);
+    bill.setDepth(70);
+    bill.setAlpha(0);
+
+    this.playTone({ frequency: 880, duration: 0.08, type: "triangle", volume: 0.06 });
+    this.tweens.add({
+      targets: bill,
+      alpha: 1,
+      y: 205,
+      duration: 220,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.playTone({ frequency: 1240, duration: 0.08, type: "square", volume: 0.045 });
+        this.tweens.add({
+          targets: bill,
+          x: 480,
+          y: 210,
+          scaleX: bill.scaleX * 0.35,
+          scaleY: bill.scaleY * 0.35,
+          alpha: 0,
+          duration: 420,
+          ease: "Cubic.easeIn",
+          onComplete: () => {
+            bill.destroy();
+            this.dropSelectedDrink(drink);
+          },
+        });
+      },
+    });
+  }
+
+  dropSelectedDrink(drink) {
+    const can = this.add.image(384, 205, drink.texture);
+    can.setScrollFactor(0);
+    can.setDisplaySize(62, 62);
+    can.setDepth(70);
+    can.setAlpha(0);
+    this.playTone({ frequency: 196, duration: 0.08, type: "square", volume: 0.06 });
+    this.playTone({ frequency: 330, duration: 0.1, type: "triangle", volume: 0.05, delay: 0.07 });
+
+    this.tweens.add({
+      targets: can,
+      alpha: 1,
+      y: 285,
+      duration: 420,
+      ease: "Bounce.easeOut",
+      onComplete: () => {
+        this.time.delayedCall(520, () => {
+          can.destroy();
+          this.finishJjookQuest();
+        });
+      },
+    });
+  }
+
+  finishJjookQuest() {
+    this.jjookQuestState = "completed";
+    this.hasWallet = false;
+    if (this.selectedDrink) {
+      this.drinkInventory.push(this.selectedDrink.key);
+      this.showQuestToast(`${this.selectedDrink.label}을 마셨다! 이동 속도 UP`);
+    }
+    this.activateDrinkSpeedBuff();
+    this.activateJjookFollower();
+    this.dialogueSystem?.start([
+      {
+        name: "해냄이",
+        text: "잘 먹었어, 고마워! 시원하다!",
+      },
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjookface",
+        frame: 2,
+        text: "아냐, 내가 더 고맙지! 나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!",
+      },
+    ]);
+  }
+
+  activateDrinkSpeedBuff() {
+    this.isSpeedBuffActive = true;
+    this.showBuffIcon("speed_buff_icon", "이동 속도 UP", GAME_CONFIG.speedBuffDurationMs);
+    this.time.delayedCall(GAME_CONFIG.speedBuffDurationMs, () => {
+      this.isSpeedBuffActive = false;
+      this.showQuestToast("음료수 속도 효과가 끝났어.");
+    });
+  }
+
+  activateJjookFollower() {
+    this.isJjookFollowActive = true;
+    this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
+    this.showQuestToast("쭉쭉이가 5분 동안 플로깅을 도와줘!");
+    this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
+      this.isJjookFollowActive = false;
+      this.showQuestToast("쭉쭉이가 잠깐 쉬러 갔어.");
+    });
+  }
+
+  showBuffIcon(textureKey, label, duration) {
+    const icon = this.add.image(708, 88, textureKey);
+    icon.setScrollFactor(0);
+    icon.setDisplaySize(42, 42);
+    icon.setDepth(55);
+    icon.setAlpha(0);
+    const text = this.add.text(708, 122, label, {
+      fontFamily: "Arial",
+      fontSize: "13px",
+      color: "#21352c",
+      fontStyle: "bold",
+      backgroundColor: "rgba(255,255,255,0.9)",
+      padding: { left: 5, right: 5, top: 2, bottom: 2 },
+    });
+    text.setOrigin(0.5);
+    text.setScrollFactor(0);
+    text.setDepth(55);
+    text.setAlpha(0);
+
+    this.tweens.add({ targets: [icon, text], alpha: 1, duration: 180 });
+    this.time.delayedCall(duration, () => {
+      this.tweens.add({
+        targets: [icon, text],
+        alpha: 0,
+        duration: 240,
+        onComplete: () => {
+          icon.destroy();
+          text.destroy();
+        },
+      });
+    });
   }
 
   showRecycleDepositEffect(target, type) {
@@ -1115,15 +1585,7 @@ class PlayScene extends Phaser.Scene {
     }
     this.addTrashToRecycleInventory(trashType);
 
-    // ===== 돈 보상 시스템 =====
-    let reward = GAME_CONFIG.rewardPerSlime; // 기본 100원
-    if (isCanTrash) {
-      reward += GAME_CONFIG.bonusPerCan; // 캔이면 +200원
-    }
-    if (this.isRecycleMaster) {
-      reward += GAME_CONFIG.recycleMasterBonus;
-    }
-    // 나중에 MoneySystem 추가 시: this.moneySystem.addMoney(reward);
+    const reward = this.getTrashCleanReward();
     console.log(`획득: ${reward}원 (총: ${this.totalCleanedCount}개)`);
     this.moneySystem.addMoney(reward);
 
@@ -1154,7 +1616,11 @@ class PlayScene extends Phaser.Scene {
       can: "캔",
       plastic: "플라스틱",
     };
-    this.showSpeechBubble(this.player, `${labelByType[normalizedType]} +1`);
+    this.queueInventoryCaption(`${labelByType[normalizedType]} +1`);
+  }
+
+  getTrashCleanReward() {
+    return this.isJjookFollowActive ? GAME_CONFIG.rewardPerSlime * 2 : GAME_CONFIG.rewardPerSlime;
   }
 
   respawnSlime() {
@@ -1283,11 +1749,11 @@ class PlayScene extends Phaser.Scene {
     this.isRecycleMaster = true;
     this.playMoneyRewardSound();
     this.showCleanFeedback(this.player.x, this.player.y, true);
-    this.showQuestToast("분리수거 전문가! 모든 쓰레기 수거 보너스 +200원");
+    this.showQuestToast("분리수거 수당 개방! 맞는 통에 넣으면 100원");
     this.dialogueSystem?.start([
       {
         name: "상처리",
-        text: "역시 해냄이야! 이제부터는 쓰레기 하나를 치울 때마다 돈을 더 줄게. 우리 삼각지가 반짝반짝해지겠는걸?",
+        text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에서 맞는 통에 넣으면 100원을 더 받을 수 있어.",
       },
       {
         name: "상처리",
@@ -1489,15 +1955,34 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
-  showMoneyRewardAnimation(amount) {
+  queueInventoryCaption(message) {
+    if (!message) return;
+
+    this.inventoryCaptionQueue.push(message);
+    this.showNextInventoryCaption();
+  }
+
+  showNextInventoryCaption() {
+    if (this.isShowingInventoryCaption || this.inventoryCaptionQueue.length === 0) return;
+
+    this.isShowingInventoryCaption = true;
+    const message = this.inventoryCaptionQueue.shift();
+    this.showSpeechBubble(this.player, message, 760);
+    this.time.delayedCall(780, () => {
+      this.isShowingInventoryCaption = false;
+      this.showNextInventoryCaption();
+    });
+  }
+
+  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
     const stage = document.querySelector(".game-stage");
     if (!stage) return;
 
     const reward = document.createElement("div");
     reward.className = "money-reward-pop";
     reward.innerHTML = `
-      <img src="./assets/ui/10000won.png" alt="만원 선물" />
-      <strong>선물 ${amount.toLocaleString()}원</strong>
+      <img src="${icon}" alt="${label}" />
+      <strong>${label} ${amount.toLocaleString()}원</strong>
     `;
     stage.appendChild(reward);
     window.setTimeout(() => reward.remove(), 3600);
@@ -1652,9 +2137,7 @@ class PlayScene extends Phaser.Scene {
     }
     this.addTrashToRecycleInventory(trashType);
 
-    let reward = GAME_CONFIG.rewardPerSlime;
-    if (trashType === "can") reward += GAME_CONFIG.bonusPerCan;
-    if (this.isRecycleMaster) reward += GAME_CONFIG.recycleMasterBonus;
+    const reward = this.getTrashCleanReward();
     this.moneySystem.addMoney(reward);
 
     this.showCleanFeedback(trash.x, trash.y);
@@ -2080,6 +2563,16 @@ class PlayScene extends Phaser.Scene {
 
     if (this.missionCountEl) {
       this.missionCountEl.textContent = `${this.totalCleanedCount}/${GAME_CONFIG.totalGoal}`;
+    }
+
+    if (this.inventoryNormalCountEl) {
+      this.inventoryNormalCountEl.textContent = this.recyclingInventory.normal;
+    }
+    if (this.inventoryPlasticCountEl) {
+      this.inventoryPlasticCountEl.textContent = this.recyclingInventory.plastic;
+    }
+    if (this.inventoryCanCountEl) {
+      this.inventoryCanCountEl.textContent = this.recyclingInventory.can;
     }
 
     this.sweepButton?.classList.toggle("is-upgraded", this.hasBroomUpgrade);

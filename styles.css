@@ -779,6 +779,29 @@ body.app-fit-mode #game canvas {
   margin-bottom: 20px;
 }
 
+.dialog-panel.has-portrait {
+  padding-left: 132px;
+}
+
+.dialog-portrait {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  width: 92px;
+  height: 92px;
+  display: none;
+  border: 3px solid #6b4c3b;
+  border-radius: 14px;
+  background-color: #ffffff;
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+  box-shadow: 0 5px 0 rgba(107, 76, 59, 0.25);
+}
+
+.dialog-panel.has-portrait .dialog-portrait {
+  display: block;
+}
+
 .dialog-name {
   font-weight: bold;
   color: #d68b45;
@@ -816,6 +839,18 @@ body.app-fit-mode #game canvas {
     width: 95%;
     padding: 14px 16px;
   }
+
+  .dialog-panel.has-portrait {
+    padding-left: 104px;
+  }
+
+  .dialog-portrait {
+    left: 12px;
+    bottom: 14px;
+    width: 76px;
+    height: 76px;
+  }
+
   .dialog-text {
     font-size: 16px;
     min-height: 50px;
@@ -890,6 +925,43 @@ body.app-fit-mode #game canvas {
   font-weight: bold;
   display: flex;
   align-items: center;
+}
+
+.trash-inventory-ui {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 2px solid rgba(255, 255, 255, 0.32);
+  padding-left: 10px;
+  margin-left: 1px;
+}
+
+.trash-inventory-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 46px;
+  padding: 4px 7px 4px 5px;
+  border-radius: 28px;
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.trash-inventory-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex: 0 0 auto;
+}
+
+.trash-inventory-item span {
+  min-width: 14px;
+  color: #dff6ff;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 1px 1px 0 #000000;
 }
 
 .can-quest-hud {
@@ -1200,6 +1272,27 @@ body.app-fit-mode #game canvas {
   .money-total {
     font-size: 16px;
     padding-left: 10px;
+  }
+
+  .trash-inventory-ui {
+    gap: 5px;
+    padding-left: 8px;
+  }
+
+  .trash-inventory-item {
+    min-width: 42px;
+    gap: 3px;
+    padding: 4px 6px 4px 4px;
+  }
+
+  .trash-inventory-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .trash-inventory-item span {
+    min-width: 12px;
+    font-size: 15px;
   }
 
   .can-quest-hud {

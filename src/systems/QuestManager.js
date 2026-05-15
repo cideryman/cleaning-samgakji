@@ -148,11 +148,11 @@ class QuestManager {
 
   depositRecycleItem(type) {
     const quest = this.recycleQuest;
-    if (!quest.isActive || quest.isCompleted || !(type in quest.target)) return;
+    if (!quest.isActive || quest.isCompleted || !(type in quest.target)) return false;
 
     if (quest.current[type] >= quest.target[type]) {
       this.scene.showSpeechBubble?.(this.scene.player, "이 종류는 충분해!");
-      return;
+      return false;
     }
 
     quest.current[type] += 1;
@@ -161,6 +161,8 @@ class QuestManager {
     if (this.isRecycleQuestReadyToComplete()) {
       this.completeRecycleQuest();
     }
+
+    return true;
   }
 
   completeRecycleQuest() {
@@ -223,18 +225,16 @@ class QuestManager {
     if (!root || !label || !bar) return;
 
     const recycleQuest = this.recycleQuest;
-    if (recycleQuest.isActive || recycleQuest.isCompleted) {
+    if (recycleQuest.isActive) {
       const current = this.getRecycleCurrentTotal();
       const target = this.getRecycleTargetTotal();
       root.classList.toggle("is-hidden", false);
-      root.classList.toggle("is-complete", recycleQuest.isCompleted);
+      root.classList.toggle("is-complete", false);
       root.setAttribute("aria-hidden", "false");
       if (!bar.classList.contains("is-recycle")) {
         this.renderRecycleGauge();
       }
-      label.textContent = recycleQuest.isCompleted
-        ? "분리수거 전문가 완료"
-        : `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · 캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · 플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
+      label.textContent = `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · 캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · 플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
       Array.from(bar.querySelectorAll(".recycle-gauge-row")).forEach((row) => {
         const type = row.dataset.type;
         const filled = Math.min(recycleQuest.current[type], recycleQuest.target[type]);

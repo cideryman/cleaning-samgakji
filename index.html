@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=45" />
+    <link rel="stylesheet" href="./styles.css?v=48" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body class="start-screen">
@@ -43,6 +43,20 @@
             <span id="count100">0</span>
           </div>
           <div class="money-total" id="totalMoney">￦0</div>
+          <div class="trash-inventory-ui" aria-label="collected trash">
+            <div class="trash-inventory-item" title="일반 쓰레기">
+              <img src="./assets/ui/trash.png" alt="일반 쓰레기" class="trash-inventory-icon">
+              <span id="inventoryNormalCount">0</span>
+            </div>
+            <div class="trash-inventory-item" title="플라스틱">
+              <img src="./assets/ui/plastic.png" alt="플라스틱" class="trash-inventory-icon">
+              <span id="inventoryPlasticCount">0</span>
+            </div>
+            <div class="trash-inventory-item" title="캔">
+              <img src="./assets/ui/trash-can.png" alt="캔" class="trash-inventory-icon">
+              <span id="inventoryCanCount">0</span>
+            </div>
+          </div>
         </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
           <div class="can-quest-label" id="canQuestLabel">퀘스트 없음</div>
@@ -73,6 +87,7 @@
         <!-- 대화창 모달 -->
         <div id="dialogModal" class="dialog-modal" style="display: none;">
           <div class="dialog-panel">
+            <div class="dialog-portrait" aria-hidden="true"></div>
             <div class="dialog-name"></div>
             <div class="dialog-text"></div>
             <div class="dialog-choices" aria-hidden="true"></div>
@@ -97,12 +112,12 @@
       </div>
     </main>
 
-        <script src="./src/scenes/Preload.js?v=36"></script>
+        <script src="./src/scenes/Preload.js?v=37"></script>
     <script src="./src/scenes/StartScene.js?v=1"></script>
-    <script src="./src/systems/DialogueSystem.js?v=2"></script>
+    <script src="./src/systems/DialogueSystem.js?v=3"></script>
     <script src="./src/systems/MoneySystem.js?v=3"></script>
-    <script src="./src/systems/QuestManager.js?v=6"></script>
-    <script src="./src/scenes/PlayScene.js?v=48"></script>
+    <script src="./src/systems/QuestManager.js?v=7"></script>
+    <script src="./src/scenes/PlayScene.js?v=51"></script>
     <script src="./src/main.js?v=27"></script>
     <script src="./src/pwa.js?v=1"></script>
   </body>
