@@ -622,6 +622,12 @@ body.app-fit-mode #game canvas {
       max(28px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   }
 
+  .money-ui {
+    transform: scale(0.82);
+    transform-origin: top left;
+    max-width: calc((100vw - 18px) / 0.82);
+  }
+
   .game-stage {
     min-height: 0;
     display: grid;
@@ -689,16 +695,17 @@ body.app-fit-mode #game canvas {
 
   body {
     padding: 0;
+    background: #9acb87;
   }
 
   .game-shell {
     width: 100vw;
-    height: 100svh;
+    height: 100vh;
+    height: 100dvh;
     max-width: none;
     display: grid;
     grid-template-rows: minmax(0, 1fr);
-    padding: max(0px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right))
-      max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+    padding: 0;
   }
 
   .game-header {
