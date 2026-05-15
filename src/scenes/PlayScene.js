@@ -812,8 +812,9 @@ class PlayScene extends Phaser.Scene {
     const viewport = window.visualViewport;
     const width = viewport?.width || window.innerWidth || this.scale.width;
     const height = viewport?.height || window.innerHeight || this.scale.height;
-    const isMobileLandscape = width <= 1200 && height <= 560 && width > height;
-    const zoom = isMobileLandscape ? 1.6 : 1;
+    const isTouchDevice = navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches;
+    const isMobileLandscape = isTouchDevice && width > height;
+    const zoom = isMobileLandscape ? 1.55 : 1;
 
     this.cameras.main.setViewport(0, 0, this.scale.width, this.scale.height);
     this.cameras.main.setZoom(zoom);

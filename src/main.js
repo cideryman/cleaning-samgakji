@@ -1,12 +1,25 @@
 const BASE_GAME_WIDTH = 768;
 const BASE_GAME_HEIGHT = 480;
 const BASE_GAME_RATIO = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
+const MOBILE_LANDSCAPE_WIDTH = 1040;
+const MOBILE_LANDSCAPE_HEIGHT = 480;
+
+function isTouchDevice() {
+  return navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches;
+}
 
 function getResponsiveGameSize() {
   const viewport = window.visualViewport;
   const viewportWidth = Math.max(Math.round(viewport?.width || window.innerWidth || BASE_GAME_WIDTH), 320);
   const viewportHeight = Math.max(Math.round(viewport?.height || window.innerHeight || BASE_GAME_HEIGHT), 240);
   const viewportRatio = viewportWidth / viewportHeight;
+
+  if (isTouchDevice() && viewportWidth > viewportHeight) {
+    return {
+      width: MOBILE_LANDSCAPE_WIDTH,
+      height: MOBILE_LANDSCAPE_HEIGHT,
+    };
+  }
 
   if (viewportRatio >= BASE_GAME_RATIO) {
     return {
