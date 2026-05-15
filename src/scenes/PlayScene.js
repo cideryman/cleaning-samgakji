@@ -192,6 +192,7 @@ class PlayScene extends Phaser.Scene {
     document.addEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
     window.addEventListener("resize", this.resizeHandler);
     window.addEventListener("orientationchange", this.resizeHandler);
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.resizeHandler);
     window.addEventListener("pagehide", this.pageAudioStopHandler);
     window.addEventListener("beforeunload", this.pageAudioStopHandler);
     document.addEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -227,6 +228,7 @@ class PlayScene extends Phaser.Scene {
       document.removeEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
       window.removeEventListener("resize", this.resizeHandler);
       window.removeEventListener("orientationchange", this.resizeHandler);
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.resizeHandler);
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
       window.removeEventListener("beforeunload", this.pageAudioStopHandler);
       document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -809,8 +811,8 @@ class PlayScene extends Phaser.Scene {
   updateCameraZoom() {
     const width = window.innerWidth || this.scale.width;
     const height = window.innerHeight || this.scale.height;
-    const isMobileLandscape = width <= 950 && height <= 520 && width > height;
-    const zoom = isMobileLandscape ? 1.55 : 1;
+    const isMobileLandscape = width <= 1200 && height <= 560 && width > height;
+    const zoom = isMobileLandscape ? 2.05 : 1;
 
     this.cameras.main.setViewport(0, 0, this.scale.width, this.scale.height);
     this.cameras.main.setZoom(zoom);
@@ -1032,12 +1034,9 @@ class PlayScene extends Phaser.Scene {
   isPlayerNearVendingMachine() {
     if (!this.player || !this.vendingMachine) return false;
 
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      this.vendingMachine.x,
-      this.vendingMachine.y,
-    ) < 130;
+    const dx = Math.abs(this.player.x - this.vendingMachine.x);
+    const dy = Math.abs(this.player.y - (this.vendingMachine.y + 6));
+    return dx <= 82 && dy <= 74;
   }
 
   handleJjookInteraction() {
