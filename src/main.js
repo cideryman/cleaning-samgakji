@@ -3,8 +3,9 @@ const BASE_GAME_HEIGHT = 480;
 const BASE_GAME_RATIO = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;
 
 function getResponsiveGameSize() {
-  const viewportWidth = Math.max(window.innerWidth || BASE_GAME_WIDTH, 320);
-  const viewportHeight = Math.max(window.innerHeight || BASE_GAME_HEIGHT, 240);
+  const viewport = window.visualViewport;
+  const viewportWidth = Math.max(Math.round(viewport?.width || window.innerWidth || BASE_GAME_WIDTH), 320);
+  const viewportHeight = Math.max(Math.round(viewport?.height || window.innerHeight || BASE_GAME_HEIGHT), 240);
   const viewportRatio = viewportWidth / viewportHeight;
 
   if (viewportRatio >= BASE_GAME_RATIO) {
@@ -64,6 +65,10 @@ function startGame() {
       const nextSize = getResponsiveGameSize();
       game.scale.resize(nextSize.width, nextSize.height);
     }, 120);
+  });
+  window.visualViewport?.addEventListener("resize", () => {
+    const nextSize = getResponsiveGameSize();
+    game.scale.resize(nextSize.width, nextSize.height);
   });
 }
 
