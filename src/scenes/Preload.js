@@ -10,6 +10,8 @@ const EXTERNAL_ASSETS = [
   { key: "trash_can_3", path: "assets/sprites/trash-can3.png" },
   { key: "trash_plastic", path: "assets/sprites/plastic.png" },
   { key: "sangcheori_npc", path: "assets/sprites/sangcheori-npc.png", fallback: "createSangcheoriNpcTexture" },
+  { key: "sunisuni_sick", path: "assets/sprites/sunisuni-sick.png" },
+  { key: "sunisuni_recovered", path: "assets/sprites/sunisuni-recovered.png" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },
   { key: "recycle_bin_normal", path: "assets/objects/normal.png" },
@@ -27,6 +29,20 @@ const EXTERNAL_ASSETS = [
   { key: "drink_water", path: "assets/objects/water.png" },
   { key: "bill_1000", path: "assets/objects/1000won.png" },
   { key: "speed_buff_icon", path: "assets/objects/acceleration.png" },
+  { key: "hospital_building", path: "assets/objects/hospital-building.png" },
+  { key: "pharmacy_building", path: "assets/objects/pharmacy-building.png" },
+  { key: "hospital_interior", path: "assets/objects/hospital-interior.png" },
+  { key: "pharmacy_interior", path: "assets/objects/pharmacy-interior.png" },
+  { key: "hospital_doctor", path: "assets/objects/hospital-doctor.png" },
+  { key: "hospital_staff", path: "assets/objects/hospital-staff.png" },
+  { key: "chemist", path: "assets/objects/chemist.png" },
+  { key: "sunisuni_portrait_sick", path: "assets/objects/sunisuni-portrait-sick.png" },
+  { key: "sunisuni_bench", path: "assets/objects/sunisuni-bench.png" },
+  { key: "sunisuni_tree", path: "assets/objects/sunisuni-tree.png" },
+  { key: "prescription_item", path: "assets/objects/prescription.png" },
+  { key: "medicine_bag", path: "assets/objects/medicine-bag.png" },
+  { key: "bill_5000", path: "assets/objects/bill-5000.png" },
+  { key: "bacchus_item", path: "assets/ui/bacchus.png" },
   { key: "grass_tile", path: "assets/tiles/grass.png", fallback: "createGrassTileTexture" },
   { key: "path_tile", path: "assets/tiles/path.png", fallback: "createPathTileTexture" },
   { key: "sidewalk_tile", path: "assets/tiles/sidewalk.png", fallback: "createSidewalkTileTexture" },
@@ -35,6 +51,16 @@ const EXTERNAL_ASSETS = [
   { key: "road_tile", path: "assets/tiles/road.png", fallback: "createRoadTileTexture" },
   { key: "bench_tile", path: "assets/tiles/bench.png" },
   { key: "samgakji_tiles", path: "assets/tilesets/samgakji-tiles.png" },
+];
+
+const SPRITESHEET_ASSETS = [
+  { key: "sunisuni_front", path: "assets/sprites/sunisuni-front.png", frameWidth: 256, frameHeight: 256 },
+  { key: "sunisuni_back", path: "assets/sprites/sunisuni-back.png", frameWidth: 256, frameHeight: 256 },
+  { key: "sunisuni_left", path: "assets/sprites/sunisuni-left.png", frameWidth: 256, frameHeight: 256 },
+  { key: "sunisuni_right", path: "assets/sprites/sunisuni-right.png", frameWidth: 256, frameHeight: 256 },
+  { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
+  { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
+  { key: "heart_effect", path: "assets/sprites/heart-effect.png", frameWidth: 128, frameHeight: 128 },
 ];
 
 const TILED_MAP = {
@@ -58,6 +84,12 @@ class Preload extends Phaser.Scene {
   preload() {
     EXTERNAL_ASSETS.forEach((asset) => {
       this.load.image(asset.key, asset.path);
+    });
+    SPRITESHEET_ASSETS.forEach((asset) => {
+      this.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameWidth,
+        frameHeight: asset.frameHeight,
+      });
     });
     AUDIO_ASSETS.forEach((asset) => {
       this.load.audio(asset.key, asset.path);

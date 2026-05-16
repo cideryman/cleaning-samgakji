@@ -59,6 +59,8 @@ class DialogueSystem {
     this.clearChoices();
     this.dialogNext.style.opacity = "0";
     this.dialogName.textContent = line.name || "???";
+    this.scene.handleDialogueLineChange?.(line);
+    this.dialogModal?.classList.toggle("has-scene-overlay", Boolean(line.overlayKey));
     this.updatePortrait(line);
     this.typewrite(line.text, line.choices || null);
   }
@@ -66,16 +68,26 @@ class DialogueSystem {
   updatePortrait(line) {
     if (!this.dialogPanel || !this.dialogPortrait) return;
 
-    if (!line.portraitKey) {
+    if (line.overlayKey || !line.portraitKey) {
       this.dialogPanel.classList.remove("has-portrait");
       this.dialogPortrait.style.backgroundImage = "";
+      this.dialogPortrait.style.backgroundSize = "";
+      this.dialogPortrait.style.backgroundPosition = "";
+      this.dialogPortrait.style.backgroundRepeat = "";
       return;
     }
 
     const frame = Math.max(0, Math.min(2, line.frame || 0));
     this.dialogPanel.classList.add("has-portrait");
     this.dialogPortrait.style.backgroundImage = `url("./assets/objects/${line.portraitKey}.png")`;
-    this.dialogPortrait.style.backgroundPosition = `${frame * 50}% 50%`;
+    this.dialogPortrait.style.backgroundRepeat = "no-repeat";
+    if (line.portraitSingle) {
+      this.dialogPortrait.style.backgroundSize = "contain";
+      this.dialogPortrait.style.backgroundPosition = "50% 50%";
+    } else {
+      this.dialogPortrait.style.backgroundSize = "300% 100%";
+      this.dialogPortrait.style.backgroundPosition = `${frame * 50}% 50%`;
+    }
   }
 
   typewrite(fullText, choices = null) {
@@ -187,6 +199,7 @@ class DialogueSystem {
     this.typingInterval = null;
     this.clearChoices();
     this.dialogModal.style.display = "none";
+    this.dialogModal?.classList.remove("has-scene-overlay");
     this.dialogPanel?.classList.remove("has-portrait");
     this.isInDialogue = false;
     this.scene.isInDialogue = false;

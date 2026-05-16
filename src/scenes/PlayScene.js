@@ -1,4 +1,4 @@
-const GAME_CONFIG = {
+﻿const GAME_CONFIG = {
   worldWidth: 1536,
   worldHeight: 960,
   playerSpeed: 135,
@@ -19,10 +19,10 @@ const GAME_CONFIG = {
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.3,
   joystickRadius: 78,
-  // 새로운 경제 시스템 설정
-  slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
-  maxSlimes: 25,                 // 동시 최대 슬라임 수
-  rewardPerSlime: 100,           // 슬라임당 100원
+  // ?덈줈??寃쎌젣 ?쒖뒪???ㅼ젙
+  slimeRespawnDelayMs: 12000,    // 12珥???由ъ뒪??
+  maxSlimes: 25,                 // ?숈떆 理쒕? ?щ씪????
+  rewardPerSlime: 100,           // ?щ씪?꾨떦 100??
   recycleDepositReward: 100,
   recycleQuestUnlockMoney: 25000,
   jjookQuestUnlockMoney: 45000,
@@ -30,7 +30,20 @@ const GAME_CONFIG = {
   speedBuffMultiplier: 1.35,
   speedBuffDurationMs: 60000,
   jjookFollowDurationMs: 60000,
-  chapter1TargetMoney: 100000,   // 챕터1 목표 금액
+  sunisuniQuestUnlockMoney: 60000,
+  sunisuniSpeedMultiplier: 0.55,
+  sunisuniFollowDistance: 72,
+  sunisuniMaxDistance: 220,
+  sunisuniSpawn: { x: 520, y: 668 },
+  sunisuniBench: { x: 520, y: 650 },
+  sunisuniTree: { x: 472, y: 588 },
+  hospitalBuilding: { x: 300, y: 210 },
+  pharmacyBuilding: { x: 505, y: 210 },
+  hospitalDoor: { x: 300, y: 260 },
+  pharmacyDoor: { x: 505, y: 260 },
+  bacchusDurationMs: 60000,
+  bacchusSweepMultiplier: 2,
+  chapter1TargetMoney: 100000,   // 梨뺥꽣1 紐⑺몴 湲덉븸
   recyclingCenter: { x: 1210, y: 420 },
   vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 685, y: 545 },
@@ -48,8 +61,8 @@ const DRINK_OPTIONS = [
 const TILED_MAP_CONFIG = {
   key: "chapter1_map",
   chapter: 1,
-  title: "챕터 1",
-  mapName: "삼각지 복지관",
+  title: "梨뺥꽣 1",
+  mapName: "?쇨컖吏 蹂듭?愿",
   tilesetName: "samgakji_tiles",
   tilesetImageKey: "samgakji_tiles",
   visibleLayers: ["ground", "objects"],
@@ -71,9 +84,9 @@ const TRASH_TEXTURES = {
 };
 
 const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "罹?怨좎쿋" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "醫낆씠/?쇰컲" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "?뚮씪?ㅽ떛" },
 ];
 
 class PlayScene extends Phaser.Scene {
@@ -101,6 +114,15 @@ class PlayScene extends Phaser.Scene {
     this.shouldCompleteJjookAfterDrink = false;
     this.speedBuffTimer = null;
     this.speedBuffIconGroup = null;
+    this.sunisuniQuestState = "locked";
+    this.hasAnnouncedSunisuniQuest = false;
+    this.hasPrescription = false;
+    this.hasMedicine = false;
+    this.hasBacchus = false;
+    this.isBacchusActive = false;
+    this.bacchusTimer = null;
+    this.bacchusCountdownEvent = null;
+    this.interiorSceneGroup = null;
     this.questMarkers = {};
     this.vendingMenuOptions = [];
     this.selectedVendingIndex = 0;
@@ -127,7 +149,7 @@ class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
-    // 챕터 및 경제 시스템 관련
+    // 梨뺥꽣 諛?寃쎌젣 ?쒖뒪??愿??
     this.currentChapter = 1;
     this.isChapterComplete = false;
   }
@@ -141,6 +163,8 @@ class PlayScene extends Phaser.Scene {
     this.missionCountEl = document.querySelector("#missionCount");
     this.sweepButton = document.querySelector("#sweepButton");
     this.specialButton = document.querySelector("#specialButton");
+    this.bacchusButton = document.querySelector("#bacchusButton");
+    this.bacchusTimerEl = document.querySelector("#bacchusTimer");
     this.movePad = document.querySelector("#movePad");
     this.moveKnob = document.querySelector("#moveKnob");
     this.fullscreenButton = document.querySelector("#fullscreenButton");
@@ -165,6 +189,11 @@ class PlayScene extends Phaser.Scene {
       event?.stopPropagation();
       this.useSangcheoriItem();
     };
+    this.bacchusHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.useBacchusItem();
+    };
     this.moveStartHandler = (event) => this.startFloatingJoystick(event);
     this.moveUpdateHandler = (event) => this.updateJoystick(event);
     this.moveStopHandler = (event) => this.stopJoystick(event);
@@ -180,6 +209,7 @@ class PlayScene extends Phaser.Scene {
     this.restartButton?.addEventListener("click", this.restartHandler);
     this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
     this.specialButton?.addEventListener("pointerdown", this.specialHandler);
+    this.bacchusButton?.addEventListener("pointerdown", this.bacchusHandler);
     window.addEventListener("pointerdown", this.audioUnlockHandler, { passive: true });
     window.addEventListener("keydown", this.audioUnlockHandler);
     window.addEventListener("keydown", this.devKeyHandler, true);
@@ -202,12 +232,12 @@ class PlayScene extends Phaser.Scene {
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
     
-    // ===== 시스템 초기화 =====
+    // ===== ?쒖뒪??珥덇린??=====
     this.dialogueSystem = new DialogueSystem(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);
     this.isInDialogue = false;
-    this.isContractActive = false;   // 챕터2에서 사용
+    this.isContractActive = false;   // 梨뺥꽣2?먯꽌 ?ъ슜
     this.currentChapter = 1;
     this.isChapterComplete = false;
     
@@ -216,6 +246,7 @@ class PlayScene extends Phaser.Scene {
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
       this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
+      this.bacchusButton?.removeEventListener("pointerdown", this.bacchusHandler);
       window.removeEventListener("pointerdown", this.audioUnlockHandler);
       window.removeEventListener("keydown", this.audioUnlockHandler);
       window.removeEventListener("keydown", this.devKeyHandler, true);
@@ -235,9 +266,12 @@ class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.createSunisuniAnimations();
+    this.createHospitalAndPharmacy();
     this.createLargeBenchOverlays();
     this.createRecyclingCenter();
     this.createSangcheoriNpc();
+    this.createSunisuniNpc();
     this.createPlayer();
     this.trashSlimes = this.physics.add.staticGroup();
     this.spawnTrashWave();
@@ -275,6 +309,21 @@ class PlayScene extends Phaser.Scene {
     this.speedBuffTimer = null;
     this.speedBuffIconGroup?.clear(true, true);
     this.speedBuffIconGroup = null;
+    this.sunisuniQuestState = "locked";
+    this.hasAnnouncedSunisuniQuest = false;
+    this.hasPrescription = false;
+    this.hasMedicine = false;
+    this.hasBacchus = false;
+    this.isBacchusActive = false;
+    this.bacchusTimer?.remove(false);
+    this.bacchusCountdownEvent?.remove(false);
+    this.bacchusTimer = null;
+    this.bacchusCountdownEvent = null;
+    this.bacchusButton?.setAttribute("hidden", "");
+    this.bacchusButton?.classList.remove("is-active");
+    if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = "";
+    this.interiorSceneGroup?.clear(true, true);
+    this.interiorSceneGroup = null;
     Object.values(this.questMarkers || {}).forEach((marker) => marker.text?.destroy());
     this.questMarkers = {};
     this.vendingMenuOptions = [];
@@ -307,8 +356,10 @@ class PlayScene extends Phaser.Scene {
     this.handleMovement();
     this.checkRecycleQuestUnlock();
     this.checkJjookQuestUnlock();
+    this.checkSunisuniQuestUnlock();
     this.checkWalletPickup();
     this.updateJjookFollower();
+    this.updateSunisuniFollower();
     this.updateQuestMarkers();
     if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
@@ -372,8 +423,8 @@ class PlayScene extends Phaser.Scene {
 
     this.moveSangcheoriToRecyclingCenter();
     this.setQuestMarker("recycleQuest", this.sangcheoriNpc, "!");
-    this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
-    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
+    this.showQuestToast("?щ퉬 ?꾩??④? 遺꾨━?섍굅?μ뿉??湲곕떎由ш퀬 ?덉뼱!", 10000);
+    this.showSpeechBubble(this.sangcheoriNpc, "遺꾨━?섍굅?μ쑝濡??!", 10000);
   }
 
   checkJjookQuestUnlock() {
@@ -385,8 +436,26 @@ class PlayScene extends Phaser.Scene {
     this.jjookQuestState = "wallet_missing";
     this.createJjookQuestObjects();
     this.setQuestMarker("jjookQuest", this.jjookNpc, "?");
-    this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
-    this.showSpeechBubble(this.jjookNpc, "내 지갑 어디 갔지?", 10000);
+    this.showQuestToast("彛됱춬?닿? ?먰뙋湲??욎뿉??湲곕떎由ш퀬 ?덉뼱!", 10000);
+    this.showSpeechBubble(this.jjookNpc, "??吏媛??대뵒 媛붿??", 10000);
+  }
+
+  checkSunisuniQuestUnlock() {
+    if (!this.moneySystem || this.hasAnnouncedSunisuniQuest) return;
+    if (this.jjookQuestState !== "completed") return;
+    if (this.moneySystem.money < GAME_CONFIG.sunisuniQuestUnlockMoney) return;
+
+    this.hasAnnouncedSunisuniQuest = true;
+    this.sunisuniQuestState = "sunisuni_found";
+    if (this.sunisuniNpc) {
+      this.sunisuniNpc.setVisible(true);
+      this.sunisuniNpc.setActive(true);
+      this.setSunisuniSickPose();
+      this.setQuestMarker("sunisuniQuest", this.sunisuniNpc, "!");
+      this.playSunisuniEffect("sweat_drop", this.sunisuniNpc.x + 28, this.sunisuniNpc.y - 42);
+      this.showSpeechBubble(this.sunisuniNpc, "?꾩슦... 諛곗빞...", 10000);
+    }
+    this.showQuestToast("?섎땲?섎땲媛 諛곕? ?↔퀬 ?됱븘 ?덉뼱??", 10000);
   }
 
   createMap() {
@@ -566,6 +635,100 @@ class PlayScene extends Phaser.Scene {
 
   }
 
+  createHospitalAndPharmacy() {
+    if (this.textures.exists("hospital_building")) {
+      const hospital = this.add.image(
+        GAME_CONFIG.hospitalBuilding.x,
+        GAME_CONFIG.hospitalBuilding.y,
+        "hospital_building",
+      );
+      hospital.setDisplaySize(132, 100);
+      hospital.setDepth(2.8);
+    }
+
+    if (this.textures.exists("pharmacy_building")) {
+      const pharmacy = this.add.image(
+        GAME_CONFIG.pharmacyBuilding.x,
+        GAME_CONFIG.pharmacyBuilding.y,
+        "pharmacy_building",
+      );
+      pharmacy.setDisplaySize(112, 96);
+      pharmacy.setDepth(2.8);
+    }
+  }
+
+  createSunisuniAnimations() {
+    ["sunisuni_front", "sunisuni_back", "sunisuni_left", "sunisuni_right", "sunisuni_sick", "sunisuni_recovered"].forEach((textureKey) => {
+      this.textures.get(textureKey)?.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    });
+    ["hospital_staff", "hospital_doctor", "chemist", "sunisuni_bench", "sunisuni_tree"].forEach((textureKey) => {
+      this.textures.get(textureKey)?.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    });
+
+    const configs = [
+      ["sunisuni_walk_down", "sunisuni_front"],
+      ["sunisuni_walk_up", "sunisuni_back"],
+      ["sunisuni_walk_left", "sunisuni_left"],
+      ["sunisuni_walk_right", "sunisuni_right"],
+      ["sweat_drop", "sweat_effect"],
+      ["sunisuni_star", "star_effect"],
+      ["sunisuni_heart", "heart_effect"],
+    ];
+
+    configs.forEach(([key, texture]) => {
+      if (this.anims.exists(key) || !this.textures.exists(texture)) return;
+      this.anims.create({
+        key,
+        frames: this.anims.generateFrameNumbers(texture, { start: 0, end: 2 }),
+        frameRate: 4,
+        repeat: -1,
+      });
+    });
+  }
+
+  createSunisuniNpc() {
+    if (!this.textures.exists("sunisuni_front")) return;
+
+    if (this.textures.exists("sunisuni_tree")) {
+      const tree = this.add.image(GAME_CONFIG.sunisuniTree.x, GAME_CONFIG.sunisuniTree.y, "sunisuni_tree");
+      tree.setDisplaySize(150, 176);
+      tree.setDepth(2.6);
+    }
+    if (this.textures.exists("sunisuni_bench")) {
+      const bench = this.add.image(GAME_CONFIG.sunisuniBench.x, GAME_CONFIG.sunisuniBench.y + 20, "sunisuni_bench");
+      bench.setDisplaySize(136, 76);
+      bench.setDepth(2.7);
+    }
+
+    const { x, y } = GAME_CONFIG.sunisuniSpawn;
+    this.sunisuniNpc = this.add.sprite(x, y, this.textures.exists("sunisuni_sick") ? "sunisuni_sick" : "sunisuni_front");
+    this.setSunisuniSickPose();
+    this.sunisuniNpc.setDepth(4.15);
+    this.sunisuniNpc.setVisible(false);
+    this.sunisuniNpc.setActive(false);
+    this.sunisuniNpc.setInteractive({ useHandCursor: true });
+    this.sunisuniNpc.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      this.handleSunisuniInteraction();
+    });
+  }
+
+  setSunisuniSickPose() {
+    if (!this.sunisuniNpc) return;
+
+    if (this.textures.exists("sunisuni_sick")) {
+      this.sunisuniNpc.setTexture("sunisuni_sick");
+      this.sunisuniNpc.setDisplaySize(82, 106);
+      this.sunisuniNpc.setOrigin(0.5, 0.92);
+      return;
+    }
+
+    this.sunisuniNpc.setTexture("sunisuni_front", 2);
+    this.sunisuniNpc.setDisplaySize(78, 104);
+    this.sunisuniNpc.setOrigin(0.5, 0.5);
+  }
+
   handleVendingMachineInteraction() {
     if (this.isInDialogue || this.vendingMenuGroup) return;
 
@@ -580,10 +743,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     this.dialogueSystem?.start([
-      {
-        name: "해냄이",
-        text: "아냐, 돈을 더 모아야 해.",
-      },
+      { name: "해냄이", text: "아냐, 돈을 먼저 모아야 해." },
     ]);
   }
 
@@ -646,8 +806,8 @@ class PlayScene extends Phaser.Scene {
     this.walletItem = null;
     this.playItemPickupSound();
     this.setQuestMarker("jjookQuest", this.jjookNpc, "!");
-    this.showQuestToast("갈색 지갑을 찾았다!");
-    this.showSpeechBubble(this.player, "지갑 찾았다!");
+    this.showQuestToast("媛덉깋 吏媛묒쓣 李얠븯??");
+    this.showSpeechBubble(this.player, "吏媛?李얠븯??");
   }
 
   checkWalletPickup() {
@@ -840,13 +1000,13 @@ class PlayScene extends Phaser.Scene {
     if (this.isChapterComplete) return;
     this.isChapterComplete = true;
     this.dialogueSystem.start([
-      { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney}원을 달성했습니다!` },
-      { name: "알림", text: "다음 챕터로 이동합니다." }
+      { name: "?뚮┝", text: `紐⑺몴 湲덉븸 ${GAME_CONFIG.chapter1TargetMoney}?먯쓣 ?ъ꽦?덉뒿?덈떎!` },
+      { name: "?뚮┝", text: "?ㅼ쓬 梨뺥꽣濡??대룞?⑸땲??" }
     ]);
-    // 추가로 챕터 전환 로직 (예: 2초 후 새 맵 로드)
+    // 異붽?濡?梨뺥꽣 ?꾪솚 濡쒖쭅 (?? 2珥?????留?濡쒕뱶)
     this.time.delayedCall(2000, () => {
-      // this.scene.restart() 또는 다음 챕터로 이동하는 코드
-      console.log("챕터2로 전환 예정");
+      // this.scene.restart() ?먮뒗 ?ㅼ쓬 梨뺥꽣濡??대룞?섎뒗 肄붾뱶
+      console.log("梨뺥꽣2濡??꾪솚 ?덉젙");
     });
   }
 
@@ -931,6 +1091,7 @@ class PlayScene extends Phaser.Scene {
       specialEnter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       devMoney: Phaser.Input.Keyboard.KeyCodes.F2,
       devTrash: Phaser.Input.Keyboard.KeyCodes.F3,
+      devNextQuest: Phaser.Input.Keyboard.KeyCodes.F4,
     });
 
     this.keys.sweep.on("down", () => this.handleSpaceAction());
@@ -945,20 +1106,22 @@ class PlayScene extends Phaser.Scene {
 
   handleDevKeydown(event) {
     if (!this.isDevMode()) return;
-    if (event.code !== "F2" && event.code !== "F3") return;
+    if (event.code !== "F2" && event.code !== "F3" && event.code !== "F4") return;
 
     event.preventDefault();
     event.stopPropagation();
     if (event.code === "F2") {
       this.addDevMoney();
-    } else {
+    } else if (event.code === "F3") {
       this.addDevTrashInventory();
+    } else {
+      this.advanceDevQuest();
     }
   }
 
   addDevMoney() {
     this.moneySystem?.addMoney(10000);
-    this.showQuestToast("개발 치트: 10,000원 추가");
+    this.showQuestToast("媛쒕컻 移섑듃: 10,000??異붽?");
   }
 
   addDevTrashInventory() {
@@ -966,7 +1129,77 @@ class PlayScene extends Phaser.Scene {
     this.recyclingInventory.can += 20;
     this.recyclingInventory.plastic += 20;
     this.updateHud();
-    this.showQuestToast("개발 치트: 쓰레기 20개씩 추가");
+    this.showQuestToast("媛쒕컻 移섑듃: ?곕젅湲?20媛쒖뵫 異붽?");
+  }
+
+  advanceDevQuest() {
+    if (this.isInDialogue || this.vendingMenuGroup) {
+      this.showQuestToast("??붽? ?앸궃 ??F4瑜??뚮윭以?");
+      return;
+    }
+
+    const canQuest = this.questManager?.canQuest;
+    const recycleQuest = this.questManager?.recycleQuest;
+
+    if (canQuest && !canQuest.isCompleted) {
+      canQuest.isActive = false;
+      canQuest.isCompleted = true;
+      canQuest.current = canQuest.target;
+      this.questManager.updateUI();
+      this.questManager.hideQuestGaugeWithPoof();
+      this.clearQuestMarker("canQuest");
+      this.ensureDevMoney(GAME_CONFIG.recycleQuestUnlockMoney);
+      this.hasAnnouncedRecycleQuest = false;
+      this.checkRecycleQuestUnlock();
+      this.showQuestToast("F4: 遺꾨━?섍굅 ?섏뒪?몃줈 ?대룞");
+      return;
+    }
+
+    if (recycleQuest && !recycleQuest.isCompleted) {
+      recycleQuest.isUnlocked = true;
+      recycleQuest.isActive = false;
+      recycleQuest.isCompleted = true;
+      recycleQuest.current.normal = recycleQuest.target.normal;
+      recycleQuest.current.can = recycleQuest.target.can;
+      recycleQuest.current.plastic = recycleQuest.target.plastic;
+      this.questManager.updateUI();
+      this.questManager.hideQuestGaugeWithPoof();
+      this.clearQuestMarker("recycleQuest");
+      this.ensureDevMoney(GAME_CONFIG.jjookQuestUnlockMoney);
+      this.hasAnnouncedJjookQuest = false;
+      this.checkJjookQuestUnlock();
+      this.showQuestToast("F4: 彛됱춬???섏뒪?몃줈 ?대룞");
+      return;
+    }
+
+    if (this.jjookQuestState !== "completed") {
+      this.createJjookQuestObjects();
+      this.jjookQuestState = "completed";
+      this.hasWallet = false;
+      this.walletItem?.destroy();
+      this.walletItem = null;
+      this.clearQuestMarker("jjookQuest");
+      this.ensureDevMoney(GAME_CONFIG.sunisuniQuestUnlockMoney);
+      this.hasAnnouncedSunisuniQuest = false;
+      this.checkSunisuniQuestUnlock();
+      this.showQuestToast("F4: ?섎땲?섎땲 ?섏뒪?몃줈 ?대룞");
+      return;
+    }
+
+    if (this.sunisuniQuestState === "locked") {
+      this.ensureDevMoney(GAME_CONFIG.sunisuniQuestUnlockMoney);
+      this.hasAnnouncedSunisuniQuest = false;
+      this.checkSunisuniQuestUnlock();
+      this.showQuestToast("F4: ?섎땲?섎땲 ?섏뒪???쒖옉");
+      return;
+    }
+
+    this.showQuestToast("F4: ?대? 留덉?留??섏뒪?멸퉴吏 ?대졇??");
+  }
+
+  ensureDevMoney(amount) {
+    if (!this.moneySystem || this.moneySystem.money >= amount) return;
+    this.moneySystem.addMoney(amount - this.moneySystem.money);
   }
 
   handleSpaceAction() {
@@ -984,6 +1217,21 @@ class PlayScene extends Phaser.Scene {
 
   handlePrimaryAction() {
     if (this.tryDepositNearestRecycleBin()) {
+      return;
+    }
+
+    if (this.isPlayerNearHospitalDoor() && !this.isInDialogue) {
+      this.handleHospitalInteraction();
+      return;
+    }
+
+    if (this.isPlayerNearPharmacyDoor() && !this.isInDialogue) {
+      this.handlePharmacyInteraction();
+      return;
+    }
+
+    if (this.shouldPrioritizeSunisuniDialogue()) {
+      this.handleSunisuniInteraction();
       return;
     }
 
@@ -1033,6 +1281,44 @@ class PlayScene extends Phaser.Scene {
       && this.isPlayerNearJjookNpc();
   }
 
+  isPlayerNearSunisuniNpc() {
+    if (!this.player || !this.sunisuniNpc?.active || !this.sunisuniNpc.visible) return false;
+
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.sunisuniNpc.x,
+      this.sunisuniNpc.y,
+    ) < 120;
+  }
+
+  shouldPrioritizeSunisuniDialogue() {
+    return !this.isInDialogue
+      && this.sunisuniQuestState !== "locked"
+      && this.sunisuniQuestState !== "quest_complete"
+      && this.isPlayerNearSunisuniNpc();
+  }
+
+  isPlayerNearHospitalDoor() {
+    if (!this.player || this.sunisuniQuestState !== "going_hospital") return false;
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      GAME_CONFIG.hospitalDoor.x,
+      GAME_CONFIG.hospitalDoor.y,
+    ) < 155;
+  }
+
+  isPlayerNearPharmacyDoor() {
+    if (!this.player || this.sunisuniQuestState !== "going_pharmacy") return false;
+    return Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      GAME_CONFIG.pharmacyDoor.x,
+      GAME_CONFIG.pharmacyDoor.y,
+    ) < 155;
+  }
+
   isPlayerNearVendingMachine() {
     if (!this.player || !this.vendingMachine) return false;
 
@@ -1046,54 +1332,248 @@ class PlayScene extends Phaser.Scene {
 
     if (this.jjookQuestState === "wallet_missing") {
       this.dialogueSystem.start([
-        {
-          name: "쭉쭉이",
-          portraitKey: "jjookface",
-          frame: 0,
-          text: "아... 운동하다 지갑을 잃어버렸어... 목도 너무 마른데 어떡하지?",
-        },
-        {
-          name: "쭉쭉이",
-          portraitKey: "jjookface",
-          frame: 2,
-          text: "혹시 근처 수풀이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야!",
-        },
+        { name: "쭉쭉이", portraitKey: "jjookface", frame: 0, text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
+        { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
       ], () => {
-        if (!this.walletItem?.active && !this.hasWallet) {
-          this.spawnWalletItem();
-        }
+        if (!this.walletItem?.active && !this.hasWallet) this.spawnWalletItem();
       });
       return;
     }
 
     if (this.jjookQuestState === "wallet_found") {
       this.dialogueSystem.start([
-        {
-          name: "쭉쭉이",
-          portraitKey: "jjookface",
-          frame: 1,
-          text: "지갑을 찾아줘서 정말 고마워! 내가 보답으로 시원한 음료수 하나 사줄게. 해냄아, 뭐 마실래?",
-        },
+        { name: "쭉쭉이", portraitKey: "jjookface", frame: 1, text: "지갑을 찾아줘서 정말 고마워. 보답으로 시원한 음료수 하나 사줄게. 뭐 마실래?" },
       ], () => this.openVendingMenu({ completeQuestOnSelect: true }));
       return;
     }
 
     if (this.jjookQuestState === "completed") {
       this.dialogueSystem.start([
-        {
-          name: "쭉쭉이",
-          portraitKey: "jjookface",
-          frame: 1,
-          text: "나랑 같이 뛰자! 음료수가 필요하면 자판기 앞에서 골라줘.",
-        },
+        { name: "쭉쭉이", portraitKey: "jjookface", frame: 1, text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
       ]);
     }
+  }
+
+  handleSunisuniInteraction() {
+    if (this.isInDialogue || !this.dialogueSystem || this.sunisuniQuestState === "locked") return;
+
+    if (this.sunisuniQuestState === "sunisuni_found") {
+      this.dialogueSystem.start([
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "아우... 배야..." },
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "너무 아파서 일어나기가 힘들어..." },
+        {
+          name: "해냄이",
+          text: "수니수니에게 뭐라고 말할까요?",
+          choices: [
+            { label: "괜찮으세요?", onSelect: () => this.askSunisuniHospitalHelp() },
+            { label: "도움이 필요하세요?", onSelect: () => this.askSunisuniHospitalHelp() },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    if (this.sunisuniQuestState === "accepted_help" || this.sunisuniQuestState === "going_hospital") {
+      this.dialogueSystem.start([
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "조금만 천천히 가줄래...?" },
+        { name: "해냄이", text: "천천히 같이 가야겠다." },
+      ]);
+      return;
+    }
+
+    if (this.sunisuniQuestState === "got_prescription" || this.sunisuniQuestState === "going_pharmacy") {
+      this.dialogueSystem.start([
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "처방전을 가지고 약국으로 가요." },
+      ]);
+      return;
+    }
+
+    if (this.sunisuniQuestState === "quest_complete") {
+      this.dialogueSystem.start([
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "해냄이 덕분에 많이 괜찮아졌어." },
+        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "약은 꼭 설명대로 먹어야 해." },
+      ]);
+    }
+  }
+
+  askSunisuniHospitalHelp() {
+    this.dialogueSystem.start([
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "혼자서는 병원까지 가기 어려울 것 같아..." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "혹시 나랑 같이 가줄 수 있을까?" },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "병원에 갔다가 약국도 들러야 할 것 같아..." },
+      {
+        name: "해냄이",
+        text: "어떻게 할까요?",
+        choices: [
+          { label: "같이 가요.", onSelect: () => this.startSunisuniEscort() },
+          { label: "잠깐만요...", onSelect: () => this.deferSunisuniHelp() },
+        ],
+      },
+    ]);
+  }
+
+  deferSunisuniHelp() {
+    this.dialogueSystem.start([
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "괜찮아... 기다릴게..." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "그래도 너무 아파서 도움이 필요해..." },
+    ]);
+  }
+
+  startSunisuniEscort() {
+    this.sunisuniQuestState = "going_hospital";
+    this.clearQuestMarker("sunisuniQuest");
+    this.setQuestMarker("sunisuniHospital", this.sunisuniNpc, "!");
+    this.sunisuniNpc.setTexture("sunisuni_front", 2);
+    this.sunisuniNpc.setDisplaySize(78, 104);
+    this.sunisuniNpc.setOrigin(0.5, 0.5);
+    this.showQuestToast("병원으로 가요.");
+    this.showSpeechBubble(this.sunisuniNpc, "고마워... 같이 와줘서 마음이 놓여...", 4200);
+  }
+
+  handleHospitalInteraction() {
+    if (this.sunisuniQuestState !== "going_hospital") return;
+    this.sunisuniQuestState = "hospital_reception";
+    this.showInteriorScene("hospital_interior", "hospital");
+    this.dialogueSystem.start([
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "어서 오세요. 접수를 도와드릴게요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "환자분 성함과 어디가 불편한지 알려주세요." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 너무 긴장해서 말이 잘 안 나와..." },
+      {
+        name: "해냄이",
+        overlayKey: "sunisuni_portrait_sick",
+        overlayOptions: { maxWidth: 240, maxHeight: 260 },
+        text: "접수처에 뭐라고 말하면 좋을까요?",
+        choices: [
+          { label: "배가 아파서 왔어요.", onSelect: () => this.completeHospitalReception() },
+          { label: "음료수를 사러 왔어요.", onSelect: () => this.retryHospitalReception() },
+          { label: "쓰레기를 버리러 왔어요.", onSelect: () => this.retryHospitalReception() },
+        ],
+      },
+    ]);
+  }
+
+  retryHospitalReception() {
+    this.dialogueSystem.start([
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "괜찮아요. 천천히 다시 말해볼까요?" },
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "병원에서는 아픈 곳을 말하면 접수하기 쉬워요." },
+    ], () => {
+      this.sunisuniQuestState = "going_hospital";
+      this.handleHospitalInteraction();
+    });
+  }
+
+  completeHospitalReception() {
+    this.dialogueSystem.start([
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "네, 수니수니 님 배가 아파서 오셨군요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "접수되었습니다. 잠시만 기다리면 의사 선생님을 만날 수 있어요." },
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "안녕하세요. 어디가 어떻게 아픈지 알려주세요." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "내 배가 아프다고 대신 말해줄래?" },
+      {
+        name: "해냄이",
+        overlayKey: "hospital_doctor",
+        text: "의사 선생님께 뭐라고 말할까요?",
+        choices: [
+          { label: "배가 아파요.", onSelect: () => this.completeDoctorQuiz() },
+          { label: "귀가 아파요.", onSelect: () => this.retryDoctorQuiz() },
+          { label: "발이 아파요.", onSelect: () => this.retryDoctorQuiz() },
+        ],
+      },
+    ]);
+  }
+
+  retryDoctorQuiz() {
+    this.dialogueSystem.start([
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "괜찮아요. 다시 해볼까요?" },
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "배가 아플 때는 배가 아프다고 말하면 됩니다." },
+    ], () => this.completeHospitalReception());
+  }
+
+  completeDoctorQuiz() {
+    this.hasPrescription = true;
+    this.sunisuniQuestState = "going_pharmacy";
+    this.clearQuestMarker("sunisuniHospital");
+    this.dialogueSystem.start([
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "잘 말했어요. 배가 아플 때는 이렇게 아픈 곳을 알려주면 됩니다." },
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "오늘은 처방전을 줄게요. 이 처방전을 가지고 약국으로 가세요." },
+      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "처방전입니다." },
+    ], () => {
+      this.playItemPickupSound();
+      this.showQuestToast("처방전을 가지고 약국으로 가요.");
+      this.showFloatingItem("prescription_item", Math.max(384, (this.scale.width || 768) / 2), Math.max(240, (this.scale.height || 480) / 2), { width: 190, height: 142 }, true, { duration: 360, hold: 1900, floatY: -12, onComplete: () => this.clearInteriorScene() });
+    });
+  }
+
+  handlePharmacyInteraction() {
+    if (this.sunisuniQuestState !== "going_pharmacy" || !this.hasPrescription) return;
+    this.sunisuniQuestState = "medicine_paid";
+    this.showInteriorScene("pharmacy_interior", "pharmacy");
+    this.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "안녕하세요. 처방전이 있으면 보여주세요." },
+      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "처방전을 확인할게요. 잠시만 기다려 주세요." },
+      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "처방약이 나왔습니다." },
+      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "이 약은 수니수니 님만 드셔야 해요. 다른 사람이 먹으면 안 됩니다." },
+      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "밥을 먹고 30분 뒤에 드세요. 이제 약값 5,000원을 결제해 주세요." },
+    ], () => this.payForMedicine());
+  }
+
+  payForMedicine() {
+    if (!this.moneySystem?.deductMoney(5000)) {
+      this.sunisuniQuestState = "going_pharmacy";
+      this.clearInteriorScene();
+      this.showQuestToast("약값 5,000원이 필요해요.");
+      return;
+    }
+
+    this.hasPrescription = false;
+    this.hasMedicine = true;
+    this.playVendingPaymentAnimationLike("bill_5000", () => {
+      this.showFloatingItem("medicine_bag", Math.max(384, (this.scale.width || 768) / 2), Math.max(240, (this.scale.height || 480) / 2), { width: 150, height: 150 }, true, {
+        duration: 360,
+        hold: 1900,
+        floatY: -12,
+        onComplete: () => {
+          this.dialogueSystem.start([
+            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "결제가 완료되었습니다." },
+            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "약 봉투를 잘 챙겨 주세요." },
+            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
+          ], () => this.completeSunisuniQuest());
+        },
+      });
+    });
+  }
+
+  completeSunisuniQuest() {
+    this.sunisuniQuestState = "quest_complete";
+    this.clearInteriorScene();
+    this.clearQuestMarker("sunisuniHospital");
+    this.clearQuestMarker("sunisuniQuest");
+    this.hasMedicine = false;
+    this.hasBacchus = true;
+    this.moneySystem?.addMoney(10000);
+    this.playMoneyRewardSound();
+    this.showMoneyRewardAnimation?.(10000, { label: "수고비", icon: "./assets/ui/10000won.png" });
+    this.showFloatingItem("bacchus_item", this.player.x + 28, this.player.y - 68, 58);
+    this.updateBacchusButton();
+    if (this.sunisuniNpc?.active) {
+      this.sunisuniNpc.setTexture("sunisuni_front", 2);
+      this.sunisuniNpc.setDisplaySize(78, 104);
+      this.sunisuniNpc.setOrigin(0.5, 0.5);
+      this.playSunisuniEffect("sunisuni_heart", this.sunisuniNpc.x, this.sunisuniNpc.y - 48);
+    }
+    this.dialogueSystem.start([
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "정말 고마워." },
+      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "이건 같이 가준 보답이야." },
+      { name: "여비", text: "해냄이, 오늘은 청소뿐 아니라 친구도 도왔구나!" },
+      { name: "여비", text: "진짜 멋진 사람이야!" },
+    ], () => this.sendSunisuniBackToBench());
   }
 
   hasTrashInSweepRange() {
     if (!this.player || !this.trashSlimes) return false;
 
-    const multiplier = this.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
+    const multiplier = this.getSweepMultiplier();
     const range = 112 * multiplier;
     return this.trashSlimes.getChildren().some((trash) => {
       return trash.active
@@ -1108,23 +1588,12 @@ class PlayScene extends Phaser.Scene {
     const recycleState = this.questManager.getRecycleQuestState();
     if (recycleState === "unlocked") {
       this.dialogueSystem.start([
+        { name: "여비", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
+        { name: "여비", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
         {
           name: "여비",
-          text: "오! 해냄이, 청소 실력이 대단한데? 이제 진짜 전문가는 '나눠서 버릴 줄' 알아야 해!",
-        },
-        {
-          name: "여비",
-          text: "쓰레기를 치우면 바로 100원을 받고, 퀘스트를 끝낸 뒤 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어.",
-        },
-        {
-          name: "여비",
-          text: "여기 분리수거장 보이지? 일반 쓰레기 30개, 캔 10개, 플라스틱 10개를 딱 맞춰서 통에 넣어봐. 그럼 분리수거 수당을 열어줄게!",
-          choices: [
-            {
-              label: "해볼게!",
-              onSelect: () => this.questManager.startRecycleQuest(),
-            },
-          ],
+          text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
+          choices: [{ label: "해볼게", onSelect: () => this.questManager.startRecycleQuest() }],
         },
       ]);
       return;
@@ -1133,17 +1602,14 @@ class PlayScene extends Phaser.Scene {
     if (recycleState === "active") {
       const quest = this.questManager.recycleQuest;
       this.dialogueSystem.start([
-        {
-          name: "여비",
-          text: `좋아! 일반 ${quest.current.normal}/${quest.target.normal}, 캔 ${quest.current.can}/${quest.target.can}, 플라스틱 ${quest.current.plastic}/${quest.target.plastic}이야. 통 앞에서 빗자루 버튼을 눌러!`,
-        },
+        { name: "여비", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
       ]);
       return;
     }
 
     if (recycleState === "completed") {
       this.dialogueSystem.start([
-        { name: "여비", text: "이제 모아둔 쓰레기를 맞는 통에 넣어봐. 하나 넣을 때마다 분리수거 수당 100원을 받을 수 있어!" },
+        { name: "여비", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
       ]);
       return;
     }
@@ -1158,15 +1624,9 @@ class PlayScene extends Phaser.Scene {
             {
               label: "예",
               onSelect: () => {
-                this.dialogueSystem.start(
-                  [
-                    {
-                      name: "여비",
-                      text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!",
-                    },
-                  ],
-                  () => this.questManager.startQuest(),
-                );
+                this.dialogueSystem.start([
+                  { name: "여비", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
+                ], () => this.questManager.startQuest());
               },
             },
             {
@@ -1191,7 +1651,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     this.dialogueSystem.start([
-      { name: "여비", text: "오늘도 고마워! 깨끗한 거리를 같이 만들자." },
+      { name: "여비", text: "오늘도 고마워. 깨끗한 거리를 같이 만들자!" },
     ]);
   }
 
@@ -1209,11 +1669,11 @@ class PlayScene extends Phaser.Scene {
   showFirstGuide() {
     if (this.isMissionComplete || !this.sangcheoriNpc) return;
     
-    // 대화창으로 첫 가이드 표시
+    // ??붿갹?쇰줈 泥?媛?대뱶 ?쒖떆
     const dialogue = [
-      { name: "알림", text: "여행을 가려면 돈이 조금 부족해요." },
-      { name: "엄마", text: "삼각지 청소를 도와주면 청소 수당을 줄게." },
-      { name: "알림", text: "쓰레기를 빗자루로 치우고 수당을 모아보세요!" }
+      { name: "?뚮┝", text: "?ы뻾??媛?ㅻ㈃ ?덉씠 議곌툑 遺議깊빐??" },
+      { name: "?꾨쭏", text: "?쇨컖吏 泥?냼瑜??꾩?二쇰㈃ 泥?냼 ?섎떦??以꾧쾶." },
+      { name: "?뚮┝", text: "?곕젅湲곕? 鍮쀬옄猷⑤줈 移섏슦怨??섎떦??紐⑥븘蹂댁꽭??" }
     ];
     this.dialogueSystem.start(dialogue);
   }
@@ -1253,6 +1713,47 @@ class PlayScene extends Phaser.Scene {
     return this.isSpeedBuffActive
       ? GAME_CONFIG.playerSpeed * GAME_CONFIG.speedBuffMultiplier
       : GAME_CONFIG.playerSpeed;
+  }
+
+  isSunisuniFollowing() {
+    return ["going_hospital", "going_pharmacy"].includes(this.sunisuniQuestState);
+  }
+
+  updateSunisuniFollower() {
+    if (!this.isSunisuniFollowing() || !this.sunisuniNpc?.active || !this.player) return;
+
+    const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, this.player.x, this.player.y);
+    if (distance > GAME_CONFIG.sunisuniMaxDistance) {
+      this.showSpeechBubble(this.sunisuniNpc, "議곌툑留?泥쒖쿇??媛以꾨옒...?", 900);
+    }
+    if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
+      this.sunisuniNpc.stop();
+      this.sunisuniNpc.setFrame(2);
+      return;
+    }
+
+    const step = (this.game.loop.delta / 1000) * GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
+    const angle = Phaser.Math.Angle.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, this.player.x, this.player.y);
+    const moveX = Math.cos(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
+    const moveY = Math.sin(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
+    this.sunisuniNpc.x += moveX;
+    this.sunisuniNpc.y += moveY;
+    this.updateSunisuniDirection(moveX, moveY);
+  }
+
+  updateSunisuniDirection(moveX, moveY) {
+    if (!this.sunisuniNpc?.active) return;
+
+    let animKey = "sunisuni_walk_down";
+    if (Math.abs(moveX) > Math.abs(moveY)) {
+      animKey = moveX < 0 ? "sunisuni_walk_left" : "sunisuni_walk_right";
+    } else if (moveY < 0) {
+      animKey = "sunisuni_walk_up";
+    }
+
+    if (this.sunisuniNpc.anims.currentAnim?.key !== animKey) {
+      this.sunisuniNpc.play(animKey, true);
+    }
   }
 
   updateJjookFollower() {
@@ -1387,8 +1888,8 @@ class PlayScene extends Phaser.Scene {
     const inventoryCount = this.recyclingInventory[type] || 0;
     if (inventoryCount <= 0) {
       const message = type === "plastic"
-        ? "플라스틱을 아직 안 주웠어!"
-        : "잉? 이건 여기가 아니야!";
+        ? "?뚮씪?ㅽ떛???꾩쭅 ??二쇱썱??"
+        : "?? ?닿굔 ?ш린媛 ?꾨땲??";
       this.showSpeechBubble(this.player, message);
       this.playTone({ frequency: 220, duration: 0.09, type: "square", volume: 0.035 });
       return;
@@ -1396,7 +1897,7 @@ class PlayScene extends Phaser.Scene {
 
     const recycleState = this.questManager?.getRecycleQuestState();
     if (recycleState === "locked" || recycleState === "unlocked") {
-      this.showSpeechBubble(this.player, "여비 아저씨에게 먼저 물어보자!");
+      this.showSpeechBubble(this.player, "?щ퉬 ?꾩??⑥뿉寃?癒쇱? 臾쇱뼱蹂댁옄!");
       return;
     }
 
@@ -1450,7 +1951,7 @@ class PlayScene extends Phaser.Scene {
 
     const menuOptions = [
       ...DRINK_OPTIONS,
-      { key: "cancel", label: "안 산다", isCancel: true },
+      { key: "cancel", label: "안 먹는다", isCancel: true },
     ];
 
     menuOptions.forEach((drink, index) => {
@@ -1495,7 +1996,8 @@ class PlayScene extends Phaser.Scene {
       label.setDepth(63);
       group.add(label);
 
-      const price = this.add.text(x, 312, `${GAME_CONFIG.drinkPrice.toLocaleString()}원`, {
+      const priceText = drink.isCancel ? "닫기" : GAME_CONFIG.drinkPrice.toLocaleString() + "원";
+      const price = this.add.text(x, 312, priceText, {
         fontFamily: "Arial",
         fontSize: "17px",
         color: "#ffd966",
@@ -1503,7 +2005,6 @@ class PlayScene extends Phaser.Scene {
         stroke: "#21352c",
         strokeThickness: 4,
       });
-      price.setText(drink.isCancel ? "닫기" : `${GAME_CONFIG.drinkPrice.toLocaleString()}원`);
       price.setOrigin(0.5);
       price.setScrollFactor(0);
       price.setDepth(63);
@@ -1567,13 +2068,13 @@ class PlayScene extends Phaser.Scene {
       if (shouldFinishQuest) {
         this.finishJjookQuestWithoutDrink();
       } else {
-        this.showQuestToast("다음에 마시자!");
+        this.showQuestToast("?ㅼ쓬??留덉떆??");
       }
       return;
     }
 
     if (!this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
-      this.showQuestToast("돈이 1,000원 필요해!");
+      this.showQuestToast("?덉씠 1,000???꾩슂??");
       return;
     }
 
@@ -1647,7 +2148,7 @@ class PlayScene extends Phaser.Scene {
   finishPurchasedDrink(drink) {
     this.jjookQuestState = this.jjookStateBeforeVending || "completed";
     this.drinkInventory.push(drink.key);
-    this.showQuestToast(`${drink.label}을 마셨다! 이동 속도 UP`);
+    this.showQuestToast(`${drink.label}??留덉뀲?? ?대룞 ?띾룄 UP`);
     this.activateDrinkSpeedBuff();
     this.selectedDrink = null;
     this.shouldCompleteJjookAfterDrink = false;
@@ -1661,12 +2162,7 @@ class PlayScene extends Phaser.Scene {
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
     this.dialogueSystem?.start([
-      {
-        name: "쭉쭉이",
-        portraitKey: "jjookface",
-        frame: 2,
-        text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!",
-      },
+      { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!" },
     ]);
   }
 
@@ -1676,23 +2172,15 @@ class PlayScene extends Phaser.Scene {
     this.clearQuestMarker("jjookQuest");
     if (this.selectedDrink) {
       this.drinkInventory.push(this.selectedDrink.key);
-      this.showQuestToast(`${this.selectedDrink.label}을 마셨다! 이동 속도 UP`);
+      this.showQuestToast(this.selectedDrink.label + "를 마셨어. 이동 속도 UP");
     }
     this.activateDrinkSpeedBuff();
     this.activateJjookFollower();
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
     this.dialogueSystem?.start([
-      {
-        name: "해냄이",
-        text: "잘 먹었어, 고마워! 시원하다!",
-      },
-      {
-        name: "쭉쭉이",
-        portraitKey: "jjookface",
-        frame: 2,
-        text: "아냐, 내가 더 고맙지! 나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!",
-      },
+      { name: "해냄이", text: "잘 먹었어. 고마워! 시원하다!" },
+      { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!" },
     ]);
   }
 
@@ -1702,14 +2190,14 @@ class PlayScene extends Phaser.Scene {
     this.showBuffIcon("speed_buff_icon", "이동 속도 UP", GAME_CONFIG.speedBuffDurationMs);
     this.speedBuffTimer = this.time.delayedCall(GAME_CONFIG.speedBuffDurationMs, () => {
       this.isSpeedBuffActive = false;
-      this.showQuestToast("음료수 속도 효과가 끝났어.");
+      this.showQuestToast("음료수 속도 효과가 끝났어요.");
     });
   }
 
   activateJjookFollower() {
     this.isJjookFollowActive = true;
     this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
-    this.showQuestToast("쭉쭉이가 1분 동안 플로깅을 도와줘!");
+    this.showQuestToast("쭉쭉이가 1분 동안 플로깅을 도와줘.");
     this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
       this.isJjookFollowActive = false;
       this.showQuestToast("쭉쭉이: 그럼 다음에 또 봐!");
@@ -1736,7 +2224,7 @@ class PlayScene extends Phaser.Scene {
       plastic: 0xf2c94c,
     };
     const color = colorByType[type] || 0xffffff;
-    this.showSpeechBubble(target, "쏙!");
+    this.showSpeechBubble(target, "??");
 
     const itemTexture = this.getRandomTrashTexture(type);
     if (this.textures.exists(itemTexture)) {
@@ -1780,7 +2268,7 @@ class PlayScene extends Phaser.Scene {
       this.canSweep = true;
     });
 
-    const multiplier = this.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
+    const multiplier = this.getSweepMultiplier();
     const width = GAME_CONFIG.baseSweepWidth * multiplier;
     const height = GAME_CONFIG.baseSweepHeight * multiplier;
     const offset = 42 * multiplier;
@@ -1795,6 +2283,12 @@ class PlayScene extends Phaser.Scene {
       const jjookHeight = height * 0.92;
       this.performSweepAt(this.jjookNpc.x, this.jjookNpc.y + 8, jjookWidth, jjookHeight, null);
     }
+  }
+
+  getSweepMultiplier() {
+    const broomMultiplier = this.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
+    const bacchusMultiplier = this.isBacchusActive ? GAME_CONFIG.bacchusSweepMultiplier : 1;
+    return Math.max(broomMultiplier, bacchusMultiplier);
   }
 
   performSweepAt(x, y, width, height, direction = null) {
@@ -1882,7 +2376,7 @@ class PlayScene extends Phaser.Scene {
     this.addTrashToRecycleInventory(trashType);
 
     const reward = this.getTrashCleanReward();
-    console.log(`획득: ${reward}원 (총: ${this.totalCleanedCount}개)`);
+    console.log(`?띾뱷: ${reward}??(珥? ${this.totalCleanedCount}媛?`);
     this.moneySystem.addMoney(reward);
 
     if (isCanTrash) {
@@ -1894,7 +2388,7 @@ class PlayScene extends Phaser.Scene {
     this.showCleanFeedback(slimeX, slimeY, isCanTrash);
     this.updateHud();
 
-    // ===== 슬라임 리스폰 시스템 =====
+    // ===== ?щ씪??由ъ뒪???쒖뒪??=====
     this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
       if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
         this.respawnSlime();
@@ -2045,16 +2539,10 @@ class PlayScene extends Phaser.Scene {
     this.isRecycleMaster = true;
     this.playMoneyRewardSound();
     this.showCleanFeedback(this.player.x, this.player.y, true);
-    this.showQuestToast("분리수거 수당 개방! 맞는 통에 넣으면 100원");
+    this.showQuestToast("분리수거 보상 개방! 맞는 통에 넣으면 100원");
     this.dialogueSystem?.start([
-      {
-        name: "여비",
-        text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에서 맞는 통에 넣으면 100원을 더 받을 수 있어.",
-      },
-      {
-        name: "여비",
-        text: "그리고 약속한 멋진 빗자루야. 이걸로 더 넓게 쓸어보자!",
-      },
+      { name: "여비", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
+      { name: "여비", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
     ]);
     this.dropBroomUpgrade();
   }
@@ -2193,10 +2681,10 @@ class PlayScene extends Phaser.Scene {
 
   showCompleteOverlay() {
     if (this.resultTrashCountEl) {
-      this.resultTrashCountEl.textContent = `쓰레기 ${this.totalCleanedCount}개`;
+      this.resultTrashCountEl.textContent = "쓰레기 " + this.totalCleanedCount + "개";
     }
     if (this.resultCanCountEl) {
-      this.resultCanCountEl.textContent = `캔 ${this.cleanedCanCount}개`;
+      this.resultCanCountEl.textContent = "캔 " + this.cleanedCanCount + "개";
     }
     if (this.resultHelpUsedEl) {
       this.resultHelpUsedEl.textContent = this.hasUsedSangcheori ? "여비 도움 완료" : "여비 도움 미사용";
@@ -2270,7 +2758,7 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
-  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
+  showMoneyRewardAnimation(amount, { label = "?좊Ъ", icon = "./assets/ui/10000won.png" } = {}) {
     const stage = document.querySelector(".game-stage");
     if (!stage) return;
 
@@ -2278,13 +2766,261 @@ class PlayScene extends Phaser.Scene {
     reward.className = "money-reward-pop";
     reward.innerHTML = `
       <img src="${icon}" alt="${label}" />
-      <strong>${label} ${amount.toLocaleString()}원</strong>
+      <strong>${label} ${amount.toLocaleString()}??/strong>
     `;
     stage.appendChild(reward);
     window.setTimeout(() => reward.remove(), 3600);
   }
 
 
+
+  showInteriorScene(textureKey, type = "hospital") {
+    this.clearInteriorScene();
+    this.interiorSceneGroup = this.add.group();
+    this.interiorSceneType = type;
+
+    const viewportWidth = Math.max(768, this.scale.width || 768);
+    const viewportHeight = Math.max(480, this.scale.height || 480);
+    const centerX = viewportWidth / 2;
+    const centerY = viewportHeight / 2;
+
+    const dim = this.add.rectangle(centerX, centerY, viewportWidth, viewportHeight, 0x000000, 0.35);
+    dim.setScrollFactor(0);
+    dim.setDepth(58);
+    this.interiorSceneGroup.add(dim);
+
+    const bg = this.add.image(centerX, centerY, textureKey);
+    bg.setScrollFactor(0);
+    bg.setDisplaySize(viewportWidth, viewportHeight);
+    bg.setDepth(59);
+    this.interiorSceneGroup.add(bg);
+  }
+
+  clearInteriorScene() {
+    this.interiorSceneGroup?.clear(true, true);
+    this.interiorSceneGroup = null;
+    this.interiorSpeaker = null;
+    this.interiorSceneType = null;
+  }
+
+  handleDialogueLineChange(line) {
+    if (!this.interiorSceneGroup) return;
+    if (!line?.overlayKey) return;
+
+    this.setInteriorSpeaker(line.overlayKey, line.overlayOptions || {});
+  }
+
+  setInteriorSpeaker(textureKey, options = {}) {
+    if (!this.interiorSceneGroup || !this.textures.exists(textureKey)) return;
+
+    this.interiorSpeaker?.destroy();
+
+    const viewportWidth = Math.max(768, this.scale.width || 768);
+    const viewportHeight = Math.max(480, this.scale.height || 480);
+    const image = this.add.image(
+      options.x ?? Phaser.Math.Clamp(viewportWidth * 0.18, 140, 250),
+      options.y ?? viewportHeight - 92,
+      textureKey,
+    );
+    image.setScrollFactor(0);
+    image.setDepth(61);
+    image.setOrigin(0.5, 1);
+
+    const texture = this.textures.get(textureKey);
+    const source = texture.getSourceImage();
+    const sourceWidth = Math.max(1, source?.width || 1);
+    const sourceHeight = Math.max(1, source?.height || 1);
+    const maxWidth = options.maxWidth ?? Phaser.Math.Clamp(viewportWidth * 0.22, 190, 310);
+    const maxHeight = options.maxHeight ?? viewportHeight * 0.72;
+    const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
+    image.setScale(scale);
+
+    image.setAlpha(0);
+    image.setTintFill(0xffffff);
+    this.interiorSceneGroup.add(image);
+    this.interiorSpeaker = image;
+
+    this.tweens.add({
+      targets: image,
+      alpha: 1,
+      x: image.x + 10,
+      duration: 180,
+      ease: "Sine.easeOut",
+      onComplete: () => image.clearTint(),
+    });
+  }
+
+  showFloatingItem(textureKey, x, y, size = 64, fixedToCamera = false, options = {}) {
+    if (!this.textures.exists(textureKey)) return;
+
+    const item = this.add.image(x, y, textureKey);
+    item.setDepth(72);
+    if (fixedToCamera) item.setScrollFactor(0);
+    if (typeof size === "object") {
+      item.setDisplaySize(size.width, size.height);
+    } else {
+      item.setDisplaySize(size, size);
+    }
+    item.setAlpha(0);
+    this.tweens.add({
+      targets: item,
+      alpha: 1,
+      y: y + (options.floatY ?? -18),
+      duration: options.duration ?? 280,
+      ease: "Back.easeOut",
+      yoyo: true,
+      hold: options.hold ?? 760,
+      onComplete: () => {
+        item.destroy();
+        options.onComplete?.();
+      },
+    });
+  }
+
+  playVendingPaymentAnimationLike(textureKey, onComplete) {
+    const bill = this.add.image(384, 250, textureKey);
+    bill.setScrollFactor(0);
+    bill.setDisplaySize(132, 80);
+    bill.setDepth(71);
+    bill.setAlpha(0);
+    this.playTone({ frequency: 880, duration: 0.08, type: "triangle", volume: 0.06 });
+    this.tweens.add({
+      targets: bill,
+      alpha: 1,
+      y: 205,
+      duration: 240,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        this.playTone({ frequency: 1240, duration: 0.08, type: "square", volume: 0.045 });
+        this.tweens.add({
+          targets: bill,
+          x: 520,
+          y: 220,
+          scaleX: bill.scaleX * 0.25,
+          scaleY: bill.scaleY * 0.25,
+          alpha: 0,
+          duration: 460,
+          ease: "Cubic.easeIn",
+          onComplete: () => {
+            bill.destroy();
+            onComplete?.();
+          },
+        });
+      },
+    });
+  }
+
+  playSunisuniEffect(animKey, x, y) {
+    const textureByAnim = {
+      sweat_drop: "sweat_effect",
+      sunisuni_star: "star_effect",
+      sunisuni_heart: "heart_effect",
+    };
+    const textureKey = textureByAnim[animKey] || "sweat_effect";
+    if (!this.anims.exists(animKey) || !this.textures.exists(textureKey)) return;
+
+    const effect = this.add.sprite(x, y, textureKey);
+    effect.setDisplaySize(48, 48);
+    effect.setDepth(9);
+    effect.play(animKey);
+    this.tweens.add({
+      targets: effect,
+      y: y - 18,
+      alpha: 0,
+      duration: 1200,
+      ease: "Cubic.easeOut",
+      onComplete: () => effect.destroy(),
+    });
+  }
+
+  updateBacchusButton() {
+    if (!this.bacchusButton) return;
+
+    if (!this.hasBacchus && !this.isBacchusActive) {
+      this.bacchusButton.setAttribute("hidden", "");
+      this.bacchusButton.classList.remove("is-active");
+      if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = "";
+      return;
+    }
+
+    this.bacchusButton.removeAttribute("hidden");
+    this.bacchusButton.classList.toggle("is-active", this.isBacchusActive);
+  }
+
+  useBacchusItem() {
+    if (!this.hasBacchus || this.isBacchusActive) return;
+
+    this.hasBacchus = false;
+    this.isBacchusActive = true;
+    this.updateBacchusButton();
+    this.playItemPickupSound();
+    this.showQuestToast("?섏씠 ?섎뒗 寃?媛숈븘!");
+    this.showSpeechBubble(this.player, "議곌툑 ??源⑤걮?섍쾶 移섏슱 ???덇쿋??", 1800);
+    this.showCleanFeedback(this.player.x, this.player.y, true);
+
+    const endAt = this.time.now + GAME_CONFIG.bacchusDurationMs;
+    this.bacchusCountdownEvent?.remove(false);
+    this.bacchusCountdownEvent = this.time.addEvent({
+      delay: 250,
+      loop: true,
+      callback: () => {
+        const remaining = Math.max(0, Math.ceil((endAt - this.time.now) / 1000));
+        if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = `${remaining}`;
+      },
+    });
+    this.bacchusTimer?.remove(false);
+    this.bacchusTimer = this.time.delayedCall(GAME_CONFIG.bacchusDurationMs, () => {
+      this.isBacchusActive = false;
+      this.bacchusCountdownEvent?.remove(false);
+      this.bacchusCountdownEvent = null;
+      this.updateBacchusButton();
+      this.showQuestToast("諛뺤뭅???④낵媛 ?앸궗?댁슂.");
+    });
+  }
+
+  sendSunisuniBackToBench() {
+    if (!this.sunisuniNpc?.active) return;
+
+    const target = GAME_CONFIG.sunisuniBench;
+    this.sunisuniNpc.setTexture("sunisuni_front", 2);
+    this.sunisuniNpc.setDisplaySize(78, 104);
+    this.sunisuniNpc.setOrigin(0.5, 0.5);
+    this.showSpeechBubble(this.sunisuniNpc, "踰ㅼ튂濡?媛??議곌툑 ?닿쾶.", 2200);
+
+    const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, target.x, target.y);
+    const duration = Phaser.Math.Clamp(distance * 12, 900, 4200);
+    let previousX = this.sunisuniNpc.x;
+    let previousY = this.sunisuniNpc.y;
+
+    this.tweens.add({
+      targets: this.sunisuniNpc,
+      x: target.x,
+      y: target.y,
+      duration,
+      ease: "Sine.easeInOut",
+      onUpdate: () => {
+        const dx = this.sunisuniNpc.x - previousX;
+        const dy = this.sunisuniNpc.y - previousY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+          this.updateSunisuniDirection(dx, dy);
+        }
+        previousX = this.sunisuniNpc.x;
+        previousY = this.sunisuniNpc.y;
+      },
+      onComplete: () => {
+        this.sunisuniNpc.stop();
+        if (this.textures.exists("sunisuni_recovered")) {
+          this.sunisuniNpc.setTexture("sunisuni_recovered");
+          this.sunisuniNpc.setDisplaySize(82, 106);
+          this.sunisuniNpc.setOrigin(0.5, 0.5);
+        } else {
+          this.sunisuniNpc.setTexture("sunisuni_front", 2);
+          this.sunisuniNpc.setOrigin(0.5, 0.5);
+        }
+        this.showSpeechBubble(this.sunisuniNpc, "留롮씠 愿쒖갖?꾩죱??", 2400);
+      },
+    });
+  }
 
   useSangcheoriItem() {
     if (!this.hasUnlockedSangcheori || this.hasUsedSangcheori || this.isMissionComplete) {
@@ -2316,7 +3052,7 @@ class PlayScene extends Phaser.Scene {
   }
 
   showSangcheoriCleanCutscene() {
-    this.showSangcheoriCenterMessage("내가 도울께");
+    this.showSangcheoriCenterMessage("내가 도울게");
   }
 
   showSangcheoriCenterMessage(
@@ -2879,3 +3615,4 @@ class PlayScene extends Phaser.Scene {
     }
   }
 }
+
