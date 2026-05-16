@@ -17,7 +17,7 @@ const GAME_CONFIG = {
   feedbackSparkleCount: 14,
   canFeedbackSparkleCount: 18,
   slimeSpawnMinDistance: 72,
-  wideCameraZoom: 1.24,
+  wideCameraZoom: 1.3,
   joystickRadius: 78,
   // 새로운 경제 시스템 설정
   slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
