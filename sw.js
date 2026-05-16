@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260516-4";
+const CACHE_NAME = "cleaning-samgakji-v20260516-5";
 
 const PRECACHE_URLS = [
   "./",
@@ -13,7 +13,7 @@ const PRECACHE_URLS = [
   "./src/systems/DialogueSystem.js?v=4",
   "./src/systems/MoneySystem.js?v=3",
   "./src/systems/QuestManager.js?v=8",
-  "./src/scenes/PlayScene.js?v=65",
+  "./src/scenes/PlayScene.js?v=66",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",

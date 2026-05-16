@@ -18,6 +18,8 @@ const GAME_CONFIG = {
   canFeedbackSparkleCount: 18,
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.24,
+  mobileLandscapeViewWidth: 670,
+  mobileLandscapeViewHeight: 310,
   joystickRadius: 78,
   // 새로운 경제 시스템 설정
   slimeRespawnDelayMs: 12000,    // 12초 후 리스폰
@@ -170,7 +172,7 @@ class PlayScene extends Phaser.Scene {
     this.moveStopHandler = (event) => this.stopJoystick(event);
     this.fullscreenHandler = (event) => this.toggleFullscreen(event);
     this.fullscreenChangeHandler = () => this.handleFullscreenChange();
-    this.resizeHandler = () => this.updateCameraZoom();
+    this.resizeHandler = () => this.scheduleCameraZoomUpdate();
     this.audioUnlockHandler = () => this.unlockAudio();
     this.devKeyHandler = (event) => this.handleDevKeydown(event);
     this.pageAudioStopHandler = () => this.stopAudioForPageExit();
@@ -243,7 +245,7 @@ class PlayScene extends Phaser.Scene {
     this.spawnTrashWave();
     this.createInput();
     this.updateHud();
-    this.updateCameraZoom();
+    this.scheduleCameraZoomUpdate();
 
     this.physics.add.collider(this.player, this.walls);
     this.startChapterMusic();
@@ -814,10 +816,26 @@ class PlayScene extends Phaser.Scene {
     const height = viewport?.height || window.innerHeight || this.scale.height;
     const isTouchDevice = navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches;
     const isMobileLandscape = isTouchDevice && width > height;
-    const zoom = isMobileLandscape ? 1.55 : 1;
+    const zoom = isMobileLandscape
+      ? Phaser.Math.Clamp(
+          Math.max(
+            this.scale.width / GAME_CONFIG.mobileLandscapeViewWidth,
+            this.scale.height / GAME_CONFIG.mobileLandscapeViewHeight,
+          ),
+          1.45,
+          3.4,
+        )
+      : 1;
 
     this.cameras.main.setViewport(0, 0, this.scale.width, this.scale.height);
     this.cameras.main.setZoom(zoom);
+  }
+
+  scheduleCameraZoomUpdate() {
+    this.updateCameraZoom();
+    [120, 360, 720].forEach((delay) => {
+      this.time.delayedCall(delay, () => this.updateCameraZoom());
+    });
   }
 
   spawnTrashWave() {
