@@ -58,9 +58,9 @@ class DialogueSystem {
     this.activeChoices = null;
     this.clearChoices();
     this.dialogNext.style.opacity = "0";
-    this.dialogName.textContent = line.name || "???";
-    this.scene.handleDialogueLineChange?.(line);
+    this.dialogName.textContent = line.name || "알림";
     this.dialogModal?.classList.toggle("has-scene-overlay", Boolean(line.overlayKey));
+    this.scene.handleDialogueLineChange?.(line);
     this.updatePortrait(line);
     this.typewrite(line.text, line.choices || null);
   }
@@ -200,6 +200,7 @@ class DialogueSystem {
     this.clearChoices();
     this.dialogModal.style.display = "none";
     this.dialogModal?.classList.remove("has-scene-overlay");
+    this.dialogModal?.style.removeProperty("--dialog-scene-left");
     this.dialogPanel?.classList.remove("has-portrait");
     this.isInDialogue = false;
     this.scene.isInDialogue = false;

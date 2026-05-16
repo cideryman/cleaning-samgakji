@@ -19,10 +19,10 @@
   slimeSpawnMinDistance: 72,
   wideCameraZoom: 1.3,
   joystickRadius: 78,
-  // ?덈줈??寃쎌젣 ?쒖뒪???ㅼ젙
-  slimeRespawnDelayMs: 12000,    // 12珥???由ъ뒪??
-  maxSlimes: 25,                 // ?숈떆 理쒕? ?щ씪????
-  rewardPerSlime: 100,           // ?щ씪?꾨떦 100??
+  // 경제 시스템 설정
+  slimeRespawnDelayMs: 12000,    // 12초마다 리스폰
+  maxSlimes: 25,                 // 동시에 최대 슬라임 수
+  rewardPerSlime: 100,           // 슬라임당 100원
   recycleDepositReward: 100,
   recycleQuestUnlockMoney: 25000,
   jjookQuestUnlockMoney: 45000,
@@ -43,7 +43,7 @@
   pharmacyDoor: { x: 505, y: 260 },
   bacchusDurationMs: 60000,
   bacchusSweepMultiplier: 2,
-  chapter1TargetMoney: 100000,   // 梨뺥꽣1 紐⑺몴 湲덉븸
+  chapter1TargetMoney: 100000,   // 챕터 1 목표 금액
   recyclingCenter: { x: 1210, y: 420 },
   vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 685, y: 545 },
@@ -61,8 +61,8 @@ const DRINK_OPTIONS = [
 const TILED_MAP_CONFIG = {
   key: "chapter1_map",
   chapter: 1,
-  title: "梨뺥꽣 1",
-  mapName: "?쇨컖吏 蹂듭?愿",
+  title: "챕터 1",
+  mapName: "삼각지 복지관",
   tilesetName: "samgakji_tiles",
   tilesetImageKey: "samgakji_tiles",
   visibleLayers: ["ground", "objects"],
@@ -84,9 +84,9 @@ const TRASH_TEXTURES = {
 };
 
 const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "罹?怨좎쿋" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "醫낆씠/?쇰컲" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "?뚮씪?ㅽ떛" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
 ];
 
 class PlayScene extends Phaser.Scene {
@@ -149,7 +149,7 @@ class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
-    // 梨뺥꽣 諛?寃쎌젣 ?쒖뒪??愿??
+    // 챕터 및 경제 시스템 관련
     this.currentChapter = 1;
     this.isChapterComplete = false;
   }
@@ -232,12 +232,12 @@ class PlayScene extends Phaser.Scene {
     this.specialToast?.setAttribute("aria-hidden", "true");
     this.hideJoystick();
     
-    // ===== ?쒖뒪??珥덇린??=====
+    // ===== 시스템 초기화 =====
     this.dialogueSystem = new DialogueSystem(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);
     this.isInDialogue = false;
-    this.isContractActive = false;   // 梨뺥꽣2?먯꽌 ?ъ슜
+    this.isContractActive = false;   // 챕터 2에서 사용
     this.currentChapter = 1;
     this.isChapterComplete = false;
     
@@ -423,8 +423,8 @@ class PlayScene extends Phaser.Scene {
 
     this.moveSangcheoriToRecyclingCenter();
     this.setQuestMarker("recycleQuest", this.sangcheoriNpc, "!");
-    this.showQuestToast("?щ퉬 ?꾩??④? 遺꾨━?섍굅?μ뿉??湲곕떎由ш퀬 ?덉뼱!", 10000);
-    this.showSpeechBubble(this.sangcheoriNpc, "遺꾨━?섍굅?μ쑝濡??!", 10000);
+    this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
+    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
   }
 
   checkJjookQuestUnlock() {
@@ -436,8 +436,8 @@ class PlayScene extends Phaser.Scene {
     this.jjookQuestState = "wallet_missing";
     this.createJjookQuestObjects();
     this.setQuestMarker("jjookQuest", this.jjookNpc, "?");
-    this.showQuestToast("彛됱춬?닿? ?먰뙋湲??욎뿉??湲곕떎由ш퀬 ?덉뼱!", 10000);
-    this.showSpeechBubble(this.jjookNpc, "??吏媛??대뵒 媛붿??", 10000);
+    this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
+    this.showSpeechBubble(this.jjookNpc, "내 지갑 어디 갔지?", 10000);
   }
 
   checkSunisuniQuestUnlock() {
@@ -453,9 +453,9 @@ class PlayScene extends Phaser.Scene {
       this.setSunisuniSickPose();
       this.setQuestMarker("sunisuniQuest", this.sunisuniNpc, "!");
       this.playSunisuniEffect("sweat_drop", this.sunisuniNpc.x + 28, this.sunisuniNpc.y - 42);
-      this.showSpeechBubble(this.sunisuniNpc, "?꾩슦... 諛곗빞...", 10000);
+      this.showSpeechBubble(this.sunisuniNpc, "아우... 배야...", 10000);
     }
-    this.showQuestToast("?섎땲?섎땲媛 諛곕? ?↔퀬 ?됱븘 ?덉뼱??", 10000);
+    this.showQuestToast("수니수니가 배를 잡고 앉아 있어요!", 10000);
   }
 
   createMap() {
@@ -806,8 +806,8 @@ class PlayScene extends Phaser.Scene {
     this.walletItem = null;
     this.playItemPickupSound();
     this.setQuestMarker("jjookQuest", this.jjookNpc, "!");
-    this.showQuestToast("媛덉깋 吏媛묒쓣 李얠븯??");
-    this.showSpeechBubble(this.player, "吏媛?李얠븯??");
+    this.showQuestToast("갈색 지갑을 찾았어!");
+    this.showSpeechBubble(this.player, "지갑 찾았어!");
   }
 
   checkWalletPickup() {
@@ -1000,13 +1000,13 @@ class PlayScene extends Phaser.Scene {
     if (this.isChapterComplete) return;
     this.isChapterComplete = true;
     this.dialogueSystem.start([
-      { name: "?뚮┝", text: `紐⑺몴 湲덉븸 ${GAME_CONFIG.chapter1TargetMoney}?먯쓣 ?ъ꽦?덉뒿?덈떎!` },
-      { name: "?뚮┝", text: "?ㅼ쓬 梨뺥꽣濡??대룞?⑸땲??" }
+      { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney.toLocaleString()}원을 달성했습니다!` },
+      { name: "알림", text: "다음 챕터로 이동합니다." }
     ]);
-    // 異붽?濡?梨뺥꽣 ?꾪솚 濡쒖쭅 (?? 2珥?????留?濡쒕뱶)
+    // 추가 챕터 전환 로직
     this.time.delayedCall(2000, () => {
-      // this.scene.restart() ?먮뒗 ?ㅼ쓬 梨뺥꽣濡??대룞?섎뒗 肄붾뱶
-      console.log("梨뺥꽣2濡??꾪솚 ?덉젙");
+      // this.scene.restart() 또는 다음 챕터로 이동하는 코드
+      console.log("챕터 2로 전환 예정");
     });
   }
 
@@ -1121,7 +1121,7 @@ class PlayScene extends Phaser.Scene {
 
   addDevMoney() {
     this.moneySystem?.addMoney(10000);
-    this.showQuestToast("媛쒕컻 移섑듃: 10,000??異붽?");
+    this.showQuestToast("개발 치트: 10,000원 추가");
   }
 
   addDevTrashInventory() {
@@ -1129,12 +1129,12 @@ class PlayScene extends Phaser.Scene {
     this.recyclingInventory.can += 20;
     this.recyclingInventory.plastic += 20;
     this.updateHud();
-    this.showQuestToast("媛쒕컻 移섑듃: ?곕젅湲?20媛쒖뵫 異붽?");
+    this.showQuestToast("개발 치트: 쓰레기 20개씩 추가");
   }
 
   advanceDevQuest() {
     if (this.isInDialogue || this.vendingMenuGroup) {
-      this.showQuestToast("??붽? ?앸궃 ??F4瑜??뚮윭以?");
+      this.showQuestToast("대화가 끝난 뒤 F4를 눌러줘.");
       return;
     }
 
@@ -1151,7 +1151,7 @@ class PlayScene extends Phaser.Scene {
       this.ensureDevMoney(GAME_CONFIG.recycleQuestUnlockMoney);
       this.hasAnnouncedRecycleQuest = false;
       this.checkRecycleQuestUnlock();
-      this.showQuestToast("F4: 遺꾨━?섍굅 ?섏뒪?몃줈 ?대룞");
+      this.showQuestToast("F4: 분리수거 퀘스트로 이동");
       return;
     }
 
@@ -1168,7 +1168,7 @@ class PlayScene extends Phaser.Scene {
       this.ensureDevMoney(GAME_CONFIG.jjookQuestUnlockMoney);
       this.hasAnnouncedJjookQuest = false;
       this.checkJjookQuestUnlock();
-      this.showQuestToast("F4: 彛됱춬???섏뒪?몃줈 ?대룞");
+      this.showQuestToast("F4: 쭉쭉이 퀘스트로 이동");
       return;
     }
 
@@ -1182,7 +1182,7 @@ class PlayScene extends Phaser.Scene {
       this.ensureDevMoney(GAME_CONFIG.sunisuniQuestUnlockMoney);
       this.hasAnnouncedSunisuniQuest = false;
       this.checkSunisuniQuestUnlock();
-      this.showQuestToast("F4: ?섎땲?섎땲 ?섏뒪?몃줈 ?대룞");
+      this.showQuestToast("F4: 수니수니 퀘스트로 이동");
       return;
     }
 
@@ -1190,11 +1190,11 @@ class PlayScene extends Phaser.Scene {
       this.ensureDevMoney(GAME_CONFIG.sunisuniQuestUnlockMoney);
       this.hasAnnouncedSunisuniQuest = false;
       this.checkSunisuniQuestUnlock();
-      this.showQuestToast("F4: ?섎땲?섎땲 ?섏뒪???쒖옉");
+      this.showQuestToast("F4: 수니수니 퀘스트 시작");
       return;
     }
 
-    this.showQuestToast("F4: ?대? 留덉?留??섏뒪?멸퉴吏 ?대졇??");
+    this.showQuestToast("F4: 이미 마지막 퀘스트까지 열렸어.");
   }
 
   ensureDevMoney(amount) {
@@ -1359,8 +1359,8 @@ class PlayScene extends Phaser.Scene {
 
     if (this.sunisuniQuestState === "sunisuni_found") {
       this.dialogueSystem.start([
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "아우... 배야..." },
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "너무 아파서 일어나기가 힘들어..." },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "아우... 배야..." },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "너무 아파서 일어나기가 힘들어..." },
         {
           name: "해냄이",
           text: "수니수니에게 뭐라고 말할까요?",
@@ -1375,7 +1375,7 @@ class PlayScene extends Phaser.Scene {
 
     if (this.sunisuniQuestState === "accepted_help" || this.sunisuniQuestState === "going_hospital") {
       this.dialogueSystem.start([
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "조금만 천천히 가줄래...?" },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "조금만 천천히 가줄래...?" },
         { name: "해냄이", text: "천천히 같이 가야겠다." },
       ]);
       return;
@@ -1383,24 +1383,24 @@ class PlayScene extends Phaser.Scene {
 
     if (this.sunisuniQuestState === "got_prescription" || this.sunisuniQuestState === "going_pharmacy") {
       this.dialogueSystem.start([
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "처방전을 가지고 약국으로 가요." },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "처방전을 가지고 약국으로 가요." },
       ]);
       return;
     }
 
     if (this.sunisuniQuestState === "quest_complete") {
       this.dialogueSystem.start([
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "해냄이 덕분에 많이 괜찮아졌어." },
-        { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "약은 꼭 설명대로 먹어야 해." },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 많이 괜찮아졌어." },
+        { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "약은 꼭 설명대로 먹어야 해." },
       ]);
     }
   }
 
   askSunisuniHospitalHelp() {
     this.dialogueSystem.start([
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "혼자서는 병원까지 가기 어려울 것 같아..." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "혹시 나랑 같이 가줄 수 있을까?" },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "병원에 갔다가 약국도 들러야 할 것 같아..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "혼자서는 병원까지 가기 어려울 것 같아..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "혹시 나랑 같이 가줄 수 있을까?" },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "병원에 갔다가 약국도 들러야 할 것 같아..." },
       {
         name: "해냄이",
         text: "어떻게 할까요?",
@@ -1414,8 +1414,8 @@ class PlayScene extends Phaser.Scene {
 
   deferSunisuniHelp() {
     this.dialogueSystem.start([
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "괜찮아... 기다릴게..." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 0, text: "그래도 너무 아파서 도움이 필요해..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "괜찮아... 기다릴게..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "그래도 너무 아파서 도움이 필요해..." },
     ]);
   }
 
@@ -1437,10 +1437,10 @@ class PlayScene extends Phaser.Scene {
     this.dialogueSystem.start([
       { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "어서 오세요. 접수를 도와드릴게요." },
       { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "환자분 성함과 어디가 불편한지 알려주세요." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 너무 긴장해서 말이 잘 안 나와..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, overlayKey: "sunisuni_portrait_worried", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 너무 긴장해서 말이 잘 안 나와..." },
       {
         name: "해냄이",
-        overlayKey: "sunisuni_portrait_sick",
+        overlayKey: "sunisuni_portrait_worried",
         overlayOptions: { maxWidth: 240, maxHeight: 260 },
         text: "접수처에 뭐라고 말하면 좋을까요?",
         choices: [
@@ -1467,8 +1467,8 @@ class PlayScene extends Phaser.Scene {
       { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "네, 수니수니 님 배가 아파서 오셨군요." },
       { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "접수되었습니다. 잠시만 기다리면 의사 선생님을 만날 수 있어요." },
       { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "안녕하세요. 어디가 어떻게 아픈지 알려주세요." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "내 배가 아프다고 대신 말해줄래?" },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, overlayKey: "sunisuni_portrait_worried", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "내 배가 아프다고 대신 말해줄래?" },
       {
         name: "해냄이",
         overlayKey: "hospital_doctor",
@@ -1562,9 +1562,9 @@ class PlayScene extends Phaser.Scene {
       this.playSunisuniEffect("sunisuni_heart", this.sunisuniNpc.x, this.sunisuniNpc.y - 48);
     }
     this.dialogueSystem.start([
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "정말 고마워." },
-      { name: "수니수니", portraitKey: "sunisuni_portrait", frame: 1, text: "이건 같이 가준 보답이야." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "정말 고마워." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이건 같이 가준 보답이야." },
       { name: "여비", text: "해냄이, 오늘은 청소뿐 아니라 친구도 도왔구나!" },
       { name: "여비", text: "진짜 멋진 사람이야!" },
     ], () => this.sendSunisuniBackToBench());
@@ -1669,11 +1669,11 @@ class PlayScene extends Phaser.Scene {
   showFirstGuide() {
     if (this.isMissionComplete || !this.sangcheoriNpc) return;
     
-    // ??붿갹?쇰줈 泥?媛?대뱶 ?쒖떆
+    // 대화창으로 첫 가이드 표시
     const dialogue = [
-      { name: "?뚮┝", text: "?ы뻾??媛?ㅻ㈃ ?덉씠 議곌툑 遺議깊빐??" },
-      { name: "?꾨쭏", text: "?쇨컖吏 泥?냼瑜??꾩?二쇰㈃ 泥?냼 ?섎떦??以꾧쾶." },
-      { name: "?뚮┝", text: "?곕젅湲곕? 鍮쀬옄猷⑤줈 移섏슦怨??섎떦??紐⑥븘蹂댁꽭??" }
+      { name: "알림", text: "여행을 가려면 돈이 조금 부족해요." },
+      { name: "여비", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
+      { name: "알림", text: "쓰레기를 빗자루로 치우고 보상을 모아보세요." }
     ];
     this.dialogueSystem.start(dialogue);
   }
@@ -1724,7 +1724,7 @@ class PlayScene extends Phaser.Scene {
 
     const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, this.player.x, this.player.y);
     if (distance > GAME_CONFIG.sunisuniMaxDistance) {
-      this.showSpeechBubble(this.sunisuniNpc, "議곌툑留?泥쒖쿇??媛以꾨옒...?", 900);
+      this.showSpeechBubble(this.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
     }
     if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
       this.sunisuniNpc.stop();
@@ -1888,8 +1888,8 @@ class PlayScene extends Phaser.Scene {
     const inventoryCount = this.recyclingInventory[type] || 0;
     if (inventoryCount <= 0) {
       const message = type === "plastic"
-        ? "?뚮씪?ㅽ떛???꾩쭅 ??二쇱썱??"
-        : "?? ?닿굔 ?ш린媛 ?꾨땲??";
+        ? "플라스틱을 아직 못 주웠어."
+        : "이건 여기가 아니야.";
       this.showSpeechBubble(this.player, message);
       this.playTone({ frequency: 220, duration: 0.09, type: "square", volume: 0.035 });
       return;
@@ -1897,7 +1897,7 @@ class PlayScene extends Phaser.Scene {
 
     const recycleState = this.questManager?.getRecycleQuestState();
     if (recycleState === "locked" || recycleState === "unlocked") {
-      this.showSpeechBubble(this.player, "?щ퉬 ?꾩??⑥뿉寃?癒쇱? 臾쇱뼱蹂댁옄!");
+      this.showSpeechBubble(this.player, "여비 아저씨에게 먼저 물어보자!");
       return;
     }
 
@@ -2068,13 +2068,13 @@ class PlayScene extends Phaser.Scene {
       if (shouldFinishQuest) {
         this.finishJjookQuestWithoutDrink();
       } else {
-        this.showQuestToast("?ㅼ쓬??留덉떆??");
+        this.showQuestToast("다음에 마실게.");
       }
       return;
     }
 
     if (!this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
-      this.showQuestToast("?덉씠 1,000???꾩슂??");
+      this.showQuestToast("돈이 1,000원 필요해요.");
       return;
     }
 
@@ -2148,7 +2148,7 @@ class PlayScene extends Phaser.Scene {
   finishPurchasedDrink(drink) {
     this.jjookQuestState = this.jjookStateBeforeVending || "completed";
     this.drinkInventory.push(drink.key);
-    this.showQuestToast(`${drink.label}??留덉뀲?? ?대룞 ?띾룄 UP`);
+    this.showQuestToast(`${drink.label}를 마셨어. 이동 속도 UP`);
     this.activateDrinkSpeedBuff();
     this.selectedDrink = null;
     this.shouldCompleteJjookAfterDrink = false;
@@ -2224,7 +2224,7 @@ class PlayScene extends Phaser.Scene {
       plastic: 0xf2c94c,
     };
     const color = colorByType[type] || 0xffffff;
-    this.showSpeechBubble(target, "??");
+    this.showSpeechBubble(target, "쏙!");
 
     const itemTexture = this.getRandomTrashTexture(type);
     if (this.textures.exists(itemTexture)) {
@@ -2376,7 +2376,7 @@ class PlayScene extends Phaser.Scene {
     this.addTrashToRecycleInventory(trashType);
 
     const reward = this.getTrashCleanReward();
-    console.log(`?띾뱷: ${reward}??(珥? ${this.totalCleanedCount}媛?`);
+    console.log(`획득: ${reward}원 (총 ${this.totalCleanedCount}개)`);
     this.moneySystem.addMoney(reward);
 
     if (isCanTrash) {
@@ -2388,7 +2388,7 @@ class PlayScene extends Phaser.Scene {
     this.showCleanFeedback(slimeX, slimeY, isCanTrash);
     this.updateHud();
 
-    // ===== ?щ씪??由ъ뒪???쒖뒪??=====
+    // ===== 슬라임 리스폰 시스템 =====
     this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
       if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
         this.respawnSlime();
@@ -2758,7 +2758,7 @@ class PlayScene extends Phaser.Scene {
     });
   }
 
-  showMoneyRewardAnimation(amount, { label = "?좊Ъ", icon = "./assets/ui/10000won.png" } = {}) {
+  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
     const stage = document.querySelector(".game-stage");
     if (!stage) return;
 
@@ -2766,7 +2766,7 @@ class PlayScene extends Phaser.Scene {
     reward.className = "money-reward-pop";
     reward.innerHTML = `
       <img src="${icon}" alt="${label}" />
-      <strong>${label} ${amount.toLocaleString()}??/strong>
+      <strong>${label} ${amount.toLocaleString()}원</strong>
     `;
     stage.appendChild(reward);
     window.setTimeout(() => reward.remove(), 3600);
@@ -2776,6 +2776,8 @@ class PlayScene extends Phaser.Scene {
 
   showInteriorScene(textureKey, type = "hospital") {
     this.clearInteriorScene();
+    document.body.classList.add("interior-scene-active");
+    document.body.dataset.interiorScene = type;
     this.interiorSceneGroup = this.add.group();
     this.interiorSceneType = type;
 
@@ -2783,17 +2785,40 @@ class PlayScene extends Phaser.Scene {
     const viewportHeight = Math.max(480, this.scale.height || 480);
     const centerX = viewportWidth / 2;
     const centerY = viewportHeight / 2;
+    const overscan = 1.18;
+    const fillColor = type === "pharmacy" ? 0xe9ded2 : 0xded2c4;
 
-    const dim = this.add.rectangle(centerX, centerY, viewportWidth, viewportHeight, 0x000000, 0.35);
+    const solidBack = this.add.rectangle(
+      centerX,
+      centerY,
+      viewportWidth * 2,
+      viewportHeight * 2,
+      fillColor,
+      1,
+    );
+    solidBack.setScrollFactor(0);
+    solidBack.setDepth(58);
+    this.interiorSceneGroup.add(solidBack);
+
+    const dim = this.add.rectangle(centerX, centerY, viewportWidth * 2, viewportHeight * 2, 0x000000, 0.35);
     dim.setScrollFactor(0);
-    dim.setDepth(58);
+    dim.setDepth(59);
     this.interiorSceneGroup.add(dim);
 
     const bg = this.add.image(centerX, centerY, textureKey);
     bg.setScrollFactor(0);
-    bg.setDisplaySize(viewportWidth, viewportHeight);
-    bg.setDepth(59);
+    this.fitInteriorBackground(bg, viewportWidth * overscan, viewportHeight * overscan);
+    bg.setDepth(60);
     this.interiorSceneGroup.add(bg);
+  }
+
+  fitInteriorBackground(image, targetWidth, targetHeight) {
+    const texture = this.textures.get(image.texture.key);
+    const source = texture?.getSourceImage?.();
+    const sourceWidth = Math.max(1, source?.width || image.width || 1);
+    const sourceHeight = Math.max(1, source?.height || image.height || 1);
+    const scale = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
+    image.setScale(scale);
   }
 
   clearInteriorScene() {
@@ -2801,6 +2826,8 @@ class PlayScene extends Phaser.Scene {
     this.interiorSceneGroup = null;
     this.interiorSpeaker = null;
     this.interiorSceneType = null;
+    document.body.classList.remove("interior-scene-active");
+    delete document.body.dataset.interiorScene;
   }
 
   handleDialogueLineChange(line) {
@@ -2817,14 +2844,27 @@ class PlayScene extends Phaser.Scene {
 
     const viewportWidth = Math.max(768, this.scale.width || 768);
     const viewportHeight = Math.max(480, this.scale.height || 480);
+    const panelRect = document.querySelector(".dialog-panel")?.getBoundingClientRect();
+    const speakerLeft = Phaser.Math.Clamp(
+      options.x ?? Math.round(panelRect?.left ?? viewportWidth * 0.18),
+      16,
+      Math.max(16, viewportWidth - 180),
+    );
+    const speakerBottom = Phaser.Math.Clamp(
+      options.y ?? Math.round((panelRect?.top ?? viewportHeight - 168) + 6),
+      120,
+      viewportHeight - 48,
+    );
+    document.querySelector(".dialog-modal")?.style.setProperty("--dialog-scene-left", `${speakerLeft}px`);
+
     const image = this.add.image(
-      options.x ?? Phaser.Math.Clamp(viewportWidth * 0.18, 140, 250),
-      options.y ?? viewportHeight - 92,
+      speakerLeft,
+      speakerBottom,
       textureKey,
     );
     image.setScrollFactor(0);
     image.setDepth(61);
-    image.setOrigin(0.5, 1);
+    image.setOrigin(0, 1);
 
     const texture = this.textures.get(textureKey);
     const source = texture.getSourceImage();
@@ -2843,7 +2883,7 @@ class PlayScene extends Phaser.Scene {
     this.tweens.add({
       targets: image,
       alpha: 1,
-      x: image.x + 10,
+      x: image.x + 8,
       duration: 180,
       ease: "Sine.easeOut",
       onComplete: () => image.clearTint(),
@@ -2954,8 +2994,8 @@ class PlayScene extends Phaser.Scene {
     this.isBacchusActive = true;
     this.updateBacchusButton();
     this.playItemPickupSound();
-    this.showQuestToast("?섏씠 ?섎뒗 寃?媛숈븘!");
-    this.showSpeechBubble(this.player, "議곌툑 ??源⑤걮?섍쾶 移섏슱 ???덇쿋??", 1800);
+    this.showQuestToast("힘이 나는 것 같아!");
+    this.showSpeechBubble(this.player, "조금 더 깨끗하게 치울 수 있겠어!", 1800);
     this.showCleanFeedback(this.player.x, this.player.y, true);
 
     const endAt = this.time.now + GAME_CONFIG.bacchusDurationMs;
@@ -2974,7 +3014,7 @@ class PlayScene extends Phaser.Scene {
       this.bacchusCountdownEvent?.remove(false);
       this.bacchusCountdownEvent = null;
       this.updateBacchusButton();
-      this.showQuestToast("諛뺤뭅???④낵媛 ?앸궗?댁슂.");
+      this.showQuestToast("박카스 효과가 끝났어요.");
     });
   }
 
@@ -2985,7 +3025,7 @@ class PlayScene extends Phaser.Scene {
     this.sunisuniNpc.setTexture("sunisuni_front", 2);
     this.sunisuniNpc.setDisplaySize(78, 104);
     this.sunisuniNpc.setOrigin(0.5, 0.5);
-    this.showSpeechBubble(this.sunisuniNpc, "踰ㅼ튂濡?媛??議곌툑 ?닿쾶.", 2200);
+    this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
 
     const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, target.x, target.y);
     const duration = Phaser.Math.Clamp(distance * 12, 900, 4200);
@@ -3017,7 +3057,7 @@ class PlayScene extends Phaser.Scene {
           this.sunisuniNpc.setTexture("sunisuni_front", 2);
           this.sunisuniNpc.setOrigin(0.5, 0.5);
         }
-        this.showSpeechBubble(this.sunisuniNpc, "留롮씠 愿쒖갖?꾩죱??", 2400);
+        this.showSpeechBubble(this.sunisuniNpc, "많이 괜찮아졌어.", 2400);
       },
     });
   }

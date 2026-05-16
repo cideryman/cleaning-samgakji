@@ -37,6 +37,8 @@ const EXTERNAL_ASSETS = [
   { key: "hospital_staff", path: "assets/objects/hospital-staff.png" },
   { key: "chemist", path: "assets/objects/chemist.png" },
   { key: "sunisuni_portrait_sick", path: "assets/objects/sunisuni-portrait-sick.png" },
+  { key: "sunisuni_portrait_smile", path: "assets/objects/sunisuni-portrait-smile.png" },
+  { key: "sunisuni_portrait_worried", path: "assets/objects/sunisuni-portrait-worried.png" },
   { key: "sunisuni_bench", path: "assets/objects/sunisuni-bench.png" },
   { key: "sunisuni_tree", path: "assets/objects/sunisuni-tree.png" },
   { key: "prescription_item", path: "assets/objects/prescription.png" },

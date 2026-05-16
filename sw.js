@@ -1,19 +1,19 @@
-const CACHE_NAME = "cleaning-samgakji-v20260516-15";
+const CACHE_NAME = "cleaning-samgakji-v20260517-03";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=57",
+  "./styles.css?v=59",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=2",
   "./src/main.js?v=31",
-  "./src/scenes/Preload.js?v=40",
+  "./src/scenes/Preload.js?v=41",
   "./src/scenes/StartScene.js?v=2",
-  "./src/systems/DialogueSystem.js?v=7",
+  "./src/systems/DialogueSystem.js?v=9",
   "./src/systems/MoneySystem.js?v=3",
   "./src/systems/QuestManager.js?v=8",
-  "./src/scenes/PlayScene.js?v=76",
+  "./src/scenes/PlayScene.js?v=79",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",
@@ -61,6 +61,8 @@ const PRECACHE_URLS = [
   "./assets/objects/hospital-staff.png",
   "./assets/objects/chemist.png",
   "./assets/objects/sunisuni-portrait-sick.png",
+  "./assets/objects/sunisuni-portrait-smile.png",
+  "./assets/objects/sunisuni-portrait-worried.png",
   "./assets/objects/sunisuni_portrait.png",
   "./assets/objects/sunisuni_full.png",
   "./assets/objects/sunisuni-bench.png",
