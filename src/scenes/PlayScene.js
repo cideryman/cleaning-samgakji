@@ -5,13 +5,16 @@ import {
   GAME_CONFIG,
   RECYCLE_BIN_CONFIG,
   TILED_MAP_CONFIG,
-  TRASH_TEXTURES,
 } from "../config/GameConstants.js";
 import { StateManager } from "../config/SceneState.js";
+import CleaningSystem from "../systems/CleaningSystem.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
 import QuestManager from "../systems/QuestManager.js";
+import SlimeSystem from "../systems/SlimeSystem.js";
+import UIManager from "../systems/UIManager.js";
+
 export default class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
@@ -162,6 +165,9 @@ export default class PlayScene extends Phaser.Scene {
     this.questManager = new QuestManager(this);
     this.playerController = new PlayerController(this);
     this.interactionSystem = new InteractionSystem(this);
+    this.slimeSystem = new SlimeSystem(this);
+    this.cleaningSystem = new CleaningSystem(this);
+    this.uiManager = new UIManager(this);
     this.isInDialogue = false;
     this.isContractActive = false;   // 챕터 2에서 사용
     this.currentChapter = 1;
@@ -1988,277 +1994,59 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   trySweep() {
-    if (!this.canSweep || this.isMissionComplete) return;
-    this.unlockAudio();
-
-    this.canSweep = false;
-    this.time.delayedCall(GAME_CONFIG.sweepCooldownMs, () => {
-      this.canSweep = true;
-    });
-
-    const multiplier = this.getSweepMultiplier();
-    const width = GAME_CONFIG.baseSweepWidth * multiplier;
-    const height = GAME_CONFIG.baseSweepHeight * multiplier;
-    const offset = 42 * multiplier;
-    const sweepX = this.player.x + this.lastDirection.x * offset;
-    const sweepY = this.player.y + this.lastDirection.y * offset;
-
-    this.playSweepSound();
-    this.performSweepAt(sweepX, sweepY, width, height, this.lastDirection);
-
-    if (this.isJjookFollowActive && this.jjookNpc?.active) {
-      const jjookWidth = width * 0.92;
-      const jjookHeight = height * 0.92;
-      this.performSweepAt(this.jjookNpc.x, this.jjookNpc.y + 8, jjookWidth, jjookHeight, null);
-    }
+    this.cleaningSystem.trySweep();
   }
 
   getSweepMultiplier() {
-    const broomMultiplier = this.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
-    const bacchusMultiplier = this.isBacchusActive ? GAME_CONFIG.bacchusSweepMultiplier : 1;
-    return Math.max(broomMultiplier, bacchusMultiplier);
+    return this.cleaningSystem.getSweepMultiplier();
   }
 
   performSweepAt(x, y, width, height, direction = null) {
-    const sweepZone = this.add.zone(x, y, width, height);
-    this.physics.add.existing(sweepZone);
-    sweepZone.body.setAllowGravity(false);
-
-    this.showSweepEffect(x, y, width, height, direction);
-
-    this.physics.overlap(sweepZone, this.trashSlimes, (_, slime) => {
-      this.cleanTrash(slime);
-    });
-
-    this.time.delayedCall(80, () => sweepZone.destroy());
+    this.cleaningSystem.performSweepAt(x, y, width, height, direction);
   }
 
   showSweepEffect(x, y, width, height, direction = this.lastDirection) {
-    const sweepFlash = this.add.ellipse(x, y, width, height, 0xfff3a3, 0.42);
-    sweepFlash.setStrokeStyle(5, 0xf2c94c, 0.9);
-    sweepFlash.setDepth(6);
-
-    const broomGhost = this.add.image(x, y, "broom_item");
-    broomGhost.setDisplaySize(48, 48);
-    broomGhost.setAlpha(0.75);
-    broomGhost.setDepth(7);
-    broomGhost.setRotation((direction || this.lastDirection).angle() + 0.8);
-    const broomGhostScale = broomGhost.scaleX;
-
-    this.tweens.add({
-      targets: sweepFlash,
-      alpha: 0,
-      scaleX: 1.18,
-      scaleY: 1.18,
-      duration: 180,
-      ease: "Cubic.easeOut",
-      onComplete: () => sweepFlash.destroy(),
-    });
-
-    this.tweens.add({
-      targets: broomGhost,
-      alpha: 0,
-      angle: broomGhost.angle + 38,
-      scaleX: broomGhostScale * 1.18,
-      scaleY: broomGhostScale * 1.18,
-      duration: 180,
-      ease: "Cubic.easeOut",
-      onComplete: () => broomGhost.destroy(),
-    });
-
-    for (let i = 0; i < 7; i += 1) {
-      const dust = this.add.circle(
-        x + Phaser.Math.Between(-width / 3, width / 3),
-        y + Phaser.Math.Between(-height / 3, height / 3),
-        Phaser.Math.Between(3, 6),
-        0xffffff,
-        0.8,
-      );
-      dust.setDepth(7);
-      this.tweens.add({
-        targets: dust,
-        x: dust.x + Phaser.Math.Between(-18, 18),
-        y: dust.y + Phaser.Math.Between(-18, 18),
-        alpha: 0,
-        duration: 260,
-        onComplete: () => dust.destroy(),
-      });
-    }
+    this.cleaningSystem.showSweepEffect(x, y, width, height, direction);
   }
 
   cleanTrash(slime) {
-    if (slime.getData("cleaned")) return;
-
-    slime.setData("cleaned", true);
-    const slimeX = slime.x;
-    const slimeY = slime.y;
-    slime.body.enable = false;
-    this.totalCleanedCount += 1;
-    this.waveCleanedCount += 1;
-    const trashType = slime.getData("trashType") || "normal";
-    const isCanTrash = trashType === "can";
-    if (isCanTrash) {
-      this.cleanedCanCount += 1;
-      this.questManager?.updateQuestProgress(1);
-    }
-    this.addTrashToRecycleInventory(trashType);
-
-    const reward = this.getTrashCleanReward();
-    console.log(`획득: ${reward}원 (총 ${this.totalCleanedCount}개)`);
-    this.moneySystem.addMoney(reward);
-
-    if (isCanTrash) {
-      this.playCanCleanSound();
-    } else {
-      this.playCleanSound();
-    }
-    this.showSlimePop(slime);
-    this.showCleanFeedback(slimeX, slimeY, isCanTrash);
-    this.updateHud();
-
-    // ===== 슬라임 리스폰 시스템 =====
-    this.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
-      if (this.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
-        this.respawnSlime();
-      }
-    });
+    this.cleaningSystem.cleanTrash(slime);
   }
 
   addTrashToRecycleInventory(type) {
-    const normalizedType = type === "slime" ? "normal" : type;
-    if (!(normalizedType in this.recyclingInventory)) return;
-
-    this.recyclingInventory[normalizedType] += 1;
-    const labelByType = {
-      normal: "일반 쓰레기",
-      can: "캔",
-      plastic: "플라스틱",
-    };
-    this.queueInventoryCaption(`${labelByType[normalizedType]} +1`);
+    this.cleaningSystem.addTrashToRecycleInventory(type);
   }
 
   getTrashCleanReward() {
-    return this.isJjookFollowActive ? GAME_CONFIG.rewardPerSlime * 2 : GAME_CONFIG.rewardPerSlime;
+    return this.cleaningSystem.getTrashCleanReward();
   }
 
   respawnSlime() {
-    const positions = this.createRandomSlimePositions();
-    if (positions.length === 0) return;
-    const [x, y] = positions[0];
-
-    const trashType = Math.random() < 0.2 ? "can" : this.getRandomNonCanTrashType();
-    this.createTrashSprite(x, y, trashType);
+    this.slimeSystem.respawnSlime();
   }
 
   createTrashSprite(x, y, trashType = "normal") {
-    const normalizedType = trashType === "slime" ? "normal" : trashType;
-    const isCan = normalizedType === "can";
-    const textureKey = this.getRandomTrashTexture(normalizedType);
-    const slime = this.trashSlimes.create(x, y, textureKey);
-    const displaySize = this.getTrashDisplaySize(textureKey, normalizedType);
-    slime.setDisplaySize(displaySize.width, displaySize.height);
-    slime.refreshBody();
-    slime.setDepth(4);
-    slime.setData("cleaned", false);
-    slime.setData("trashType", normalizedType);
-    slime.setAlpha(0);
-    slime.setScale(0.35);
-    
-    this.tweens.add({
-      targets: slime,
-      alpha: 1,
-      scaleX: displaySize.width / slime.width,
-      scaleY: displaySize.height / slime.height,
-      duration: 220,
-      ease: "Back.easeOut",
-      onComplete: () => {
-        this.tweens.add({
-          targets: slime,
-          y: y - 5,
-          duration: 900,
-          yoyo: true,
-          repeat: -1,
-          ease: "Sine.easeInOut",
-        });
-      },
-    });
-    return slime;
+    return this.slimeSystem.createTrashSprite(x, y, trashType);
   }
 
   getRandomNonCanTrashType() {
-    return Math.random() < 0.18 && this.textures.exists("trash_plastic") ? "plastic" : "normal";
+    return this.slimeSystem.getRandomNonCanTrashType();
   }
 
   getRandomTrashTexture(trashType) {
-    const textureKeys = TRASH_TEXTURES[trashType] || TRASH_TEXTURES.normal;
-    const fallback = trashType === "can" ? "trash_can" : "trash_slime";
-    const availableKeys = textureKeys.filter((key) => this.textures.exists(key));
-    return Phaser.Utils.Array.GetRandom(availableKeys.length > 0 ? availableKeys : [fallback]);
+    return this.slimeSystem.getRandomTrashTexture(trashType);
   }
 
   getTrashDisplaySize(textureKey, trashType) {
-    if (trashType === "plastic") {
-      return { width: 30, height: 34 };
-    }
-
-    if (trashType !== "can") {
-      return {
-        width: GAME_CONFIG.slimeDisplaySize,
-        height: GAME_CONFIG.slimeDisplaySize,
-      };
-    }
-
-    if (textureKey === "trash_can_2") {
-      return { width: 24, height: 32 };
-    }
-
-    return { width: 34, height: 23 };
+    return this.slimeSystem.getTrashDisplaySize(textureKey, trashType);
   }
 
   showSlimePop(slime) {
-    this.tweens.killTweensOf(slime);
-    slime.setDepth(8);
-
-    this.tweens.add({
-      targets: slime,
-      y: slime.y - 18,
-      scaleX: 1.2,
-      scaleY: 0.8,
-      alpha: 0,
-      duration: 220,
-      ease: "Back.easeIn",
-      onComplete: () => slime.destroy(),
-    });
+    this.cleaningSystem.showSlimePop(slime);
   }
 
   showCleanFeedback(x, y, isCanFeedback = false) {
-    const cleanRing = this.add.circle(x, y, 8, 0xffffff, 0);
-    cleanRing.setStrokeStyle(4, isCanFeedback ? 0x9fd1ff : 0xffffff, 0.95);
-    cleanRing.setDepth(6);
-
-    this.tweens.add({
-      targets: cleanRing,
-      alpha: 0,
-      radius: 34,
-      duration: 320,
-      ease: "Cubic.easeOut",
-      onComplete: () => cleanRing.destroy(),
-    });
-
-    const sparkleCount = isCanFeedback ? GAME_CONFIG.canFeedbackSparkleCount : GAME_CONFIG.feedbackSparkleCount;
-    const sparkleColor = isCanFeedback ? 0x9fd1ff : 0xfff3a3;
-    for (let i = 0; i < sparkleCount; i += 1) {
-      const sparkle = this.add.circle(x, y, Phaser.Math.Between(3, 5), sparkleColor, 1);
-      sparkle.setDepth(7);
-      this.tweens.add({
-        targets: sparkle,
-        x: x + Phaser.Math.Between(-42, 42),
-        y: y + Phaser.Math.Between(-42, 42),
-        alpha: 0,
-        duration: 460,
-        onComplete: () => sparkle.destroy(),
-      });
-    }
+    this.cleaningSystem.showCleanFeedback(x, y, isCanFeedback);
   }
 
   activateRecycleMasterReward() {
@@ -2435,69 +2223,23 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   showQuestToast(message, duration = 1700) {
-    const toast = document.createElement("div");
-    toast.className = "quest-toast";
-    toast.textContent = message;
-    toast.style.setProperty("--toast-duration", `${duration}ms`);
-    document.querySelector(".game-stage")?.appendChild(toast);
-    window.setTimeout(() => toast.remove(), duration + 80);
+    this.uiManager.showQuestToast(message, duration);
   }
 
   showSpeechBubble(target, message, duration = 1050) {
-    if (!target || !message) return;
-
-    const bubble = this.add.text(target.x, target.y - 58, message, {
-      fontFamily: "Arial",
-      fontSize: "15px",
-      color: "#21352c",
-      fontStyle: "bold",
-      backgroundColor: "rgba(255,255,255,0.94)",
-      padding: { left: 8, right: 8, top: 5, bottom: 5 },
-    });
-    bubble.setOrigin(0.5);
-    bubble.setDepth(20);
-
-    this.tweens.add({
-      targets: bubble,
-      y: bubble.y - 18,
-      alpha: 0,
-      duration,
-      ease: "Cubic.easeOut",
-      onComplete: () => bubble.destroy(),
-    });
+    this.uiManager.showSpeechBubble(target, message, duration);
   }
 
   queueInventoryCaption(message) {
-    if (!message) return;
-
-    this.inventoryCaptionQueue.push(message);
-    this.showNextInventoryCaption();
+    this.uiManager.queueInventoryCaption(message);
   }
 
   showNextInventoryCaption() {
-    if (this.isShowingInventoryCaption || this.inventoryCaptionQueue.length === 0) return;
-
-    this.isShowingInventoryCaption = true;
-    const message = this.inventoryCaptionQueue.shift();
-    this.showSpeechBubble(this.player, message, 760);
-    this.time.delayedCall(780, () => {
-      this.isShowingInventoryCaption = false;
-      this.showNextInventoryCaption();
-    });
+    this.uiManager.showNextInventoryCaption();
   }
 
   showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
-    const stage = document.querySelector(".game-stage");
-    if (!stage) return;
-
-    const reward = document.createElement("div");
-    reward.className = "money-reward-pop";
-    reward.innerHTML = `
-      <img src="${icon}" alt="${label}" />
-      <strong>${label} ${amount.toLocaleString()}원</strong>
-    `;
-    stage.appendChild(reward);
-    window.setTimeout(() => reward.remove(), 3600);
+    this.uiManager.showMoneyRewardAnimation(amount, { label, icon });
   }
 
 
@@ -2952,26 +2694,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   autoCleanTrash(trash) {
-    if (!trash.active || trash.getData("cleaned")) return;
-
-    trash.setData("cleaned", true);
-    trash.body.enable = false;
-    this.totalCleanedCount += 1;
-    this.waveCleanedCount += 1;
-    const trashType = trash.getData("trashType") || "normal";
-    if (trashType === "can") {
-      this.cleanedCanCount += 1;
-      this.questManager?.updateQuestProgress(1);
-    }
-    this.addTrashToRecycleInventory(trashType);
-
-    const reward = this.getTrashCleanReward();
-    this.moneySystem.addMoney(reward);
-
-    this.showCleanFeedback(trash.x, trash.y);
-    this.showSlimePop(trash);
-    this.updateHud();
-
+    this.cleaningSystem.autoCleanTrash(trash);
   }
 
   restartGame() {
@@ -3377,38 +3100,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   updateHud() {
-    const visibleWaveCount = this.isMissionComplete
-      ? this.cleanProgressEls.length
-      : Math.floor((this.totalCleanedCount / GAME_CONFIG.totalGoal) * this.cleanProgressEls.length);
-
-    this.cleanProgressEls?.forEach((dot, index) => {
-      dot.classList.toggle("is-cleaned", index < visibleWaveCount);
-    });
-
-    this.canProgressEls?.forEach((dot, index) => {
-      dot.classList.toggle("is-cleaned", index < this.cleanedCanCount);
-    });
-
-    if (this.missionCountEl) {
-      this.missionCountEl.textContent = `${this.totalCleanedCount}/${GAME_CONFIG.totalGoal}`;
-    }
-
-    if (this.inventoryNormalCountEl) {
-      this.inventoryNormalCountEl.textContent = this.recyclingInventory.normal;
-    }
-    if (this.inventoryPlasticCountEl) {
-      this.inventoryPlasticCountEl.textContent = this.recyclingInventory.plastic;
-    }
-    if (this.inventoryCanCountEl) {
-      this.inventoryCanCountEl.textContent = this.recyclingInventory.can;
-    }
-
-    this.sweepButton?.classList.toggle("is-upgraded", this.hasBroomUpgrade);
-
-    if (this.specialButton) {
-      this.specialButton.hidden = !this.hasUnlockedSangcheori || this.hasUsedSangcheori;
-      this.specialButton.classList.toggle("is-ready", this.hasUnlockedSangcheori && !this.hasUsedSangcheori);
-    }
+    this.uiManager.updateHud();
   }
 }
 
