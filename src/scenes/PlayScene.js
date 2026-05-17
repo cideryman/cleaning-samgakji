@@ -1,108 +1,18 @@
-﻿const GAME_CONFIG = {
-  worldWidth: 1536,
-  worldHeight: 960,
-  playerSpeed: 135,
-  waveSize: 30,
-  totalGoal: 30,
-  canCount: 20,
-  sangcheoriRemoveCount: 10,
-  playerDisplaySize: 64,
-  slimeDisplaySize: 42,
-  broomItemDisplaySize: 44,
-  sangcheoriNpcDisplaySize: 72,
-  baseSweepWidth: 112,
-  baseSweepHeight: 84,
-  upgradedSweepMultiplier: 2,
-  sweepCooldownMs: 420,
-  feedbackSparkleCount: 14,
-  canFeedbackSparkleCount: 18,
-  slimeSpawnMinDistance: 72,
-  wideCameraZoom: 1.3,
-  joystickRadius: 78,
-  // 경제 시스템 설정
-  slimeRespawnDelayMs: 12000,    // 12초마다 리스폰
-  maxSlimes: 25,                 // 동시에 최대 슬라임 수
-  rewardPerSlime: 100,           // 슬라임당 100원
-  recycleDepositReward: 100,
-  recycleQuestUnlockMoney: 25000,
-  jjookQuestUnlockMoney: 45000,
-  drinkPrice: 1000,
-  speedBuffMultiplier: 1.35,
-  speedBuffDurationMs: 60000,
-  jjookFollowDurationMs: 60000,
-  sunisuniQuestUnlockMoney: 60000,
-  sunisuniSpeedMultiplier: 0.55,
-  sunisuniFollowDistance: 72,
-  sunisuniMaxDistance: 220,
-  sunisuniSpawn: { x: 520, y: 668 },
-  sunisuniBench: { x: 520, y: 650 },
-  sunisuniTree: { x: 472, y: 588 },
-  hospitalBuilding: { x: 300, y: 210 },
-  pharmacyBuilding: { x: 505, y: 210 },
-  hospitalDoor: { x: 300, y: 260 },
-  pharmacyDoor: { x: 505, y: 260 },
-  bacchusDurationMs: 60000,
-  bacchusSweepMultiplier: 2,
-  chapter1TargetMoney: 100000,   // 챕터 1 목표 금액
-  recyclingCenter: { x: 1210, y: 420 },
-  vendingMachine: { x: 690, y: 465 },
-  jjookSpawn: { x: 685, y: 545 },
-  walletSpawn: { x: 250, y: 735 },
-  recycleBinHitboxWidth: 82,
-  recycleBinHitboxHeight: 90,
-};
-
-const DRINK_OPTIONS = [
-  { key: "cider", label: "사이다", texture: "drink_cider" },
-  { key: "cola", label: "콜라", texture: "drink_cola" },
-  { key: "water", label: "생수", texture: "drink_water" },
-];
-
-const TILED_MAP_CONFIG = {
-  key: "chapter1_map",
-  chapter: 1,
-  title: "챕터 1",
-  mapName: "삼각지 복지관",
-  tilesetName: "samgakji_tiles",
-  tilesetImageKey: "samgakji_tiles",
-  visibleLayers: ["ground", "objects"],
-  collisionLayer: "collision",
-  objectLayer: "spawn",
-};
-
-const PLAYER_TEXTURES = {
-  down: "player",
-  left: "player_left",
-  right: "player_right",
-  up: "player_back",
-};
-
-const TRASH_TEXTURES = {
-  can: ["trash_can", "trash_can_2", "trash_can_3"],
-  normal: ["trash_slime", "trash_slime_2"],
-  plastic: ["trash_plastic"],
-};
-
-const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
-];
-
-const DIALOGUE_OVERLAY_TEXTURES = {
-  jjookface: "jjook_face",
-  hospital_staff: "hospital_staff",
-  hospital_doctor: "hospital_doctor",
-  chemist: "chemist",
-  "sunisuni-portrait-sick": "sunisuni_portrait_sick",
-  "sunisuni-portrait-smile": "sunisuni_portrait_smile",
-  "sunisuni-portrait-worried": "sunisuni_portrait_worried",
-  sunisuni_portrait_sick: "sunisuni_portrait_sick",
-  sunisuni_portrait_smile: "sunisuni_portrait_smile",
-  sunisuni_portrait_worried: "sunisuni_portrait_worried",
-};
-
-class PlayScene extends Phaser.Scene {
+﻿import PlayerController from "../controllers/PlayerController.js";
+import {
+  DIALOGUE_OVERLAY_TEXTURES,
+  DRINK_OPTIONS,
+  GAME_CONFIG,
+  RECYCLE_BIN_CONFIG,
+  TILED_MAP_CONFIG,
+  TRASH_TEXTURES,
+} from "../config/GameConstants.js";
+import { StateManager } from "../config/SceneState.js";
+import DialogueSystem from "../systems/DialogueSystem.js";
+import InteractionSystem from "../systems/InteractionSystem.js";
+import MoneySystem from "../systems/MoneySystem.js";
+import QuestManager from "../systems/QuestManager.js";
+export default class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
     this.totalCleanedCount = 0;
@@ -246,9 +156,12 @@ class PlayScene extends Phaser.Scene {
     this.hideJoystick();
     
     // ===== 시스템 초기화 =====
+    this.stateManager = new StateManager();
     this.dialogueSystem = new DialogueSystem(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);
+    this.playerController = new PlayerController(this);
+    this.interactionSystem = new InteractionSystem(this);
     this.isInDialogue = false;
     this.isContractActive = false;   // 챕터 2에서 사용
     this.currentChapter = 1;
@@ -364,9 +277,9 @@ class PlayScene extends Phaser.Scene {
     this.finalFlowerPositions = null;
   }
 
-  update() {
+  update(time, delta) {
     this.handleVendingMenuKeyboard();
-    this.handleMovement();
+    this.playerController.update(time, delta);
     this.checkRecycleQuestUnlock();
     this.checkJjookQuestUnlock();
     this.checkSunisuniQuestUnlock();
@@ -1095,21 +1008,7 @@ class PlayScene extends Phaser.Scene {
   }
 
   createInput() {
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.W,
-      down: Phaser.Input.Keyboard.KeyCodes.S,
-      left: Phaser.Input.Keyboard.KeyCodes.A,
-      right: Phaser.Input.Keyboard.KeyCodes.D,
-      sweep: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      specialEnter: Phaser.Input.Keyboard.KeyCodes.ENTER,
-      devMoney: Phaser.Input.Keyboard.KeyCodes.F2,
-      devTrash: Phaser.Input.Keyboard.KeyCodes.F3,
-      devNextQuest: Phaser.Input.Keyboard.KeyCodes.F4,
-    });
-
-    this.keys.sweep.on("down", () => this.handleSpaceAction());
-    this.keys.specialEnter.on("down", () => this.useSangcheoriItem());
+    this.playerController.createInput();
   }
 
   isDevMode() {
@@ -1230,115 +1129,35 @@ class PlayScene extends Phaser.Scene {
   }
 
   handlePrimaryAction() {
-    if (this.tryDepositNearestRecycleBin()) {
-      return;
-    }
-
-    if (this.isPlayerNearHospitalDoor() && !this.isInDialogue) {
-      this.handleHospitalInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearPharmacyDoor() && !this.isInDialogue) {
-      this.handlePharmacyInteraction();
-      return;
-    }
-
-    if (this.shouldPrioritizeSunisuniDialogue()) {
-      this.handleSunisuniInteraction();
-      return;
-    }
-
-    if (this.hasTrashInSweepRange()) {
-      this.trySweep();
-      return;
-    }
-
-    if (this.shouldPrioritizeJjookDialogue()) {
-      this.handleJjookInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearVendingMachine() && !this.isInDialogue) {
-      this.handleVendingMachineInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearJjookNpc() && !this.isInDialogue) {
-      this.handleJjookInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearSangcheoriNpc() && !this.isInDialogue) {
-      this.showSangcheoriQuestDialogue();
-      return;
-    }
-
-    this.trySweep();
+    this.interactionSystem.handlePrimaryAction();
   }
 
   isPlayerNearJjookNpc() {
-    if (!this.player || !this.jjookNpc) return false;
-
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      this.jjookNpc.x,
-      this.jjookNpc.y,
-    ) < 120;
+    return this.interactionSystem.isPlayerNearJjookNpc();
   }
 
   shouldPrioritizeJjookDialogue() {
-    return !this.isInDialogue
-      && this.jjookQuestState !== "locked"
-      && this.jjookQuestState !== "completed"
-      && this.isPlayerNearJjookNpc();
+    return this.interactionSystem.shouldPrioritizeJjookDialogue();
   }
 
   isPlayerNearSunisuniNpc() {
-    if (!this.player || !this.sunisuniNpc?.active || !this.sunisuniNpc.visible) return false;
-
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      this.sunisuniNpc.x,
-      this.sunisuniNpc.y,
-    ) < 120;
+    return this.interactionSystem.isPlayerNearSunisuniNpc();
   }
 
   shouldPrioritizeSunisuniDialogue() {
-    return !this.isInDialogue
-      && this.sunisuniQuestState !== "locked"
-      && this.sunisuniQuestState !== "quest_complete"
-      && this.isPlayerNearSunisuniNpc();
+    return this.interactionSystem.shouldPrioritizeSunisuniDialogue();
   }
 
   isPlayerNearHospitalDoor() {
-    if (!this.player || this.sunisuniQuestState !== "going_hospital") return false;
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      GAME_CONFIG.hospitalDoor.x,
-      GAME_CONFIG.hospitalDoor.y,
-    ) < 155;
+    return this.interactionSystem.isPlayerNearHospitalDoor();
   }
 
   isPlayerNearPharmacyDoor() {
-    if (!this.player || this.sunisuniQuestState !== "going_pharmacy") return false;
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      GAME_CONFIG.pharmacyDoor.x,
-      GAME_CONFIG.pharmacyDoor.y,
-    ) < 155;
+    return this.interactionSystem.isPlayerNearPharmacyDoor();
   }
 
   isPlayerNearVendingMachine() {
-    if (!this.player || !this.vendingMachine) return false;
-
-    const dx = Math.abs(this.player.x - this.vendingMachine.x);
-    const dy = Math.abs(this.player.y - (this.vendingMachine.y + 6));
-    return dx <= 82 && dy <= 74;
+    return this.interactionSystem.isPlayerNearVendingMachine();
   }
 
   handleJjookInteraction() {
@@ -1672,14 +1491,7 @@ class PlayScene extends Phaser.Scene {
   }
 
   isPlayerNearSangcheoriNpc() {
-    if (!this.player || !this.sangcheoriNpc) return false;
-
-    return Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      this.sangcheoriNpc.x,
-      this.sangcheoriNpc.y,
-    ) < 120;
+    return this.interactionSystem.isPlayerNearSangcheoriNpc();
   }
 
   showFirstGuide() {
@@ -1695,40 +1507,11 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleMovement() {
-    if (this.isInDialogue || this.vendingMenuGroup) {
-      this.player.setVelocity(0, 0);
-      return;
-    }
-    let horizontal =
-      Number(this.cursors.right.isDown || this.keys.right.isDown) -
-      Number(this.cursors.left.isDown || this.keys.left.isDown);
-    let vertical =
-      Number(this.cursors.down.isDown || this.keys.down.isDown) -
-      Number(this.cursors.up.isDown || this.keys.up.isDown);
-
-    if (horizontal === 0 && vertical === 0 && this.joystickVector.lengthSq() > 0) {
-      horizontal = this.joystickVector.x;
-      vertical = this.joystickVector.y;
-    }
-
-    const velocity = new Phaser.Math.Vector2(horizontal, vertical);
-    if (velocity.lengthSq() > 0) {
-      velocity.normalize();
-      this.lastDirection.copy(velocity);
-      this.updatePlayerDirection(velocity);
-    }
-
-    const speed = this.getPlayerSpeed();
-    this.player.setVelocity(
-      velocity.x * speed,
-      velocity.y * speed,
-    );
+    this.playerController.update();
   }
 
   getPlayerSpeed() {
-    return this.isSpeedBuffActive
-      ? GAME_CONFIG.playerSpeed * GAME_CONFIG.speedBuffMultiplier
-      : GAME_CONFIG.playerSpeed;
+    return this.playerController.getPlayerSpeed();
   }
 
   isSunisuniFollowing() {
@@ -1785,106 +1568,35 @@ class PlayScene extends Phaser.Scene {
   }
 
   updatePlayerDirection(velocity) {
-    if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
-      this.setPlayerDirectionTexture(velocity.x < 0 ? "left" : "right");
-      this.player.setScale(this.playerBaseScale.x, this.playerBaseScale.y * 0.98);
-      this.player.clearTint();
-      return;
-    }
-
-    this.player.setFlipX(false);
-    if (velocity.y < 0) {
-      this.setPlayerDirectionTexture("up");
-      this.player.setScale(this.playerBaseScale.x * 0.94, this.playerBaseScale.y * 1.06);
-    } else {
-      this.setPlayerDirectionTexture("down");
-      this.player.setScale(this.playerBaseScale.x, this.playerBaseScale.y);
-    }
-    this.player.clearTint();
+    this.playerController.updatePlayerDirection(velocity);
   }
 
   setPlayerDirectionTexture(directionKey) {
-    const textureKey = PLAYER_TEXTURES[directionKey] || PLAYER_TEXTURES.down;
-    if (this.playerDirectionKey === directionKey || !this.textures.exists(textureKey)) return;
-
-    this.playerDirectionKey = directionKey;
-    this.player.setTexture(textureKey);
-    this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
-    this.playerBaseScale = { x: this.player.scaleX, y: this.player.scaleY };
-    this.player.setFlipX(false);
+    this.playerController.setPlayerDirectionTexture(directionKey);
   }
 
   startFloatingJoystick(event) {
-    if (this.isMissionComplete || this.activeJoystickPointerId !== null) return;
-    if (!this.isJoystickStartEvent(event)) return;
-
-    event.preventDefault();
-    this.activeJoystickPointerId = event.pointerId;
-    this.joystickBase = { x: event.clientX, y: event.clientY };
-    this.showJoystick(event.clientX, event.clientY);
-    this.updateJoystick(event);
+    this.playerController.startFloatingJoystick(event);
   }
 
   isJoystickStartEvent(event) {
-    if (event.pointerType === "mouse") {
-      return false;
-    }
-
-    if (event.clientX > window.innerWidth / 2) {
-      return false;
-    }
-
-    const blockedTarget = event.target.closest?.(
-      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay",
-    );
-    return !blockedTarget;
+    return this.playerController.isJoystickStartEvent(event);
   }
 
   updateJoystick(event) {
-    if (this.activeJoystickPointerId !== event.pointerId || !this.movePad) return;
-
-    event.preventDefault();
-    const radius = GAME_CONFIG.joystickRadius;
-    const dx = event.clientX - this.joystickBase.x;
-    const dy = event.clientY - this.joystickBase.y;
-    const distance = Math.min(Math.hypot(dx, dy), radius);
-    const angle = Math.atan2(dy, dx);
-    const knobX = Math.cos(angle) * distance;
-    const knobY = Math.sin(angle) * distance;
-
-    this.joystickVector.set(knobX / radius, knobY / radius);
-    this.movePad.style.left = `${event.clientX}px`;
-    this.movePad.style.top = `${event.clientY}px`;
-    this.moveKnob.style.transform = "translate(-50%, -50%)";
+    this.playerController.updateJoystick(event);
   }
 
   stopJoystick(event) {
-    if (this.activeJoystickPointerId !== event.pointerId) return;
-
-    event.preventDefault();
-    this.activeJoystickPointerId = null;
-    this.joystickVector.set(0, 0);
-    this.hideJoystick();
+    this.playerController.stopJoystick(event);
   }
 
   showJoystick(x, y) {
-    if (!this.movePad || !this.moveKnob) return;
-
-    this.movePad.style.left = `${x}px`;
-    this.movePad.style.top = `${y}px`;
-    this.movePad.classList.add("is-visible");
-    this.movePad.setAttribute("aria-hidden", "false");
-    this.moveKnob.style.transform = "translate(-50%, -50%)";
+    this.playerController.showJoystick(x, y);
   }
 
   hideJoystick() {
-    if (!this.movePad) return;
-
-    this.movePad.classList.remove("is-visible");
-    this.movePad.setAttribute("aria-hidden", "true");
-    if (this.moveKnob) {
-      this.moveKnob.style.transform = "translate(-50%, -50%)";
-    }
+    this.playerController?.hideJoystick();
   }
 
   tryDepositNearestRecycleBin() {
@@ -3699,4 +3411,5 @@ class PlayScene extends Phaser.Scene {
     }
   }
 }
+
 

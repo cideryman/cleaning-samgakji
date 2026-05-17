@@ -1,3 +1,7 @@
+import Preload from "./scenes/Preload.js";
+import StartScene from "./scenes/StartScene.js";
+import PlayScene from "./scenes/PlayScene.js";
+
 const BASE_GAME_WIDTH = 768;
 const BASE_GAME_HEIGHT = 480;
 const BASE_GAME_RATIO = BASE_GAME_WIDTH / BASE_GAME_HEIGHT;

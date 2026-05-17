@@ -1,4 +1,4 @@
-class QuestManager {
+export default class QuestManager {
   constructor(scene) {
     this.scene = scene;
     this.canQuest = {
@@ -84,7 +84,7 @@ class QuestManager {
     this.uiElements.bar?.classList.remove("is-recycle");
     this.updateUI();
     this.scene.setQuestMarker?.("canQuest", this.scene.sangcheoriNpc, "!");
-    this.scene.showQuestToast?.("여비 퀘스트: 캔 20개 모으기!");
+    this.scene.showQuestToast?.("여비 퀘스트: 캔 20개 모으기");
     this.scene.playItemPickupSound?.();
   }
 
@@ -112,7 +112,7 @@ class QuestManager {
     this.scene.moneySystem?.addMoney(quest.reward);
     this.scene.playMoneyRewardSound?.();
     this.scene.showMoneyRewardAnimation?.(quest.reward);
-    this.scene.showQuestToast?.(`수당 ${quest.reward.toLocaleString()}원 획득!`);
+    this.scene.showQuestToast?.(`보상 ${quest.reward.toLocaleString()}원 획득!`);
     if (this.scene.player) {
       this.scene.showCleanFeedback?.(this.scene.player.x, this.scene.player.y, true);
     }
@@ -123,7 +123,7 @@ class QuestManager {
       this.scene.dialogueSystem?.start([
         {
           name: "여비",
-          text: "고마워! 캔 20개를 모으다니, 역시 해냄이야!",
+          text: "고마워! 캔 20개를 모았으니 약속한 선물이야!",
         },
       ]);
     });
@@ -154,7 +154,7 @@ class QuestManager {
     if (!quest.isActive || quest.isCompleted || !(type in quest.target)) return false;
 
     if (quest.current[type] >= quest.target[type]) {
-      this.scene.showSpeechBubble?.(this.scene.player, "이 종류는 충분해!");
+      this.scene.showSpeechBubble?.(this.scene.player, "이 종류는 충분해.");
       return false;
     }
 
@@ -230,15 +230,16 @@ class QuestManager {
 
     const recycleQuest = this.recycleQuest;
     if (recycleQuest.isActive) {
-      const current = this.getRecycleCurrentTotal();
-      const target = this.getRecycleTargetTotal();
       root.classList.toggle("is-hidden", false);
       root.classList.toggle("is-complete", false);
       root.setAttribute("aria-hidden", "false");
       if (!bar.classList.contains("is-recycle")) {
         this.renderRecycleGauge();
       }
-      label.textContent = `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · 캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · 플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
+      label.textContent =
+        `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · ` +
+        `캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · ` +
+        `플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
       Array.from(bar.querySelectorAll(".recycle-gauge-row")).forEach((row) => {
         const type = row.dataset.type;
         const filled = Math.min(recycleQuest.current[type], recycleQuest.target[type]);

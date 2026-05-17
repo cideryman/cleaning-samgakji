@@ -1,4 +1,4 @@
-class StartScene extends Phaser.Scene {
+export default class StartScene extends Phaser.Scene {
   constructor() {
     super("StartScene");
     this.selectedIndex = 0;

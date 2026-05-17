@@ -1,0 +1,102 @@
+export const GAME_CONFIG = {
+  worldWidth: 1536,
+  worldHeight: 960,
+  playerSpeed: 135,
+  waveSize: 30,
+  totalGoal: 30,
+  canCount: 20,
+  sangcheoriRemoveCount: 10,
+  playerDisplaySize: 64,
+  slimeDisplaySize: 42,
+  broomItemDisplaySize: 44,
+  sangcheoriNpcDisplaySize: 72,
+  baseSweepWidth: 112,
+  baseSweepHeight: 84,
+  upgradedSweepMultiplier: 2,
+  sweepCooldownMs: 420,
+  feedbackSparkleCount: 14,
+  canFeedbackSparkleCount: 18,
+  slimeSpawnMinDistance: 72,
+  wideCameraZoom: 1.3,
+  joystickRadius: 78,
+  slimeRespawnDelayMs: 12000,
+  maxSlimes: 25,
+  rewardPerSlime: 100,
+  recycleDepositReward: 100,
+  recycleQuestUnlockMoney: 25000,
+  jjookQuestUnlockMoney: 45000,
+  drinkPrice: 1000,
+  speedBuffMultiplier: 1.35,
+  speedBuffDurationMs: 60000,
+  jjookFollowDurationMs: 60000,
+  sunisuniQuestUnlockMoney: 60000,
+  sunisuniSpeedMultiplier: 0.55,
+  sunisuniFollowDistance: 72,
+  sunisuniMaxDistance: 220,
+  sunisuniSpawn: { x: 520, y: 668 },
+  sunisuniBench: { x: 520, y: 650 },
+  sunisuniTree: { x: 472, y: 588 },
+  hospitalBuilding: { x: 300, y: 210 },
+  pharmacyBuilding: { x: 505, y: 210 },
+  hospitalDoor: { x: 300, y: 260 },
+  pharmacyDoor: { x: 505, y: 260 },
+  bacchusDurationMs: 60000,
+  bacchusSweepMultiplier: 2,
+  chapter1TargetMoney: 100000,
+  recyclingCenter: { x: 1210, y: 420 },
+  vendingMachine: { x: 690, y: 465 },
+  jjookSpawn: { x: 685, y: 545 },
+  walletSpawn: { x: 250, y: 735 },
+  recycleBinHitboxWidth: 82,
+  recycleBinHitboxHeight: 90,
+};
+
+export const DRINK_OPTIONS = [
+  { key: "cider", label: "사이다", texture: "drink_cider" },
+  { key: "cola", label: "콜라", texture: "drink_cola" },
+  { key: "water", label: "생수", texture: "drink_water" },
+];
+
+export const TILED_MAP_CONFIG = {
+  key: "chapter1_map",
+  chapter: 1,
+  title: "챕터 1",
+  mapName: "삼각지 복지관",
+  tilesetName: "samgakji_tiles",
+  tilesetImageKey: "samgakji_tiles",
+  visibleLayers: ["ground", "objects"],
+  collisionLayer: "collision",
+  objectLayer: "spawn",
+};
+
+export const PLAYER_TEXTURES = {
+  down: "player",
+  left: "player_left",
+  right: "player_right",
+  up: "player_back",
+};
+
+export const TRASH_TEXTURES = {
+  can: ["trash_can", "trash_can_2", "trash_can_3"],
+  normal: ["trash_slime", "trash_slime_2"],
+  plastic: ["trash_plastic"],
+};
+
+export const RECYCLE_BIN_CONFIG = [
+  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
+];
+
+export const DIALOGUE_OVERLAY_TEXTURES = {
+  jjookface: "jjook_face",
+  hospital_staff: "hospital_staff",
+  hospital_doctor: "hospital_doctor",
+  chemist: "chemist",
+  "sunisuni-portrait-sick": "sunisuni_portrait_sick",
+  "sunisuni-portrait-smile": "sunisuni_portrait_smile",
+  "sunisuni-portrait-worried": "sunisuni_portrait_worried",
+  sunisuni_portrait_sick: "sunisuni_portrait_sick",
+  sunisuni_portrait_smile: "sunisuni_portrait_smile",
+  sunisuni_portrait_worried: "sunisuni_portrait_worried",
+};

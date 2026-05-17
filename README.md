@@ -30,7 +30,16 @@ The game is designed around generous controls, clear feedback, and minimal text.
 
 ## Run
 
-Open `index.html` in a browser.
+Install and run the local dev server:
+
+```powershell
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite.
+
+The static fallback still works from a simple local web server:
 
 For a local web server:
 
@@ -51,7 +60,11 @@ http://localhost:5174/cleaning-samgakji/
 index.html
 styles.css
 src/main.js
+src/config/GameConstants.js
+src/config/SceneState.js
+src/controllers/PlayerController.js
 src/scenes/Preload.js
 src/scenes/PlayScene.js
+src/systems/InteractionSystem.js
 assets/
 ```

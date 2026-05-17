@@ -1,4 +1,4 @@
-class MoneySystem {
+export default class MoneySystem {
   constructor(scene) {
     this.scene = scene;
     this.money = 0;
@@ -7,16 +7,16 @@ class MoneySystem {
       count1000: document.querySelector("#count1000"),
       count500: document.querySelector("#count500"),
       count100: document.querySelector("#count100"),
-      totalMoney: document.querySelector("#totalMoney")
+      totalMoney: document.querySelector("#totalMoney"),
     };
   }
-  
+
   addMoney(amount) {
     this.money += amount;
     this.updateUI();
     return this.money;
   }
-  
+
   deductMoney(amount) {
     if (this.money >= amount) {
       this.money -= amount;
@@ -25,7 +25,7 @@ class MoneySystem {
     }
     return false;
   }
-  
+
   updateUI() {
     const count10000 = Math.floor(this.money / 10000);
     const count1000 = Math.floor((this.money % 10000) / 1000);
@@ -35,10 +35,9 @@ class MoneySystem {
     this.uiElements.count1000.textContent = count1000;
     this.uiElements.count500.textContent = count500;
     this.uiElements.count100.textContent = count100;
-    this.uiElements.totalMoney.textContent = `￦${this.money.toLocaleString()}`;
+    this.uiElements.totalMoney.textContent = `₩${this.money.toLocaleString()}`;
   }
-  
-  // 보너스 캔 처리 (선택)
+
   processCanBonus(isCan) {
     if (isCan) {
       this.addMoney(200);

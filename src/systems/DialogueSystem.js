@@ -1,4 +1,6 @@
-class DialogueSystem {
+import { SceneState } from "../config/SceneState.js";
+
+export default class DialogueSystem {
   constructor(scene) {
     this.scene = scene;
     this.isInDialogue = false;
@@ -46,6 +48,7 @@ class DialogueSystem {
     this.onComplete = onComplete;
 
     this.scene.isInDialogue = true;
+    this.scene.stateManager?.set(SceneState.TALKING);
     if (this.scene.player) this.scene.player.setVelocity(0, 0);
 
     this.dialogModal.style.display = "flex";
@@ -205,6 +208,7 @@ class DialogueSystem {
     this.scene.handleDialogueClose?.();
     this.isInDialogue = false;
     this.scene.isInDialogue = false;
+    this.scene.stateManager?.set(SceneState.PLAYING);
 
     const onComplete = this.onComplete;
     this.onComplete = null;

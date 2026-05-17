@@ -78,7 +78,7 @@ const AUDIO_ASSETS = [
   { key: "chapter1_bgm", path: "assets/audio/chapter1.mp3" },
 ];
 
-class Preload extends Phaser.Scene {
+export default class Preload extends Phaser.Scene {
   constructor() {
     super("Preload");
   }
