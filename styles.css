@@ -1430,7 +1430,7 @@ body.app-fit-mode #game canvas {
 
   .can-quest-hud {
     top: 60px;
-    left: 8px;
+    left: max(8px, calc(env(safe-area-inset-left) + 12px));
     width: 238px;
     padding: 7px 8px;
   }

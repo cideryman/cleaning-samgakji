@@ -59,7 +59,8 @@ class DialogueSystem {
     this.clearChoices();
     this.dialogNext.style.opacity = "0";
     this.dialogName.textContent = line.name || "알림";
-    this.dialogModal?.classList.toggle("has-scene-overlay", Boolean(line.overlayKey));
+    const usesSceneOverlay = Boolean(line.overlayKey || line.portraitKey);
+    this.dialogModal?.classList.toggle("has-scene-overlay", usesSceneOverlay);
     this.scene.handleDialogueLineChange?.(line);
     this.updatePortrait(line);
     this.typewrite(line.text, line.choices || null);
@@ -68,14 +69,13 @@ class DialogueSystem {
   updatePortrait(line) {
     if (!this.dialogPanel || !this.dialogPortrait) return;
 
-    if (line.overlayKey || !line.portraitKey) {
-      this.dialogPanel.classList.remove("has-portrait");
-      this.dialogPortrait.style.backgroundImage = "";
-      this.dialogPortrait.style.backgroundSize = "";
-      this.dialogPortrait.style.backgroundPosition = "";
-      this.dialogPortrait.style.backgroundRepeat = "";
-      return;
-    }
+    this.dialogPanel.classList.remove("has-portrait");
+    this.dialogPortrait.style.backgroundImage = "";
+    this.dialogPortrait.style.backgroundSize = "";
+    this.dialogPortrait.style.backgroundPosition = "";
+    this.dialogPortrait.style.backgroundRepeat = "";
+
+    if (line.overlayKey || line.portraitKey || !line.portraitKey) return;
 
     const frame = Math.max(0, Math.min(2, line.frame || 0));
     this.dialogPanel.classList.add("has-portrait");
@@ -202,6 +202,7 @@ class DialogueSystem {
     this.dialogModal?.classList.remove("has-scene-overlay");
     this.dialogModal?.style.removeProperty("--dialog-scene-left");
     this.dialogPanel?.classList.remove("has-portrait");
+    this.scene.handleDialogueClose?.();
     this.isInDialogue = false;
     this.scene.isInDialogue = false;
 

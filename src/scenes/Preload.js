@@ -42,7 +42,7 @@ const EXTERNAL_ASSETS = [
   { key: "sunisuni_bench", path: "assets/objects/sunisuni-bench.png" },
   { key: "sunisuni_tree", path: "assets/objects/sunisuni-tree.png" },
   { key: "prescription_item", path: "assets/objects/prescription.png" },
-  { key: "medicine_bag", path: "assets/objects/medicine-bag.png" },
+  { key: "medicine_bag", path: "assets/objects/medicine_bag.png" },
   { key: "bill_5000", path: "assets/objects/bill-5000.png" },
   { key: "bacchus_item", path: "assets/ui/bacchus.png" },
   { key: "grass_tile", path: "assets/tiles/grass.png", fallback: "createGrassTileTexture" },

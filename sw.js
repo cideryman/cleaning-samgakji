@@ -1,19 +1,19 @@
-const CACHE_NAME = "cleaning-samgakji-v20260517-03";
+const CACHE_NAME = "cleaning-samgakji-v20260517-06";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=59",
+  "./styles.css?v=60",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=2",
   "./src/main.js?v=31",
-  "./src/scenes/Preload.js?v=41",
+  "./src/scenes/Preload.js?v=42",
   "./src/scenes/StartScene.js?v=2",
-  "./src/systems/DialogueSystem.js?v=9",
+  "./src/systems/DialogueSystem.js?v=10",
   "./src/systems/MoneySystem.js?v=3",
   "./src/systems/QuestManager.js?v=8",
-  "./src/scenes/PlayScene.js?v=79",
+  "./src/scenes/PlayScene.js?v=80",
   "./assets/maps/chapter1-samgakji-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/player.png",
@@ -68,7 +68,7 @@ const PRECACHE_URLS = [
   "./assets/objects/sunisuni-bench.png",
   "./assets/objects/sunisuni-tree.png",
   "./assets/objects/prescription.png",
-  "./assets/objects/medicine-bag.png",
+  "./assets/objects/medicine_bag.png",
   "./assets/objects/bill-5000.png",
   "./assets/ui/broom-button.png",
   "./assets/ui/sangcheori-button.png",

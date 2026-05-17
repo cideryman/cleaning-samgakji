@@ -89,6 +89,19 @@ const RECYCLE_BIN_CONFIG = [
   { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
 ];
 
+const DIALOGUE_OVERLAY_TEXTURES = {
+  jjookface: "jjook_face",
+  hospital_staff: "hospital_staff",
+  hospital_doctor: "hospital_doctor",
+  chemist: "chemist",
+  "sunisuni-portrait-sick": "sunisuni_portrait_sick",
+  "sunisuni-portrait-smile": "sunisuni_portrait_smile",
+  "sunisuni-portrait-worried": "sunisuni_portrait_worried",
+  sunisuni_portrait_sick: "sunisuni_portrait_sick",
+  sunisuni_portrait_smile: "sunisuni_portrait_smile",
+  sunisuni_portrait_worried: "sunisuni_portrait_worried",
+};
+
 class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
@@ -731,6 +744,7 @@ class PlayScene extends Phaser.Scene {
 
   handleVendingMachineInteraction() {
     if (this.isInDialogue || this.vendingMenuGroup) return;
+    if (!this.isPlayerNearVendingMachine()) return;
 
     if (this.jjookQuestState === "completed") {
       this.openVendingMenu({ completeQuestOnSelect: false });
@@ -1329,6 +1343,7 @@ class PlayScene extends Phaser.Scene {
 
   handleJjookInteraction() {
     if (this.isInDialogue || !this.dialogueSystem || this.jjookQuestState === "locked") return;
+    if (!this.isPlayerNearJjookNpc()) return;
 
     if (this.jjookQuestState === "wallet_missing") {
       this.dialogueSystem.start([
@@ -1356,6 +1371,7 @@ class PlayScene extends Phaser.Scene {
 
   handleSunisuniInteraction() {
     if (this.isInDialogue || !this.dialogueSystem || this.sunisuniQuestState === "locked") return;
+    if (!this.isPlayerNearSunisuniNpc()) return;
 
     if (this.sunisuniQuestState === "sunisuni_found") {
       this.dialogueSystem.start([
@@ -2831,16 +2847,39 @@ class PlayScene extends Phaser.Scene {
   }
 
   handleDialogueLineChange(line) {
-    if (!this.interiorSceneGroup) return;
-    if (!line?.overlayKey) return;
+    const textureKey = this.getDialogueOverlayTextureKey(line);
+    if (!textureKey) {
+      this.clearDialogueSpeaker();
+      return;
+    }
 
-    this.setInteriorSpeaker(line.overlayKey, line.overlayOptions || {});
+    this.setDialogueSpeaker(textureKey, line.overlayOptions || {});
   }
 
-  setInteriorSpeaker(textureKey, options = {}) {
-    if (!this.interiorSceneGroup || !this.textures.exists(textureKey)) return;
+  handleDialogueClose() {
+    this.clearDialogueSpeaker();
+  }
 
-    this.interiorSpeaker?.destroy();
+  getDialogueOverlayTextureKey(line) {
+    if (!line) return null;
+
+    const requestedKey = line.overlayKey || line.portraitKey;
+    if (!requestedKey) return null;
+    return DIALOGUE_OVERLAY_TEXTURES[requestedKey] || requestedKey;
+  }
+
+  clearDialogueSpeaker() {
+    this.dialogueSpeaker?.destroy();
+    this.dialogueSpeaker = null;
+  }
+
+  setDialogueSpeaker(textureKey, options = {}) {
+    if (!this.textures.exists(textureKey)) {
+      this.clearDialogueSpeaker();
+      return;
+    }
+
+    this.clearDialogueSpeaker();
 
     const viewportWidth = Math.max(768, this.scale.width || 768);
     const viewportHeight = Math.max(480, this.scale.height || 480);
@@ -2871,14 +2910,16 @@ class PlayScene extends Phaser.Scene {
     const sourceWidth = Math.max(1, source?.width || 1);
     const sourceHeight = Math.max(1, source?.height || 1);
     const maxWidth = options.maxWidth ?? Phaser.Math.Clamp(viewportWidth * 0.22, 190, 310);
-    const maxHeight = options.maxHeight ?? viewportHeight * 0.72;
+    const availableHeight = Math.max(120, speakerBottom - 24);
+    const maxHeight = Math.min(options.maxHeight ?? viewportHeight * 0.72, availableHeight);
     const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
     image.setScale(scale);
 
     image.setAlpha(0);
     image.setTintFill(0xffffff);
-    this.interiorSceneGroup.add(image);
-    this.interiorSpeaker = image;
+    this.interiorSceneGroup?.add(image);
+    this.dialogueSpeaker = image;
+    this.interiorSpeaker = this.interiorSceneGroup ? image : null;
 
     this.tweens.add({
       targets: image,
@@ -2891,7 +2932,10 @@ class PlayScene extends Phaser.Scene {
   }
 
   showFloatingItem(textureKey, x, y, size = 64, fixedToCamera = false, options = {}) {
-    if (!this.textures.exists(textureKey)) return;
+    if (!this.textures.exists(textureKey)) {
+      options.onComplete?.();
+      return;
+    }
 
     const item = this.add.image(x, y, textureKey);
     item.setDepth(72);
