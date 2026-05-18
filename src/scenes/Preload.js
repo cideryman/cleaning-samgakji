@@ -67,6 +67,11 @@ const EXTERNAL_ASSETS = [
 ];
 
 const SPRITESHEET_ASSETS = [
+  { key: "haenaem_walk_down", path: "assets/sprites/haenaem-walk-down.png", frameWidth: 512, frameHeight: 1024 },
+  { key: "haenaem_walk_up", path: "assets/sprites/haenaem-walk-up.png", frameWidth: 512, frameHeight: 1024 },
+  { key: "haenaem_walk_left", path: "assets/sprites/haenaem-walk-left.png", frameWidth: 512, frameHeight: 1024 },
+  { key: "haenaem_walk_right", path: "assets/sprites/haenaem-walk-right.png", frameWidth: 512, frameHeight: 1024 },
+  { key: "haenaem_sweep_right", path: "assets/sprites/haenaem-sweep-right.png", frameWidth: 512, frameHeight: 1024 },
   { key: "sunisuni_front", path: "assets/sprites/sunisuni-front.png", frameWidth: 256, frameHeight: 256 },
   { key: "sunisuni_back", path: "assets/sprites/sunisuni-back.png", frameWidth: 256, frameHeight: 256 },
   { key: "sunisuni_left", path: "assets/sprites/sunisuni-left.png", frameWidth: 256, frameHeight: 256 },
@@ -112,10 +117,39 @@ export default class Preload extends Phaser.Scene {
 
   create() {
     this.createMissingExternalTextures();
+    this.createPlayerAnimations();
     this.createBlockTexture("clean_tile", 32, 32, "#f6fff3", "#6fcf97");
     this.createBlockTexture("sweep_hitbox", 96, 72, "#fff3a3", "#f2c94c");
 
     this.scene.start("StartScene");
+  }
+
+  createPlayerAnimations() {
+    const walkAnimations = [
+      ["haenaem_walk_down_anim", "haenaem_walk_down"],
+      ["haenaem_walk_up_anim", "haenaem_walk_up"],
+      ["haenaem_walk_left_anim", "haenaem_walk_left"],
+      ["haenaem_walk_right_anim", "haenaem_walk_right"],
+    ];
+
+    walkAnimations.forEach(([animKey, textureKey]) => {
+      if (!this.textures.exists(textureKey) || this.anims.exists(animKey)) return;
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(textureKey, { frames: [0, 1, 2, 1] }),
+        frameRate: 7,
+        repeat: -1,
+      });
+    });
+
+    if (this.textures.exists("haenaem_sweep_right") && !this.anims.exists("haenaem_sweep_right_anim")) {
+      this.anims.create({
+        key: "haenaem_sweep_right_anim",
+        frames: this.anims.generateFrameNumbers("haenaem_sweep_right", { start: 0, end: 2 }),
+        frameRate: 12,
+        repeat: 0,
+      });
+    }
   }
 
   createMissingExternalTextures() {

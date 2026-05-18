@@ -1,4 +1,4 @@
-import { GAME_CONFIG, PLAYER_TEXTURES } from "../config/GameConstants.js";
+import { GAME_CONFIG, PLAYER_TEXTURES, PLAYER_WALK_ANIMS } from "../config/GameConstants.js";
 
 export default class PlayerController {
   constructor(scene) {
@@ -49,7 +49,11 @@ export default class PlayerController {
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       scene.lastDirection.copy(velocity);
-      this.updatePlayerDirection(velocity);
+      if (!scene.playerIsSweeping) {
+        this.updatePlayerDirection(velocity, true);
+      }
+    } else if (!scene.playerIsSweeping) {
+      this.stopWalkAnimation();
     }
 
     const speed = this.getPlayerSpeed();
@@ -63,10 +67,10 @@ export default class PlayerController {
       : GAME_CONFIG.playerSpeed;
   }
 
-  updatePlayerDirection(velocity) {
+  updatePlayerDirection(velocity, isMoving = false) {
     const scene = this.scene;
     if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
-      this.setPlayerDirectionTexture(velocity.x < 0 ? "left" : "right");
+      this.setPlayerDirectionTexture(velocity.x < 0 ? "left" : "right", isMoving);
       scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y * 0.98);
       scene.player.clearTint();
       return;
@@ -74,25 +78,65 @@ export default class PlayerController {
 
     scene.player.setFlipX(false);
     if (velocity.y < 0) {
-      this.setPlayerDirectionTexture("up");
+      this.setPlayerDirectionTexture("up", isMoving);
       scene.player.setScale(scene.playerBaseScale.x * 0.94, scene.playerBaseScale.y * 1.06);
     } else {
-      this.setPlayerDirectionTexture("down");
+      this.setPlayerDirectionTexture("down", isMoving);
       scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y);
     }
     scene.player.clearTint();
   }
 
-  setPlayerDirectionTexture(directionKey) {
+  setPlayerDirectionTexture(directionKey, isMoving = false) {
     const scene = this.scene;
     const textureKey = PLAYER_TEXTURES[directionKey] || PLAYER_TEXTURES.down;
-    if (scene.playerDirectionKey === directionKey || !scene.textures.exists(textureKey)) return;
+    if (!scene.textures.exists(textureKey)) return;
 
+    const shouldChangeTexture = scene.playerDirectionKey !== directionKey || scene.player.texture.key !== textureKey;
     scene.playerDirectionKey = directionKey;
-    scene.player.setTexture(textureKey);
-    scene.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
+    if (shouldChangeTexture) {
+      scene.player.setTexture(textureKey, 1);
+    }
+    scene.player.setDisplaySize(GAME_CONFIG.playerDisplayWidth, GAME_CONFIG.playerDisplayHeight);
     scene.playerBaseScale = { x: scene.player.scaleX, y: scene.player.scaleY };
     scene.player.setFlipX(false);
+
+    const animKey = PLAYER_WALK_ANIMS[directionKey];
+    if (isMoving && animKey && scene.anims.exists(animKey)) {
+      scene.player.anims.play(animKey, true);
+    } else {
+      scene.player.anims.stop();
+      if (scene.player.anims.currentFrame) {
+        scene.player.setFrame(1);
+      }
+    }
+  }
+
+  stopWalkAnimation() {
+    const scene = this.scene;
+    if (!scene.player?.anims) return;
+
+    scene.player.anims.stop();
+    if (scene.player.anims.currentFrame) {
+      scene.player.setFrame(1);
+    }
+  }
+
+  playSweepAnimation(direction = this.scene.lastDirection) {
+    const scene = this.scene;
+    if (!scene.player || direction.x <= 0 || !scene.anims.exists("haenaem_sweep_right_anim")) return;
+
+    scene.playerIsSweeping = true;
+    scene.player.anims.stop();
+    scene.player.setTexture("haenaem_sweep_right", 0);
+    scene.player.setDisplaySize(GAME_CONFIG.playerDisplayWidth, GAME_CONFIG.playerDisplayHeight);
+    scene.playerBaseScale = { x: scene.player.scaleX, y: scene.player.scaleY };
+    scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y * 0.98);
+    scene.player.anims.play("haenaem_sweep_right_anim");
+    scene.player.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      scene.playerIsSweeping = false;
+      this.setPlayerDirectionTexture("right", false);
+    });
   }
 
   startFloatingJoystick(event) {

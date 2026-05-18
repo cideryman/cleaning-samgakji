@@ -7,6 +7,8 @@ export const GAME_CONFIG = {
   canCount: 20,
   yebiRemoveCount: 10,
   playerDisplaySize: 64,
+  playerDisplayWidth: 64,
+  playerDisplayHeight: 88,
   slimeDisplaySize: 42,
   broomItemDisplaySize: 44,
   yebiNpcDisplaySize: 72,
@@ -70,10 +72,17 @@ export const TILED_MAP_CONFIG = {
 };
 
 export const PLAYER_TEXTURES = {
-  down: "player",
-  left: "player_left",
-  right: "player_right",
-  up: "player_back",
+  down: "haenaem_walk_down",
+  left: "haenaem_walk_left",
+  right: "haenaem_walk_right",
+  up: "haenaem_walk_up",
+};
+
+export const PLAYER_WALK_ANIMS = {
+  down: "haenaem_walk_down_anim",
+  left: "haenaem_walk_left_anim",
+  right: "haenaem_walk_right_anim",
+  up: "haenaem_walk_up_anim",
 };
 
 export const TRASH_TEXTURES = {

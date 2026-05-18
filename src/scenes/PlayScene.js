@@ -2,6 +2,7 @@
 import {
   DRINK_OPTIONS,
   GAME_CONFIG,
+  PLAYER_TEXTURES,
   RECYCLE_BIN_CONFIG,
   TILED_MAP_CONFIG,
 } from "../config/GameConstants.js";
@@ -908,8 +909,9 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createPlayer() {
-    this.player = this.physics.add.sprite(this.playerStart.x, this.playerStart.y, "player");
-    this.player.setDisplaySize(GAME_CONFIG.playerDisplaySize, GAME_CONFIG.playerDisplaySize);
+    const playerTexture = this.textures.exists(PLAYER_TEXTURES.down) ? PLAYER_TEXTURES.down : "player";
+    this.player = this.physics.add.sprite(this.playerStart.x, this.playerStart.y, playerTexture, 1);
+    this.player.setDisplaySize(GAME_CONFIG.playerDisplayWidth, GAME_CONFIG.playerDisplayHeight);
     this.playerBaseScale = { x: this.player.scaleX, y: this.player.scaleY };
     this.playerDirectionKey = "down";
     this.player.setCollideWorldBounds(true);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260518-02";
+const CACHE_NAME = "cleaning-samgakji-v20260518-03";
 
 const PRECACHE_URLS = [
   "./",
@@ -30,6 +30,11 @@ const PRECACHE_URLS = [
   "./assets/sprites/playerleft.png",
   "./assets/sprites/playerright.png",
   "./assets/sprites/playerback.png",
+  "./assets/sprites/haenaem-walk-down.png",
+  "./assets/sprites/haenaem-walk-up.png",
+  "./assets/sprites/haenaem-walk-left.png",
+  "./assets/sprites/haenaem-walk-right.png",
+  "./assets/sprites/haenaem-sweep-right.png",
   "./assets/sprites/trash-slime.png",
   "./assets/sprites/trash-slime2.png",
   "./assets/sprites/trash-can.png",
