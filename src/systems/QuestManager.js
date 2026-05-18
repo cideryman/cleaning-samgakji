@@ -83,7 +83,7 @@ export default class QuestManager {
     this.renderGauge(quest.target);
     this.uiElements.bar?.classList.remove("is-recycle");
     this.updateUI();
-    this.scene.setQuestMarker?.("canQuest", this.scene.sangcheoriNpc, "!");
+    this.scene.setQuestMarker?.("canQuest", this.scene.yebiNpc, "!");
     this.scene.showQuestToast?.("여비 퀘스트: 캔 20개 모으기");
     this.scene.playItemPickupSound?.();
   }
@@ -141,7 +141,7 @@ export default class QuestManager {
     if (!quest.isUnlocked || quest.isCompleted) return;
 
     quest.isActive = true;
-    this.scene.setQuestMarker?.("recycleQuest", this.scene.sangcheoriNpc, "!");
+    this.scene.setQuestMarker?.("recycleQuest", this.scene.yebiNpc, "!");
     this.uiElements.root?.classList.remove("is-poofing");
     this.renderRecycleGauge();
     this.updateUI();

@@ -58,8 +58,13 @@
             </div>
           </div>
         </div>
-        <div id="speedBuffHud" class="speed-buff-hud" aria-hidden="true">
+        <div id="speedBuffHud" class="speed-buff-hud effect-button" aria-hidden="true">
           <img src="./assets/objects/acceleration.png" alt="" aria-hidden="true" />
+          <span id="speedBuffTimer" aria-hidden="true"></span>
+        </div>
+        <div id="jjookFollowHud" class="jjook-follow-hud effect-button" aria-hidden="true">
+          <img src="./assets/초상화/쭉쭉이 기본.png" alt="" aria-hidden="true" />
+          <span id="jjookFollowTimer" aria-hidden="true"></span>
         </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
           <div class="can-quest-label" id="canQuestLabel">퀘스트 없음</div>
@@ -84,7 +89,7 @@
           </button>
         </div>
         <div id="specialToast" class="special-toast" aria-hidden="true">
-          <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
+          <img src="./assets/ui/yebi-button.png" alt="" aria-hidden="true" />
           <span>고마워</span>
         </div>
         <!-- 대화창 모달 -->
@@ -98,7 +103,7 @@
         </div>
         <div class="touch-controls" aria-label="mobile controls">
           <button id="specialButton" class="special-button" type="button" aria-label="yebi item" hidden>
-            <img src="./assets/ui/sangcheori-button.png" alt="" aria-hidden="true" />
+            <img src="./assets/ui/yebi-button.png" alt="" aria-hidden="true" />
           </button>
           <button id="bacchusButton" class="bacchus-button" type="button" aria-label="bacchus item" hidden>
             <img src="./assets/ui/bacchus.png" alt="" aria-hidden="true" />

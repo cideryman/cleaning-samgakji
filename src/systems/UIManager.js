@@ -102,8 +102,8 @@ export default class UIManager {
     scene.sweepButton?.classList.toggle("is-upgraded", scene.hasBroomUpgrade);
 
     if (scene.specialButton) {
-      scene.specialButton.hidden = !scene.hasUnlockedSangcheori || scene.hasUsedSangcheori;
-      scene.specialButton.classList.toggle("is-ready", scene.hasUnlockedSangcheori && !scene.hasUsedSangcheori);
+      scene.specialButton.hidden = !scene.hasUnlockedYebi || scene.hasUsedYebi;
+      scene.specialButton.classList.toggle("is-ready", scene.hasUnlockedYebi && !scene.hasUsedYebi);
     }
   }
 }

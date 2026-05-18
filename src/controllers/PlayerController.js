@@ -21,7 +21,7 @@ export default class PlayerController {
     });
 
     scene.keys.sweep.on("down", () => scene.handleSpaceAction());
-    scene.keys.specialEnter.on("down", () => scene.useSangcheoriItem());
+    scene.keys.specialEnter.on("down", () => scene.useYebiItem());
   }
 
   update() {

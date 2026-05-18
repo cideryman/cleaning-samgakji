@@ -47,8 +47,8 @@ export default class InteractionSystem {
       return;
     }
 
-    if (this.isPlayerNearSangcheoriNpc() && !scene.isInDialogue) {
-      scene.showSangcheoriQuestDialogue();
+    if (this.isPlayerNearYebiNpc() && !scene.isInDialogue) {
+      scene.showYebiQuestDialogue();
       return;
     }
 
@@ -84,7 +84,7 @@ export default class InteractionSystem {
 
   isPlayerNearHospitalDoor() {
     const scene = this.scene;
-    if (!scene.player || scene.sunisuniQuestState !== "going_hospital") return false;
+    if (!scene.player || !["going_hospital", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
     return Phaser.Math.Distance.Between(
       scene.player.x,
       scene.player.y,
@@ -95,7 +95,7 @@ export default class InteractionSystem {
 
   isPlayerNearPharmacyDoor() {
     const scene = this.scene;
-    if (!scene.player || scene.sunisuniQuestState !== "going_pharmacy") return false;
+    if (!scene.player || !["going_pharmacy", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
     return Phaser.Math.Distance.Between(
       scene.player.x,
       scene.player.y,
@@ -113,8 +113,8 @@ export default class InteractionSystem {
     return dx <= 82 && dy <= 74;
   }
 
-  isPlayerNearSangcheoriNpc() {
+  isPlayerNearYebiNpc() {
     const scene = this.scene;
-    return isNear(scene.player, scene.sangcheoriNpc, 120);
+    return isNear(scene.player, scene.yebiNpc, 120);
   }
 }

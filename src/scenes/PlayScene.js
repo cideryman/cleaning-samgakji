@@ -36,15 +36,19 @@ export default class PlayScene extends Phaser.Scene {
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
     this.jjookFollowEndsAt = 0;
+    this.jjookFollowTimer = null;
+    this.jjookFollowCountdownEvent = null;
+    this.shouldBuyJjookColaAfterFollow = false;
     this.jjookStateBeforeVending = null;
     this.shouldCompleteJjookAfterDrink = false;
     this.speedBuffTimer = null;
-    this.speedBuffIconGroup = null;
+    this.speedBuffCountdownEvent = null;
     this.sunisuniQuestState = "locked";
     this.hasAnnouncedSunisuniQuest = false;
     this.hasPrescription = false;
     this.hasMedicine = false;
     this.hasBacchus = false;
+    this.hospitalRevisitUsed = false;
     this.isBacchusActive = false;
     this.bacchusTimer = null;
     this.bacchusCountdownEvent = null;
@@ -54,8 +58,8 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedVendingIndex = 0;
     this.vendingMenuInputLockedUntil = 0;
     this.hasAnnouncedRecycleQuest = false;
-    this.hasUnlockedSangcheori = false;
-    this.hasUsedSangcheori = false;
+    this.hasUnlockedYebi = false;
+    this.hasUsedYebi = false;
     this.isMissionComplete = false;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
@@ -97,6 +101,9 @@ export default class PlayScene extends Phaser.Scene {
     this.completeOverlay = document.querySelector("#completeOverlay");
     this.specialToast = document.querySelector("#specialToast");
     this.speedBuffHudEl = document.querySelector("#speedBuffHud");
+    this.speedBuffTimerEl = document.querySelector("#speedBuffTimer");
+    this.jjookFollowHudEl = document.querySelector("#jjookFollowHud");
+    this.jjookFollowTimerEl = document.querySelector("#jjookFollowTimer");
     this.resultTrashCountEl = document.querySelector("#resultTrashCount");
     this.resultCanCountEl = document.querySelector("#resultCanCount");
     this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
@@ -113,7 +120,7 @@ export default class PlayScene extends Phaser.Scene {
     this.specialHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      this.useSangcheoriItem();
+      this.useYebiItem();
     };
     this.bacchusHandler = (event) => {
       event?.preventDefault();
@@ -204,7 +211,7 @@ export default class PlayScene extends Phaser.Scene {
     this.createHospitalAndPharmacy();
     this.createLargeBenchOverlays();
     this.createRecyclingCenter();
-    this.createSangcheoriNpc();
+    this.createYebiNpc();
     this.createSunisuniNpc();
     this.createPlayer();
     this.trashSlimes = this.physics.add.staticGroup();
@@ -237,17 +244,23 @@ export default class PlayScene extends Phaser.Scene {
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
     this.jjookFollowEndsAt = 0;
+    this.jjookFollowTimer?.remove(false);
+    this.jjookFollowCountdownEvent?.remove(false);
+    this.jjookFollowTimer = null;
+    this.jjookFollowCountdownEvent = null;
+    this.shouldBuyJjookColaAfterFollow = false;
     this.jjookStateBeforeVending = null;
     this.shouldCompleteJjookAfterDrink = false;
     this.speedBuffTimer?.remove(false);
+    this.speedBuffCountdownEvent?.remove(false);
     this.speedBuffTimer = null;
-    this.speedBuffIconGroup?.clear(true, true);
-    this.speedBuffIconGroup = null;
+    this.speedBuffCountdownEvent = null;
     this.sunisuniQuestState = "locked";
     this.hasAnnouncedSunisuniQuest = false;
     this.hasPrescription = false;
     this.hasMedicine = false;
     this.hasBacchus = false;
+    this.hospitalRevisitUsed = false;
     this.isBacchusActive = false;
     this.bacchusTimer?.remove(false);
     this.bacchusCountdownEvent?.remove(false);
@@ -264,9 +277,12 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedVendingIndex = 0;
     this.vendingMenuInputLockedUntil = 0;
     this.speedBuffHudEl?.classList.remove("is-visible");
+    this.jjookFollowHudEl?.classList.remove("is-visible");
+    if (this.speedBuffTimerEl) this.speedBuffTimerEl.textContent = "";
+    if (this.jjookFollowTimerEl) this.jjookFollowTimerEl.textContent = "";
     this.hasAnnouncedRecycleQuest = false;
-    this.hasUnlockedSangcheori = false;
-    this.hasUsedSangcheori = false;
+    this.hasUnlockedYebi = false;
+    this.hasUsedYebi = false;
     this.isMissionComplete = false;
     this.isChapterComplete = false;
     this.lastDirection.set(1, 0);
@@ -355,10 +371,10 @@ export default class PlayScene extends Phaser.Scene {
     const didUnlock = this.questManager.unlockRecycleQuest();
     if (!didUnlock) return;
 
-    this.moveSangcheoriToRecyclingCenter();
-    this.setQuestMarker("recycleQuest", this.sangcheoriNpc, "!");
+    this.moveYebiToRecyclingCenter();
+    this.setQuestMarker("recycleQuest", this.yebiNpc, "!");
     this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
-    this.showSpeechBubble(this.sangcheoriNpc, "분리수거장으로 와!", 10000);
+    this.showSpeechBubble(this.yebiNpc, "분리수거장으로 와!", 10000);
   }
 
   checkJjookQuestUnlock() {
@@ -538,7 +554,7 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  getSangcheoriRecyclePosition() {
+  getYebiRecyclePosition() {
     return {
       x: GAME_CONFIG.recyclingCenter.x - 270,
       y: GAME_CONFIG.recyclingCenter.y + 28,
@@ -759,7 +775,7 @@ export default class PlayScene extends Phaser.Scene {
     }
   }
 
-  createSangcheoriNpc() {
+  createYebiNpc() {
     const positions = [
       [420, 226],
       [756, 310],
@@ -770,20 +786,20 @@ export default class PlayScene extends Phaser.Scene {
     ].filter(([x, y]) => !this.isBlockedSpawnPoint(x, y));
     const [x, y] = Phaser.Utils.Array.GetRandom(positions);
 
-    this.sangcheoriNpc = this.add.image(x, y, "sangcheori_npc");
-    this.sangcheoriNpc.setDisplaySize(
-      GAME_CONFIG.sangcheoriNpcDisplaySize,
-      GAME_CONFIG.sangcheoriNpcDisplaySize,
+    this.yebiNpc = this.add.image(x, y, "yebi_npc");
+    this.yebiNpc.setDisplaySize(
+      GAME_CONFIG.yebiNpcDisplaySize,
+      GAME_CONFIG.yebiNpcDisplaySize,
     );
-    this.sangcheoriNpc.setDepth(3.5);
-    this.sangcheoriNpc.setInteractive({ useHandCursor: true });
-    this.sangcheoriNpc.on("pointerdown", (pointer) => {
+    this.yebiNpc.setDepth(3.5);
+    this.yebiNpc.setInteractive({ useHandCursor: true });
+    this.yebiNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
       this.handlePrimaryAction();
     });
     this.tweens.add({
-      targets: this.sangcheoriNpc,
+      targets: this.yebiNpc,
       y: y - 5,
       duration: 900,
       yoyo: true,
@@ -792,15 +808,15 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  moveSangcheoriToRecyclingCenter() {
-    if (!this.sangcheoriNpc) return;
+  moveYebiToRecyclingCenter() {
+    if (!this.yebiNpc) return;
 
-    const position = this.getSangcheoriRecyclePosition();
-    this.tweens.killTweensOf(this.sangcheoriNpc);
-    this.sangcheoriNpc.setPosition(position.x, position.y);
-    this.sangcheoriNpc.setDepth(3.6);
+    const position = this.getYebiRecyclePosition();
+    this.tweens.killTweensOf(this.yebiNpc);
+    this.yebiNpc.setPosition(position.x, position.y);
+    this.yebiNpc.setDepth(3.6);
     this.tweens.add({
-      targets: this.sangcheoriNpc,
+      targets: this.yebiNpc,
       y: position.y - 5,
       duration: 900,
       yoyo: true,
@@ -1192,8 +1208,54 @@ export default class PlayScene extends Phaser.Scene {
     if (this.jjookQuestState === "completed") {
       this.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_smile", text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
+        {
+          name: "해냄이",
+          portraitKey: "haenaem_confused",
+          text: "쭉쭉이에게 뭐라고 말할까요?",
+          choices: [
+            { label: "플로깅을 도와줄래?", onSelect: () => this.requestJjookPloggingHelp() },
+            { label: "다음에 보자.", onSelect: () => this.sayByeToJjook() },
+          ],
+        },
       ]);
     }
+  }
+
+  requestJjookPloggingHelp() {
+    if (this.isJjookFollowActive) {
+      this.dialogueSystem?.start([
+        { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "이미 같이 줍고 있잖아! 조금만 더 힘내자!" },
+      ]);
+      return;
+    }
+
+    const accepted = Phaser.Math.Between(0, 99) < 65;
+    if (accepted) {
+      const reasons = [
+        "좋아! 방금 몸도 풀렸고, 같이 걸으면 더 신나지!",
+        "좋아! 나도 오늘은 조금 더 움직이고 싶었어.",
+        "물론이지! 해냄이랑 같이하면 플로깅도 재밌어.",
+      ];
+      this.dialogueSystem?.start([
+        { name: "쭉쭉이", portraitKey: "jjook_plogging", text: Phaser.Utils.Array.GetRandom(reasons) },
+      ], () => this.activateJjookFollower({ buyColaOnComplete: true }));
+      return;
+    }
+
+    const reasons = [
+      "미안! 오늘은 다리가 조금 뻐근해서 쉬어야겠어.",
+      "지금은 물을 좀 마시고 쉬어야 할 것 같아. 다음에 꼭 도와줄게!",
+      "방금 운동을 너무 열심히 했나 봐. 조금 쉬고 싶어.",
+    ];
+    this.dialogueSystem?.start([
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: Phaser.Utils.Array.GetRandom(reasons) },
+    ]);
+  }
+
+  sayByeToJjook() {
+    this.dialogueSystem?.start([
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "좋아! 필요하면 또 불러줘." },
+    ]);
   }
 
   handleSunisuniInteraction() {
@@ -1276,6 +1338,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleHospitalInteraction() {
+    if (this.sunisuniQuestState === "quest_complete") {
+      this.startHospitalRevisitDialogue();
+      return;
+    }
+
     if (this.sunisuniQuestState !== "going_hospital") return;
     this.sunisuniQuestState = "hospital_reception";
     this.showInteriorScene("hospital_interior", "hospital");
@@ -1348,7 +1415,69 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
+  startHospitalRevisitDialogue() {
+    this.showInteriorScene("hospital_interior", "hospital");
+
+    if (this.hospitalRevisitUsed) {
+      this.dialogueSystem.start([
+        { name: "접수 직원", portraitKey: "hospital_staff", text: "오늘은 이미 진료를 받으셨어요." },
+        { name: "접수 직원", portraitKey: "hospital_staff", text: "정말 아프면 보호자와 함께 다시 와 주세요." },
+      ], () => this.clearInteriorScene());
+      return;
+    }
+
+    this.dialogueSystem.start([
+      {
+        name: "접수 직원",
+        portraitKey: "hospital_staff",
+        text: "어디가 아프세요?",
+        choices: [
+          { label: "목이 아파요.", onSelect: () => this.startPretendHospitalVisit("목이") },
+          { label: "머리가 아파요.", onSelect: () => this.startPretendHospitalVisit("머리가") },
+          { label: "안 아파요.", onSelect: () => this.closeHospitalRevisit("아프지 않다니 다행이에요. 건강할 때도 몸을 잘 살펴보세요.") },
+          { label: "잘못 들어왔어요.", onSelect: () => this.closeHospitalRevisit("괜찮아요. 필요할 때 다시 오세요.") },
+        ],
+      },
+    ]);
+  }
+
+  startPretendHospitalVisit(symptomLabel) {
+    this.dialogueSystem.start([
+      { name: "접수 직원", portraitKey: "hospital_staff", text: `${symptomLabel} 아프다고 접수할게요. 진료실로 들어가세요.` },
+      { name: "의사", portraitKey: "hospital_doctor", text: "안녕하세요. 어디가 얼마나 아픈지 천천히 말해볼까요?" },
+      { name: "해냄이", portraitKey: "haenaem_confused", text: `음... ${symptomLabel}가 아픈 것 같기도 하고 아닌 것 같기도 해요.` },
+      { name: "의사", portraitKey: "hospital_doctor", text: "음... 특별히 아픈 곳은 없어 보이는데요?" },
+      { name: "의사", portraitKey: "hospital_doctor", text: "병원은 정말 아플 때 오는 곳이에요. 궁금해서 들어오는 곳은 아니랍니다." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "몸이 이상하면 보호자에게 먼저 말하고, 필요한 때 진료를 받는 게 좋아요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "진료는 끝났습니다." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "특별한 이상은 없으셨지만 진료비는 내셔야 해요. 1만원입니다." },
+    ], () => this.finishPretendHospitalVisit());
+  }
+
+  finishPretendHospitalVisit() {
+    this.hospitalRevisitUsed = true;
+    this.clearInteriorScene();
+
+    if (this.moneySystem?.deductMoney(10000)) {
+      this.showQuestToast("진료비 10,000원을 냈어요.", 2600);
+      return;
+    }
+
+    this.showQuestToast("진료비 10,000원이 부족해요. 다음에는 꼭 챙겨 오자.", 3200);
+  }
+
+  closeHospitalRevisit(message) {
+    this.dialogueSystem.start([
+      { name: "접수 직원", portraitKey: "hospital_staff", text: message },
+    ], () => this.clearInteriorScene());
+  }
+
   handlePharmacyInteraction() {
+    if (this.sunisuniQuestState === "quest_complete") {
+      this.startPharmacyRevisitDialogue();
+      return;
+    }
+
     if (this.sunisuniQuestState !== "going_pharmacy" || !this.hasPrescription) return;
     this.sunisuniQuestState = "medicine_paid";
     this.showInteriorScene("pharmacy_interior", "pharmacy");
@@ -1385,6 +1514,96 @@ export default class PlayScene extends Phaser.Scene {
         },
       });
     });
+  }
+
+  startPharmacyRevisitDialogue() {
+    this.showInteriorScene("pharmacy_interior", "pharmacy");
+    this.dialogueSystem.start([
+      {
+        name: "약사",
+        portraitKey: "chemist",
+        text: "어떻게 오셨어요?",
+        choices: [
+          { label: "머리가 아파요.", onSelect: () => this.startPharmacyHeadacheRoute() },
+          { label: "잘못 들어왔어요.", onSelect: () => this.closePharmacyRevisit("언제든 필요할 때 들러주세요.") },
+          { label: "활력수를 사고 싶어요.", onSelect: () => this.startVitalDrinkRoute() },
+        ],
+      },
+    ]);
+  }
+
+  startPharmacyHeadacheRoute() {
+    this.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", text: "병원은 다녀오셨어요? 처방전 있으신가요?" },
+      { name: "해냄이", portraitKey: "haenaem_confused", text: "처방전이 없어요." },
+      { name: "약사", portraitKey: "chemist", text: "정말 아프신 건 맞나요? 아파 보이지는 않는데..." },
+      {
+        name: "해냄이",
+        portraitKey: "haenaem_confused",
+        text: "어떻게 말할까요?",
+        choices: [
+          { label: "아파요.", onSelect: () => this.answerPharmacyHeadache(true) },
+          { label: "괜찮아요.", onSelect: () => this.answerPharmacyHeadache(false) },
+        ],
+      },
+    ]);
+  }
+
+  answerPharmacyHeadache(isStillSick) {
+    if (!isStillSick) {
+      this.dialogueSystem.start([
+        { name: "약사", portraitKey: "chemist", text: "괜찮다니 다행이에요." },
+        { name: "약사", portraitKey: "chemist", text: "약은 필요할 때만 먹는 거예요." },
+      ], () => this.clearInteriorScene());
+      return;
+    }
+
+    this.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", text: "처방전이 없으면 일반 의약품만 드릴 수 있어요." },
+      { name: "약사", portraitKey: "chemist", text: "두통약이나 감기약도 꼭 필요한 만큼만 먹어야 해요." },
+      { name: "약사", portraitKey: "chemist", text: "정말 아프면 병원에서 먼저 진료를 받아야 합니다." },
+    ], () => this.clearInteriorScene());
+  }
+
+  startVitalDrinkRoute() {
+    this.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", text: "아직 어리신데 활력수는 너무 많이 마시면 좋지 않아요." },
+      { name: "약사", portraitKey: "chemist", text: "보호자랑 같이 오면 다시 이야기해볼게요." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: "왜 마시고 싶은 거야?" },
+      { name: "해냄이", portraitKey: "haenaem_confused", text: "그냥... 다들 마셔서..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", text: "그런 음료는 많이 마시면 몸에 안 좋아." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: "대신 내가 음료수 사줄게. 뭘 마실래?" },
+      {
+        name: "해냄이",
+        portraitKey: "haenaem_confused",
+        text: "무엇을 고를까요?",
+        choices: [
+          { label: "생수", onSelect: () => this.chooseSunisuniDrinkChoice("생수", true) },
+          { label: "음료수", onSelect: () => this.chooseSunisuniDrinkChoice("음료수", false) },
+        ],
+      },
+    ]);
+  }
+
+  chooseSunisuniDrinkChoice(drinkLabel, isWater) {
+    this.dialogueSystem.start([
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: `${drinkLabel} 좋지. 몸을 생각해서 고르는 것도 멋진 선택이야.` },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워요. 다음엔 몸에 필요한 걸 먼저 생각해볼게요." },
+    ], () => {
+      this.clearInteriorScene();
+      if (isWater) {
+        this.showQuestToast("생수를 마셨어. 몸이 편안해졌어.", 2600);
+        return;
+      }
+      this.activateDrinkSpeedBuff();
+      this.showQuestToast("음료수를 마셨어. 잠깐 힘이 났어!", 2600);
+    });
+  }
+
+  closePharmacyRevisit(message) {
+    this.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", text: message },
+    ], () => this.clearInteriorScene());
   }
 
   completeSunisuniQuest() {
@@ -1426,7 +1645,7 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  showSangcheoriQuestDialogue() {
+  showYebiQuestDialogue() {
     if (this.isInDialogue || !this.dialogueSystem || !this.questManager) return;
 
     const recycleState = this.questManager.getRecycleQuestState();
@@ -1501,12 +1720,12 @@ export default class PlayScene extends Phaser.Scene {
     ]);
   }
 
-  isPlayerNearSangcheoriNpc() {
-    return this.interactionSystem.isPlayerNearSangcheoriNpc();
+  isPlayerNearYebiNpc() {
+    return this.interactionSystem.isPlayerNearYebiNpc();
   }
 
   showFirstGuide() {
-    if (this.isMissionComplete || !this.sangcheoriNpc) return;
+    if (this.isMissionComplete || !this.yebiNpc) return;
     
     // 대화창으로 첫 가이드 표시
     const dialogue = [
@@ -1572,7 +1791,8 @@ export default class PlayScene extends Phaser.Scene {
     const distance = Phaser.Math.Distance.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
     if (distance <= 88) return;
 
-    const step = (this.game.loop.delta / 1000) * 118;
+    const followSpeed = this.isSpeedBuffActive ? 118 * GAME_CONFIG.speedBuffMultiplier : 118;
+    const step = (this.game.loop.delta / 1000) * followSpeed;
     const angle = Phaser.Math.Angle.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
     this.jjookNpc.x += Math.cos(angle) * Math.min(step, distance - 88);
     this.jjookNpc.y += Math.sin(angle) * Math.min(step, distance - 88);
@@ -1651,10 +1871,13 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    this.recyclingInventory[type] -= 1;
-    this.showRecycleDepositEffect(binSprite || this.player, type);
-    this.moneySystem?.addMoney(GAME_CONFIG.recycleDepositReward);
+    const depositCount = inventoryCount;
+    const reward = depositCount * GAME_CONFIG.recycleDepositReward;
+    this.recyclingInventory[type] = 0;
+    this.showRecycleDepositEffect(binSprite || this.player, type, depositCount);
+    this.moneySystem?.addMoney(reward);
     this.playItemPickupSound();
+    this.showQuestToast(`${this.getRecycleTypeLabel(type)} ${depositCount}개 분리수거! +${reward.toLocaleString()}원`);
     this.updateHud();
   }
 
@@ -1887,7 +2110,8 @@ export default class PlayScene extends Phaser.Scene {
   finishPurchasedDrink(drink) {
     this.jjookQuestState = this.jjookStateBeforeVending || "completed";
     this.drinkInventory.push(drink.key);
-    this.showQuestToast(`${drink.label}를 마셨어. 이동 속도 UP`);
+    const speedTarget = this.isJjookFollowActive ? "해냄이와 쭉쭉이" : "해냄이";
+    this.showQuestToast(`${drink.label}를 마셨어. ${speedTarget} 이동 속도 UP`);
     this.activateDrinkSpeedBuff();
     this.selectedDrink = null;
     this.shouldCompleteJjookAfterDrink = false;
@@ -1911,7 +2135,7 @@ export default class PlayScene extends Phaser.Scene {
     this.clearQuestMarker("jjookQuest");
     if (this.selectedDrink) {
       this.drinkInventory.push(this.selectedDrink.key);
-      this.showQuestToast(this.selectedDrink.label + "를 마셨어. 이동 속도 UP");
+      this.showQuestToast(this.selectedDrink.label + "를 마셨어. 해냄이와 쭉쭉이 이동 속도 UP");
     }
     this.activateDrinkSpeedBuff();
     this.activateJjookFollower();
@@ -1926,22 +2150,42 @@ export default class PlayScene extends Phaser.Scene {
   activateDrinkSpeedBuff() {
     this.isSpeedBuffActive = true;
     this.speedBuffTimer?.remove(false);
+    this.speedBuffCountdownEvent?.remove(false);
     this.showBuffIcon("speed_buff_icon", "이동 속도 UP", GAME_CONFIG.speedBuffDurationMs);
+    this.startEffectCountdown(this.speedBuffHudEl, this.speedBuffTimerEl, GAME_CONFIG.speedBuffDurationMs, (event) => {
+      this.speedBuffCountdownEvent = event;
+    });
     this.speedBuffTimer = this.time.delayedCall(GAME_CONFIG.speedBuffDurationMs, () => {
       this.isSpeedBuffActive = false;
+      this.speedBuffCountdownEvent?.remove(false);
+      this.speedBuffCountdownEvent = null;
+      this.hideEffectHud(this.speedBuffHudEl, this.speedBuffTimerEl);
       this.showQuestToast("음료수 속도 효과가 끝났어요.");
     });
   }
 
-  activateJjookFollower() {
+  activateJjookFollower({ buyColaOnComplete = false } = {}) {
     this.isJjookFollowActive = true;
     this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
+    this.shouldBuyJjookColaAfterFollow = buyColaOnComplete;
+    this.jjookFollowTimer?.remove(false);
+    this.jjookFollowCountdownEvent?.remove(false);
+    this.startEffectCountdown(this.jjookFollowHudEl, this.jjookFollowTimerEl, GAME_CONFIG.jjookFollowDurationMs, (event) => {
+      this.jjookFollowCountdownEvent = event;
+    });
     this.showQuestToast("쭉쭉이가 1분 동안 플로깅을 도와줘.");
-    this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
+    this.jjookFollowTimer = this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
       this.isJjookFollowActive = false;
+      this.jjookFollowCountdownEvent?.remove(false);
+      this.jjookFollowCountdownEvent = null;
+      this.hideEffectHud(this.jjookFollowHudEl, this.jjookFollowTimerEl);
       this.showQuestToast("쭉쭉이: 그럼 다음에 또 봐!");
       if (this.jjookNpc?.active) {
         this.showSpeechBubble(this.jjookNpc, "그럼 다음에 또 봐!", 3600);
+      }
+      if (this.shouldBuyJjookColaAfterFollow) {
+        this.shouldBuyJjookColaAfterFollow = false;
+        this.buyJjookThanksCola();
       }
     });
   }
@@ -1949,21 +2193,49 @@ export default class PlayScene extends Phaser.Scene {
   showBuffIcon(textureKey, label, duration) {
     if (this.speedBuffHudEl) {
       this.speedBuffHudEl.classList.add("is-visible");
+      this.speedBuffHudEl.setAttribute("aria-hidden", "false");
     }
-
-    this.time.delayedCall(duration, () => {
-      this.speedBuffHudEl?.classList.remove("is-visible");
-    });
   }
 
-  showRecycleDepositEffect(target, type) {
+  startEffectCountdown(hudEl, timerEl, duration, saveEvent) {
+    hudEl?.classList.add("is-visible");
+    hudEl?.setAttribute("aria-hidden", "false");
+    const endAt = this.time.now + duration;
+    const update = () => {
+      const remaining = Math.max(0, Math.ceil((endAt - this.time.now) / 1000));
+      if (timerEl) timerEl.textContent = `${remaining}`;
+    };
+    update();
+    const event = this.time.addEvent({ delay: 250, loop: true, callback: update });
+    saveEvent?.(event);
+  }
+
+  hideEffectHud(hudEl, timerEl) {
+    hudEl?.classList.remove("is-visible");
+    hudEl?.setAttribute("aria-hidden", "true");
+    if (timerEl) timerEl.textContent = "";
+  }
+
+  buyJjookThanksCola() {
+    if (this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
+      this.showQuestToast("고마운 마음으로 쭉쭉이에게 콜라를 사줬어. -1,000원", 2600);
+      this.playItemPickupSound();
+      this.showSpeechBubble(this.jjookNpc || this.player, "콜라 고마워!", 2600);
+      return;
+    }
+
+    this.showQuestToast("콜라를 사주고 싶었지만 돈이 조금 부족해.", 2600);
+    this.showSpeechBubble(this.player, "다음엔 꼭 콜라 사줄게!", 2200);
+  }
+
+  showRecycleDepositEffect(target, type, count = 1) {
     const colorByType = {
       can: 0x6fcf97,
       normal: 0x79c6ff,
       plastic: 0xf2c94c,
     };
     const color = colorByType[type] || 0xffffff;
-    this.showSpeechBubble(target, "쏙!");
+    this.showSpeechBubble(target, count > 1 ? `${count}개 쏙!` : "쏙!");
 
     const itemTexture = this.getRandomTrashTexture(type);
     if (this.textures.exists(itemTexture)) {
@@ -1996,6 +2268,15 @@ export default class PlayScene extends Phaser.Scene {
         onComplete: () => sparkle.destroy(),
       });
     }
+  }
+
+  getRecycleTypeLabel(type) {
+    const labelByType = {
+      can: "캔",
+      normal: "일반 쓰레기",
+      plastic: "플라스틱",
+    };
+    return labelByType[type] || "쓰레기";
   }
 
   trySweep() {
@@ -2208,13 +2489,13 @@ export default class PlayScene extends Phaser.Scene {
       this.resultCanCountEl.textContent = "캔 " + this.cleanedCanCount + "개";
     }
     if (this.resultHelpUsedEl) {
-      this.resultHelpUsedEl.textContent = this.hasUsedSangcheori ? "여비 도움 완료" : "여비 도움 미사용";
+      this.resultHelpUsedEl.textContent = this.hasUsedYebi ? "여비 도움 완료" : "여비 도움 미사용";
     }
     this.completeOverlay?.classList.add("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "false");
   }
 
-  showSangcheoriUnlockToast() {
+  showYebiUnlockToast() {
     if (!this.specialToast) return;
 
     this.specialToast.classList.remove("is-visible");
@@ -2488,26 +2769,26 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  useSangcheoriItem() {
-    if (!this.hasUnlockedSangcheori || this.hasUsedSangcheori || this.isMissionComplete) {
+  useYebiItem() {
+    if (!this.hasUnlockedYebi || this.hasUsedYebi || this.isMissionComplete) {
       return;
     }
 
-    this.hasUsedSangcheori = true;
-    this.hasUnlockedSangcheori = false;
+    this.hasUsedYebi = true;
+    this.hasUnlockedYebi = false;
     this.specialButton.hidden = true;
     this.specialButton.setAttribute("aria-hidden", "true");
     this.specialButton.classList.remove("is-ready");
     this.playHelpVoice();
     this.playSpecialUseSound();
-    this.showSangcheoriCleanCutscene();
+    this.showYebiCleanCutscene();
 
     const remainingTrash = this.trashSlimes
       .getChildren()
       .filter((trash) => trash.active && !trash.getData("cleaned"));
     const targets = Phaser.Utils.Array.Shuffle(remainingTrash).slice(
       0,
-      GAME_CONFIG.sangcheoriRemoveCount,
+      GAME_CONFIG.yebiRemoveCount,
     );
 
     targets.forEach((trash, index) => {
@@ -2517,11 +2798,11 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  showSangcheoriCleanCutscene() {
-    this.showSangcheoriCenterMessage("내가 도울게");
+  showYebiCleanCutscene() {
+    this.showYebiCenterMessage("내가 도울게");
   }
 
-  showSangcheoriCenterMessage(
+  showYebiCenterMessage(
     caption,
     {
       panelWidth = 164,
@@ -2532,7 +2813,7 @@ export default class PlayScene extends Phaser.Scene {
       faceOnly = false,
     } = {},
   ) {
-    const npc = this.add.image(384, 220, "sangcheori_npc");
+    const npc = this.add.image(384, 220, "yebi_npc");
     npc.setScrollFactor(0);
     const npcFinalScale = faceOnly ? 1.7 : 1;
     if (faceOnly) {
@@ -3031,5 +3312,3 @@ export default class PlayScene extends Phaser.Scene {
     this.uiManager.updateHud();
   }
 }
-
-

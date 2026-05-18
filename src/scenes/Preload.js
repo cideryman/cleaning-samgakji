@@ -9,7 +9,7 @@ const EXTERNAL_ASSETS = [
   { key: "trash_can_2", path: "assets/sprites/trash-can2.png" },
   { key: "trash_can_3", path: "assets/sprites/trash-can3.png" },
   { key: "trash_plastic", path: "assets/sprites/plastic.png" },
-  { key: "sangcheori_npc", path: "assets/sprites/sangcheori-npc.png", fallback: "createSangcheoriNpcTexture" },
+  { key: "yebi_npc", path: "assets/sprites/yebi-npc.png", fallback: "createYebiNpcTexture" },
   { key: "sunisuni_sick", path: "assets/sprites/sunisuni-sick.png" },
   { key: "sunisuni_recovered", path: "assets/sprites/sunisuni-recovered.png" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
@@ -20,18 +20,18 @@ const EXTERNAL_ASSETS = [
   { key: "recycling_center", path: "assets/objects/recycling center.png" },
   { key: "recycle_vending_machine", path: "assets/objects/vending machine.png" },
   { key: "jjook_npc", path: "assets/objects/jjookf.png" },
-  { key: "jjook_face", path: "assets/초상화/쭉쭉이 기본.png" },
-  { key: "jjook_default", path: "assets/초상화/쭉쭉이 기본.png" },
-  { key: "jjook_lost", path: "assets/초상화/쭉쭉이 지갑 잃은.png" },
-  { key: "jjook_found", path: "assets/초상화/쭉쭉이 지갑 찾은.png" },
-  { key: "jjook_smile", path: "assets/초상화/쭉쭉이 밝게 웃는 표정.png" },
-  { key: "jjook_plogging", path: "assets/초상화/쭉쭉이 씩씩한.png" },
-  { key: "haenaem", path: "assets/초상화/해냄이.png" },
-  { key: "haenaem_confused", path: "assets/초상화/해냄이 난감한표정.png" },
-  { key: "haenaem_touched", path: "assets/초상화/해냄이 감동한표정.png" },
-  { key: "haenaem_determined", path: "assets/초상화/해냄이 결심한표정.png" },
-  { key: "haenaem_surprised", path: "assets/초상화/해냄이 놀란표정.png" },
-  { key: "yeobi", path: "assets/초상화/여비.png" },
+  { key: "jjook_face", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uAE30\uBCF8.png" },
+  { key: "jjook_default", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uAE30\uBCF8.png" },
+  { key: "jjook_lost", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uC9C0\uAC11 \uC783\uC740.png" },
+  { key: "jjook_found", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uC9C0\uAC11 \uCC3E\uC740.png" },
+  { key: "jjook_smile", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uBC1D\uAC8C \uC6C3\uB294 \uD45C\uC815.png" },
+  { key: "jjook_plogging", path: "assets/\uCD08\uC0C1\uD654/\uCB49\uCB49\uC774 \uC2E0\uB09C \uD45C\uC815.png" },
+  { key: "haenaem", path: "assets/\uCD08\uC0C1\uD654/\uD574\uB0C4\uC774.png" },
+  { key: "haenaem_confused", path: "assets/\uCD08\uC0C1\uD654/\uD574\uB0C4\uC774 \uB09C\uAC10\uD55C\uD45C\uC815.png" },
+  { key: "haenaem_touched", path: "assets/\uCD08\uC0C1\uD654/\uD574\uB0C4\uC774 \uAC10\uB3D9\uD55C\uD45C\uC815.png" },
+  { key: "haenaem_determined", path: "assets/\uCD08\uC0C1\uD654/\uD574\uB0C4\uC774 \uACB0\uC2EC\uD55C\uD45C\uC815.png" },
+  { key: "haenaem_surprised", path: "assets/\uCD08\uC0C1\uD654/\uD574\uB0C4\uC774 \uB180\uB780\uD45C\uC815.png" },
+  { key: "yeobi", path: "assets/\uCD08\uC0C1\uD654/\uC5EC\uBE44.png" },
   { key: "vending_machine_full", path: "assets/objects/vms.png" },
   { key: "vending_menu", path: "assets/objects/vmmenu.png" },
   { key: "wallet_item", path: "assets/objects/wallet.png" },
@@ -44,12 +44,12 @@ const EXTERNAL_ASSETS = [
   { key: "pharmacy_building", path: "assets/objects/pharmacy-building.png" },
   { key: "hospital_interior", path: "assets/objects/hospital-interior.png" },
   { key: "pharmacy_interior", path: "assets/objects/pharmacy-interior.png" },
-  { key: "hospital_doctor", path: "assets/초상화/병원 의사.png" },
-  { key: "hospital_staff", path: "assets/초상화/병원 직원.png" },
-  { key: "chemist", path: "assets/초상화/약국 약사.png" },
-  { key: "sunisuni_portrait_sick", path: "assets/초상화/수니수니 아픈.png" },
-  { key: "sunisuni_portrait_smile", path: "assets/초상화/수니수니 웃는.png" },
-  { key: "sunisuni_portrait_worried", path: "assets/초상화/수니수니 걱정하는.png" },
+  { key: "hospital_doctor", path: "assets/\uCD08\uC0C1\uD654/\uBCD1\uC6D0 \uC758\uC0AC.png" },
+  { key: "hospital_staff", path: "assets/\uCD08\uC0C1\uD654/\uBCD1\uC6D0 \uC9C1\uC6D0.png" },
+  { key: "chemist", path: "assets/\uCD08\uC0C1\uD654/\uC57D\uAD6D \uC57D\uC0AC.png" },
+  { key: "sunisuni_portrait_sick", path: "assets/\uCD08\uC0C1\uD654/\uC218\uB2C8\uC218\uB2C8 \uC544\uD508.png" },
+  { key: "sunisuni_portrait_smile", path: "assets/\uCD08\uC0C1\uD654/\uC218\uB2C8\uC218\uB2C8 \uC6C3\uB294.png" },
+  { key: "sunisuni_portrait_worried", path: "assets/\uCD08\uC0C1\uD654/\uC218\uB2C8\uC218\uB2C8 \uAC71\uC815\uD558\uB294.png" },
   { key: "sunisuni_bench", path: "assets/objects/sunisuni-bench.png" },
   { key: "sunisuni_tree", path: "assets/objects/sunisuni-tree.png" },
   { key: "prescription_item", path: "assets/objects/prescription.png" },
@@ -237,7 +237,7 @@ export default class Preload extends Phaser.Scene {
     g.destroy();
   }
 
-  createSangcheoriNpcTexture() {
+  createYebiNpcTexture() {
     const g = this.make.graphics({ x: 0, y: 0 }, false);
     this.drawEllipse(g, 14, 14, 100, 100, "#ffffff");
     this.drawEllipse(g, 22, 24, 84, 84, "#f0b27f");
@@ -251,7 +251,7 @@ export default class Preload extends Phaser.Scene {
     this.drawRect(g, 60, 80, 18, 6, "#6b2f2f");
     this.drawRect(g, 42, 76, 10, 6, "#eaa086");
     this.drawRect(g, 82, 76, 10, 6, "#eaa086");
-    g.generateTexture("sangcheori_npc", 128, 128);
+    g.generateTexture("yebi_npc", 128, 128);
     g.destroy();
   }
 

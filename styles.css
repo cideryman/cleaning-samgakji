@@ -370,6 +370,7 @@ body.interior-scene-active[data-interior-scene="pharmacy"] #game {
 #sweepButton,
 .special-button,
 .bacchus-button,
+.effect-button,
 .fullscreen-button {
   display: grid;
   place-items: center;
@@ -433,6 +434,52 @@ body.interior-scene-active[data-interior-scene="pharmacy"] #game {
   opacity: 0;
   transform: translateY(8px) scale(0.9);
   transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.effect-button {
+  display: none;
+  right: calc(max(18px, env(safe-area-inset-right)) + 98px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 98px);
+  width: 86px;
+  height: 86px;
+  background: #ffffff;
+  box-shadow: 0 5px 0 #b9d8c2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.9);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.jjook-follow-hud {
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 196px);
+}
+
+.effect-button.is-visible {
+  display: grid;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.effect-button img {
+  width: 52px;
+  height: 52px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.effect-button span {
+  position: absolute;
+  right: 5px;
+  bottom: 3px;
+  min-width: 26px;
+  padding: 2px 4px;
+  border: 2px solid #21352c;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #21352c;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .bacchus-button:not([hidden]) {
@@ -564,7 +611,8 @@ body.interior-scene-active[data-interior-scene="pharmacy"] #game {
 @media (max-width: 820px) {
   #sweepButton,
   .special-button,
-  .bacchus-button {
+  .bacchus-button,
+  .effect-button {
     display: grid;
   }
 
@@ -734,6 +782,17 @@ body.app-fit-mode #game canvas {
     height: 82px;
   }
 
+  .effect-button {
+    right: calc(max(18px, env(safe-area-inset-right)) + 94px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 94px);
+    width: 82px;
+    height: 82px;
+  }
+
+  .jjook-follow-hud {
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 188px);
+  }
+
   .move-knob {
     width: 48px;
     height: 48px;
@@ -743,7 +802,8 @@ body.app-fit-mode #game canvas {
 @media (orientation: landscape) and (max-height: 500px) {
   #sweepButton,
   .special-button,
-  .bacchus-button {
+  .bacchus-button,
+  .effect-button {
     display: grid;
   }
 
@@ -827,9 +887,21 @@ body.app-fit-mode #game canvas {
     height: 74px;
   }
 
+  .effect-button {
+    right: calc(max(18px, env(safe-area-inset-right)) + 86px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 86px);
+    width: 74px;
+    height: 74px;
+  }
+
+  .jjook-follow-hud {
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 172px);
+  }
+
   #sweepButton img,
   .special-button img,
-  .bacchus-button img {
+  .bacchus-button img,
+  .effect-button img {
     width: 46px;
     height: 46px;
   }
@@ -1036,29 +1108,6 @@ body.app-fit-mode #game canvas {
   line-height: 1;
   text-align: center;
   text-shadow: 1px 1px 0 #000000;
-}
-
-.speed-buff-hud {
-  position: absolute;
-  top: 7px;
-  left: min(584px, calc(100% - 164px));
-  z-index: 21;
-  display: none;
-  width: 56px;
-  height: 56px;
-  pointer-events: none;
-}
-
-.speed-buff-hud.is-visible {
-  display: block;
-}
-
-.speed-buff-hud img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-  image-rendering: pixelated;
 }
 
 .can-quest-hud {

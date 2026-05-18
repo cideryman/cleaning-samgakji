@@ -5,11 +5,11 @@ export const GAME_CONFIG = {
   waveSize: 30,
   totalGoal: 30,
   canCount: 20,
-  sangcheoriRemoveCount: 10,
+  yebiRemoveCount: 10,
   playerDisplaySize: 64,
   slimeDisplaySize: 42,
   broomItemDisplaySize: 44,
-  sangcheoriNpcDisplaySize: 72,
+  yebiNpcDisplaySize: 72,
   baseSweepWidth: 112,
   baseSweepHeight: 84,
   upgradedSweepMultiplier: 2,
@@ -52,16 +52,16 @@ export const GAME_CONFIG = {
 };
 
 export const DRINK_OPTIONS = [
-  { key: "cider", label: "사이다", texture: "drink_cider" },
-  { key: "cola", label: "콜라", texture: "drink_cola" },
-  { key: "water", label: "생수", texture: "drink_water" },
+  { key: "cider", label: "\uC0AC\uC774\uB2E4", texture: "drink_cider" },
+  { key: "cola", label: "\uCF5C\uB77C", texture: "drink_cola" },
+  { key: "water", label: "\uC0DD\uC218", texture: "drink_water" },
 ];
 
 export const TILED_MAP_CONFIG = {
   key: "chapter1_map",
   chapter: 1,
-  title: "챕터 1",
-  mapName: "삼각지 복지관",
+  title: "\uCC55\uD130 1",
+  mapName: "\uC0BC\uAC01\uC9C0 \uBCF5\uC9C0\uAD00",
   tilesetName: "samgakji_tiles",
   tilesetImageKey: "samgakji_tiles",
   visibleLayers: ["ground", "objects"],
@@ -83,9 +83,9 @@ export const TRASH_TEXTURES = {
 };
 
 export const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "캔/고철" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "종이/일반" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "플라스틱" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "\uCEA0/\uACE0\uCCA0" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "\uC885\uC774/\uC77C\uBC18" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "\uD50C\uB77C\uC2A4\uD2F1" },
 ];
 
 export const DIALOGUE_OVERLAY_TEXTURES = {
