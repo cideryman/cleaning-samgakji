@@ -89,7 +89,18 @@ export const RECYCLE_BIN_CONFIG = [
 ];
 
 export const DIALOGUE_OVERLAY_TEXTURES = {
-  jjookface: "jjook_face",
+  jjookface: "jjook_default",
+  jjook_lost: "jjook_lost",
+  jjook_found: "jjook_found",
+  jjook_smile: "jjook_smile",
+  jjook_plogging: "jjook_plogging",
+  jjook_default: "jjook_default",
+  haenaem: "haenaem",
+  haenaem_confused: "haenaem_confused",
+  haenaem_touched: "haenaem_touched",
+  haenaem_determined: "haenaem_determined",
+  haenaem_surprised: "haenaem_surprised",
+  yeobi: "yeobi",
   hospital_staff: "hospital_staff",
   hospital_doctor: "hospital_doctor",
   chemist: "chemist",

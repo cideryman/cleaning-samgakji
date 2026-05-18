@@ -1,6 +1,5 @@
 ﻿import PlayerController from "../controllers/PlayerController.js";
 import {
-  DIALOGUE_OVERLAY_TEXTURES,
   DRINK_OPTIONS,
   GAME_CONFIG,
   RECYCLE_BIN_CONFIG,
@@ -11,6 +10,7 @@ import CleaningSystem from "../systems/CleaningSystem.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
+import PortraitManager from "../systems/PortraitManager.js";
 import QuestManager from "../systems/QuestManager.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import UIManager from "../systems/UIManager.js";
@@ -161,6 +161,7 @@ export default class PlayScene extends Phaser.Scene {
     // ===== 시스템 초기화 =====
     this.stateManager = new StateManager();
     this.dialogueSystem = new DialogueSystem(this);
+    this.portraitManager = new PortraitManager(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);
     this.playerController = new PlayerController(this);
@@ -192,6 +193,7 @@ export default class PlayScene extends Phaser.Scene {
       window.removeEventListener("resize", this.resizeHandler);
       window.removeEventListener("orientationchange", this.resizeHandler);
       this.scale.off(Phaser.Scale.Events.RESIZE, this.resizeHandler);
+      this.portraitManager?.destroy();
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
       window.removeEventListener("beforeunload", this.pageAudioStopHandler);
       document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -676,7 +678,7 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     this.dialogueSystem?.start([
-      { name: "해냄이", text: "아냐, 돈을 먼저 모아야 해." },
+      { name: "해냄이", portraitKey: "haenaem_confused", text: "아냐, 돈을 먼저 모아야 해." },
     ]);
   }
 
@@ -1172,8 +1174,8 @@ export default class PlayScene extends Phaser.Scene {
 
     if (this.jjookQuestState === "wallet_missing") {
       this.dialogueSystem.start([
-        { name: "쭉쭉이", portraitKey: "jjookface", frame: 0, text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
-        { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
+        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
+        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
       ], () => {
         if (!this.walletItem?.active && !this.hasWallet) this.spawnWalletItem();
       });
@@ -1182,14 +1184,14 @@ export default class PlayScene extends Phaser.Scene {
 
     if (this.jjookQuestState === "wallet_found") {
       this.dialogueSystem.start([
-        { name: "쭉쭉이", portraitKey: "jjookface", frame: 1, text: "지갑을 찾아줘서 정말 고마워. 보답으로 시원한 음료수 하나 사줄게. 뭐 마실래?" },
+        { name: "쭉쭉이", portraitKey: "jjook_found", text: "지갑을 찾아줘서 정말 고마워. 보답으로 시원한 음료수 하나 사줄게. 뭐 마실래?" },
       ], () => this.openVendingMenu({ completeQuestOnSelect: true }));
       return;
     }
 
     if (this.jjookQuestState === "completed") {
       this.dialogueSystem.start([
-        { name: "쭉쭉이", portraitKey: "jjookface", frame: 1, text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
+        { name: "쭉쭉이", portraitKey: "jjook_smile", text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
       ]);
     }
   }
@@ -1204,6 +1206,7 @@ export default class PlayScene extends Phaser.Scene {
         { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "너무 아파서 일어나기가 힘들어..." },
         {
           name: "해냄이",
+          portraitKey: "haenaem_confused",
           text: "수니수니에게 뭐라고 말할까요?",
           choices: [
             { label: "괜찮으세요?", onSelect: () => this.askSunisuniHospitalHelp() },
@@ -1217,7 +1220,7 @@ export default class PlayScene extends Phaser.Scene {
     if (this.sunisuniQuestState === "accepted_help" || this.sunisuniQuestState === "going_hospital") {
       this.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "조금만 천천히 가줄래...?" },
-        { name: "해냄이", text: "천천히 같이 가야겠다." },
+        { name: "해냄이", portraitKey: "haenaem_determined", text: "천천히 같이 가야겠다." },
       ]);
       return;
     }
@@ -1244,6 +1247,7 @@ export default class PlayScene extends Phaser.Scene {
       { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "병원에 갔다가 약국도 들러야 할 것 같아..." },
       {
         name: "해냄이",
+        portraitKey: "haenaem_confused",
         text: "어떻게 할까요?",
         choices: [
           { label: "같이 가요.", onSelect: () => this.startSunisuniEscort() },
@@ -1276,13 +1280,12 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestState = "hospital_reception";
     this.showInteriorScene("hospital_interior", "hospital");
     this.dialogueSystem.start([
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "어서 오세요. 접수를 도와드릴게요." },
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "환자분 성함과 어디가 불편한지 알려주세요." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, overlayKey: "sunisuni_portrait_worried", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 너무 긴장해서 말이 잘 안 나와..." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "어서 오세요. 접수를 도와드릴게요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "환자분 성함과 어디가 불편한지 알려주세요." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", text: "해냄아... 내가 너무 긴장해서 말이 잘 안 나와..." },
       {
         name: "해냄이",
-        overlayKey: "sunisuni_portrait_worried",
-        overlayOptions: { maxWidth: 240, maxHeight: 260 },
+        portraitKey: "haenaem_confused",
         text: "접수처에 뭐라고 말하면 좋을까요?",
         choices: [
           { label: "배가 아파서 왔어요.", onSelect: () => this.completeHospitalReception() },
@@ -1295,8 +1298,8 @@ export default class PlayScene extends Phaser.Scene {
 
   retryHospitalReception() {
     this.dialogueSystem.start([
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "괜찮아요. 천천히 다시 말해볼까요?" },
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "병원에서는 아픈 곳을 말하면 접수하기 쉬워요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "괜찮아요. 천천히 다시 말해볼까요?" },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "병원에서는 아픈 곳을 말하면 접수하기 쉬워요." },
     ], () => {
       this.sunisuniQuestState = "going_hospital";
       this.handleHospitalInteraction();
@@ -1305,14 +1308,14 @@ export default class PlayScene extends Phaser.Scene {
 
   completeHospitalReception() {
     this.dialogueSystem.start([
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "네, 수니수니 님 배가 아파서 오셨군요." },
-      { name: "접수 직원", portraitKey: "hospital_staff", portraitSingle: true, overlayKey: "hospital_staff", text: "접수되었습니다. 잠시만 기다리면 의사 선생님을 만날 수 있어요." },
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "안녕하세요. 어디가 어떻게 아픈지 알려주세요." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, overlayKey: "sunisuni_portrait_worried", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, overlayKey: "sunisuni_portrait_sick", overlayOptions: { maxWidth: 240, maxHeight: 260 }, text: "내 배가 아프다고 대신 말해줄래?" },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "네, 수니수니 님 배가 아파서 오셨군요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "접수되었습니다. 잠시만 기다리면 의사 선생님을 만날 수 있어요." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "안녕하세요. 어디가 어떻게 아픈지 알려주세요." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-sick", text: "내 배가 아프다고 대신 말해줄래?" },
       {
         name: "해냄이",
-        overlayKey: "hospital_doctor",
+        portraitKey: "haenaem_confused",
         text: "의사 선생님께 뭐라고 말할까요?",
         choices: [
           { label: "배가 아파요.", onSelect: () => this.completeDoctorQuiz() },
@@ -1325,8 +1328,8 @@ export default class PlayScene extends Phaser.Scene {
 
   retryDoctorQuiz() {
     this.dialogueSystem.start([
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "괜찮아요. 다시 해볼까요?" },
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "배가 아플 때는 배가 아프다고 말하면 됩니다." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "괜찮아요. 다시 해볼까요?" },
+      { name: "의사", portraitKey: "hospital_doctor", text: "배가 아플 때는 배가 아프다고 말하면 됩니다." },
     ], () => this.completeHospitalReception());
   }
 
@@ -1335,9 +1338,9 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestState = "going_pharmacy";
     this.clearQuestMarker("sunisuniHospital");
     this.dialogueSystem.start([
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "잘 말했어요. 배가 아플 때는 이렇게 아픈 곳을 알려주면 됩니다." },
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "오늘은 처방전을 줄게요. 이 처방전을 가지고 약국으로 가세요." },
-      { name: "의사", portraitKey: "hospital_doctor", portraitSingle: true, overlayKey: "hospital_doctor", text: "처방전입니다." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "잘 말했어요. 배가 아플 때는 이렇게 아픈 곳을 알려주면 됩니다." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "오늘은 처방전을 줄게요. 이 처방전을 가지고 약국으로 가세요." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "처방전입니다." },
     ], () => {
       this.playItemPickupSound();
       this.showQuestToast("처방전을 가지고 약국으로 가요.");
@@ -1350,11 +1353,11 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestState = "medicine_paid";
     this.showInteriorScene("pharmacy_interior", "pharmacy");
     this.dialogueSystem.start([
-      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "안녕하세요. 처방전이 있으면 보여주세요." },
-      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "처방전을 확인할게요. 잠시만 기다려 주세요." },
-      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "처방약이 나왔습니다." },
-      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "이 약은 수니수니 님만 드셔야 해요. 다른 사람이 먹으면 안 됩니다." },
-      { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "밥을 먹고 30분 뒤에 드세요. 이제 약값 5,000원을 결제해 주세요." },
+      { name: "약사", portraitKey: "chemist", text: "안녕하세요. 처방전이 있으면 보여주세요." },
+      { name: "약사", portraitKey: "chemist", text: "처방전을 확인할게요. 잠시만 기다려 주세요." },
+      { name: "약사", portraitKey: "chemist", text: "처방약이 나왔습니다." },
+      { name: "약사", portraitKey: "chemist", text: "이 약은 수니수니 님만 드셔야 해요. 다른 사람이 먹으면 안 됩니다." },
+      { name: "약사", portraitKey: "chemist", text: "밥을 먹고 30분 뒤에 드세요. 이제 약값 5,000원을 결제해 주세요." },
     ], () => this.payForMedicine());
   }
 
@@ -1375,9 +1378,9 @@ export default class PlayScene extends Phaser.Scene {
         floatY: -12,
         onComplete: () => {
           this.dialogueSystem.start([
-            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "결제가 완료되었습니다." },
-            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "약 봉투를 잘 챙겨 주세요." },
-            { name: "약사", portraitKey: "chemist", portraitSingle: true, overlayKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
+            { name: "약사", portraitKey: "chemist", text: "결제가 완료되었습니다." },
+            { name: "약사", portraitKey: "chemist", text: "약 봉투를 잘 챙겨 주세요." },
+            { name: "약사", portraitKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
           ], () => this.completeSunisuniQuest());
         },
       });
@@ -1406,8 +1409,8 @@ export default class PlayScene extends Phaser.Scene {
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "정말 고마워." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이건 같이 가준 보답이야." },
-      { name: "여비", text: "해냄이, 오늘은 청소뿐 아니라 친구도 도왔구나!" },
-      { name: "여비", text: "진짜 멋진 사람이야!" },
+      { name: "여비", portraitKey: "yeobi", text: "해냄이, 오늘은 청소뿐 아니라 친구도 도왔구나!" },
+      { name: "여비", portraitKey: "yeobi", text: "진짜 멋진 사람이야!" },
     ], () => this.sendSunisuniBackToBench());
   }
 
@@ -1429,10 +1432,11 @@ export default class PlayScene extends Phaser.Scene {
     const recycleState = this.questManager.getRecycleQuestState();
     if (recycleState === "unlocked") {
       this.dialogueSystem.start([
-        { name: "여비", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
-        { name: "여비", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
+        { name: "여비", portraitKey: "yeobi", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
+        { name: "여비", portraitKey: "yeobi", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
         {
           name: "여비",
+          portraitKey: "yeobi",
           text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
           choices: [{ label: "해볼게", onSelect: () => this.questManager.startRecycleQuest() }],
         },
@@ -1443,14 +1447,14 @@ export default class PlayScene extends Phaser.Scene {
     if (recycleState === "active") {
       const quest = this.questManager.recycleQuest;
       this.dialogueSystem.start([
-        { name: "여비", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
+        { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
       ]);
       return;
     }
 
     if (recycleState === "completed") {
       this.dialogueSystem.start([
-        { name: "여비", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
+        { name: "여비", portraitKey: "yeobi", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
       ]);
       return;
     }
@@ -1460,13 +1464,14 @@ export default class PlayScene extends Phaser.Scene {
       this.dialogueSystem.start([
         {
           name: "여비",
+          portraitKey: "yeobi",
           text: "안녕! 혹시 나 좀 도와줄 수 있어?",
           choices: [
             {
               label: "예",
               onSelect: () => {
                 this.dialogueSystem.start([
-                  { name: "여비", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
+                  { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
                 ], () => this.questManager.startQuest());
               },
             },
@@ -1474,7 +1479,7 @@ export default class PlayScene extends Phaser.Scene {
               label: "아니오",
               onSelect: () => {
                 this.dialogueSystem.start([
-                  { name: "여비", text: "아... 그래. 다음에 꼭 부탁할게." },
+                  { name: "여비", portraitKey: "yeobi", text: "아... 그래. 다음에 꼭 부탁할게." },
                 ]);
               },
             },
@@ -1486,13 +1491,13 @@ export default class PlayScene extends Phaser.Scene {
 
     if (questState === "active") {
       this.dialogueSystem.start([
-        { name: "여비", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
+        { name: "여비", portraitKey: "yeobi", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
       ]);
       return;
     }
 
     this.dialogueSystem.start([
-      { name: "여비", text: "오늘도 고마워. 깨끗한 거리를 같이 만들자!" },
+      { name: "여비", portraitKey: "yeobi", text: "오늘도 고마워. 깨끗한 거리를 같이 만들자!" },
     ]);
   }
 
@@ -1506,7 +1511,7 @@ export default class PlayScene extends Phaser.Scene {
     // 대화창으로 첫 가이드 표시
     const dialogue = [
       { name: "알림", text: "여행을 가려면 돈이 조금 부족해요." },
-      { name: "여비", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
+      { name: "여비", portraitKey: "yeobi", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
       { name: "알림", text: "쓰레기를 빗자루로 치우고 보상을 모아보세요." }
     ];
     this.dialogueSystem.start(dialogue);
@@ -1896,7 +1901,7 @@ export default class PlayScene extends Phaser.Scene {
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
     this.dialogueSystem?.start([
-      { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!" },
+      { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!" },
     ]);
   }
 
@@ -1913,8 +1918,8 @@ export default class PlayScene extends Phaser.Scene {
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
     this.dialogueSystem?.start([
-      { name: "해냄이", text: "잘 먹었어. 고마워! 시원하다!" },
-      { name: "쭉쭉이", portraitKey: "jjookface", frame: 2, text: "나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "잘 먹었어. 고마워! 시원하다!" },
+      { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!" },
     ]);
   }
 
@@ -2057,8 +2062,8 @@ export default class PlayScene extends Phaser.Scene {
     this.showCleanFeedback(this.player.x, this.player.y, true);
     this.showQuestToast("분리수거 보상 개방! 맞는 통에 넣으면 100원");
     this.dialogueSystem?.start([
-      { name: "여비", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
-      { name: "여비", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
+      { name: "여비", portraitKey: "yeobi", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
+      { name: "여비", portraitKey: "yeobi", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
     ]);
     this.dropBroomUpgrade();
   }
@@ -2301,88 +2306,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleDialogueLineChange(line) {
-    const textureKey = this.getDialogueOverlayTextureKey(line);
-    if (!textureKey) {
-      this.clearDialogueSpeaker();
-      return;
-    }
-
-    this.setDialogueSpeaker(textureKey, line.overlayOptions || {});
+    this.portraitManager?.show(line);
   }
 
   handleDialogueClose() {
-    this.clearDialogueSpeaker();
-  }
-
-  getDialogueOverlayTextureKey(line) {
-    if (!line) return null;
-
-    const requestedKey = line.overlayKey || line.portraitKey;
-    if (!requestedKey) return null;
-    return DIALOGUE_OVERLAY_TEXTURES[requestedKey] || requestedKey;
-  }
-
-  clearDialogueSpeaker() {
-    this.dialogueSpeaker?.destroy();
-    this.dialogueSpeaker = null;
-  }
-
-  setDialogueSpeaker(textureKey, options = {}) {
-    if (!this.textures.exists(textureKey)) {
-      this.clearDialogueSpeaker();
-      return;
-    }
-
-    this.clearDialogueSpeaker();
-
-    const viewportWidth = Math.max(768, this.scale.width || 768);
-    const viewportHeight = Math.max(480, this.scale.height || 480);
-    const panelRect = document.querySelector(".dialog-panel")?.getBoundingClientRect();
-    const speakerLeft = Phaser.Math.Clamp(
-      options.x ?? Math.round(panelRect?.left ?? viewportWidth * 0.18),
-      16,
-      Math.max(16, viewportWidth - 180),
-    );
-    const speakerBottom = Phaser.Math.Clamp(
-      options.y ?? Math.round((panelRect?.top ?? viewportHeight - 168) + 6),
-      120,
-      viewportHeight - 48,
-    );
-    document.querySelector(".dialog-modal")?.style.setProperty("--dialog-scene-left", `${speakerLeft}px`);
-
-    const image = this.add.image(
-      speakerLeft,
-      speakerBottom,
-      textureKey,
-    );
-    image.setScrollFactor(0);
-    image.setDepth(61);
-    image.setOrigin(0, 1);
-
-    const texture = this.textures.get(textureKey);
-    const source = texture.getSourceImage();
-    const sourceWidth = Math.max(1, source?.width || 1);
-    const sourceHeight = Math.max(1, source?.height || 1);
-    const maxWidth = options.maxWidth ?? Phaser.Math.Clamp(viewportWidth * 0.22, 190, 310);
-    const availableHeight = Math.max(120, speakerBottom - 24);
-    const maxHeight = Math.min(options.maxHeight ?? viewportHeight * 0.72, availableHeight);
-    const scale = Math.min(maxWidth / sourceWidth, maxHeight / sourceHeight);
-    image.setScale(scale);
-
-    image.setAlpha(0);
-    image.setTintFill(0xffffff);
-    this.interiorSceneGroup?.add(image);
-    this.dialogueSpeaker = image;
-    this.interiorSpeaker = this.interiorSceneGroup ? image : null;
-
-    this.tweens.add({
-      targets: image,
-      alpha: 1,
-      x: image.x + 8,
-      duration: 180,
-      ease: "Sine.easeOut",
-      onComplete: () => image.clearTint(),
-    });
+    this.portraitManager?.clear();
   }
 
   showFloatingItem(textureKey, x, y, size = 64, fixedToCamera = false, options = {}) {

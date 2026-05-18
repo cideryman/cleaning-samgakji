@@ -13,7 +13,6 @@ export default class DialogueSystem {
 
     this.dialogModal = document.querySelector("#dialogModal");
     this.dialogPanel = document.querySelector(".dialog-panel");
-    this.dialogPortrait = document.querySelector(".dialog-portrait");
     this.dialogName = document.querySelector(".dialog-name");
     this.dialogText = document.querySelector(".dialog-text");
     this.dialogNext = document.querySelector(".dialog-next");
@@ -65,32 +64,7 @@ export default class DialogueSystem {
     const usesSceneOverlay = Boolean(line.overlayKey || line.portraitKey);
     this.dialogModal?.classList.toggle("has-scene-overlay", usesSceneOverlay);
     this.scene.handleDialogueLineChange?.(line);
-    this.updatePortrait(line);
     this.typewrite(line.text, line.choices || null);
-  }
-
-  updatePortrait(line) {
-    if (!this.dialogPanel || !this.dialogPortrait) return;
-
-    this.dialogPanel.classList.remove("has-portrait");
-    this.dialogPortrait.style.backgroundImage = "";
-    this.dialogPortrait.style.backgroundSize = "";
-    this.dialogPortrait.style.backgroundPosition = "";
-    this.dialogPortrait.style.backgroundRepeat = "";
-
-    if (line.overlayKey || line.portraitKey || !line.portraitKey) return;
-
-    const frame = Math.max(0, Math.min(2, line.frame || 0));
-    this.dialogPanel.classList.add("has-portrait");
-    this.dialogPortrait.style.backgroundImage = `url("./assets/objects/${line.portraitKey}.png")`;
-    this.dialogPortrait.style.backgroundRepeat = "no-repeat";
-    if (line.portraitSingle) {
-      this.dialogPortrait.style.backgroundSize = "contain";
-      this.dialogPortrait.style.backgroundPosition = "50% 50%";
-    } else {
-      this.dialogPortrait.style.backgroundSize = "300% 100%";
-      this.dialogPortrait.style.backgroundPosition = `${frame * 50}% 50%`;
-    }
   }
 
   typewrite(fullText, choices = null) {
@@ -204,7 +178,6 @@ export default class DialogueSystem {
     this.dialogModal.style.display = "none";
     this.dialogModal?.classList.remove("has-scene-overlay");
     this.dialogModal?.style.removeProperty("--dialog-scene-left");
-    this.dialogPanel?.classList.remove("has-portrait");
     this.scene.handleDialogueClose?.();
     this.isInDialogue = false;
     this.scene.isInDialogue = false;

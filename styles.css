@@ -877,31 +877,6 @@ body.app-fit-mode #game canvas {
   margin-bottom: 28px;
 }
 
-.dialog-panel.has-portrait {
-  padding: 76px 20px 16px 20px;
-}
-
-.dialog-portrait {
-  position: absolute;
-  left: 0;
-  top: -48px;
-  width: 104px;
-  height: 104px;
-  display: none;
-  border: 3px solid #6b4c3b;
-  border-radius: 14px;
-  background-color: #ffffff;
-  background-repeat: no-repeat;
-  background-size: 300% 100%;
-  box-shadow: 0 5px 0 rgba(107, 76, 59, 0.25);
-  z-index: 102;
-  overflow: hidden;
-}
-
-.dialog-panel.has-portrait .dialog-portrait {
-  display: block;
-}
-
 .dialog-name {
   font-weight: bold;
   color: #d68b45;
@@ -948,17 +923,6 @@ body.app-fit-mode #game canvas {
   .dialog-modal.has-scene-overlay .dialog-panel {
     width: min(95%, calc(100vw - var(--dialog-scene-left, 16px) - 12px));
     max-width: 95%;
-  }
-
-  .dialog-panel.has-portrait {
-    padding: 64px 16px 14px 16px;
-  }
-
-  .dialog-portrait {
-    left: 0;
-    top: -38px;
-    width: 82px;
-    height: 82px;
   }
 
   .dialog-text {
