@@ -60,7 +60,7 @@ export default class DialogueSystem {
     this.activeChoices = null;
     this.clearChoices();
     this.dialogNext.style.opacity = "0";
-    this.dialogName.textContent = line.name || "알림";
+    this.dialogName.textContent = line.name || "\uC54C\uB9BC";
     const usesSceneOverlay = Boolean(line.overlayKey || line.portraitKey);
     this.dialogModal?.classList.toggle("has-scene-overlay", usesSceneOverlay);
     this.scene.handleDialogueLineChange?.(line);
