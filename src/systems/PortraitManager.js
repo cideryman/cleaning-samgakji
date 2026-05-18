@@ -1,4 +1,4 @@
-import { DIALOGUE_OVERLAY_TEXTURES } from "../config/GameConstants.js";
+import { DIALOGUE_OVERLAY_PATHS, DIALOGUE_OVERLAY_TEXTURES } from "../config/GameConstants.js";
 
 export default class PortraitManager {
   constructor(scene) {
@@ -31,7 +31,7 @@ export default class PortraitManager {
     this.options = line.overlayOptions || {};
 
     const source = this.scene.textures.get(textureKey)?.getSourceImage?.();
-    const sourceUrl = source?.currentSrc || source?.src;
+    const sourceUrl = DIALOGUE_OVERLAY_PATHS[textureKey] || source?.currentSrc || source?.src;
     if (!sourceUrl) {
       this.clear();
       return;

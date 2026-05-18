@@ -111,3 +111,23 @@ export const DIALOGUE_OVERLAY_TEXTURES = {
   sunisuni_portrait_smile: "sunisuni_portrait_smile",
   sunisuni_portrait_worried: "sunisuni_portrait_worried",
 };
+
+export const DIALOGUE_OVERLAY_PATHS = {
+  jjook_default: "assets/portraits/jjook-default.png",
+  jjook_lost: "assets/portraits/jjook-wallet-lost.png",
+  jjook_found: "assets/portraits/jjook-wallet-found.png",
+  jjook_smile: "assets/portraits/jjook-smile.png",
+  jjook_plogging: "assets/portraits/jjook-plogging.png",
+  haenaem: "assets/portraits/haenaem-default.png",
+  haenaem_confused: "assets/portraits/haenaem-confused.png",
+  haenaem_touched: "assets/portraits/haenaem-touched.png",
+  haenaem_determined: "assets/portraits/haenaem-determined.png",
+  haenaem_surprised: "assets/portraits/haenaem-surprised.png",
+  yeobi: "assets/portraits/yeobi-default.png",
+  hospital_staff: "assets/portraits/hospital-staff.png",
+  hospital_doctor: "assets/portraits/hospital-doctor.png",
+  chemist: "assets/portraits/pharmacist.png",
+  sunisuni_portrait_sick: "assets/portraits/sunisuni-sick.png",
+  sunisuni_portrait_smile: "assets/portraits/sunisuni-smile.png",
+  sunisuni_portrait_worried: "assets/portraits/sunisuni-worried.png",
+};

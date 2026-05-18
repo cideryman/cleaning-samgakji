@@ -1206,6 +1206,14 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     if (this.jjookQuestState === "completed") {
+      if (this.isJjookFollowActive) {
+        this.dialogueSystem.start([
+          { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "지금 같이 플로깅 중이야! 주변 쓰레기를 같이 치워보자." },
+          { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 지금처럼 같이 깨끗하게 치우자!" },
+        ]);
+        return;
+      }
+
       this.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_smile", text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
         {
