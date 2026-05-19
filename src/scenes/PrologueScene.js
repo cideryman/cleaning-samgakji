@@ -1,6 +1,14 @@
 import DialogueSystem from "../systems/DialogueSystem.js";
 import PortraitManager from "../systems/PortraitManager.js";
 
+const BACKGROUND_EDGE_COLORS = {
+  prologue_room_messy: "#705e52",
+  prologue_room_window: "#2b2b2e",
+  prologue_desk: "#683f1f",
+  prologue_travel: "#4c4744",
+  prologue_entrance: "#473e2a",
+};
+
 export default class PrologueScene extends Phaser.Scene {
   constructor() {
     super("PrologueScene");
@@ -13,6 +21,7 @@ export default class PrologueScene extends Phaser.Scene {
 
   create() {
     document.body.classList.add("start-screen");
+    document.body.classList.add("prologue-scene-active");
     this.dialogueSystem = new DialogueSystem(this);
     this.portraitManager = new PortraitManager(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
@@ -88,6 +97,10 @@ export default class PrologueScene extends Phaser.Scene {
   }
 
   setBackground(textureKey) {
+    const edgeColor = BACKGROUND_EDGE_COLORS[textureKey] || "#2b2b2e";
+    this.cameras.main.setBackgroundColor(edgeColor);
+    document.body.style.setProperty("--prologue-bg", edgeColor);
+
     this.background?.destroy();
     this.background = this.add.image(this.scale.width / 2, this.scale.height / 2, textureKey);
     this.background.setDepth(0);
@@ -139,6 +152,8 @@ export default class PrologueScene extends Phaser.Scene {
     this.currentBgm?.stop();
     this.currentBgm?.destroy();
     this.currentBgm = null;
+    document.body.classList.remove("prologue-scene-active");
+    document.body.style.removeProperty("--prologue-bg");
     this.portraitManager?.destroy();
     this.portraitManager = null;
   }

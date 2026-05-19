@@ -918,8 +918,8 @@ export default class PlayScene extends Phaser.Scene {
     this.playerDirectionKey = "down";
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(5);
-    this.player.body.setSize(72, 76);
-    this.player.body.setOffset(28, 30);
+    this.player.body.setSize(GAME_CONFIG.playerBodyWidth, GAME_CONFIG.playerBodyHeight);
+    this.player.body.setOffset(GAME_CONFIG.playerBodyOffsetX, GAME_CONFIG.playerBodyOffsetY);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
   }
 

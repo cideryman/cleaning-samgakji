@@ -41,11 +41,11 @@ const EXTERNAL_ASSETS = [
   { key: "mother_smile", path: "assets/portraits/mother-smile.png" },
   { key: "mother_worried", path: "assets/portraits/mother-worried.png" },
   { key: "yeobi", path: "assets/portraits/yeobi-default.png" },
-  { key: "prologue_room_messy", path: "assets/어지러진방.png" },
-  { key: "prologue_room_window", path: "assets/방에서 바로본 창가.png" },
-  { key: "prologue_desk", path: "assets/책상.png" },
-  { key: "prologue_travel", path: "assets/삼각지 이동 중.png" },
-  { key: "prologue_entrance", path: "assets/삼각지 입구.png" },
+  { key: "prologue_room_messy", path: "assets/backgrounds/prologue-room-messy.png" },
+  { key: "prologue_room_window", path: "assets/backgrounds/prologue-room-window.png" },
+  { key: "prologue_desk", path: "assets/backgrounds/prologue-desk.png" },
+  { key: "prologue_travel", path: "assets/backgrounds/prologue-travel.png" },
+  { key: "prologue_entrance", path: "assets/backgrounds/prologue-entrance.png" },
   { key: "vending_machine_full", path: "assets/objects/vms.png" },
   { key: "vending_menu", path: "assets/objects/vmmenu.png" },
   { key: "wallet_item", path: "assets/objects/wallet.png" },
@@ -81,11 +81,10 @@ const EXTERNAL_ASSETS = [
 ];
 
 const SPRITESHEET_ASSETS = [
-  { key: "haenaem_walk_down", path: "assets/sprites/haenaem-walk-down.png", frameWidth: 512, frameHeight: 1024 },
-  { key: "haenaem_walk_up", path: "assets/sprites/haenaem-walk-up.png", frameWidth: 512, frameHeight: 1024 },
-  { key: "haenaem_walk_left", path: "assets/sprites/haenaem-walk-left.png", frameWidth: 512, frameHeight: 1024 },
-  { key: "haenaem_walk_right", path: "assets/sprites/haenaem-walk-right.png", frameWidth: 512, frameHeight: 1024 },
-  { key: "haenaem_sweep_right", path: "assets/sprites/haenaem-sweep-right.png", frameWidth: 512, frameHeight: 1024 },
+  { key: "haenaem_walk_down", path: "assets/sprites/haenaem-walk-down-new.png", frameWidth: 64, frameHeight: 96 },
+  { key: "haenaem_walk_up", path: "assets/sprites/haenaem-walk-up-new.png", frameWidth: 64, frameHeight: 96 },
+  { key: "haenaem_walk_left", path: "assets/sprites/haenaem-walk-left-new.png", frameWidth: 64, frameHeight: 96 },
+  { key: "haenaem_walk_right", path: "assets/sprites/haenaem-walk-right-new.png", frameWidth: 64, frameHeight: 96 },
   { key: "sunisuni_front", path: "assets/sprites/sunisuni-front.png", frameWidth: 256, frameHeight: 256 },
   { key: "sunisuni_back", path: "assets/sprites/sunisuni-back.png", frameWidth: 256, frameHeight: 256 },
   { key: "sunisuni_left", path: "assets/sprites/sunisuni-left.png", frameWidth: 256, frameHeight: 256 },
@@ -159,14 +158,6 @@ export default class Preload extends Phaser.Scene {
       });
     });
 
-    if (this.textures.exists("haenaem_sweep_right") && !this.anims.exists("haenaem_sweep_right_anim")) {
-      this.anims.create({
-        key: "haenaem_sweep_right_anim",
-        frames: this.anims.generateFrameNumbers("haenaem_sweep_right", { start: 0, end: 2 }),
-        frameRate: 12,
-        repeat: 0,
-      });
-    }
   }
 
   createMissingExternalTextures() {

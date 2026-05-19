@@ -22,7 +22,6 @@ export default class CleaningSystem {
     const sweepX = scene.player.x + scene.lastDirection.x * offset;
     const sweepY = scene.player.y + scene.lastDirection.y * offset;
 
-    scene.playerController?.playSweepAnimation(scene.lastDirection);
     scene.playSweepSound();
     this.performSweepAt(sweepX, sweepY, width, height, scene.lastDirection);
 

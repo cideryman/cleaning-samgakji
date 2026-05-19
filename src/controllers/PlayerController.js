@@ -49,10 +49,8 @@ export default class PlayerController {
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       scene.lastDirection.copy(velocity);
-      if (!scene.playerIsSweeping) {
-        this.updatePlayerDirection(velocity, true);
-      }
-    } else if (!scene.playerIsSweeping) {
+      this.updatePlayerDirection(velocity, true);
+    } else {
       this.stopWalkAnimation();
     }
 
@@ -71,7 +69,6 @@ export default class PlayerController {
     const scene = this.scene;
     if (Math.abs(velocity.x) > Math.abs(velocity.y)) {
       this.setPlayerDirectionTexture(velocity.x < 0 ? "left" : "right", isMoving);
-      scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y * 0.98);
       scene.player.clearTint();
       return;
     }
@@ -79,10 +76,8 @@ export default class PlayerController {
     scene.player.setFlipX(false);
     if (velocity.y < 0) {
       this.setPlayerDirectionTexture("up", isMoving);
-      scene.player.setScale(scene.playerBaseScale.x * 0.94, scene.playerBaseScale.y * 1.06);
     } else {
       this.setPlayerDirectionTexture("down", isMoving);
-      scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y);
     }
     scene.player.clearTint();
   }
@@ -120,23 +115,6 @@ export default class PlayerController {
     if (scene.player.anims.currentFrame) {
       scene.player.setFrame(1);
     }
-  }
-
-  playSweepAnimation(direction = this.scene.lastDirection) {
-    const scene = this.scene;
-    if (!scene.player || direction.x <= 0 || !scene.anims.exists("haenaem_sweep_right_anim")) return;
-
-    scene.playerIsSweeping = true;
-    scene.player.anims.stop();
-    scene.player.setTexture("haenaem_sweep_right", 0);
-    scene.player.setDisplaySize(GAME_CONFIG.playerDisplayWidth, GAME_CONFIG.playerDisplayHeight);
-    scene.playerBaseScale = { x: scene.player.scaleX, y: scene.player.scaleY };
-    scene.player.setScale(scene.playerBaseScale.x, scene.playerBaseScale.y * 0.98);
-    scene.player.anims.play("haenaem_sweep_right_anim");
-    scene.player.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-      scene.playerIsSweeping = false;
-      this.setPlayerDirectionTexture("right", false);
-    });
   }
 
   startFloatingJoystick(event) {
