@@ -6,11 +6,11 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
-    <title>삼각지 대청소</title>
+    <title>&#49340;&#44033;&#51648; &#45824;&#52397;&#49548;</title>
     <meta name="theme-color" content="#9acb87" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="삼각지 대청소" />
+    <meta name="apple-mobile-web-app-title" content="&#49340;&#44033;&#51648; &#45824;&#52397;&#49548;" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
@@ -24,36 +24,36 @@
         <div class="game-header" aria-label="game status">
         
         </div>
-        <!-- 돈 UI -->
+        <!-- Money UI -->
         <div class="money-ui">
           <div class="money-item">
-            <img src="./assets/ui/10000won.png" alt="만원" class="money-icon icon-10000">
+            <img src="./assets/ui/10000won.png" alt="&#47564;&#50896;" class="money-icon icon-10000">
             <span id="count10000">0</span>
           </div>
           <div class="money-item">
-            <img src="./assets/ui/1000won.png" alt="천원" class="money-icon icon-1000">
+            <img src="./assets/ui/1000won.png" alt="&#52380;&#50896;" class="money-icon icon-1000">
             <span id="count1000">0</span>
           </div>
           <div class="money-item coin-item">
-            <img src="./assets/ui/500WON.png" alt="오백원" class="money-icon coin-icon icon-500">
+            <img src="./assets/ui/500WON.png" alt="&#50724;&#48177;&#50896;" class="money-icon coin-icon icon-500">
             <span id="count500">0</span>
           </div>
           <div class="money-item coin-item">
-            <img src="./assets/ui/100WON.png" alt="백원" class="money-icon coin-icon icon-100">
+            <img src="./assets/ui/100WON.png" alt="&#48177;&#50896;" class="money-icon coin-icon icon-100">
             <span id="count100">0</span>
           </div>
-          <div class="money-total" id="totalMoney">￦0</div>
+          <div class="money-total" id="totalMoney">&#8361;0</div>
           <div class="trash-inventory-ui" aria-label="collected trash">
-            <div class="trash-inventory-item" title="일반 쓰레기">
-              <img src="./assets/ui/trash.png" alt="일반 쓰레기" class="trash-inventory-icon">
+            <div class="trash-inventory-item" title="&#51068;&#48152; &#50416;&#47112;&#44592;">
+              <img src="./assets/ui/trash.png" alt="&#51068;&#48152; &#50416;&#47112;&#44592;" class="trash-inventory-icon">
               <span id="inventoryNormalCount">0</span>
             </div>
-            <div class="trash-inventory-item" title="플라스틱">
-              <img src="./assets/ui/plastic.png" alt="플라스틱" class="trash-inventory-icon">
+            <div class="trash-inventory-item" title="&#54540;&#46972;&#49828;&#54001;">
+              <img src="./assets/ui/plastic.png" alt="&#54540;&#46972;&#49828;&#54001;" class="trash-inventory-icon">
               <span id="inventoryPlasticCount">0</span>
             </div>
-            <div class="trash-inventory-item" title="캔">
-              <img src="./assets/ui/trash-can.png" alt="캔" class="trash-inventory-icon">
+            <div class="trash-inventory-item" title="&#52884;">
+              <img src="./assets/ui/trash-can.png" alt="&#52884;" class="trash-inventory-icon">
               <span id="inventoryCanCount">0</span>
             </div>
           </div>
@@ -67,7 +67,7 @@
           <span id="jjookFollowTimer" aria-hidden="true"></span>
         </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
-          <div class="can-quest-label" id="canQuestLabel">퀘스트 없음</div>
+          <div class="can-quest-label" id="canQuestLabel">&#53300;&#49828;&#53944; &#50630;&#51020;</div>
           <div class="can-quest-bar" id="canQuestBar" aria-label="can quest progress"></div>
         </div>
         <div id="completeOverlay" class="complete-overlay" aria-hidden="true">
@@ -79,10 +79,10 @@
             <span></span>
           </div>
           <div class="complete-result" aria-label="result">
-            <strong>오늘 청소 완료</strong>
-            <span id="resultTrashCount">쓰레기 30개</span>
-            <span id="resultCanCount">캔 20개</span>
-            <span id="resultHelpUsed">여비 도움 완료</span>
+            <strong>&#50724;&#45720; &#52397;&#49548; &#50756;&#47308;</strong>
+            <span id="resultTrashCount">&#50416;&#47112;&#44592; 30&#44060;</span>
+            <span id="resultCanCount">&#52884; 20&#44060;</span>
+            <span id="resultHelpUsed">&#50668;&#48708; &#51648;&#50896; &#50756;&#47308;</span>
           </div>
           <button id="restartButton" class="restart-button" type="button" aria-label="restart">
             <span class="restart-icon" aria-hidden="true"></span>
@@ -90,15 +90,15 @@
         </div>
         <div id="specialToast" class="special-toast" aria-hidden="true">
           <img src="./assets/ui/yebi-button.png" alt="" aria-hidden="true" />
-          <span>고마워</span>
+          <span>&#44256;&#47560;&#50892;</span>
         </div>
-        <!-- 대화창 모달 -->
+        <!-- Dialogue modal -->
         <div id="dialogModal" class="dialog-modal" style="display: none;">
           <div class="dialog-panel">
             <div class="dialog-name"></div>
             <div class="dialog-text"></div>
             <div class="dialog-choices" aria-hidden="true"></div>
-            <div class="dialog-next">▼</div>
+            <div class="dialog-next">&#9662;</div>
           </div>
         </div>
         <div class="touch-controls" aria-label="mobile controls">
@@ -123,7 +123,7 @@
       </div>
     </main>
 
-    <script type="module" src="./src/main.js?v=32"></script>
+    <script type="module" src="./src/main.js?v=33"></script>
     <script src="./src/pwa.js?v=3"></script>
   </body>
 </html>

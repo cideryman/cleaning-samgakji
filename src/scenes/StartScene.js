@@ -14,20 +14,20 @@ export default class StartScene extends Phaser.Scene {
 
     this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x9acb87);
     this.add.rectangle(centerX, centerY, 620, 340, 0xedf6f0, 0.94).setStrokeStyle(5, 0x21352c);
-    this.add.text(centerX, centerY - 120, "삼각지 대청소", {
+    this.add.text(centerX, centerY - 120, "\uC0BC\uAC01\uC9C0 \uB300\uCCAD\uC18C", {
       fontFamily: "Arial",
       fontSize: "42px",
       color: "#21352c",
       fontStyle: "bold",
     }).setOrigin(0.5);
-    this.add.text(centerX, centerY - 70, "챕터 1  삼각지 복지관", {
+    this.add.text(centerX, centerY - 70, "\uD504\uB864\uB85C\uADF8  \uC5EC\uB984 \uBC29\uD559\uC758 \uC57D\uC18D", {
       fontFamily: "Arial",
       fontSize: "20px",
       color: "#315545",
     }).setOrigin(0.5);
 
     this.options = [
-      this.createOption(centerX, centerY + 10, "시작하기", () => this.startGame()),
+      this.createOption(centerX, centerY + 10, "\uC2DC\uC791\uD558\uAE30", () => this.startGame()),
       this.createOption(centerX, centerY + 78, this.getSoundLabel(), () => this.toggleSound()),
     ];
 
@@ -54,7 +54,7 @@ export default class StartScene extends Phaser.Scene {
   }
 
   getSoundLabel() {
-    return this.registry.get("soundEnabled") === false ? "소리 켜기" : "소리 끄기";
+    return this.registry.get("soundEnabled") === false ? "\uC18C\uB9AC \uCF1C\uAE30" : "\uC18C\uB9AC \uB044\uAE30";
   }
 
   moveSelection(delta) {
@@ -82,6 +82,6 @@ export default class StartScene extends Phaser.Scene {
   }
 
   startGame() {
-    this.scene.start("PlayScene");
+    this.scene.start("PrologueScene");
   }
 }

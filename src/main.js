@@ -1,5 +1,6 @@
 import Preload from "./scenes/Preload.js";
 import StartScene from "./scenes/StartScene.js";
+import PrologueScene from "./scenes/PrologueScene.js";
 import PlayScene from "./scenes/PlayScene.js";
 
 const BASE_GAME_WIDTH = 768;
@@ -50,7 +51,7 @@ const config = {
       debug: false,
     },
   },
-  scene: [Preload, StartScene, PlayScene],
+  scene: [Preload, StartScene, PrologueScene, PlayScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

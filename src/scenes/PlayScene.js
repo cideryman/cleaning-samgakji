@@ -50,6 +50,7 @@ export default class PlayScene extends Phaser.Scene {
     this.hasMedicine = false;
     this.hasBacchus = false;
     this.hospitalRevisitUsed = false;
+    this.hasReceivedPharmacyDrink = false;
     this.isBacchusActive = false;
     this.bacchusTimer = null;
     this.bacchusCountdownEvent = null;
@@ -262,6 +263,7 @@ export default class PlayScene extends Phaser.Scene {
     this.hasMedicine = false;
     this.hasBacchus = false;
     this.hospitalRevisitUsed = false;
+    this.hasReceivedPharmacyDrink = false;
     this.isBacchusActive = false;
     this.bacchusTimer?.remove(false);
     this.bacchusCountdownEvent?.remove(false);
@@ -1576,28 +1578,37 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   startVitalDrinkRoute() {
+    if (this.hasReceivedPharmacyDrink) {
+      this.dialogueSystem.start([
+        { name: "약사", portraitKey: "chemist", text: "활력수나 카페인이 많은 음료는 자주 마시면 몸에 좋지 않아요." },
+        { name: "약사", portraitKey: "chemist", text: "오늘은 더 마시지 말고 물을 마시며 쉬어보는 게 좋겠어요." },
+      ], () => this.clearInteriorScene());
+      return;
+    }
+
     this.dialogueSystem.start([
       { name: "약사", portraitKey: "chemist", text: "아직 어리신데 활력수는 너무 많이 마시면 좋지 않아요." },
       { name: "약사", portraitKey: "chemist", text: "보호자랑 같이 오면 다시 이야기해볼게요." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: "왜 마시고 싶은 거야?" },
+      { name: "엄마", portraitKey: "mother_calm", text: "왜 마시고 싶은 거야?" },
       { name: "해냄이", portraitKey: "haenaem_confused", text: "그냥... 다들 마셔서..." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", text: "그런 음료는 많이 마시면 몸에 안 좋아." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: "대신 내가 음료수 사줄게. 뭘 마실래?" },
+      { name: "엄마", portraitKey: "mother_worried", text: "그런 음료는 많이 마시면 몸에 안 좋아." },
+      { name: "엄마", portraitKey: "mother_smile", text: "대신 엄마가 음료 하나 사줄게. 뭘 마실래?" },
       {
         name: "해냄이",
         portraitKey: "haenaem_confused",
         text: "무엇을 고를까요?",
         choices: [
-          { label: "생수", onSelect: () => this.chooseSunisuniDrinkChoice("생수", true) },
-          { label: "음료수", onSelect: () => this.chooseSunisuniDrinkChoice("음료수", false) },
+          { label: "생수", onSelect: () => this.choosePharmacyDrinkChoice("생수", true) },
+          { label: "음료수", onSelect: () => this.choosePharmacyDrinkChoice("음료수", false) },
         ],
       },
     ]);
   }
 
-  chooseSunisuniDrinkChoice(drinkLabel, isWater) {
+  choosePharmacyDrinkChoice(drinkLabel, isWater) {
+    this.hasReceivedPharmacyDrink = true;
     this.dialogueSystem.start([
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", text: `${drinkLabel} 좋지. 몸을 생각해서 고르는 것도 멋진 선택이야.` },
+      { name: "엄마", portraitKey: "mother_smile", text: `${drinkLabel} 좋지. 몸을 생각해서 고르는 것도 멋진 선택이야.` },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워요. 다음엔 몸에 필요한 걸 먼저 생각해볼게요." },
     ], () => {
       this.clearInteriorScene();
@@ -1638,8 +1649,8 @@ export default class PlayScene extends Phaser.Scene {
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "정말 고마워." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이건 같이 가준 보답이야." },
-      { name: "여비", portraitKey: "yeobi", text: "해냄이, 오늘은 청소뿐 아니라 친구도 도왔구나!" },
-      { name: "여비", portraitKey: "yeobi", text: "진짜 멋진 사람이야!" },
+      { name: "엄마", portraitKey: "mother_smile", text: "해냄이, 오늘은 청소뿐 아니라 아픈 친구도 도왔구나!" },
+      { name: "엄마", portraitKey: "mother_smile", text: "스스로 생각하고 도와준 모습이 정말 멋졌어." },
     ], () => this.sendSunisuniBackToBench());
   }
 
@@ -1739,7 +1750,6 @@ export default class PlayScene extends Phaser.Scene {
     
     // 대화창으로 첫 가이드 표시
     const dialogue = [
-      { name: "알림", text: "여행을 가려면 돈이 조금 부족해요." },
       { name: "여비", portraitKey: "yeobi", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
       { name: "알림", text: "쓰레기를 빗자루로 치우고 보상을 모아보세요." }
     ];
