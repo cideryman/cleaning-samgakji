@@ -1,6 +1,6 @@
 import Preload from "./scenes/Preload.js";
 import StartScene from "./scenes/StartScene.js";
-import PrologueScene from "./scenes/PrologueScene.js";
+import PrologueScene from "./scenes/PrologueScene.js?v=2";
 import PlayScene from "./scenes/PlayScene.js";
 
 const BASE_GAME_WIDTH = 768;
@@ -71,6 +71,34 @@ function startGame() {
   );
 
   const game = new Phaser.Game(config);
+  const prologueSkipButton = document.querySelector("#prologueSkipButton");
+  const syncPrologueSkipButton = () => {
+    if (!prologueSkipButton) return;
+    prologueSkipButton.hidden = !document.body.classList.contains("prologue-scene-active");
+  };
+
+  if (prologueSkipButton) {
+    prologueSkipButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const prologueScene = game.scene.getScene("PrologueScene");
+      if (prologueScene?.skipPrologue) {
+        prologueScene.skipPrologue();
+        return;
+      }
+
+      prologueSkipButton.hidden = true;
+      game.scene.stop("PrologueScene");
+      game.scene.start("PlayScene");
+    });
+    new MutationObserver(syncPrologueSkipButton).observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    syncPrologueSkipButton();
+  }
+
   window.addEventListener("resize", () => {
     const nextSize = getResponsiveGameSize();
     game.scale.resize(nextSize.width, nextSize.height);

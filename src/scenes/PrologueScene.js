@@ -16,6 +16,7 @@ export default class PrologueScene extends Phaser.Scene {
     this.portraitManager = null;
     this.background = null;
     this.currentBgm = null;
+    this.skipButton = null;
     this.isTransitioningToGame = false;
   }
 
@@ -25,8 +26,29 @@ export default class PrologueScene extends Phaser.Scene {
     this.dialogueSystem = new DialogueSystem(this);
     this.portraitManager = new PortraitManager(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
+    this.createSkipButton();
 
     this.showRoomOpening();
+  }
+
+  createSkipButton() {
+    this.skipButton = document.querySelector("#prologueSkipButton");
+    if (this.skipButton) {
+      this.skipButton.hidden = false;
+      return;
+    }
+
+    this.skipButton = document.createElement("button");
+    this.skipButton.type = "button";
+    this.skipButton.className = "prologue-skip-button";
+    this.skipButton.textContent = "\uAC74\uB108\uB6F0\uAE30";
+    this.skipButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.skipPrologue();
+    });
+
+    document.querySelector(".game-stage")?.appendChild(this.skipButton);
   }
 
   showRoomOpening() {
@@ -140,6 +162,19 @@ export default class PrologueScene extends Phaser.Scene {
     });
   }
 
+  skipPrologue() {
+    if (this.isTransitioningToGame) return;
+
+    if (this.skipButton?.id === "prologueSkipButton") {
+      this.skipButton.hidden = true;
+    } else {
+      this.skipButton?.remove();
+    }
+    this.skipButton = null;
+    this.dialogueSystem?.close(false);
+    this.startMainGame();
+  }
+
   handleDialogueLineChange(line) {
     this.portraitManager?.show(line);
   }
@@ -152,6 +187,12 @@ export default class PrologueScene extends Phaser.Scene {
     this.currentBgm?.stop();
     this.currentBgm?.destroy();
     this.currentBgm = null;
+    if (this.skipButton?.id === "prologueSkipButton") {
+      this.skipButton.hidden = true;
+    } else {
+      this.skipButton?.remove();
+    }
+    this.skipButton = null;
     document.body.classList.remove("prologue-scene-active");
     document.body.style.removeProperty("--prologue-bg");
     this.portraitManager?.destroy();

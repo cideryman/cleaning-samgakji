@@ -1,17 +1,18 @@
-const CACHE_NAME = "cleaning-samgakji-v20260519-01";
+const CACHE_NAME = "cleaning-samgakji-v20260519-04";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=60",
+  "./styles.css?v=61",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=3",
-  "./src/main.js?v=32",
+  "./src/main.js?v=34",
   "./src/main.js",
   "./src/scenes/Preload.js",
   "./src/scenes/StartScene.js",
   "./src/scenes/PrologueScene.js",
+  "./src/scenes/PrologueScene.js?v=2",
   "./src/scenes/PlayScene.js",
   "./src/controllers/PlayerController.js",
   "./src/config/GameConstants.js",
