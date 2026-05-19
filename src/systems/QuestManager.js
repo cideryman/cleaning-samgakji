@@ -3,7 +3,7 @@ export default class QuestManager {
     this.scene = scene;
     this.canQuest = {
       id: "collect_cans",
-      name: "캔 모으기",
+      name: "\uCEA0 \uBAA8\uC73C\uAE30",
       type: "collect_cans",
       target: 20,
       current: 0,
@@ -13,7 +13,7 @@ export default class QuestManager {
     };
     this.recycleQuest = {
       id: "recycle_master",
-      name: "분리수거 전문가",
+      name: "\uBD84\uB9AC\uC218\uAC70 \uC804\uBB38\uAC00",
       type: "recycle",
       target: { normal: 30, can: 10, plastic: 10 },
       current: { normal: 0, can: 0, plastic: 0 },
@@ -44,9 +44,9 @@ export default class QuestManager {
     if (!this.uiElements.bar) return;
 
     const typeConfig = [
-      { type: "normal", icon: "assets/sprites/trash-slime2.png", label: "일반" },
-      { type: "can", icon: "assets/sprites/trash-can2.png", label: "캔" },
-      { type: "plastic", icon: "assets/sprites/plastic.png", label: "플라스틱" },
+      { type: "normal", icon: "assets/sprites/trash-slime2.png", label: "\uC77C\uBC18" },
+      { type: "can", icon: "assets/sprites/trash-can2.png", label: "\uCEA0" },
+      { type: "plastic", icon: "assets/sprites/plastic.png", label: "\uD50C\uB77C\uC2A4\uD2F1" },
     ];
     this.uiElements.bar.innerHTML = "";
     this.uiElements.bar.classList.add("is-recycle");
@@ -84,8 +84,9 @@ export default class QuestManager {
     this.uiElements.bar?.classList.remove("is-recycle");
     this.updateUI();
     this.scene.setQuestMarker?.("canQuest", this.scene.yebiNpc, "!");
-    this.scene.showQuestToast?.("여비 퀘스트: 캔 20개 모으기");
+    this.scene.showQuestToast?.("\uC0C8 \uD018\uC2A4\uD2B8: \uCEA0 20\uAC1C \uBAA8\uC73C\uAE30");
     this.scene.playItemPickupSound?.();
+    this.scene.walkYebiToRecyclingCenter?.();
   }
 
   updateQuestProgress(canCount = 1) {
@@ -111,8 +112,12 @@ export default class QuestManager {
 
     this.scene.moneySystem?.addMoney(quest.reward);
     this.scene.playMoneyRewardSound?.();
-    this.scene.showMoneyRewardAnimation?.(quest.reward);
-    this.scene.showQuestToast?.(`보상 ${quest.reward.toLocaleString()}원 획득!`);
+    this.scene.showMoneyRewardAnimation?.(quest.reward, {
+      label: "\uC120\uBB3C",
+      icon: "./assets/ui/10000won.png",
+      framed: false,
+    });
+    this.scene.showQuestToast?.(`\uBCF4\uC0C1 ${quest.reward.toLocaleString()}\uC6D0 \uD68D\uB4DD!`);
     if (this.scene.player) {
       this.scene.showCleanFeedback?.(this.scene.player.x, this.scene.player.y, true);
     }
@@ -122,8 +127,9 @@ export default class QuestManager {
     this.scene.time.delayedCall(180, () => {
       this.scene.dialogueSystem?.start([
         {
-          name: "여비",
-          text: "고마워! 캔 20개를 모았으니 약속한 선물이야!",
+          name: "\uC5EC\uBE44",
+          portraitKey: "yeobi",
+          text: "\uACE0\uB9C8\uC6CC! \uCEA0 20\uAC1C\uB97C \uBAA8\uC544\uC92C\uC73C\uB2C8 \uC57D\uC18D\uD55C \uC120\uBB3C\uC774\uC57C!",
         },
       ]);
     });
@@ -145,7 +151,7 @@ export default class QuestManager {
     this.uiElements.root?.classList.remove("is-poofing");
     this.renderRecycleGauge();
     this.updateUI();
-    this.scene.showQuestToast?.("분리수거 퀘스트 시작!");
+    this.scene.showQuestToast?.("\uBD84\uB9AC\uC218\uAC70 \uD018\uC2A4\uD2B8 \uC2DC\uC791!");
     this.scene.playItemPickupSound?.();
   }
 
@@ -154,7 +160,7 @@ export default class QuestManager {
     if (!quest.isActive || quest.isCompleted || !(type in quest.target)) return false;
 
     if (quest.current[type] >= quest.target[type]) {
-      this.scene.showSpeechBubble?.(this.scene.player, "이 종류는 충분해.");
+      this.scene.showSpeechBubble?.(this.scene.player, "\uC774 \uC885\uB958\uB294 \uCda9\uBD84\uD574!");
       return false;
     }
 
@@ -237,9 +243,9 @@ export default class QuestManager {
         this.renderRecycleGauge();
       }
       label.textContent =
-        `분리수거: 일반 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · ` +
-        `캔 ${recycleQuest.current.can}/${recycleQuest.target.can} · ` +
-        `플라스틱 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
+        `\uBD84\uB9AC\uC218\uAC70: \uC77C\uBC18 ${recycleQuest.current.normal}/${recycleQuest.target.normal} · ` +
+        `\uCEA0 ${recycleQuest.current.can}/${recycleQuest.target.can} · ` +
+        `\uD50C\uB77C\uC2A4\uD2F1 ${recycleQuest.current.plastic}/${recycleQuest.target.plastic}`;
       Array.from(bar.querySelectorAll(".recycle-gauge-row")).forEach((row) => {
         const type = row.dataset.type;
         const filled = Math.min(recycleQuest.current[type], recycleQuest.target[type]);
@@ -260,11 +266,11 @@ export default class QuestManager {
     root.setAttribute("aria-hidden", String(!quest.isActive && !quest.isCompleted));
 
     if (quest.isCompleted) {
-      label.textContent = "캔 모으기 완료";
+      label.textContent = "\uCEA0 \uBAA8\uC73C\uAE30 \uC644\uB8CC";
     } else if (quest.isActive) {
-      label.textContent = `캔 수집: ${quest.current} / ${quest.target}`;
+      label.textContent = `\uCEA0 \uC218\uC9D1: ${quest.current} / ${quest.target}`;
     } else {
-      label.textContent = "퀘스트 없음";
+      label.textContent = "\uD018\uC2A4\uD2B8 \uC5C6\uC74C";
     }
 
     Array.from(bar.children).forEach((dot, index) => {

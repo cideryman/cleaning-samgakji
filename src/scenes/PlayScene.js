@@ -779,15 +779,10 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createYebiNpc() {
-    const positions = [
-      [420, 226],
-      [756, 310],
-      [1028, 354],
-      [560, 650],
-      [1120, 602],
-      [310, 760],
-    ].filter(([x, y]) => !this.isBlockedSpawnPoint(x, y));
-    const [x, y] = Phaser.Utils.Array.GetRandom(positions);
+    const fallbackX = this.playerStart.x + 108;
+    const fallbackY = this.playerStart.y - 8;
+    const x = this.isBlockedSpawnPoint(fallbackX, fallbackY) ? this.playerStart.x + 72 : fallbackX;
+    const y = fallbackY;
 
     this.yebiNpc = this.add.image(x, y, "yebi_npc");
     this.yebiNpc.setDisplaySize(
@@ -825,6 +820,31 @@ export default class PlayScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
+    });
+  }
+
+  walkYebiToRecyclingCenter() {
+    if (!this.yebiNpc) return;
+
+    const position = this.getYebiRecyclePosition();
+    this.tweens.killTweensOf(this.yebiNpc);
+    this.yebiNpc.setDepth(3.6);
+    this.tweens.add({
+      targets: this.yebiNpc,
+      x: position.x,
+      y: position.y,
+      duration: 1600,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        this.tweens.add({
+          targets: this.yebiNpc,
+          y: position.y - 5,
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      },
     });
   }
 
@@ -1753,7 +1773,7 @@ export default class PlayScene extends Phaser.Scene {
       { name: "여비", portraitKey: "yeobi", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
       { name: "알림", text: "쓰레기를 빗자루로 치우고 보상을 모아보세요." }
     ];
-    this.dialogueSystem.start(dialogue);
+    this.dialogueSystem.start(dialogue, () => this.showYebiQuestDialogue());
   }
 
   handleMovement() {
@@ -2544,8 +2564,8 @@ export default class PlayScene extends Phaser.Scene {
     this.uiManager.showNextInventoryCaption();
   }
 
-  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
-    this.uiManager.showMoneyRewardAnimation(amount, { label, icon });
+  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png", framed = true } = {}) {
+    this.uiManager.showMoneyRewardAnimation(amount, { label, icon, framed });
   }
 
 

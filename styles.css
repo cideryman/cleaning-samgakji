@@ -466,8 +466,8 @@ body.prologue-scene-active #game {
 
 .effect-button {
   display: none;
-  right: calc(max(18px, env(safe-area-inset-right)) + 98px);
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 82px);
+  right: max(18px, env(safe-area-inset-right));
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 100px);
   width: 74px;
   height: 74px;
   background: #ffffff;
@@ -479,7 +479,7 @@ body.prologue-scene-active #game {
 }
 
 .jjook-follow-hud {
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 164px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 182px);
 }
 
 .effect-button.is-visible {
@@ -817,14 +817,14 @@ body.app-fit-mode #game canvas {
   }
 
   .effect-button {
-    right: calc(max(18px, env(safe-area-inset-right)) + 94px);
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 76px);
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 94px);
     width: 68px;
     height: 68px;
   }
 
   .jjook-follow-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 152px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 170px);
   }
 
   .move-knob {
@@ -920,14 +920,14 @@ body.app-fit-mode #game canvas {
   }
 
   .effect-button {
-    right: calc(max(18px, env(safe-area-inset-right)) + 86px);
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 68px);
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 82px);
     width: 60px;
     height: 60px;
   }
 
   .jjook-follow-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 136px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 150px);
   }
 
   #sweepButton img,
@@ -1033,6 +1033,10 @@ body.app-fit-mode #game canvas {
 
 /* 모바일 최적화 */
 @media (max-width: 820px) {
+  .dialog-modal {
+    padding-bottom: max(4px, env(safe-area-inset-bottom));
+  }
+
   .dialog-modal.has-scene-overlay {
     justify-content: center;
   }
@@ -1040,11 +1044,13 @@ body.app-fit-mode #game canvas {
   .dialog-panel {
     width: 95%;
     padding: 14px 16px;
+    margin-bottom: 4px;
   }
 
   .dialog-modal.has-scene-overlay .dialog-panel {
     width: 95%;
     max-width: 95%;
+    margin-bottom: 4px;
   }
 
   .dialog-text {
@@ -1384,6 +1390,15 @@ body.app-fit-mode #game canvas {
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.45);
   animation: money-reward-pop 3500ms ease-out forwards;
+}
+
+.money-reward-pop.is-unframed {
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .money-reward-pop img {

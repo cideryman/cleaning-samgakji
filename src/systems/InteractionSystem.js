@@ -85,23 +85,17 @@ export default class InteractionSystem {
   isPlayerNearHospitalDoor() {
     const scene = this.scene;
     if (!scene.player || !["going_hospital", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
-    return Phaser.Math.Distance.Between(
-      scene.player.x,
-      scene.player.y,
-      GAME_CONFIG.hospitalDoor.x,
-      GAME_CONFIG.hospitalDoor.y,
-    ) < 155;
+    const dx = Math.abs(scene.player.x - GAME_CONFIG.hospitalDoor.x);
+    const dy = Math.abs(scene.player.y - GAME_CONFIG.hospitalDoor.y);
+    return dx <= 72 && dy <= 56;
   }
 
   isPlayerNearPharmacyDoor() {
     const scene = this.scene;
     if (!scene.player || !["going_pharmacy", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
-    return Phaser.Math.Distance.Between(
-      scene.player.x,
-      scene.player.y,
-      GAME_CONFIG.pharmacyDoor.x,
-      GAME_CONFIG.pharmacyDoor.y,
-    ) < 155;
+    const dx = Math.abs(scene.player.x - GAME_CONFIG.pharmacyDoor.x);
+    const dy = Math.abs(scene.player.y - GAME_CONFIG.pharmacyDoor.y);
+    return dx <= 68 && dy <= 54;
   }
 
   isPlayerNearVendingMachine() {

@@ -1,4 +1,4 @@
-import { GAME_CONFIG } from "../config/GameConstants.js";
+﻿import { GAME_CONFIG } from "../config/GameConstants.js";
 
 export default class UIManager {
   constructor(scene) {
@@ -57,15 +57,16 @@ export default class UIManager {
     });
   }
 
-  showMoneyRewardAnimation(amount, { label = "선물", icon = "./assets/ui/10000won.png" } = {}) {
+  showMoneyRewardAnimation(amount, { label = "\uC120\uBB3C", icon = "./assets/ui/10000won.png", framed = true } = {}) {
     const stage = document.querySelector(".game-stage");
     if (!stage) return;
 
     const reward = document.createElement("div");
     reward.className = "money-reward-pop";
+    reward.classList.toggle("is-unframed", !framed);
     reward.innerHTML = `
       <img src="${icon}" alt="${label}" />
-      <strong>${label} ${amount.toLocaleString()}원</strong>
+      <strong>${label} ${amount.toLocaleString()}\uC6D0</strong>
     `;
     stage.appendChild(reward);
     window.setTimeout(() => reward.remove(), 3600);
