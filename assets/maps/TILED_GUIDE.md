@@ -12,6 +12,16 @@ Use these settings when making the Samgakji map in Tiled.
 
 The game currently loads `assets/maps/chapter1-samgakji-map.json` for Chapter 1. Edit that file in Tiled and export over the same path when you want Chapter 1 to change.
 
+Current Chapter 1 layout:
+
+- Center: 삼각지 공원 허브, main cleaning loop and frequent NPC flow
+- North: 병원 골목 with hospital, pharmacy, bench, and Sunisuni route
+- East: 상가 거리 with vending machine and the recycling area nearby
+- South/West: 공원 산책길 with denser trees, benches, flower beds, and wallet/trash exploration
+- Far East: 역 방향 길 with road and crosswalk-style connection
+
+Keep future edits compact: extend by opening one short street at a time from the center, not by adding long empty roads.
+
 Chapter audio:
 
 - Put chapter music in `assets/audio/chapter1.mp3`, `assets/audio/chapter2.mp3`, and so on.

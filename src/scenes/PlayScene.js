@@ -214,7 +214,7 @@ export default class PlayScene extends Phaser.Scene {
     this.createMap();
     this.createSunisuniAnimations();
     this.createHospitalAndPharmacy();
-    this.createLargeBenchOverlays();
+    this.createDepthDecorations();
     this.createRecyclingCenter();
     this.createYebiNpc();
     this.createSunisuniNpc();
@@ -336,6 +336,7 @@ export default class PlayScene extends Phaser.Scene {
     this.checkWalletPickup();
     this.updateJjookFollower();
     this.updateSunisuniFollower();
+    this.updateWorldDepths();
     this.updateQuestMarkers();
     if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
@@ -557,16 +558,117 @@ export default class PlayScene extends Phaser.Scene {
     this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
   }
 
-  createLargeBenchOverlays() {
+  getWorldDepth(y, offset = 0) {
+    return 10 + (y / 1000) + offset;
+  }
+
+  createDepthDecorations() {
+    this.createDepthTrees();
+    this.createDepthBenches();
+    this.createDepthFences();
+    this.createDepthPoles();
+  }
+
+  createDepthTrees() {
+    const treePositions = [
+      { x: GAME_CONFIG.sunisuniTree.x, y: GAME_CONFIG.sunisuniTree.y + 88, width: 150, height: 176 },
+      { x: 400, y: 386, width: 126, height: 150 },
+      { x: 592, y: 742, width: 132, height: 156 },
+      { x: 1040, y: 386, width: 126, height: 150 },
+      { x: 1200, y: 614, width: 130, height: 154 },
+      { x: 208, y: 742, width: 122, height: 146 },
+      { x: 336, y: 624, width: 104, height: 124 },
+      { x: 1296, y: 382, width: 104, height: 124 },
+      { x: 1120, y: 838, width: 108, height: 128 },
+      { x: 112, y: 612, width: 102, height: 122 },
+    ];
+
+    treePositions.forEach((tree) => {
+      const shadow = this.add.ellipse(tree.x, tree.y - 9, tree.width * 0.56, 18, 0x21352c, 0.18);
+      shadow.setDepth(this.getWorldDepth(tree.y, -0.04));
+
+      const image = this.add.image(tree.x, tree.y, "sunisuni_tree");
+      image.setOrigin(0.5, 1);
+      image.setDisplaySize(tree.width, tree.height);
+      image.setDepth(this.getWorldDepth(tree.y));
+    });
+  }
+
+  createDepthBenches() {
     const benchPositions = [
-      [585, 592],
-      [990, 374],
+      [450, 374],
+      [620, 708],
+      [990, 612],
+      [1180, 412],
     ];
 
     benchPositions.forEach(([x, y]) => {
+      const shadow = this.add.ellipse(x, y - 4, 86, 14, 0x21352c, 0.22);
+      shadow.setDepth(this.getWorldDepth(y, -0.05));
+
       const bench = this.add.image(x, y, "bench_tile");
-      bench.setDisplaySize(96, 54);
-      bench.setDepth(2.5);
+      bench.setOrigin(0.5, 1);
+      bench.setDisplaySize(108, 60);
+      bench.setDepth(this.getWorldDepth(y));
+    });
+  }
+
+  createDepthFences() {
+    this.createFenceLine(304, 590, 288, "horizontal");
+    this.createFenceLine(1060, 654, 288, "horizontal");
+    this.createFenceLine(78, 690, 224, "vertical");
+    this.createFenceLine(1326, 318, 192, "vertical");
+  }
+
+  createFenceLine(x, y, length, direction) {
+    const isHorizontal = direction === "horizontal";
+    const depth = this.getWorldDepth(y);
+    const shadow = this.add.rectangle(x, y + 7, isHorizontal ? length : 14, isHorizontal ? 8 : length, 0x21352c, 0.16);
+    shadow.setDepth(depth - 0.05);
+
+    const rail1 = this.add.rectangle(x, y - 5, isHorizontal ? length : 8, isHorizontal ? 7 : length, 0x8a663c, 1);
+    const rail2 = this.add.rectangle(x, y + 7, isHorizontal ? length : 8, isHorizontal ? 7 : length, 0x6f4f30, 1);
+    const highlight = this.add.rectangle(x, y - 8, isHorizontal ? length : 3, isHorizontal ? 2 : length, 0xc58a4a, 0.82);
+    [rail1, rail2, highlight].forEach((part) => part.setDepth(depth));
+
+    const postCount = Math.max(2, Math.floor(length / 44));
+    for (let index = 0; index <= postCount; index += 1) {
+      const progress = index / postCount - 0.5;
+      const postX = isHorizontal ? x + progress * length : x;
+      const postY = isHorizontal ? y + 2 : y + progress * length;
+      const post = this.add.rectangle(postX, postY, 11, 30, 0x7a552e, 1);
+      const postTop = this.add.rectangle(postX, postY - 16, 15, 6, 0xb47c3f, 1);
+      post.setDepth(depth + 0.01);
+      postTop.setDepth(depth + 0.02);
+    }
+  }
+
+  createDepthPoles() {
+    [
+      [240, 400],
+      [912, 336],
+      [1104, 272],
+      [1296, 560],
+      [592, 272],
+    ].forEach(([x, y]) => {
+      const shadow = this.add.ellipse(x, y + 17, 24, 9, 0x21352c, 0.18);
+      const pole = this.add.rectangle(x, y, 10, 56, 0x7a552e, 1);
+      const cap = this.add.rectangle(x, y - 30, 18, 6, 0xb47c3f, 1);
+      const light = this.add.circle(x + 9, y - 22, 6, 0xfff3a3, 0.55);
+      [shadow, pole, cap, light].forEach((part, index) => {
+        part.setDepth(this.getWorldDepth(y, index * 0.01));
+      });
+    });
+  }
+
+  updateWorldDepths() {
+    this.player?.setDepth(this.getWorldDepth(this.player.y, 0.02));
+    this.yebiNpc?.setDepth(this.getWorldDepth(this.yebiNpc.y, 0.02));
+    this.jjookNpc?.setDepth(this.getWorldDepth(this.jjookNpc.y, 0.02));
+    this.sunisuniNpc?.setDepth(this.getWorldDepth(this.sunisuniNpc.y, 0.02));
+    this.walletItem?.setDepth(this.getWorldDepth(this.walletItem.y, 0.02));
+    this.trashSlimes?.getChildren().forEach((trash) => {
+      if (trash.active) trash.setDepth(this.getWorldDepth(trash.y, 0.01));
     });
   }
 
@@ -712,17 +814,6 @@ export default class PlayScene extends Phaser.Scene {
 
   createSunisuniNpc() {
     if (!this.textures.exists(NPC_TEXTURES.sunisuni.down)) return;
-
-    if (this.textures.exists("sunisuni_tree")) {
-      const tree = this.add.image(GAME_CONFIG.sunisuniTree.x, GAME_CONFIG.sunisuniTree.y, "sunisuni_tree");
-      tree.setDisplaySize(150, 176);
-      tree.setDepth(2.6);
-    }
-    if (this.textures.exists("sunisuni_bench")) {
-      const bench = this.add.image(GAME_CONFIG.sunisuniBench.x, GAME_CONFIG.sunisuniBench.y + 20, "sunisuni_bench");
-      bench.setDisplaySize(136, 76);
-      bench.setDepth(2.7);
-    }
 
     const { x, y } = GAME_CONFIG.sunisuniSpawn;
     this.sunisuniNpc = this.add.sprite(x, y, NPC_TEXTURES.sunisuni.down, 1);
@@ -898,11 +989,12 @@ export default class PlayScene extends Phaser.Scene {
     const startX = this.yebiNpc?.x ?? this.playerStart.x;
     const startY = this.yebiNpc?.y ?? this.playerStart.y;
     const upperLaneY = Math.min(startY - 70, GAME_CONFIG.vendingMachine.y - 118);
+    const vendingBypassX = GAME_CONFIG.vendingMachine.x - 170;
 
     return [
       { x: startX + 130, y: upperLaneY },
-      { x: GAME_CONFIG.vendingMachine.x - 145, y: upperLaneY },
-      { x: GAME_CONFIG.vendingMachine.x + 155, y: upperLaneY },
+      { x: vendingBypassX, y: upperLaneY },
+      { x: vendingBypassX, y: target.y },
       { x: target.x, y: target.y },
     ];
   }
