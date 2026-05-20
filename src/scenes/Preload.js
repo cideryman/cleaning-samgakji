@@ -1,17 +1,10 @@
 const EXTERNAL_ASSETS = [
-  { key: "player", path: "assets/sprites/player.png", fallback: "createPlayerTexture" },
-  { key: "player_left", path: "assets/sprites/playerleft.png" },
-  { key: "player_right", path: "assets/sprites/playerright.png" },
-  { key: "player_back", path: "assets/sprites/playerback.png" },
   { key: "trash_slime", path: "assets/sprites/trash-slime.png", fallback: "createTrashSlimeTexture" },
   { key: "trash_slime_2", path: "assets/sprites/trash-slime2.png" },
   { key: "trash_can", path: "assets/sprites/trash-can.png", fallback: "createTrashCanTexture" },
   { key: "trash_can_2", path: "assets/sprites/trash-can2.png" },
   { key: "trash_can_3", path: "assets/sprites/trash-can3.png" },
   { key: "trash_plastic", path: "assets/sprites/plastic.png" },
-  { key: "yebi_npc", path: "assets/sprites/yebi-npc.png", fallback: "createYebiNpcTexture" },
-  { key: "sunisuni_sick", path: "assets/sprites/sunisuni-sick.png" },
-  { key: "sunisuni_recovered", path: "assets/sprites/sunisuni-recovered.png" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },
   { key: "recycle_bin_normal", path: "assets/objects/normal.png" },
@@ -19,7 +12,6 @@ const EXTERNAL_ASSETS = [
   { key: "recycle_bin_plastic", path: "assets/objects/plastic.png" },
   { key: "recycling_center", path: "assets/objects/recycling center.png" },
   { key: "recycle_vending_machine", path: "assets/objects/vending machine.png" },
-  { key: "jjook_npc", path: "assets/objects/jjookf.png" },
   { key: "jjook_face", path: "assets/portraits/jjook-default.png" },
   { key: "jjook_default", path: "assets/portraits/jjook-default.png" },
   { key: "jjook_lost", path: "assets/portraits/jjook-wallet-lost.png" },
@@ -85,10 +77,18 @@ const SPRITESHEET_ASSETS = [
   { key: "haenaem_walk_up", path: "assets/sprites/haenaem-walk-up-new.png", frameWidth: 64, frameHeight: 96 },
   { key: "haenaem_walk_left", path: "assets/sprites/haenaem-walk-left-new.png", frameWidth: 64, frameHeight: 96 },
   { key: "haenaem_walk_right", path: "assets/sprites/haenaem-walk-right-new.png", frameWidth: 64, frameHeight: 96 },
-  { key: "sunisuni_front", path: "assets/sprites/sunisuni-front.png", frameWidth: 256, frameHeight: 256 },
-  { key: "sunisuni_back", path: "assets/sprites/sunisuni-back.png", frameWidth: 256, frameHeight: 256 },
-  { key: "sunisuni_left", path: "assets/sprites/sunisuni-left.png", frameWidth: 256, frameHeight: 256 },
-  { key: "sunisuni_right", path: "assets/sprites/sunisuni-right.png", frameWidth: 256, frameHeight: 256 },
+  { key: "yeobi_walk_down", path: "assets/sprites/yeobi-walk-down.png", frameWidth: 64, frameHeight: 96 },
+  { key: "yeobi_walk_up", path: "assets/sprites/yeobi-walk-up.png", frameWidth: 64, frameHeight: 96 },
+  { key: "yeobi_walk_left", path: "assets/sprites/yeobi-walk-left.png", frameWidth: 64, frameHeight: 96 },
+  { key: "yeobi_walk_right", path: "assets/sprites/yeobi-walk-right.png", frameWidth: 64, frameHeight: 96 },
+  { key: "sunisuni_walk_down", path: "assets/sprites/sunisuni-walk-down.png", frameWidth: 64, frameHeight: 96 },
+  { key: "sunisuni_walk_up", path: "assets/sprites/sunisuni-walk-up.png", frameWidth: 64, frameHeight: 96 },
+  { key: "sunisuni_walk_left", path: "assets/sprites/sunisuni-walk-left.png", frameWidth: 64, frameHeight: 96 },
+  { key: "sunisuni_walk_right", path: "assets/sprites/sunisuni-walk-right.png", frameWidth: 64, frameHeight: 96 },
+  { key: "jjook_walk_down", path: "assets/sprites/jjook-walk-down.png", frameWidth: 64, frameHeight: 96 },
+  { key: "jjook_walk_up", path: "assets/sprites/jjook-walk-up.png", frameWidth: 64, frameHeight: 96 },
+  { key: "jjook_walk_left", path: "assets/sprites/jjook-walk-left.png", frameWidth: 64, frameHeight: 96 },
+  { key: "jjook_walk_right", path: "assets/sprites/jjook-walk-right.png", frameWidth: 64, frameHeight: 96 },
   { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "heart_effect", path: "assets/sprites/heart-effect.png", frameWidth: 128, frameHeight: 128 },
@@ -146,6 +146,18 @@ export default class Preload extends Phaser.Scene {
       ["haenaem_walk_up_anim", "haenaem_walk_up"],
       ["haenaem_walk_left_anim", "haenaem_walk_left"],
       ["haenaem_walk_right_anim", "haenaem_walk_right"],
+      ["yeobi_walk_down_anim", "yeobi_walk_down"],
+      ["yeobi_walk_up_anim", "yeobi_walk_up"],
+      ["yeobi_walk_left_anim", "yeobi_walk_left"],
+      ["yeobi_walk_right_anim", "yeobi_walk_right"],
+      ["sunisuni_walk_down_anim", "sunisuni_walk_down"],
+      ["sunisuni_walk_up_anim", "sunisuni_walk_up"],
+      ["sunisuni_walk_left_anim", "sunisuni_walk_left"],
+      ["sunisuni_walk_right_anim", "sunisuni_walk_right"],
+      ["jjook_walk_down_anim", "jjook_walk_down"],
+      ["jjook_walk_up_anim", "jjook_walk_up"],
+      ["jjook_walk_left_anim", "jjook_walk_left"],
+      ["jjook_walk_right_anim", "jjook_walk_right"],
     ];
 
     walkAnimations.forEach(([animKey, textureKey]) => {
@@ -276,24 +288,6 @@ export default class Preload extends Phaser.Scene {
     this.drawRect(g, 48, 98, 34, 6, "#6fcf97");
     this.drawRect(g, 28, 112, 72, 6, "#101418");
     g.generateTexture("trash_can", 128, 128);
-    g.destroy();
-  }
-
-  createYebiNpcTexture() {
-    const g = this.make.graphics({ x: 0, y: 0 }, false);
-    this.drawEllipse(g, 14, 14, 100, 100, "#ffffff");
-    this.drawEllipse(g, 22, 24, 84, 84, "#f0b27f");
-    this.drawRect(g, 30, 20, 68, 24, "#3a332c");
-    this.drawRect(g, 28, 44, 74, 6, "#21352c");
-    this.drawRect(g, 36, 50, 22, 12, "#f7dcc8");
-    this.drawRect(g, 72, 50, 22, 12, "#f7dcc8");
-    this.drawRect(g, 42, 48, 12, 4, "#21352c");
-    this.drawRect(g, 78, 48, 12, 4, "#21352c");
-    this.drawRect(g, 58, 66, 12, 6, "#d89064");
-    this.drawRect(g, 60, 80, 18, 6, "#6b2f2f");
-    this.drawRect(g, 42, 76, 10, 6, "#eaa086");
-    this.drawRect(g, 82, 76, 10, 6, "#eaa086");
-    g.generateTexture("yebi_npc", 128, 128);
     g.destroy();
   }
 

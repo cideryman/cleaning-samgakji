@@ -2,6 +2,8 @@
 import {
   DRINK_OPTIONS,
   GAME_CONFIG,
+  NPC_TEXTURES,
+  NPC_WALK_ANIMS,
   PLAYER_TEXTURES,
   RECYCLE_BIN_CONFIG,
   TILED_MAP_CONFIG,
@@ -366,6 +368,42 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
+  getDirectionKeyFromVector(dx, dy, fallback = "down") {
+    if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) return fallback;
+    if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? "left" : "right";
+    return dy < 0 ? "up" : "down";
+  }
+
+  setNpcDirectionTexture(sprite, npcKey, directionKey = "down", moving = false) {
+    if (!sprite) return;
+
+    const textureKey = NPC_TEXTURES[npcKey]?.[directionKey] || NPC_TEXTURES[npcKey]?.down;
+    if (!textureKey || !this.textures.exists(textureKey)) return;
+
+    sprite.setData("directionKey", directionKey);
+    if (sprite.texture?.key !== textureKey) {
+      sprite.setTexture(textureKey, 1);
+    }
+    sprite.setDisplaySize(GAME_CONFIG.playerDisplayWidth, GAME_CONFIG.playerDisplayHeight);
+    sprite.setOrigin(0.5, 0.5);
+
+    const animKey = NPC_WALK_ANIMS[npcKey]?.[directionKey];
+    if (moving && animKey && this.anims.exists(animKey)) {
+      sprite.anims?.play(animKey, true);
+      return;
+    }
+
+    sprite.anims?.stop();
+    if (sprite.anims?.currentFrame || sprite.frame?.name !== 1) {
+      sprite.setFrame(1);
+    }
+  }
+
+  stopNpcWalk(sprite, npcKey) {
+    const directionKey = sprite?.getData("directionKey") || "down";
+    this.setNpcDirectionTexture(sprite, npcKey, directionKey, false);
+  }
+
   checkRecycleQuestUnlock() {
     if (!this.moneySystem || !this.questManager || this.hasAnnouncedRecycleQuest) return;
     if (this.moneySystem.money < GAME_CONFIG.recycleQuestUnlockMoney) return;
@@ -403,7 +441,7 @@ export default class PlayScene extends Phaser.Scene {
     if (this.sunisuniNpc) {
       this.sunisuniNpc.setVisible(true);
       this.sunisuniNpc.setActive(true);
-      this.setSunisuniSickPose();
+      this.setSunisuniWaitingPose();
       this.setQuestMarker("sunisuniQuest", this.sunisuniNpc, "!");
       this.playSunisuniEffect("sweat_drop", this.sunisuniNpc.x + 28, this.sunisuniNpc.y - 42);
       this.showSpeechBubble(this.sunisuniNpc, "아우... 배야...", 10000);
@@ -567,8 +605,8 @@ export default class PlayScene extends Phaser.Scene {
   createJjookQuestObjects() {
     if (!this.jjookNpc) {
       const { x, y } = GAME_CONFIG.jjookSpawn;
-      this.jjookNpc = this.add.image(x, y, "jjook_npc");
-      this.jjookNpc.setDisplaySize(48, 96);
+      this.jjookNpc = this.add.sprite(x, y, NPC_TEXTURES.jjook.down, 1);
+      this.setNpcDirectionTexture(this.jjookNpc, "jjook", "down", false);
       this.jjookNpc.setDepth(4.2);
       this.jjookNpc.setInteractive({ useHandCursor: true });
       this.jjookNpc.on("pointerdown", (pointer) => {
@@ -611,7 +649,20 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createSunisuniAnimations() {
-    ["sunisuni_front", "sunisuni_back", "sunisuni_left", "sunisuni_right", "sunisuni_sick", "sunisuni_recovered"].forEach((textureKey) => {
+    [
+      "sunisuni_walk_down",
+      "sunisuni_walk_up",
+      "sunisuni_walk_left",
+      "sunisuni_walk_right",
+      "yeobi_walk_down",
+      "yeobi_walk_up",
+      "yeobi_walk_left",
+      "yeobi_walk_right",
+      "jjook_walk_down",
+      "jjook_walk_up",
+      "jjook_walk_left",
+      "jjook_walk_right",
+    ].forEach((textureKey) => {
       this.textures.get(textureKey)?.setFilter(Phaser.Textures.FilterMode.LINEAR);
     });
     ["hospital_staff", "hospital_doctor", "chemist", "sunisuni_bench", "sunisuni_tree"].forEach((textureKey) => {
@@ -619,10 +670,6 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     const configs = [
-      ["sunisuni_walk_down", "sunisuni_front"],
-      ["sunisuni_walk_up", "sunisuni_back"],
-      ["sunisuni_walk_left", "sunisuni_left"],
-      ["sunisuni_walk_right", "sunisuni_right"],
       ["sweat_drop", "sweat_effect"],
       ["sunisuni_star", "star_effect"],
       ["sunisuni_heart", "heart_effect"],
@@ -640,7 +687,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createSunisuniNpc() {
-    if (!this.textures.exists("sunisuni_front")) return;
+    if (!this.textures.exists(NPC_TEXTURES.sunisuni.down)) return;
 
     if (this.textures.exists("sunisuni_tree")) {
       const tree = this.add.image(GAME_CONFIG.sunisuniTree.x, GAME_CONFIG.sunisuniTree.y, "sunisuni_tree");
@@ -654,8 +701,8 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     const { x, y } = GAME_CONFIG.sunisuniSpawn;
-    this.sunisuniNpc = this.add.sprite(x, y, this.textures.exists("sunisuni_sick") ? "sunisuni_sick" : "sunisuni_front");
-    this.setSunisuniSickPose();
+    this.sunisuniNpc = this.add.sprite(x, y, NPC_TEXTURES.sunisuni.down, 1);
+    this.setSunisuniWaitingPose();
     this.sunisuniNpc.setDepth(4.15);
     this.sunisuniNpc.setVisible(false);
     this.sunisuniNpc.setActive(false);
@@ -667,19 +714,10 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  setSunisuniSickPose() {
+  setSunisuniWaitingPose() {
     if (!this.sunisuniNpc) return;
 
-    if (this.textures.exists("sunisuni_sick")) {
-      this.sunisuniNpc.setTexture("sunisuni_sick");
-      this.sunisuniNpc.setDisplaySize(82, 106);
-      this.sunisuniNpc.setOrigin(0.5, 0.92);
-      return;
-    }
-
-    this.sunisuniNpc.setTexture("sunisuni_front", 2);
-    this.sunisuniNpc.setDisplaySize(78, 104);
-    this.sunisuniNpc.setOrigin(0.5, 0.5);
+    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
   }
 
   handleVendingMachineInteraction() {
@@ -784,11 +822,8 @@ export default class PlayScene extends Phaser.Scene {
     const x = this.isBlockedSpawnPoint(fallbackX, fallbackY) ? this.playerStart.x + 72 : fallbackX;
     const y = fallbackY;
 
-    this.yebiNpc = this.add.image(x, y, "yebi_npc");
-    this.yebiNpc.setDisplaySize(
-      GAME_CONFIG.yebiNpcDisplaySize,
-      GAME_CONFIG.yebiNpcDisplaySize,
-    );
+    this.yebiNpc = this.add.sprite(x, y, NPC_TEXTURES.yeobi.down, 1);
+    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
     this.yebiNpc.setDepth(3.5);
     this.yebiNpc.setInteractive({ useHandCursor: true });
     this.yebiNpc.on("pointerdown", (pointer) => {
@@ -813,6 +848,7 @@ export default class PlayScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.yebiNpc);
     this.yebiNpc.setPosition(position.x, position.y);
     this.yebiNpc.setDepth(3.6);
+    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
     this.tweens.add({
       targets: this.yebiNpc,
       y: position.y - 5,
@@ -829,6 +865,8 @@ export default class PlayScene extends Phaser.Scene {
     const position = this.getYebiRecyclePosition();
     this.tweens.killTweensOf(this.yebiNpc);
     this.yebiNpc.setDepth(3.6);
+    const directionKey = this.getDirectionKeyFromVector(position.x - this.yebiNpc.x, position.y - this.yebiNpc.y);
+    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", directionKey, true);
     this.tweens.add({
       targets: this.yebiNpc,
       x: position.x,
@@ -836,6 +874,7 @@ export default class PlayScene extends Phaser.Scene {
       duration: 1600,
       ease: "Sine.easeInOut",
       onComplete: () => {
+        this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
         this.tweens.add({
           targets: this.yebiNpc,
           y: position.y - 5,
@@ -1362,9 +1401,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestState = "going_hospital";
     this.clearQuestMarker("sunisuniQuest");
     this.setQuestMarker("sunisuniHospital", this.sunisuniNpc, "!");
-    this.sunisuniNpc.setTexture("sunisuni_front", 2);
-    this.sunisuniNpc.setDisplaySize(78, 104);
-    this.sunisuniNpc.setOrigin(0.5, 0.5);
+    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
     this.showQuestToast("병원으로 가요.");
     this.showSpeechBubble(this.sunisuniNpc, "고마워... 같이 와줘서 마음이 놓여...", 4200);
   }
@@ -1660,9 +1697,7 @@ export default class PlayScene extends Phaser.Scene {
     this.showFloatingItem("bacchus_item", this.player.x + 28, this.player.y - 68, 58);
     this.updateBacchusButton();
     if (this.sunisuniNpc?.active) {
-      this.sunisuniNpc.setTexture("sunisuni_front", 2);
-      this.sunisuniNpc.setDisplaySize(78, 104);
-      this.sunisuniNpc.setOrigin(0.5, 0.5);
+      this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
       this.playSunisuniEffect("sunisuni_heart", this.sunisuniNpc.x, this.sunisuniNpc.y - 48);
     }
     this.dialogueSystem.start([
@@ -1796,8 +1831,7 @@ export default class PlayScene extends Phaser.Scene {
       this.showSpeechBubble(this.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
     }
     if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
-      this.sunisuniNpc.stop();
-      this.sunisuniNpc.setFrame(2);
+      this.stopNpcWalk(this.sunisuniNpc, "sunisuni");
       return;
     }
 
@@ -1813,29 +1847,28 @@ export default class PlayScene extends Phaser.Scene {
   updateSunisuniDirection(moveX, moveY) {
     if (!this.sunisuniNpc?.active) return;
 
-    let animKey = "sunisuni_walk_down";
-    if (Math.abs(moveX) > Math.abs(moveY)) {
-      animKey = moveX < 0 ? "sunisuni_walk_left" : "sunisuni_walk_right";
-    } else if (moveY < 0) {
-      animKey = "sunisuni_walk_up";
-    }
-
-    if (this.sunisuniNpc.anims.currentAnim?.key !== animKey) {
-      this.sunisuniNpc.play(animKey, true);
-    }
+    const directionKey = this.getDirectionKeyFromVector(moveX, moveY, this.sunisuniNpc.getData("directionKey") || "down");
+    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", directionKey, true);
   }
 
   updateJjookFollower() {
     if (!this.isJjookFollowActive || !this.jjookNpc || !this.player) return;
 
     const distance = Phaser.Math.Distance.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
-    if (distance <= 88) return;
+    if (distance <= 88) {
+      this.stopNpcWalk(this.jjookNpc, "jjook");
+      return;
+    }
 
     const followSpeed = this.isSpeedBuffActive ? 118 * GAME_CONFIG.speedBuffMultiplier : 118;
     const step = (this.game.loop.delta / 1000) * followSpeed;
     const angle = Phaser.Math.Angle.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
-    this.jjookNpc.x += Math.cos(angle) * Math.min(step, distance - 88);
-    this.jjookNpc.y += Math.sin(angle) * Math.min(step, distance - 88);
+    const moveX = Math.cos(angle) * Math.min(step, distance - 88);
+    const moveY = Math.sin(angle) * Math.min(step, distance - 88);
+    this.jjookNpc.x += moveX;
+    this.jjookNpc.y += moveY;
+    const directionKey = this.getDirectionKeyFromVector(moveX, moveY, this.jjookNpc.getData("directionKey") || "down");
+    this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
   }
 
   updatePlayerDirection(velocity) {
@@ -2768,10 +2801,8 @@ export default class PlayScene extends Phaser.Scene {
   sendSunisuniBackToBench() {
     if (!this.sunisuniNpc?.active) return;
 
-    const target = GAME_CONFIG.sunisuniBench;
-    this.sunisuniNpc.setTexture("sunisuni_front", 2);
-    this.sunisuniNpc.setDisplaySize(78, 104);
-    this.sunisuniNpc.setOrigin(0.5, 0.5);
+    const target = GAME_CONFIG.sunisuniSpawn;
+    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
     this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
 
     const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, target.x, target.y);
@@ -2795,15 +2826,7 @@ export default class PlayScene extends Phaser.Scene {
         previousY = this.sunisuniNpc.y;
       },
       onComplete: () => {
-        this.sunisuniNpc.stop();
-        if (this.textures.exists("sunisuni_recovered")) {
-          this.sunisuniNpc.setTexture("sunisuni_recovered");
-          this.sunisuniNpc.setDisplaySize(82, 106);
-          this.sunisuniNpc.setOrigin(0.5, 0.5);
-        } else {
-          this.sunisuniNpc.setTexture("sunisuni_front", 2);
-          this.sunisuniNpc.setOrigin(0.5, 0.5);
-        }
+        this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
         this.showSpeechBubble(this.sunisuniNpc, "많이 괜찮아졌어.", 2400);
       },
     });
@@ -2853,14 +2876,14 @@ export default class PlayScene extends Phaser.Scene {
       faceOnly = false,
     } = {},
   ) {
-    const npc = this.add.image(384, 220, "yebi_npc");
+    const npc = this.add.sprite(384, 220, NPC_TEXTURES.yeobi.down, 1);
     npc.setScrollFactor(0);
     const npcFinalScale = faceOnly ? 1.7 : 1;
     if (faceOnly) {
-      npc.setCrop(28, 0, 72, 60);
+      npc.setCrop(12, 0, 40, 48);
       npc.y = 224;
     } else {
-      npc.setDisplaySize(112, 112);
+      npc.setDisplaySize(112, 168);
     }
     npc.setDepth(50);
     npc.setAlpha(0);

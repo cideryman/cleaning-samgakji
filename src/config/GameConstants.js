@@ -39,7 +39,7 @@ export const GAME_CONFIG = {
   sunisuniSpeedMultiplier: 0.55,
   sunisuniFollowDistance: 72,
   sunisuniMaxDistance: 220,
-  sunisuniSpawn: { x: 520, y: 668 },
+  sunisuniSpawn: { x: 604, y: 668 },
   sunisuniBench: { x: 520, y: 650 },
   sunisuniTree: { x: 472, y: 588 },
   hospitalBuilding: { x: 300, y: 210 },
@@ -87,6 +87,48 @@ export const PLAYER_WALK_ANIMS = {
   left: "haenaem_walk_left_anim",
   right: "haenaem_walk_right_anim",
   up: "haenaem_walk_up_anim",
+};
+
+export const NPC_TEXTURES = {
+  yeobi: {
+    down: "yeobi_walk_down",
+    left: "yeobi_walk_left",
+    right: "yeobi_walk_right",
+    up: "yeobi_walk_up",
+  },
+  sunisuni: {
+    down: "sunisuni_walk_down",
+    left: "sunisuni_walk_left",
+    right: "sunisuni_walk_right",
+    up: "sunisuni_walk_up",
+  },
+  jjook: {
+    down: "jjook_walk_down",
+    left: "jjook_walk_left",
+    right: "jjook_walk_right",
+    up: "jjook_walk_up",
+  },
+};
+
+export const NPC_WALK_ANIMS = {
+  yeobi: {
+    down: "yeobi_walk_down_anim",
+    left: "yeobi_walk_left_anim",
+    right: "yeobi_walk_right_anim",
+    up: "yeobi_walk_up_anim",
+  },
+  sunisuni: {
+    down: "sunisuni_walk_down_anim",
+    left: "sunisuni_walk_left_anim",
+    right: "sunisuni_walk_right_anim",
+    up: "sunisuni_walk_up_anim",
+  },
+  jjook: {
+    down: "jjook_walk_down_anim",
+    left: "jjook_walk_left_anim",
+    right: "jjook_walk_right_anim",
+    up: "jjook_walk_up_anim",
+  },
 };
 
 export const TRASH_TEXTURES = {
