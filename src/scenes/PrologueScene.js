@@ -1,4 +1,5 @@
 import DialogueSystem from "../systems/DialogueSystem.js";
+import CheckpointStorage from "../systems/CheckpointStorage.js";
 import PortraitManager from "../systems/PortraitManager.js";
 
 const BACKGROUND_EDGE_COLORS = {
@@ -157,6 +158,7 @@ export default class PrologueScene extends Phaser.Scene {
       });
     }
     this.time.delayedCall(980, () => {
+      CheckpointStorage.savePrologueCompleted();
       this.cleanup();
       this.scene.start("PlayScene");
     });

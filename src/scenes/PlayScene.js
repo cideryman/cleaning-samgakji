@@ -10,6 +10,7 @@ import {
 } from "../config/GameConstants.js";
 import { StateManager } from "../config/SceneState.js";
 import CleaningSystem from "../systems/CleaningSystem.js";
+import CheckpointStorage from "../systems/CheckpointStorage.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
@@ -88,7 +89,7 @@ export default class PlayScene extends Phaser.Scene {
     this.isChapterComplete = false;
   }
 
-  create() {
+  create(data = {}) {
     this.resetRunState();
     document.body.classList.remove("start-screen");
 
@@ -223,10 +224,15 @@ export default class PlayScene extends Phaser.Scene {
     this.createInput();
     this.updateHud();
     this.updateCameraZoom();
+    const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
 
     this.physics.add.collider(this.player, this.walls);
     this.startChapterMusic();
-    this.time.delayedCall(800, () => this.showFirstGuide());
+    if (!restoredCheckpoint || this.restoredCheckpointId === "prologue_complete") {
+      this.time.delayedCall(800, () => this.showFirstGuide());
+    } else {
+      this.time.delayedCall(600, () => this.showQuestToast("저장 지점에서 이어합니다."));
+    }
   }
 
   resetRunState() {
@@ -304,6 +310,21 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+  }
+
+  restoreCheckpointIfRequested(data = {}) {
+    if (!data.loadCheckpoint) return false;
+
+    const checkpoint = CheckpointStorage.load();
+    const didRestore = CheckpointStorage.applyToScene(this, checkpoint);
+    if (!didRestore) {
+      this.showQuestToast("저장된 지점을 찾지 못했어요.");
+    }
+    return didRestore;
+  }
+
+  saveCheckpoint(checkpointId) {
+    CheckpointStorage.saveSceneCheckpoint(this, checkpointId);
   }
 
   update(time, delta) {
@@ -416,6 +437,7 @@ export default class PlayScene extends Phaser.Scene {
     this.setQuestMarker("recycleQuest", this.yebiNpc, "!");
     this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
     this.showSpeechBubble(this.yebiNpc, "분리수거장으로 와!", 10000);
+    this.saveCheckpoint("recycle_unlocked");
   }
 
   checkJjookQuestUnlock() {
@@ -429,6 +451,7 @@ export default class PlayScene extends Phaser.Scene {
     this.setQuestMarker("jjookQuest", this.jjookNpc, "?");
     this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
     this.showSpeechBubble(this.jjookNpc, "내 지갑 어디 갔지?", 10000);
+    this.saveCheckpoint("jjook_unlocked");
   }
 
   checkSunisuniQuestUnlock() {
@@ -447,6 +470,7 @@ export default class PlayScene extends Phaser.Scene {
       this.showSpeechBubble(this.sunisuniNpc, "아우... 배야...", 10000);
     }
     this.showQuestToast("수니수니가 배를 잡고 앉아 있어요!", 10000);
+    this.saveCheckpoint("sunisuni_found");
   }
 
   createMap() {
@@ -800,6 +824,7 @@ export default class PlayScene extends Phaser.Scene {
     this.setQuestMarker("jjookQuest", this.jjookNpc, "!");
     this.showQuestToast("갈색 지갑을 찾았어!");
     this.showSpeechBubble(this.player, "지갑 찾았어!");
+    this.saveCheckpoint("jjook_wallet_found");
   }
 
   checkWalletPickup() {
@@ -1050,9 +1075,10 @@ export default class PlayScene extends Phaser.Scene {
     this.updateHud();
   }
   
-    completeChapter1() {
+  completeChapter1() {
     if (this.isChapterComplete) return;
     this.isChapterComplete = true;
+    this.saveCheckpoint("chapter1_complete");
     this.dialogueSystem.start([
       { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney.toLocaleString()}원을 달성했습니다!` },
       { name: "알림", text: "다음 챕터로 이동합니다." }
@@ -1447,6 +1473,7 @@ export default class PlayScene extends Phaser.Scene {
       this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
       this.showQuestToast("병원으로 가요.");
       this.showSpeechBubble(this.sunisuniNpc, "고마워... 같이 와줘서 마음이 놓여...", 4200);
+      this.saveCheckpoint("sunisuni_escort");
     });
   }
 
@@ -1517,6 +1544,7 @@ export default class PlayScene extends Phaser.Scene {
     this.hasPrescription = true;
     this.sunisuniQuestState = "going_pharmacy";
     this.clearQuestMarker("sunisuniHospital");
+    this.saveCheckpoint("sunisuni_prescription");
     this.dialogueSystem.start([
       { name: "의사", portraitKey: "hospital_doctor", text: "잘 말했어요. 배가 아플 때는 이렇게 아픈 곳을 알려주면 됩니다." },
       { name: "의사", portraitKey: "hospital_doctor", text: "오늘은 처방전을 줄게요. 이 처방전을 가지고 약국으로 가세요." },
@@ -1740,6 +1768,7 @@ export default class PlayScene extends Phaser.Scene {
     this.showMoneyRewardAnimation?.(10000, { label: "수고비", icon: "./assets/ui/10000won.png" });
     this.showFloatingItem("bacchus_item", this.player.x + 28, this.player.y - 68, 58);
     this.updateBacchusButton();
+    this.saveCheckpoint("sunisuni_completed");
     if (this.sunisuniNpc?.active) {
       this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
       this.playSunisuniEffect("sunisuni_heart", this.sunisuniNpc.x, this.sunisuniNpc.y - 48);
@@ -2243,6 +2272,7 @@ export default class PlayScene extends Phaser.Scene {
     this.activateJjookFollower();
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
+    this.saveCheckpoint("jjook_completed");
     this.dialogueSystem?.start([
       { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!" },
     ]);
@@ -2260,6 +2290,7 @@ export default class PlayScene extends Phaser.Scene {
     this.activateJjookFollower();
     this.shouldCompleteJjookAfterDrink = false;
     this.selectedDrink = null;
+    this.saveCheckpoint("jjook_completed");
     this.dialogueSystem?.start([
       { name: "해냄이", portraitKey: "haenaem_touched", text: "잘 먹었어. 고마워! 시원하다!" },
       { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!" },
@@ -2466,6 +2497,7 @@ export default class PlayScene extends Phaser.Scene {
       { name: "여비", portraitKey: "yeobi", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
     ]);
     this.dropBroomUpgrade();
+    this.saveCheckpoint("recycle_completed");
   }
 
   dropBroomUpgrade() {
@@ -2523,6 +2555,7 @@ export default class PlayScene extends Phaser.Scene {
       this.showCleanFeedback(this.player.x, this.player.y);
       this.showUpgradePulse();
       this.updateHud();
+      this.saveCheckpoint("broom_upgraded");
     });
   }
 

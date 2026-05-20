@@ -87,6 +87,7 @@ export default class QuestManager {
     this.scene.showQuestToast?.("\uC0C8 \uD018\uC2A4\uD2B8: \uCEA0 20\uAC1C \uBAA8\uC73C\uAE30");
     this.scene.playItemPickupSound?.();
     this.scene.walkYebiToRecyclingCenter?.();
+    this.scene.saveCheckpoint?.("can_started");
   }
 
   updateQuestProgress(canCount = 1) {
@@ -123,6 +124,7 @@ export default class QuestManager {
     }
     this.hideQuestGaugeWithPoof();
     this.scene.clearQuestMarker?.("canQuest");
+    this.scene.saveCheckpoint?.("can_completed");
 
     this.scene.time.delayedCall(180, () => {
       this.scene.dialogueSystem?.start([
@@ -153,6 +155,7 @@ export default class QuestManager {
     this.updateUI();
     this.scene.showQuestToast?.("\uBD84\uB9AC\uC218\uAC70 \uD018\uC2A4\uD2B8 \uC2DC\uC791!");
     this.scene.playItemPickupSound?.();
+    this.scene.saveCheckpoint?.("recycle_started");
   }
 
   depositRecycleItem(type) {
