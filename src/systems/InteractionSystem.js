@@ -10,6 +10,11 @@ export default class InteractionSystem {
     const scene = this.scene;
     if (!scene.stateManager?.canInteract()) return;
 
+    if (scene.hasTrashInSweepRange()) {
+      scene.trySweep();
+      return;
+    }
+
     if (scene.tryDepositNearestRecycleBin()) return;
 
     if (this.isPlayerNearHospitalDoor() && !scene.isInDialogue) {
@@ -24,11 +29,6 @@ export default class InteractionSystem {
 
     if (this.shouldPrioritizeSunisuniDialogue()) {
       scene.handleSunisuniInteraction();
-      return;
-    }
-
-    if (scene.hasTrashInSweepRange()) {
-      scene.trySweep();
       return;
     }
 

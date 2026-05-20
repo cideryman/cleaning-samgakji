@@ -3,15 +3,32 @@
 export default class UIManager {
   constructor(scene) {
     this.scene = scene;
+    this.questToastQueue = [];
+    this.isShowingQuestToast = false;
   }
 
   showQuestToast(message, duration = 1700) {
+    if (!message) return;
+
+    this.questToastQueue.push({ message, duration });
+    this.showNextQuestToast();
+  }
+
+  showNextQuestToast() {
+    if (this.isShowingQuestToast || this.questToastQueue.length === 0) return;
+
+    this.isShowingQuestToast = true;
+    const { message, duration } = this.questToastQueue.shift();
     const toast = document.createElement("div");
     toast.className = "quest-toast";
     toast.textContent = message;
     toast.style.setProperty("--toast-duration", `${duration}ms`);
     document.querySelector(".game-stage")?.appendChild(toast);
-    window.setTimeout(() => toast.remove(), duration + 80);
+    window.setTimeout(() => {
+      toast.remove();
+      this.isShowingQuestToast = false;
+      this.showNextQuestToast();
+    }, duration + 120);
   }
 
   showSpeechBubble(target, message, duration = 1050) {

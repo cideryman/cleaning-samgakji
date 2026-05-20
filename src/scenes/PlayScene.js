@@ -865,25 +865,65 @@ export default class PlayScene extends Phaser.Scene {
     const position = this.getYebiRecyclePosition();
     this.tweens.killTweensOf(this.yebiNpc);
     this.yebiNpc.setDepth(3.6);
-    const directionKey = this.getDirectionKeyFromVector(position.x - this.yebiNpc.x, position.y - this.yebiNpc.y);
+    const path = this.getYebiPathToRecyclingCenter(position);
+    this.walkYebiAlongPath(path, 0);
+  }
+
+  getYebiPathToRecyclingCenter(target) {
+    const startX = this.yebiNpc?.x ?? this.playerStart.x;
+    const startY = this.yebiNpc?.y ?? this.playerStart.y;
+    const upperLaneY = Math.min(startY - 70, GAME_CONFIG.vendingMachine.y - 118);
+
+    return [
+      { x: startX + 130, y: upperLaneY },
+      { x: GAME_CONFIG.vendingMachine.x - 145, y: upperLaneY },
+      { x: GAME_CONFIG.vendingMachine.x + 155, y: upperLaneY },
+      { x: target.x, y: target.y },
+    ];
+  }
+
+  walkYebiAlongPath(path, index) {
+    if (!this.yebiNpc || index >= path.length) {
+      this.startYebiIdleBob();
+      return;
+    }
+
+    const target = path[index];
+    const distance = Phaser.Math.Distance.Between(this.yebiNpc.x, this.yebiNpc.y, target.x, target.y);
+    if (distance < 4) {
+      this.walkYebiAlongPath(path, index + 1);
+      return;
+    }
+
+    const directionKey = this.getDirectionKeyFromVector(
+      target.x - this.yebiNpc.x,
+      target.y - this.yebiNpc.y,
+      this.yebiNpc.getData("directionKey") || "down",
+    );
     this.setNpcDirectionTexture(this.yebiNpc, "yeobi", directionKey, true);
+    const walkingSpeed = GAME_CONFIG.playerSpeed * 0.72;
     this.tweens.add({
       targets: this.yebiNpc,
-      x: position.x,
-      y: position.y,
-      duration: 1600,
+      x: target.x,
+      y: target.y,
+      duration: Math.max(420, (distance / walkingSpeed) * 1000),
+      ease: "Linear",
+      onComplete: () => this.walkYebiAlongPath(path, index + 1),
+    });
+  }
+
+  startYebiIdleBob() {
+    if (!this.yebiNpc) return;
+
+    const idleY = this.yebiNpc.y;
+    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
+    this.tweens.add({
+      targets: this.yebiNpc,
+      y: idleY - 5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
       ease: "Sine.easeInOut",
-      onComplete: () => {
-        this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
-        this.tweens.add({
-          targets: this.yebiNpc,
-          y: position.y - 5,
-          duration: 900,
-          yoyo: true,
-          repeat: -1,
-          ease: "Sine.easeInOut",
-        });
-      },
     });
   }
 
@@ -1805,8 +1845,8 @@ export default class PlayScene extends Phaser.Scene {
     
     // 대화창으로 첫 가이드 표시
     const dialogue = [
-      { name: "여비", portraitKey: "yeobi", text: "삼각지 청소를 도와주면 청소 보상을 줄게." },
-      { name: "알림", text: "쓰레기를 빗자루로 치우고 보상을 모아보세요." }
+      { name: "엄마", portraitKey: "mother_smile", text: "해냄아, 삼각지 청소를 도와주면 청소 보상을 받을 수 있대." },
+      { name: "엄마", portraitKey: "mother_calm", text: "쓰레기를 빗자루로 치우고 스스로 보상을 모아보자." },
     ];
     this.dialogueSystem.start(dialogue, () => this.showYebiQuestDialogue());
   }
