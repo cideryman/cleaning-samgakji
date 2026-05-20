@@ -1438,12 +1438,16 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   startSunisuniEscort() {
-    this.sunisuniQuestState = "going_hospital";
-    this.clearQuestMarker("sunisuniQuest");
-    this.setQuestMarker("sunisuniHospital", this.sunisuniNpc, "!");
-    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
-    this.showQuestToast("병원으로 가요.");
-    this.showSpeechBubble(this.sunisuniNpc, "고마워... 같이 와줘서 마음이 놓여...", 4200);
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "같이 가요. 천천히 병원까지 같이 걸어갈게요." },
+    ], () => {
+      this.sunisuniQuestState = "going_hospital";
+      this.clearQuestMarker("sunisuniQuest");
+      this.setQuestMarker("sunisuniHospital", this.sunisuniNpc, "!");
+      this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
+      this.showQuestToast("병원으로 가요.");
+      this.showSpeechBubble(this.sunisuniNpc, "고마워... 같이 와줘서 마음이 놓여...", 4200);
+    });
   }
 
   handleHospitalInteraction() {
@@ -1806,6 +1810,7 @@ export default class PlayScene extends Phaser.Scene {
               label: "예",
               onSelect: () => {
                 this.dialogueSystem.start([
+                  { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어요. 캔을 모아볼게요!" },
                   { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
                 ], () => this.questManager.startQuest());
               },
@@ -1847,6 +1852,7 @@ export default class PlayScene extends Phaser.Scene {
     const dialogue = [
       { name: "엄마", portraitKey: "mother_smile", text: "해냄아, 삼각지 청소를 도와주면 청소 보상을 받을 수 있대." },
       { name: "엄마", portraitKey: "mother_calm", text: "쓰레기를 빗자루로 치우고 스스로 보상을 모아보자." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어. 내가 직접 깨끗하게 치워볼게!" },
     ];
     this.dialogueSystem.start(dialogue, () => this.showYebiQuestDialogue());
   }
