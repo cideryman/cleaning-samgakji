@@ -215,8 +215,6 @@ export default class PlayScene extends Phaser.Scene {
 
     this.createMap();
     this.createSunisuniAnimations();
-    this.createHospitalAndPharmacy();
-    this.createLargeBenchOverlays();
     this.createRecyclingCenter();
     this.createYebiNpc();
     this.createSunisuniNpc();
@@ -521,6 +519,7 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     this.applyTiledObjects(map);
+    this.createTiledMapObjects(map);
     return true;
   }
 
@@ -559,17 +558,49 @@ export default class PlayScene extends Phaser.Scene {
     this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
   }
 
-  createLargeBenchOverlays() {
-    const benchPositions = [
-      [585, 592],
-      [990, 374],
-    ];
+  getTiledObjectProperties(object) {
+    return Object.fromEntries((object.properties || []).map((property) => [property.name, property.value]));
+  }
 
-    benchPositions.forEach(([x, y]) => {
-      const bench = this.add.image(x, y, "bench_tile");
-      bench.setDisplaySize(96, 54);
-      bench.setDepth(2.5);
+  createTiledMapObjects(map) {
+    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.mapObjectsLayer);
+    if (!objectLayer) return;
+
+    objectLayer.objects.forEach((object) => {
+      const props = this.getTiledObjectProperties(object);
+      const textureKey = props.texture || object.type || object.name;
+      if (!textureKey || !this.textures.exists(textureKey)) return;
+
+      const originX = Number(props.originX ?? 0.5);
+      const originY = Number(props.originY ?? 1);
+      const displayWidth = Number(props.displayWidth || object.width || 96);
+      const displayHeight = Number(props.displayHeight || object.height || 96);
+      const x = object.x + (object.width || displayWidth) * originX;
+      const y = object.y + (object.height || displayHeight) * originY;
+      const image = this.add.image(x, y, textureKey);
+
+      image.setOrigin(originX, originY);
+      image.setDisplaySize(displayWidth, displayHeight);
+      image.setDepth(Number(props.depth ?? y / 32));
+      if (props.name) image.setName(props.name);
+
+      if (props.collides) {
+        this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight);
+      }
     });
+  }
+
+  addMapObjectCollider(object, props, x, y, displayWidth, displayHeight) {
+    if (!this.walls?.add) return;
+
+    const width = Number(props.collisionWidth || displayWidth * 0.35);
+    const height = Number(props.collisionHeight || displayHeight * 0.18);
+    const offsetX = Number(props.collisionOffsetX || 0);
+    const offsetY = Number(props.collisionOffsetY || -height / 2);
+    const zone = this.add.zone(x + offsetX, y + offsetY, width, height);
+    this.physics.add.existing(zone, true);
+    zone.setName(`${object.name || props.texture || "map_object"}_collider`);
+    this.walls.add(zone);
   }
 
   createRecyclingCenter() {
@@ -652,28 +683,6 @@ export default class PlayScene extends Phaser.Scene {
 
   }
 
-  createHospitalAndPharmacy() {
-    if (this.textures.exists("hospital_building")) {
-      const hospital = this.add.image(
-        GAME_CONFIG.hospitalBuilding.x,
-        GAME_CONFIG.hospitalBuilding.y,
-        "hospital_building",
-      );
-      hospital.setDisplaySize(132, 100);
-      hospital.setDepth(2.8);
-    }
-
-    if (this.textures.exists("pharmacy_building")) {
-      const pharmacy = this.add.image(
-        GAME_CONFIG.pharmacyBuilding.x,
-        GAME_CONFIG.pharmacyBuilding.y,
-        "pharmacy_building",
-      );
-      pharmacy.setDisplaySize(112, 96);
-      pharmacy.setDepth(2.8);
-    }
-  }
-
   createSunisuniAnimations() {
     [
       "sunisuni_walk_down",
@@ -691,7 +700,7 @@ export default class PlayScene extends Phaser.Scene {
     ].forEach((textureKey) => {
       this.textures.get(textureKey)?.setFilter(Phaser.Textures.FilterMode.LINEAR);
     });
-    ["hospital_staff", "hospital_doctor", "chemist", "sunisuni_bench", "sunisuni_tree"].forEach((textureKey) => {
+    ["hospital_staff", "hospital_doctor", "chemist", "sunisuni_bench", "sunisuni_tree", "clothing_store"].forEach((textureKey) => {
       this.textures.get(textureKey)?.setFilter(Phaser.Textures.FilterMode.LINEAR);
     });
 
@@ -714,17 +723,6 @@ export default class PlayScene extends Phaser.Scene {
 
   createSunisuniNpc() {
     if (!this.textures.exists(NPC_TEXTURES.sunisuni.down)) return;
-
-    if (this.textures.exists("sunisuni_tree")) {
-      const tree = this.add.image(GAME_CONFIG.sunisuniTree.x, GAME_CONFIG.sunisuniTree.y, "sunisuni_tree");
-      tree.setDisplaySize(150, 176);
-      tree.setDepth(2.6);
-    }
-    if (this.textures.exists("sunisuni_bench")) {
-      const bench = this.add.image(GAME_CONFIG.sunisuniBench.x, GAME_CONFIG.sunisuniBench.y + 20, "sunisuni_bench");
-      bench.setDisplaySize(136, 76);
-      bench.setDepth(2.7);
-    }
 
     const { x, y } = GAME_CONFIG.sunisuniSpawn;
     this.sunisuniNpc = this.add.sprite(x, y, NPC_TEXTURES.sunisuni.down, 1);

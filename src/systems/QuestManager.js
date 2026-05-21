@@ -3,7 +3,7 @@ export default class QuestManager {
     this.scene = scene;
     this.canQuest = {
       id: "collect_cans",
-      name: "\uCEA0 \uBAA8\uC73C\uAE30",
+      name: "\uCE94 \uBAA8\uC73C\uAE30",
       type: "collect_cans",
       target: 20,
       current: 0,

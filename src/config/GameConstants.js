@@ -39,13 +39,13 @@ export const GAME_CONFIG = {
   sunisuniSpeedMultiplier: 0.55,
   sunisuniFollowDistance: 72,
   sunisuniMaxDistance: 220,
-  sunisuniSpawn: { x: 604, y: 668 },
-  sunisuniBench: { x: 520, y: 650 },
-  sunisuniTree: { x: 472, y: 588 },
-  hospitalBuilding: { x: 300, y: 210 },
-  pharmacyBuilding: { x: 505, y: 210 },
-  hospitalDoor: { x: 300, y: 260 },
-  pharmacyDoor: { x: 505, y: 260 },
+  sunisuniSpawn: { x: 1198, y: 690 },
+  sunisuniBench: { x: 1202, y: 692 },
+  sunisuniTree: { x: 1135, y: 646 },
+  hospitalBuilding: { x: 152, y: 144 },
+  pharmacyBuilding: { x: 353, y: 144 },
+  hospitalDoor: { x: 152, y: 172 },
+  pharmacyDoor: { x: 353, y: 172 },
   bacchusDurationMs: 60000,
   bacchusSweepMultiplier: 2,
   chapter1TargetMoney: 100000,
@@ -73,6 +73,7 @@ export const TILED_MAP_CONFIG = {
   visibleLayers: ["ground", "objects"],
   collisionLayer: "collision",
   objectLayer: "spawn",
+  mapObjectsLayer: "map_objects",
 };
 
 export const PLAYER_TEXTURES = {

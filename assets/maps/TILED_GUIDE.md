@@ -24,6 +24,7 @@ row 1: grass, grass-light, grass-dark, grass-edge-left, grass-edge-right, path, 
 row 2: sidewalk, sidewalk-diagonal, road, road-edge, building-roof, building-wall, garden, flower-bed
 row 3: tree-top, tree-trunk, bush, small-tree, fence-horizontal, fence-vertical, water-drain, stairs
 row 4: bench, green-parasol, parasol-top, parasol-pole
+row 5: road-centerline, crosswalk, road-plain
 ```
 
 Recommended layer names:
@@ -31,6 +32,7 @@ Recommended layer names:
 - `ground`: floor, grass, roads, paths
 - `objects`: visual objects that do not block movement
 - `collision`: invisible blocking tiles
+- `map_objects`: large image objects such as buildings, benches, trees, and vending machines
 - `spawn`: object layer for important points
 
 The game recognizes these object names or types in the `spawn` object layer:
@@ -46,6 +48,19 @@ Recommended object naming rules:
 - Use multiple `slime_spawn` objects if you want more possible spawn locations.
 - Use multiple `flower` objects to control exactly where the clear flowers appear.
 - Keep the `collision` layer simple; only place blockers where the player must not walk.
+
+Large map objects:
+
+For buildings and large props, place an object on the `map_objects` layer and add these custom properties:
+
+- `texture`: Phaser texture key, such as `hospital_building`, `pharmacy_building`, `clothing_store`, `sunisuni_tree`, or `sunisuni_bench`
+- `displayWidth`: rendered width in pixels
+- `displayHeight`: rendered height in pixels
+- `originX`: usually `0.5`
+- `originY`: usually `1`
+- `depth`: draw order. Higher values appear above lower values.
+
+Keep big buildings out of the tileset unless they need to repeat as small 32px tiles. The tileset is best for ground, roads, paths, and small repeated decorations.
 
 Tree placement:
 
