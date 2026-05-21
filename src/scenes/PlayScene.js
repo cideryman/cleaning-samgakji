@@ -85,6 +85,8 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.objectWalls = null;
+    this.objectCollisionRects = [];
     // 챕터 및 경제 시스템 관련
     this.currentChapter = 1;
     this.isChapterComplete = false;
@@ -227,6 +229,9 @@ export default class PlayScene extends Phaser.Scene {
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
 
     this.physics.add.collider(this.player, this.walls);
+    if (this.objectWalls) {
+      this.physics.add.collider(this.player, this.objectWalls);
+    }
     this.startChapterMusic();
     if (!restoredCheckpoint || this.restoredCheckpointId === "prologue_complete") {
       this.time.delayedCall(800, () => this.showFirstGuide());
@@ -310,6 +315,8 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.objectWalls = null;
+    this.objectCollisionRects = [];
   }
 
   restoreCheckpointIfRequested(data = {}) {
@@ -337,9 +344,44 @@ export default class PlayScene extends Phaser.Scene {
     this.updateJjookFollower();
     this.updateSunisuniFollower();
     this.updateQuestMarkers();
+    this.updateWorldDepths();
     if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
     }
+  }
+
+  getWorldDepth(y, offset = 0) {
+    return y / 32 + offset;
+  }
+
+  getDepthSortY(target) {
+    if (!target) return 0;
+
+    const manualSortY = target.getData?.("depthSortY");
+    if (Number.isFinite(manualSortY)) return manualSortY;
+
+    const displayHeight = target.displayHeight || Math.abs(target.height * (target.scaleY || 1)) || 0;
+    const originY = Number.isFinite(target.originY) ? target.originY : 0.5;
+    return target.y + displayHeight * (1 - originY);
+  }
+
+  setDepthFromY(target, offset = 0) {
+    if (!target?.active && target !== this.player) return;
+    target.setDepth(this.getWorldDepth(this.getDepthSortY(target), offset));
+  }
+
+  updateWorldDepths() {
+    this.setDepthFromY(this.player, 0.05);
+    this.setDepthFromY(this.yebiNpc, 0.04);
+    this.setDepthFromY(this.jjookNpc, 0.04);
+    this.setDepthFromY(this.sunisuniNpc, 0.04);
+    this.setDepthFromY(this.walletItem, 0.03);
+
+    this.trashSlimes?.children?.iterate((trash) => {
+      if (trash?.active && !trash.getData("cleaned")) {
+        this.setDepthFromY(trash, -0.05);
+      }
+    });
   }
 
   setQuestMarker(key, target, symbol = "!") {
@@ -474,6 +516,9 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createMap() {
+    this.objectWalls = this.physics.add.staticGroup();
+    this.objectCollisionRects = [];
+
     if (this.createTiledMap()) {
       return;
     }
@@ -581,26 +626,88 @@ export default class PlayScene extends Phaser.Scene {
 
       image.setOrigin(originX, originY);
       image.setDisplaySize(displayWidth, displayHeight);
-      image.setDepth(Number(props.depth ?? y / 32));
+      const sortY = Number(props.sortY ?? this.getDepthSortY(image));
+      image.setData("depthSortY", sortY);
+      image.setDepth(this.getWorldDepth(sortY, Number(props.depthOffset ?? 0)));
       if (props.name) image.setName(props.name);
 
-      if (props.collides) {
-        this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight);
+      if (this.shouldMapObjectCollide(object, props, textureKey)) {
+        this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey);
       }
     });
   }
 
-  addMapObjectCollider(object, props, x, y, displayWidth, displayHeight) {
-    if (!this.walls?.add) return;
+  shouldMapObjectCollide(object, props, textureKey) {
+    if (props.collides === true || props.collides === "true") return true;
 
-    const width = Number(props.collisionWidth || displayWidth * 0.35);
-    const height = Number(props.collisionHeight || displayHeight * 0.18);
-    const offsetX = Number(props.collisionOffsetX || 0);
-    const offsetY = Number(props.collisionOffsetY || -height / 2);
-    const zone = this.add.zone(x + offsetX, y + offsetY, width, height);
+    const name = `${object.name || ""} ${textureKey || ""}`.toLowerCase();
+    return ["tree", "bench", "building", "store", "pharmacy", "hospital"].some((keyword) => name.includes(keyword));
+  }
+
+  addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey) {
+    const defaults = this.getMapObjectColliderDefaults(object, textureKey, displayWidth, displayHeight);
+    const width = Number(props.collisionWidth ?? defaults.width);
+    const height = Number(props.collisionHeight ?? defaults.height);
+    const offsetX = Number(props.collisionOffsetX ?? defaults.offsetX);
+    const offsetY = Number(props.collisionOffsetY ?? defaults.offsetY);
+
+    this.addObjectCollider(
+      `${object.name || props.texture || "map_object"}_collider`,
+      x + offsetX,
+      y + offsetY,
+      width,
+      height,
+    );
+  }
+
+  getMapObjectColliderDefaults(object, textureKey, displayWidth, displayHeight) {
+    const name = `${object.name || ""} ${textureKey || ""}`.toLowerCase();
+
+    if (name.includes("tree")) {
+      const height = Math.max(24, displayHeight * 0.16);
+      return {
+        width: Math.max(32, displayWidth * 0.25),
+        height,
+        offsetX: 0,
+        offsetY: -height * 0.65,
+      };
+    }
+
+    if (name.includes("bench")) {
+      const height = Math.max(26, displayHeight * 0.36);
+      return {
+        width: Math.max(82, displayWidth * 0.86),
+        height,
+        offsetX: 0,
+        offsetY: -height * 0.55,
+      };
+    }
+
+    const height = Math.max(32, displayHeight * 0.28);
+    return {
+      width: Math.max(96, displayWidth * 0.82),
+      height,
+      offsetX: 0,
+      offsetY: -height * 0.5,
+    };
+  }
+
+  addObjectCollider(name, x, y, width, height) {
+    if (!this.objectWalls) {
+      this.objectWalls = this.physics.add.staticGroup();
+    }
+
+    const zone = this.add.zone(x, y, width, height);
     this.physics.add.existing(zone, true);
-    zone.setName(`${object.name || props.texture || "map_object"}_collider`);
-    this.walls.add(zone);
+    zone.setName(name);
+    this.objectWalls.add(zone);
+    this.objectCollisionRects.push(new Phaser.Geom.Rectangle(
+      x - width / 2,
+      y - height / 2,
+      width,
+      height,
+    ));
+    return zone;
   }
 
   createRecyclingCenter() {
@@ -613,7 +720,8 @@ export default class PlayScene extends Phaser.Scene {
       "vending_machine_full",
     );
     vendingMachine.setDisplaySize(96, 118);
-    vendingMachine.setDepth(3.2);
+    vendingMachine.setData("depthSortY", this.getDepthSortY(vendingMachine));
+    vendingMachine.setDepth(this.getWorldDepth(vendingMachine.getData("depthSortY")));
     vendingMachine.setInteractive({ useHandCursor: true });
     vendingMachine.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
@@ -621,13 +729,21 @@ export default class PlayScene extends Phaser.Scene {
       this.handleVendingMachineInteraction();
     });
     this.vendingMachine = vendingMachine;
+    this.addObjectCollider(
+      "vending_machine_collider",
+      GAME_CONFIG.vendingMachine.x,
+      GAME_CONFIG.vendingMachine.y + 20,
+      76,
+      48,
+    );
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
       const x = center.x + binConfig.xOffset;
       const y = center.y + binConfig.yOffset + 76;
       const bin = this.add.image(x, y, binConfig.texture);
       bin.setDisplaySize(70, 78);
-      bin.setDepth(3.4);
+      bin.setData("depthSortY", this.getDepthSortY(bin));
+      bin.setDepth(this.getWorldDepth(bin.getData("depthSortY")));
 
       const label = this.add.text(x, y + 58, binConfig.label, {
         fontFamily: "Arial",
@@ -638,17 +754,18 @@ export default class PlayScene extends Phaser.Scene {
         padding: { left: 5, right: 5, top: 2, bottom: 2 },
       });
       label.setOrigin(0.5);
-      label.setDepth(3.5);
+      label.setDepth(bin.depth + 0.04);
 
       const zone = this.add.zone(
         x,
-        y + 28,
-        GAME_CONFIG.recycleBinHitboxWidth,
-        GAME_CONFIG.recycleBinHitboxHeight,
+        y + 60,
+        GAME_CONFIG.recycleBinHitboxWidth + 18,
+        GAME_CONFIG.recycleBinHitboxHeight + 28,
       );
       this.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
       this.recycleBins.push({ ...binConfig, x, y, bin, label, zone });
+      this.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 20, 54, 34);
     });
   }
 
@@ -986,8 +1103,6 @@ export default class PlayScene extends Phaser.Scene {
     this.addTiledRect(1030, 418, 310, 132, "garden_tile");
     this.addTiledRect(1028, 496, 286, 110, "grass_tile");
 
-    this.createTrees();
-
     this.walls = this.physics.add.staticGroup();
     this.addWall(768, 30, GAME_CONFIG.worldWidth, 60);
     this.addWall(768, 930, GAME_CONFIG.worldWidth, 60);
@@ -1011,27 +1126,6 @@ export default class PlayScene extends Phaser.Scene {
     const tile = this.add.tileSprite(x, y, width, height, texture);
     tile.setAngle(angle);
     return tile;
-  }
-
-  createTrees() {
-    const treePositions = [
-      [180, 205],
-      [225, 655],
-      [402, 566],
-      [516, 246],
-      [744, 210],
-      [806, 520],
-      [930, 370],
-      [1165, 330],
-      [1224, 560],
-      [690, 705],
-    ];
-
-    treePositions.forEach(([x, y]) => {
-      this.add.circle(x, y, 34, 0x5f8b57);
-      this.add.circle(x - 16, y + 8, 24, 0x4f7b4c);
-      this.add.rectangle(x, y + 32, 12, 24, 0x8d5a24);
-    });
   }
 
   createPlayer() {
@@ -1092,7 +1186,8 @@ export default class PlayScene extends Phaser.Scene {
 
   createRandomSlimePositions() {
     if (this.slimeSpawnPoints.length > 0) {
-      const positions = Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints]);
+      const positions = Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints])
+        .filter(([x, y]) => !this.isBlockedSpawnPoint(x, y));
       if (positions.length >= GAME_CONFIG.waveSize) {
         return positions.slice(0, GAME_CONFIG.waveSize);
       }
@@ -1132,12 +1227,15 @@ export default class PlayScene extends Phaser.Scene {
       }
     }
 
-    while (positions.length < count) {
+    let fallbackAttempts = 0;
+    while (positions.length < count && fallbackAttempts < 300) {
+      fallbackAttempts += 1;
       const area = spawnAreas[Phaser.Math.Between(0, spawnAreas.length - 1)];
-      positions.push([
-        Phaser.Math.Between(area.left, area.right),
-        Phaser.Math.Between(area.top, area.bottom),
-      ]);
+      const x = Phaser.Math.Between(area.left, area.right);
+      const y = Phaser.Math.Between(area.top, area.bottom);
+      if (!this.isBlockedSpawnPoint(x, y)) {
+        positions.push([x, y]);
+      }
     }
 
     return positions;
@@ -1155,8 +1253,13 @@ export default class PlayScene extends Phaser.Scene {
       { left: 1446, right: 1490, top: 70, bottom: 890 },
     ];
 
-    return blockedAreas.some((area) => {
+    const isStaticAreaBlocked = blockedAreas.some((area) => {
       return x >= area.left && x <= area.right && y >= area.top && y <= area.bottom;
+    });
+    if (isStaticAreaBlocked) return true;
+
+    return (this.objectCollisionRects || []).some((rect) => {
+      return Phaser.Geom.Rectangle.Contains(rect, x, y);
     });
   }
 

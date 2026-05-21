@@ -49,7 +49,7 @@ export const GAME_CONFIG = {
   bacchusDurationMs: 60000,
   bacchusSweepMultiplier: 2,
   chapter1TargetMoney: 100000,
-  recyclingCenter: { x: 1210, y: 420 },
+  recyclingCenter: { x: 940, y: 545 },
   vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 685, y: 545 },
   walletSpawn: { x: 250, y: 735 },
