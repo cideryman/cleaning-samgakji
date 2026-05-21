@@ -1,0 +1,40 @@
+{
+  "dialogues": [
+    {
+      "id": "zzuk_clothes_start_001",
+      "name": "쭉쭉이",
+      "text": "해냄아, 서울 여행 준비는 잘 되고 있어?",
+      "audio": null,
+      "next": "zzuk_clothes_start_002"
+    },
+    {
+      "id": "zzuk_clothes_start_002",
+      "name": "쭉쭉이",
+      "text": "우리 여행 가기 전에 옷 사러 갈래?",
+      "audio": null,
+      "choices": [
+        {
+          "label": "응! 같이 가자!",
+          "next": "zzuk_clothes_yes",
+          "action": "START_CLOTHES_SHOP"
+        },
+        {
+          "label": "아직 고민중이야",
+          "next": "zzuk_clothes_no"
+        }
+      ]
+    },
+    {
+      "id": "zzuk_clothes_no",
+      "name": "쭉쭉이",
+      "text": "그래! 나중에 생각나면 다시 말해줘.",
+      "audio": null
+    },
+    {
+      "id": "zzuk_clothes_yes",
+      "name": "쭉쭉이",
+      "text": "좋아! 그럼 옷가게로 가보자.",
+      "audio": null
+    }
+  ]
+}

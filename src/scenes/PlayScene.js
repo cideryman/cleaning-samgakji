@@ -11,6 +11,7 @@ import {
 import { StateManager } from "../config/SceneState.js";
 import CleaningSystem from "../systems/CleaningSystem.js";
 import CheckpointStorage from "../systems/CheckpointStorage.js";
+import DialogueManager from "../systems/DialogueManager.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
@@ -173,6 +174,7 @@ export default class PlayScene extends Phaser.Scene {
     // ===== 시스템 초기화 =====
     this.stateManager = new StateManager();
     this.dialogueSystem = new DialogueSystem(this);
+    this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
     this.portraitManager = new PortraitManager(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);

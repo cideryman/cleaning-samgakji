@@ -128,6 +128,7 @@ export default class Preload extends Phaser.Scene {
     AUDIO_ASSETS.forEach((asset) => {
       this.load.audio(asset.key, asset.path);
     });
+    this.load.json("dialogues", "src/data/dialogues.json");
     this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
   }
 

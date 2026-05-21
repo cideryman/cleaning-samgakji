@@ -1,4 +1,5 @@
 import DialogueSystem from "../systems/DialogueSystem.js";
+import DialogueManager from "../systems/DialogueManager.js";
 import CheckpointStorage from "../systems/CheckpointStorage.js";
 import PortraitManager from "../systems/PortraitManager.js";
 
@@ -25,6 +26,7 @@ export default class PrologueScene extends Phaser.Scene {
     document.body.classList.add("start-screen");
     document.body.classList.add("prologue-scene-active");
     this.dialogueSystem = new DialogueSystem(this);
+    this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
     this.portraitManager = new PortraitManager(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
     this.createSkipButton();
