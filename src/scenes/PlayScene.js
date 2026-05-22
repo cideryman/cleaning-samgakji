@@ -2100,28 +2100,42 @@ export default class PlayScene extends Phaser.Scene {
     if (!this.travelPrepFanEl || !this.travelPrepHudEl) return;
     const items = Array.isArray(this.travelPrepItems) ? this.travelPrepItems : [];
     this.travelPrepFanEl.replaceChildren();
+    const useGridLayout = items.length > 5;
     this.travelPrepHudEl.classList.toggle("is-open", this.isTravelPrepFanOpen && items.length > 0);
+    this.travelPrepHudEl.classList.toggle("is-grid", useGridLayout);
+    this.travelPrepHudEl.classList.toggle("is-fan", !useGridLayout);
     this.travelPrepFanEl.setAttribute("aria-hidden", this.isTravelPrepFanOpen ? "false" : "true");
 
-    const maxPerRing = 6;
+    const maxGridColumns = 5;
     items.forEach((item, index) => {
-      const ring = Math.floor(index / maxPerRing);
-      const ringStart = ring * maxPerRing;
-      const ringCount = Math.min(maxPerRing, items.length - ringStart);
-      const ringIndex = index - ringStart;
-      const spread = ringCount <= 1 ? 0 : 82;
-      const startAngle = 220;
-      const angle = startAngle + (ringCount <= 1 ? 0 : (spread * ringIndex) / (ringCount - 1));
-      const distance = 92 + ring * 48;
-      const radians = Phaser.Math.DegToRad(angle);
-      const x = Math.cos(radians) * distance;
-      const y = Math.sin(radians) * distance;
+      let x = 0;
+      let y = 0;
+      let rotation = 0;
+
+      if (useGridLayout) {
+        const row = Math.floor(index / maxGridColumns);
+        const rows = Math.ceil(items.length / maxGridColumns);
+        const rowStart = row * maxGridColumns;
+        const rowCount = Math.min(maxGridColumns, items.length - rowStart);
+        const col = index - rowStart;
+        x = -16 - (rowCount - 1 - col) * 62;
+        y = -108 - (rows - 1 - row) * 66;
+      } else {
+        const spread = items.length <= 1 ? 0 : 70;
+        const startAngle = items.length <= 1 ? 235 : 198;
+        const angle = startAngle + (items.length <= 1 ? 0 : (spread * index) / (items.length - 1));
+        const radians = Phaser.Math.DegToRad(angle);
+        x = Math.cos(radians) * 96;
+        y = Math.sin(radians) * 96;
+        rotation = angle - 238;
+      }
+
       const button = document.createElement("button");
       button.type = "button";
       button.className = "travel-prep-fan-item";
       button.style.setProperty("--fan-x", `${x.toFixed(1)}px`);
       button.style.setProperty("--fan-y", `${y.toFixed(1)}px`);
-      button.style.setProperty("--fan-rotation", `${(angle - 260).toFixed(1)}deg`);
+      button.style.setProperty("--fan-rotation", `${rotation.toFixed(1)}deg`);
       button.style.setProperty("--fan-delay", `${Math.min(index, 8) * 24}ms`);
       button.setAttribute("aria-label", `${item.label} 준비됨`);
       button.innerHTML = `

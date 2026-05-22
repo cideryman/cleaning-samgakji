@@ -581,6 +581,10 @@ body.prologue-scene-active #game {
     transform 210ms cubic-bezier(0.2, 0.82, 0.2, 1.18) var(--fan-delay, 0ms);
 }
 
+.travel-prep-hud.is-grid .travel-prep-fan-item {
+  border-radius: 12px;
+}
+
 .travel-prep-hud.is-open .travel-prep-fan-item {
   opacity: 1;
   pointer-events: auto;
@@ -598,25 +602,7 @@ body.prologue-scene-active #game {
 }
 
 .travel-prep-fan-item span {
-  position: absolute;
-  left: 50%;
-  right: auto;
-  bottom: -18px;
-  display: block;
-  max-width: 82px;
-  min-width: 0;
-  padding: 2px 6px;
-  border: 2px solid rgba(33, 53, 44, 0.78);
-  border-radius: 999px;
-  background: #ffffff;
-  color: #21352c;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1.1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transform: translateX(-50%) rotate(calc(var(--fan-rotation, 0deg) * -1));
+  display: none;
 }
 
 .bacchus-button:not([hidden]) {
