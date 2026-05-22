@@ -21,19 +21,30 @@ import SlimeSystem from "../systems/SlimeSystem.js";
 import UIManager from "../systems/UIManager.js";
 
 const CLOTHING_SHOP_ITEMS = [
-  { key: "hoodie_jacket", label: "기본 후드집업", category: "outer", price: 39000, texture: "shop_hoodie_jacket" },
-  { key: "denim_jacket", label: "청자켓", category: "outer", price: 69000, texture: "shop_denim_jacket" },
-  { key: "padded_jacket", label: "브랜드 패딩", category: "outer", price: 129000, texture: "shop_padded_jacket" },
   { key: "white_tshirt", label: "반팔 티셔츠", category: "top", price: 12000, texture: "shop_white_tshirt" },
   { key: "check_shirt", label: "체크 셔츠", category: "top", price: 25000, texture: "shop_check_shirt" },
   { key: "sweatshirt", label: "맨투맨", category: "top", price: 38000, texture: "shop_sweatshirt" },
   { key: "cotton_pants", label: "면바지", category: "pants", price: 29000, texture: "shop_cotton_pants" },
   { key: "jeans", label: "청바지", category: "pants", price: 45000, texture: "shop_jeans" },
   { key: "jogger_pants", label: "조거팬츠", category: "pants", price: 22000, texture: "shop_jogger_pants" },
+  { key: "hoodie_jacket", label: "기본 후드집업", category: "outer", price: 39000, texture: "shop_hoodie_jacket" },
+  { key: "denim_jacket", label: "청자켓", category: "outer", price: 69000, texture: "shop_denim_jacket" },
+  { key: "padded_jacket", label: "브랜드 패딩", category: "outer", price: 129000, texture: "shop_padded_jacket" },
   { key: "sneakers", label: "운동화", category: "shoes", price: 49000, texture: "shop_sneakers" },
   { key: "canvas_shoes", label: "캔버스화", category: "shoes", price: 32000, texture: "shop_canvas_shoes" },
   { key: "running_shoes", label: "브랜드 러닝화", category: "shoes", price: 89000, texture: "shop_running_shoes" },
 ];
+
+const CLOTHING_SHOP_CATEGORIES = [
+  { key: "top", label: "상의" },
+  { key: "pants", label: "하의" },
+  { key: "outer", label: "외투" },
+  { key: "shoes", label: "신발" },
+];
+
+const CLOTHING_SHOP_CATEGORY_LABELS = Object.fromEntries(
+  CLOTHING_SHOP_CATEGORIES.map((category) => [category.key, category.label]),
+);
 
 export default class PlayScene extends Phaser.Scene {
   constructor() {
@@ -80,6 +91,8 @@ export default class PlayScene extends Phaser.Scene {
     this.clothingShopModal = null;
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
+    this.clothingShopStepIndex = 0;
+    this.clothingShopMode = "category";
     this.jjookIdleTween = null;
     this.interiorSceneGroup = null;
     this.questMarkers = {};
@@ -325,6 +338,8 @@ export default class PlayScene extends Phaser.Scene {
     this.travelPrepItems = [];
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
+    this.clothingShopStepIndex = 0;
+    this.clothingShopMode = "category";
     this.closeClothingShopMenu?.();
     this.clothesPrepHudEl?.classList.remove("is-visible");
     this.shoesPrepHudEl?.classList.remove("is-visible");
@@ -1623,6 +1638,8 @@ export default class PlayScene extends Phaser.Scene {
     this.closeClothingShopMenu();
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
+    this.clothingShopStepIndex = 0;
+    this.clothingShopMode = "category";
     const stage = document.querySelector(".game-stage") || document.body;
     const modal = document.createElement("div");
     modal.className = "clothing-shop-modal";
@@ -1634,42 +1651,24 @@ export default class PlayScene extends Phaser.Scene {
           <strong>삼각옷방</strong>
           <span>마음에 드는 것을 고른 뒤 한 번에 계산해요.</span>
         </div>
-        <div class="clothing-shop-grid"></div>
-        <div class="clothing-shop-summary">선택한 상품 0개 / 합계 0원</div>
-        <div class="clothing-shop-footer">
-          <button type="button" class="clothing-shop-checkout">최종 선택</button>
-          <button type="button" class="clothing-shop-close">나가기</button>
-        </div>
+        <div class="clothing-shop-progress"></div>
+        <div class="clothing-shop-body"></div>
+        <div class="clothing-shop-summary"></div>
+        <div class="clothing-shop-footer"></div>
       </div>
     `;
     this.clothingShopModal = modal;
     stage.appendChild(modal);
-
-    const grid = modal.querySelector(".clothing-shop-grid");
-    CLOTHING_SHOP_ITEMS.forEach((item) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "clothing-shop-item";
-      button.dataset.itemKey = item.key;
-      if (this.hasTravelPrepItem(item.key)) button.classList.add("is-owned");
-      button.innerHTML = `
-        <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
-        <span class="item-label">${item.label}</span>
-        <span class="item-price">${item.price.toLocaleString()}원</span>
-      `;
-      button.addEventListener("click", () => this.toggleClothingShopSelection(item.key));
-      grid.appendChild(button);
-    });
-
-    modal.querySelector(".clothing-shop-checkout")?.addEventListener("click", () => this.checkoutClothingShopSelection());
-    modal.querySelector(".clothing-shop-close")?.addEventListener("click", () => this.finishClothingShopVisit());
-    this.refreshClothingShopSelection();
+    this.renderClothingShopStep();
   }
 
   closeClothingShopMenu() {
     this.clothingShopModal?.remove();
     this.clothingShopModal = null;
     this.clothingShopSelectedKeys = new Set();
+    this.selectedClothingShopIndex = 0;
+    this.clothingShopStepIndex = 0;
+    this.clothingShopMode = "category";
   }
 
   getShopIconFile(textureKey) {
@@ -1678,6 +1677,213 @@ export default class PlayScene extends Phaser.Scene {
 
   hasTravelPrepItem(itemKey) {
     return this.travelPrepItems.some((entry) => entry.key === itemKey);
+  }
+
+  getCurrentClothingCategory() {
+    return CLOTHING_SHOP_CATEGORIES[this.clothingShopStepIndex] || CLOTHING_SHOP_CATEGORIES[0];
+  }
+
+  getSelectedClothingShopItems() {
+    return CLOTHING_SHOP_ITEMS.filter((item) => this.clothingShopSelectedKeys.has(item.key));
+  }
+
+  getSelectedClothingShopTotal() {
+    return this.getSelectedClothingShopItems().reduce((sum, item) => sum + item.price, 0);
+  }
+
+  formatShopMoney(amount) {
+    return `${Math.max(0, amount).toLocaleString()}원`;
+  }
+
+  renderClothingShopStep() {
+    if (!this.clothingShopModal) return;
+
+    const progress = this.clothingShopModal.querySelector(".clothing-shop-progress");
+    const body = this.clothingShopModal.querySelector(".clothing-shop-body");
+    const footer = this.clothingShopModal.querySelector(".clothing-shop-footer");
+    if (!progress || !body || !footer) return;
+
+    body.className = "clothing-shop-body";
+    body.innerHTML = "";
+    footer.innerHTML = "";
+    const isReview = this.clothingShopMode === "review";
+    progress.innerHTML = this.renderClothingShopProgress();
+
+    if (isReview) {
+      this.renderClothingShopReview(body, footer);
+    } else {
+      this.renderClothingShopCategory(body, footer);
+    }
+
+    this.refreshClothingShopSelection();
+  }
+
+  renderClothingShopProgress() {
+    const steps = CLOTHING_SHOP_CATEGORIES.map((category, index) => {
+      const isDone = index < this.clothingShopStepIndex || this.clothingShopMode === "review";
+      const isCurrent = index === this.clothingShopStepIndex && this.clothingShopMode !== "review";
+      const className = ["clothing-shop-step", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
+        .filter(Boolean)
+        .join(" ");
+      return `<span class="${className}">${category.label}</span>`;
+    }).join("");
+
+    const reviewClass = this.clothingShopMode === "review" ? "clothing-shop-step is-current" : "clothing-shop-step";
+    return `${steps}<span class="${reviewClass}">확인</span>`;
+  }
+
+  renderClothingShopCategory(body, footer) {
+    const category = this.getCurrentClothingCategory();
+    const selectedCount = this.getSelectedClothingShopItems().filter((item) => item.category === category.key).length;
+    const items = CLOTHING_SHOP_ITEMS.filter((item) => item.category === category.key);
+    const grid = document.createElement("div");
+    grid.className = "clothing-shop-grid";
+    body.innerHTML = `
+      <div class="clothing-shop-category-title">
+        <strong>${category.label}</strong>
+        <span>${category.label}는 여러 개 골라도 돼요. 선택 ${selectedCount}개</span>
+      </div>
+    `;
+    body.appendChild(grid);
+
+    items.forEach((item) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "clothing-shop-item clothing-shop-option";
+      button.dataset.action = "toggle";
+      button.dataset.itemKey = item.key;
+      if (this.hasTravelPrepItem(item.key)) {
+        button.classList.add("is-owned");
+        button.setAttribute("aria-label", `${item.label}, 이미 준비한 물건`);
+      }
+      button.innerHTML = `
+        <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
+        <span class="item-label">${item.label}</span>
+        <span class="item-price">${item.price.toLocaleString()}원</span>
+        ${this.hasTravelPrepItem(item.key) ? '<span class="item-status">이미 준비</span>' : ""}
+      `;
+      button.addEventListener("click", () => this.toggleClothingShopSelection(item.key));
+      grid.appendChild(button);
+    });
+
+    this.addClothingShopFooterButton(footer, "이 범주는 안 산다", "skip-category");
+    if (this.clothingShopStepIndex > 0) {
+      this.addClothingShopFooterButton(footer, "이전", "previous-category", "secondary");
+    }
+    this.addClothingShopFooterButton(
+      footer,
+      this.clothingShopStepIndex === CLOTHING_SHOP_CATEGORIES.length - 1 ? "확인하기" : "다음",
+      "next-category",
+    );
+    this.addClothingShopFooterButton(footer, "나가기", "close", "secondary");
+    this.renderClothingShopSummary();
+  }
+
+  renderClothingShopReview(body, footer) {
+    const selectedItems = this.getSelectedClothingShopItems();
+    body.classList.add("is-review");
+    body.innerHTML = `
+      <div class="clothing-shop-category-title">
+        <strong>마지막 확인</strong>
+        <span>방향키로 고른 뒤 Space 또는 터치하면 선택을 뺄 수 있어요.</span>
+      </div>
+      <div class="clothing-shop-review-list"></div>
+    `;
+    const list = body.querySelector(".clothing-shop-review-list");
+
+    if (selectedItems.length === 0) {
+      list.innerHTML = '<div class="clothing-shop-empty">고른 옷이 없어요. 이전으로 돌아가서 골라볼까요?</div>';
+    } else {
+      selectedItems.forEach((item) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "clothing-shop-review-item clothing-shop-option";
+        row.dataset.action = "remove";
+        row.dataset.itemKey = item.key;
+        row.innerHTML = `
+          <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
+          <span class="review-name">${item.label}</span>
+          <span class="review-category">${CLOTHING_SHOP_CATEGORY_LABELS[item.category] || item.category}</span>
+          <span class="review-price">${item.price.toLocaleString()}원</span>
+          <span class="review-remove">선택 취소</span>
+        `;
+        row.addEventListener("click", () => this.removeClothingShopSelection(item.key));
+        list.appendChild(row);
+      });
+    }
+
+    this.addClothingShopFooterButton(footer, "계산하기", "checkout");
+    this.addClothingShopFooterButton(footer, "이전", "previous-category", "secondary");
+    this.addClothingShopFooterButton(footer, "나가기", "close", "secondary");
+    this.renderClothingShopSummary();
+  }
+
+  addClothingShopFooterButton(footer, label, action, tone = "primary") {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `clothing-shop-footer-button clothing-shop-option is-${tone}`;
+    button.dataset.action = action;
+    button.textContent = label;
+    button.addEventListener("click", () => this.handleClothingShopAction(action));
+    footer.appendChild(button);
+    return button;
+  }
+
+  handleClothingShopAction(action) {
+    if (action === "skip-category") {
+      this.clearCurrentClothingCategorySelection();
+      this.advanceClothingShopStep();
+      return;
+    }
+
+    if (action === "next-category") {
+      this.advanceClothingShopStep();
+      return;
+    }
+
+    if (action === "previous-category") {
+      this.goBackClothingShopStep();
+      return;
+    }
+
+    if (action === "checkout") {
+      this.checkoutClothingShopSelection();
+      return;
+    }
+
+    if (action === "close") {
+      this.finishClothingShopVisit();
+    }
+  }
+
+  clearCurrentClothingCategorySelection() {
+    const category = this.getCurrentClothingCategory();
+    CLOTHING_SHOP_ITEMS
+      .filter((item) => item.category === category.key)
+      .forEach((item) => this.clothingShopSelectedKeys.delete(item.key));
+  }
+
+  advanceClothingShopStep() {
+    if (this.clothingShopMode === "review") return;
+
+    if (this.clothingShopStepIndex >= CLOTHING_SHOP_CATEGORIES.length - 1) {
+      this.clothingShopMode = "review";
+    } else {
+      this.clothingShopStepIndex += 1;
+    }
+    this.selectedClothingShopIndex = 0;
+    this.renderClothingShopStep();
+  }
+
+  goBackClothingShopStep() {
+    if (this.clothingShopMode === "review") {
+      this.clothingShopMode = "category";
+      this.clothingShopStepIndex = CLOTHING_SHOP_CATEGORIES.length - 1;
+    } else if (this.clothingShopStepIndex > 0) {
+      this.clothingShopStepIndex -= 1;
+    }
+    this.selectedClothingShopIndex = 0;
+    this.renderClothingShopStep();
   }
 
   toggleClothingShopSelection(itemKey) {
@@ -1694,11 +1900,17 @@ export default class PlayScene extends Phaser.Scene {
     } else {
       this.clothingShopSelectedKeys.add(item.key);
     }
-    this.refreshClothingShopSelection();
+    this.renderClothingShopStep();
+  }
+
+  removeClothingShopSelection(itemKey) {
+    this.clothingShopSelectedKeys.delete(itemKey);
+    this.selectedClothingShopIndex = Math.max(0, this.selectedClothingShopIndex - 1);
+    this.renderClothingShopStep();
   }
 
   checkoutClothingShopSelection() {
-    const items = CLOTHING_SHOP_ITEMS.filter((item) => this.clothingShopSelectedKeys.has(item.key) && !this.hasTravelPrepItem(item.key));
+    const items = this.getSelectedClothingShopItems().filter((item) => !this.hasTravelPrepItem(item.key));
     if (!items.length) {
       this.showQuestToast("먼저 살 물건을 골라주세요.");
       return;
@@ -1706,7 +1918,9 @@ export default class PlayScene extends Phaser.Scene {
 
     const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
     if (!this.moneySystem?.deductMoney(totalPrice)) {
+      this.clothingShopMode = "review";
       this.showClothingShopNotEnoughMoney(totalPrice);
+      this.renderClothingShopStep();
       return;
     }
 
@@ -1716,6 +1930,7 @@ export default class PlayScene extends Phaser.Scene {
         category: item.category,
         label: item.label,
         texture: item.texture,
+        price: item.price,
       });
     });
     this.playItemPickupSound();
@@ -1750,36 +1965,30 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   showClothingShopNotEnoughMoney(totalPrice) {
-    this.closeClothingShopMenu();
-    this.dialogueSystem.start([
-      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: `총 ${totalPrice.toLocaleString()}원이구나.` },
-      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "돈이 조금 모자란 것 같아. 다시 골라볼래?" },
-    ], () => this.openClothingShopMenu());
+    const balance = this.moneySystem?.money ?? 0;
+    const shortfall = Math.max(0, totalPrice - balance);
+    this.showQuestToast(`돈이 ${shortfall.toLocaleString()}원 부족해요. 항목을 빼보세요.`, 5000);
   }
 
   refreshClothingShopSelection() {
     if (!this.clothingShopModal) return;
-    const buttons = Array.from(this.clothingShopModal.querySelectorAll(".clothing-shop-item"));
+    const buttons = this.getClothingShopOptionButtons();
     buttons.forEach((button, index) => {
       const itemKey = button.dataset.itemKey;
-      button.classList.toggle("is-selected", this.clothingShopSelectedKeys.has(itemKey));
+      button.classList.toggle("is-selected", Boolean(itemKey && this.clothingShopSelectedKeys.has(itemKey)));
       button.classList.toggle("is-focused", index === this.selectedClothingShopIndex);
     });
 
-    const selectedItems = CLOTHING_SHOP_ITEMS.filter((item) => this.clothingShopSelectedKeys.has(item.key));
-    const totalPrice = selectedItems.reduce((sum, item) => sum + item.price, 0);
-    const summary = this.clothingShopModal.querySelector(".clothing-shop-summary");
-    if (summary) summary.textContent = `선택한 상품 ${selectedItems.length}개 / 합계 ${totalPrice.toLocaleString()}원`;
     const focused = buttons[this.selectedClothingShopIndex];
     focused?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    this.refreshClothingShopFooterFocus();
+    this.renderClothingShopSummary();
   }
 
   moveClothingShopFocus(delta) {
-    const count = CLOTHING_SHOP_ITEMS.length + 2;
+    const count = this.getClothingShopOptionButtons().length;
+    if (count <= 0) return;
     this.selectedClothingShopIndex = (this.selectedClothingShopIndex + delta + count) % count;
     this.refreshClothingShopSelection();
-    this.refreshClothingShopFooterFocus();
   }
 
   moveClothingShopFocusVertical(deltaRows) {
@@ -1787,31 +1996,45 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   getClothingShopColumnCount() {
-    if (!this.clothingShopModal) return 4;
+    if (!this.clothingShopModal || this.clothingShopMode === "review") return 1;
     const grid = this.clothingShopModal.querySelector(".clothing-shop-grid");
+    if (!grid) return 1;
     const columns = window.getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
-    return Math.max(1, columns || 4);
+    return Math.max(1, columns || 3);
   }
 
-  refreshClothingShopFooterFocus() {
+  getClothingShopOptionButtons() {
+    if (!this.clothingShopModal) return [];
+    return Array.from(this.clothingShopModal.querySelectorAll(".clothing-shop-option:not(.is-owned)"));
+  }
+
+  renderClothingShopSummary() {
     if (!this.clothingShopModal) return;
-    const checkout = this.clothingShopModal.querySelector(".clothing-shop-checkout");
-    const close = this.clothingShopModal.querySelector(".clothing-shop-close");
-    checkout?.classList.toggle("is-focused", this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length);
-    close?.classList.toggle("is-focused", this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length + 1);
+
+    const summary = this.clothingShopModal.querySelector(".clothing-shop-summary");
+    if (!summary) return;
+
+    const selectedItems = this.getSelectedClothingShopItems();
+    const totalPrice = this.getSelectedClothingShopTotal();
+    const balance = this.moneySystem?.money ?? 0;
+    const shortfall = Math.max(0, totalPrice - balance);
+    const remaining = Math.max(0, balance - totalPrice);
+    const overBudgetClass = shortfall > 0 ? "is-over-budget" : "is-in-budget";
+
+    summary.innerHTML = `
+      <div class="clothing-shop-money-grid ${overBudgetClass}">
+        <div><span>고른 옷</span><strong>${selectedItems.length}개</strong></div>
+        <div><span>합계</span><strong>${this.formatShopMoney(totalPrice)}</strong></div>
+        <div><span>내 잔고</span><strong>${this.formatShopMoney(balance)}</strong></div>
+        <div><span>${shortfall > 0 ? "부족" : "남는 돈"}</span><strong>${this.formatShopMoney(shortfall > 0 ? shortfall : remaining)}</strong></div>
+      </div>
+    `;
   }
 
   selectFocusedClothingShopOption() {
     if (!this.clothingShopModal) return false;
-    if (this.selectedClothingShopIndex < CLOTHING_SHOP_ITEMS.length) {
-      this.toggleClothingShopSelection(CLOTHING_SHOP_ITEMS[this.selectedClothingShopIndex].key);
-      return true;
-    }
-    if (this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length) {
-      this.checkoutClothingShopSelection();
-      return true;
-    }
-    this.finishClothingShopVisit();
+    const option = this.getClothingShopOptionButtons()[this.selectedClothingShopIndex];
+    option?.click();
     return true;
   }
 

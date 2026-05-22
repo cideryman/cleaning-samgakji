@@ -624,7 +624,7 @@ body.prologue-scene-active #game {
   width: min(860px, 94vw);
   max-height: min(660px, 86vh);
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: 12px;
   padding: 18px;
   border: 4px solid #5b4636;
@@ -651,10 +651,66 @@ body.prologue-scene-active #game {
   color: #6f5b46;
 }
 
+.clothing-shop-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.clothing-shop-step {
+  min-width: 54px;
+  padding: 5px 8px;
+  border: 2px solid #d6b98f;
+  border-radius: 999px;
+  background: #fffdf6;
+  color: #6f5b46;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.clothing-shop-step.is-done {
+  border-color: #5f9f6e;
+  background: #e5f7df;
+  color: #2f6b44;
+}
+
+.clothing-shop-step.is-current {
+  border-color: #c8892c;
+  background: #fff3a3;
+  color: #3d3229;
+}
+
+.clothing-shop-body {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 2px;
+}
+
+.clothing-shop-category-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #3d3229;
+}
+
+.clothing-shop-category-title strong {
+  font-size: 20px;
+}
+
+.clothing-shop-category-title span {
+  color: #6f5b46;
+  font-size: 14px;
+}
+
 .clothing-shop-grid {
   overflow: auto;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding: 2px 2px 6px;
 }
@@ -694,8 +750,11 @@ body.prologue-scene-active #game {
 }
 
 .clothing-shop-item.is-owned {
-  background: #e8f5df;
-  border-color: #4f8a4b;
+  background: #edf0ec;
+  border-color: #9aa79d;
+  color: #66706a;
+  box-shadow: 0 4px 0 #c7cec9;
+  opacity: 0.82;
 }
 
 .clothing-shop-item.is-selected {
@@ -703,31 +762,148 @@ body.prologue-scene-active #game {
   border-color: #c8892c;
 }
 
+.clothing-shop-item .item-status {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #66706a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .clothing-shop-item.is-focused,
-.clothing-shop-checkout.is-focused,
-.clothing-shop-close.is-focused {
+.clothing-shop-footer-button.is-focused,
+.clothing-shop-review-item.is-focused {
   outline: 4px solid #2f80ed;
   outline-offset: 2px;
 }
 
 .clothing-shop-summary {
-  padding: 8px 10px;
+  padding: 8px;
   border: 3px solid #d6b98f;
   border-radius: 8px;
   background: #fffdf6;
   color: #3d3229;
+}
+
+.clothing-shop-money-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.clothing-shop-money-grid div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #fff7e6;
+}
+
+.clothing-shop-money-grid span {
+  font-size: 12px;
+  color: #6f5b46;
   font-weight: 800;
-  text-align: right;
+}
+
+.clothing-shop-money-grid strong {
+  overflow: hidden;
+  color: #3d3229;
+  font-size: 16px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clothing-shop-money-grid.is-over-budget div:last-child {
+  background: #ffe0d4;
+}
+
+.clothing-shop-money-grid.is-over-budget div:last-child strong {
+  color: #b33925;
+}
+
+.clothing-shop-money-grid.is-in-budget div:last-child {
+  background: #e5f7df;
+}
+
+.clothing-shop-review-list {
+  display: grid;
+  gap: 8px;
+}
+
+.clothing-shop-review-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 64px;
+  padding: 7px 9px;
+  border: 3px solid #6b533e;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: #342b24;
+  box-shadow: 0 3px 0 #d6b98f;
+  font: inherit;
+}
+
+.clothing-shop-review-item img {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.review-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-category,
+.review-price,
+.review-remove {
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-category {
+  color: #6f5b46;
+}
+
+.review-price {
+  color: #8a5b2e;
+}
+
+.review-remove {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #ffe0d4;
+  color: #9d3827;
+}
+
+.clothing-shop-empty {
+  padding: 16px;
+  border: 3px dashed #d6b98f;
+  border-radius: 8px;
+  background: #fffdf6;
+  color: #6f5b46;
+  font-weight: 800;
+  text-align: center;
 }
 
 .clothing-shop-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
-.clothing-shop-checkout,
-.clothing-shop-close {
+.clothing-shop-footer-button {
   min-width: 120px;
   padding: 10px 18px;
   border: 3px solid #21352c;
@@ -739,8 +915,9 @@ body.prologue-scene-active #game {
   font-weight: 800;
 }
 
-.clothing-shop-close {
+.clothing-shop-footer-button.is-secondary {
   background: #ffffff;
+  box-shadow: 0 4px 0 #b8c1bd;
 }
 
 #sweepButton:active,
@@ -996,7 +1173,34 @@ body.app-fit-mode #game canvas {
   }
 
   .clothing-shop-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clothing-shop-money-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .clothing-shop-review-item {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+  }
+
+  .clothing-shop-review-item img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .review-category {
+    display: none;
+  }
+
+  .review-price,
+  .review-remove {
+    font-size: 12px;
+  }
+
+  .clothing-shop-footer-button {
+    min-width: 104px;
+    padding: 9px 12px;
   }
 
   .move-knob {
@@ -1111,13 +1315,32 @@ body.app-fit-mode #game canvas {
   }
 
   .clothing-shop-panel {
-    width: min(760px, 88vw);
-    max-height: 82vh;
+    width: min(760px, 94vw);
+    max-height: 94vh;
     padding: 12px;
   }
 
   .clothing-shop-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .clothing-shop-item {
+    min-height: 118px;
+    padding: 8px 6px;
+  }
+
+  .clothing-shop-item img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .clothing-shop-money-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .clothing-shop-footer-button {
+    min-width: 104px;
+    padding: 8px 12px;
   }
 
   #sweepButton img,
