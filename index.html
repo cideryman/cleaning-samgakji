@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
-    <link rel="stylesheet" href="./styles.css?v=65" />
+    <link rel="stylesheet" href="./styles.css?v=66" />
     <script src="./vendor/phaser.min.js"></script>
   </head>
   <body class="start-screen">
@@ -67,11 +67,10 @@
           <img src="./assets/portraits/jjook-default.png" alt="" aria-hidden="true" />
           <span id="jjookFollowTimer" aria-hidden="true"></span>
         </div>
-        <div id="clothesPrepHud" class="clothes-prep-hud prep-item-hud effect-button" aria-hidden="true">
-          <img id="clothesPrepIcon" src="./assets/shop-icons/shopping-bag.png" alt="" aria-hidden="true" />
-        </div>
-        <div id="shoesPrepHud" class="shoes-prep-hud prep-item-hud effect-button" aria-hidden="true">
-          <img id="shoesPrepIcon" src="./assets/shop-icons/shoe-box-front.png" alt="" aria-hidden="true" />
+        <div id="travelPrepHud" class="travel-prep-hud prep-item-hud effect-button" aria-hidden="true">
+          <img id="travelPrepBagIcon" src="./assets/shop-icons/paper-bag.png" alt="" aria-hidden="true" />
+          <span id="travelPrepCount" class="travel-prep-count" aria-hidden="true">0</span>
+          <div id="travelPrepFan" class="travel-prep-fan" aria-hidden="true"></div>
         </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
           <div class="can-quest-label" id="canQuestLabel">&#53300;&#49828;&#53944; &#50630;&#51020;</div>
@@ -130,7 +129,7 @@
       </div>
     </main>
 
-    <script type="module" src="./src/main.js?v=35"></script>
+    <script type="module" src="./src/main.js?v=36"></script>
     <script src="./src/pwa.js?v=3"></script>
   </body>
 </html>

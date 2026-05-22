@@ -482,16 +482,34 @@ body.prologue-scene-active #game {
   bottom: calc(max(18px, env(safe-area-inset-bottom)) + 182px);
 }
 
-.clothes-prep-hud {
+.travel-prep-hud {
   bottom: calc(max(18px, env(safe-area-inset-bottom)) + 264px);
-}
-
-.shoes-prep-hud {
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 346px);
-}
-
-.prep-item-hud {
+  z-index: 16;
+  overflow: visible;
   background: #fffdf3;
+  pointer-events: auto;
+}
+
+.travel-prep-hud.is-open {
+  background: #fff1a8;
+  box-shadow: 0 5px 0 #c89d27;
+}
+
+.travel-prep-hud::before {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid rgba(255, 215, 90, 0.38);
+  border-radius: 50%;
+  content: "";
+  opacity: 0;
+  transform: scale(0.86);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+
+.travel-prep-hud.is-open::before {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .effect-button.is-visible {
@@ -522,8 +540,83 @@ body.prologue-scene-active #game {
   line-height: 1;
 }
 
-.prep-item-hud span {
-  display: none;
+.travel-prep-hud #travelPrepBagIcon {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.travel-prep-count {
+  right: -4px;
+  bottom: -2px;
+  min-width: 27px;
+  background: #21352c;
+  color: #ffd75a;
+}
+
+.travel-prep-fan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.travel-prep-fan-item {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 3px solid #21352c;
+  border-radius: 14px;
+  background: #fffdf6;
+  box-shadow: 0 4px 0 rgba(33, 53, 44, 0.26);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(0deg) scale(0.42);
+  transition:
+    opacity 170ms ease var(--fan-delay, 0ms),
+    transform 210ms cubic-bezier(0.2, 0.82, 0.2, 1.18) var(--fan-delay, 0ms);
+}
+
+.travel-prep-hud.is-open .travel-prep-fan-item {
+  opacity: 1;
+  pointer-events: auto;
+  transform:
+    translate(calc(-50% + var(--fan-x, 0px)), calc(-50% + var(--fan-y, 0px)))
+    rotate(var(--fan-rotation, 0deg))
+    scale(1);
+}
+
+.travel-prep-fan-item img {
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.travel-prep-fan-item span {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  bottom: -18px;
+  display: block;
+  max-width: 82px;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 2px solid rgba(33, 53, 44, 0.78);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #21352c;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(calc(var(--fan-rotation, 0deg) * -1));
 }
 
 .bacchus-button:not([hidden]) {
@@ -1153,12 +1246,8 @@ body.app-fit-mode #game canvas {
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 170px);
   }
 
-  .clothes-prep-hud {
+  .travel-prep-hud {
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 246px);
-  }
-
-  .shoes-prep-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 322px);
   }
 
   .clothing-shop-panel {
@@ -1306,12 +1395,8 @@ body.app-fit-mode #game canvas {
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 150px);
   }
 
-  .clothes-prep-hud {
+  .travel-prep-hud {
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 218px);
-  }
-
-  .shoes-prep-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 286px);
   }
 
   .clothing-shop-panel {

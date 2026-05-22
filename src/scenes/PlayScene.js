@@ -88,6 +88,7 @@ export default class PlayScene extends Phaser.Scene {
     this.clothesQuestState = "locked";
     this.hasAnnouncedClothesQuest = false;
     this.travelPrepItems = [];
+    this.isTravelPrepFanOpen = false;
     this.clothingShopModal = null;
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
@@ -149,10 +150,10 @@ export default class PlayScene extends Phaser.Scene {
     this.speedBuffTimerEl = document.querySelector("#speedBuffTimer");
     this.jjookFollowHudEl = document.querySelector("#jjookFollowHud");
     this.jjookFollowTimerEl = document.querySelector("#jjookFollowTimer");
-    this.clothesPrepHudEl = document.querySelector("#clothesPrepHud");
-    this.clothesPrepIconEl = document.querySelector("#clothesPrepIcon");
-    this.shoesPrepHudEl = document.querySelector("#shoesPrepHud");
-    this.shoesPrepIconEl = document.querySelector("#shoesPrepIcon");
+    this.travelPrepHudEl = document.querySelector("#travelPrepHud");
+    this.travelPrepBagIconEl = document.querySelector("#travelPrepBagIcon");
+    this.travelPrepCountEl = document.querySelector("#travelPrepCount");
+    this.travelPrepFanEl = document.querySelector("#travelPrepFan");
     this.resultTrashCountEl = document.querySelector("#resultTrashCount");
     this.resultCanCountEl = document.querySelector("#resultCanCount");
     this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
@@ -176,6 +177,11 @@ export default class PlayScene extends Phaser.Scene {
       event?.stopPropagation();
       this.useBacchusItem();
     };
+    this.travelPrepHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.toggleTravelPrepFan();
+    };
     this.moveStartHandler = (event) => this.startFloatingJoystick(event);
     this.moveUpdateHandler = (event) => this.updateJoystick(event);
     this.moveStopHandler = (event) => this.stopJoystick(event);
@@ -192,6 +198,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
     this.specialButton?.addEventListener("pointerdown", this.specialHandler);
     this.bacchusButton?.addEventListener("pointerdown", this.bacchusHandler);
+    this.travelPrepHudEl?.addEventListener("pointerdown", this.travelPrepHandler);
     window.addEventListener("pointerdown", this.audioUnlockHandler, { passive: true });
     window.addEventListener("keydown", this.audioUnlockHandler);
     window.addEventListener("keydown", this.devKeyHandler, true);
@@ -241,6 +248,7 @@ export default class PlayScene extends Phaser.Scene {
       this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
       this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
       this.bacchusButton?.removeEventListener("pointerdown", this.bacchusHandler);
+      this.travelPrepHudEl?.removeEventListener("pointerdown", this.travelPrepHandler);
       window.removeEventListener("pointerdown", this.audioUnlockHandler);
       window.removeEventListener("keydown", this.audioUnlockHandler);
       window.removeEventListener("keydown", this.devKeyHandler, true);
@@ -340,9 +348,14 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedClothingShopIndex = 0;
     this.clothingShopStepIndex = 0;
     this.clothingShopMode = "category";
+    this.isTravelPrepFanOpen = false;
     this.closeClothingShopMenu?.();
-    this.clothesPrepHudEl?.classList.remove("is-visible");
-    this.shoesPrepHudEl?.classList.remove("is-visible");
+    this.travelPrepHudEl?.classList.remove("is-visible", "is-open");
+    this.travelPrepHudEl?.setAttribute("aria-hidden", "true");
+    if (this.travelPrepFanEl) {
+      this.travelPrepFanEl.innerHTML = "";
+      this.travelPrepFanEl.setAttribute("aria-hidden", "true");
+    }
     this.interiorSceneGroup?.clear(true, true);
     this.interiorSceneGroup = null;
     Object.values(this.questMarkers || {}).forEach((marker) => marker.text?.destroy());
@@ -1766,13 +1779,14 @@ export default class PlayScene extends Phaser.Scene {
       grid.appendChild(button);
     });
 
-    this.addClothingShopFooterButton(footer, "이 범주는 안 산다", "skip-category");
+    const previousCategory = CLOTHING_SHOP_CATEGORIES[this.clothingShopStepIndex - 1];
+    const nextCategory = CLOTHING_SHOP_CATEGORIES[this.clothingShopStepIndex + 1];
     if (this.clothingShopStepIndex > 0) {
-      this.addClothingShopFooterButton(footer, "이전", "previous-category", "secondary");
+      this.addClothingShopFooterButton(footer, `${previousCategory.label} 보기`, "previous-category", "secondary");
     }
     this.addClothingShopFooterButton(
       footer,
-      this.clothingShopStepIndex === CLOTHING_SHOP_CATEGORIES.length - 1 ? "확인하기" : "다음",
+      nextCategory ? `${nextCategory.label} 보기` : "확인하기",
       "next-category",
     );
     this.addClothingShopFooterButton(footer, "나가기", "close", "secondary");
@@ -1813,7 +1827,8 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     this.addClothingShopFooterButton(footer, "계산하기", "checkout");
-    this.addClothingShopFooterButton(footer, "이전", "previous-category", "secondary");
+    const lastCategory = CLOTHING_SHOP_CATEGORIES[CLOTHING_SHOP_CATEGORIES.length - 1];
+    this.addClothingShopFooterButton(footer, `${lastCategory.label} 보기`, "previous-category", "secondary");
     this.addClothingShopFooterButton(footer, "나가기", "close", "secondary");
     this.renderClothingShopSummary();
   }
@@ -1830,12 +1845,6 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleClothingShopAction(action) {
-    if (action === "skip-category") {
-      this.clearCurrentClothingCategorySelection();
-      this.advanceClothingShopStep();
-      return;
-    }
-
     if (action === "next-category") {
       this.advanceClothingShopStep();
       return;
@@ -1854,13 +1863,6 @@ export default class PlayScene extends Phaser.Scene {
     if (action === "close") {
       this.finishClothingShopVisit();
     }
-  }
-
-  clearCurrentClothingCategorySelection() {
-    const category = this.getCurrentClothingCategory();
-    CLOTHING_SHOP_ITEMS
-      .filter((item) => item.category === category.key)
-      .forEach((item) => this.clothingShopSelectedKeys.delete(item.key));
   }
 
   advanceClothingShopStep() {
@@ -2067,33 +2069,72 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   updateTravelPrepHud() {
-    const clothingItem = this.travelPrepItems?.find((item) => item.category === "top")
-      || this.travelPrepItems?.find((item) => item.category === "outer")
-      || this.travelPrepItems?.find((item) => item.category === "pants");
-    const shoesItem = this.travelPrepItems?.find((item) => item.category === "shoes")
-      || this.travelPrepItems?.find((item) => item.category === "pants");
+    const items = Array.isArray(this.travelPrepItems) ? this.travelPrepItems : [];
+    if (!this.travelPrepHudEl) return;
 
-    if (this.clothesPrepHudEl && this.clothesPrepIconEl) {
-      if (clothingItem) {
-        this.clothesPrepIconEl.src = `./assets/shop-icons/${this.getShopIconFile(clothingItem.texture)}`;
-        this.clothesPrepHudEl.classList.add("is-visible");
-        this.clothesPrepHudEl.setAttribute("aria-hidden", "false");
-      } else {
-        this.clothesPrepHudEl.classList.remove("is-visible");
-        this.clothesPrepHudEl.setAttribute("aria-hidden", "true");
-      }
+    if (!items.length) {
+      this.isTravelPrepFanOpen = false;
+      this.travelPrepHudEl.classList.remove("is-visible", "is-open");
+      this.travelPrepHudEl.setAttribute("aria-hidden", "true");
+      this.travelPrepFanEl?.replaceChildren();
+      this.travelPrepFanEl?.setAttribute("aria-hidden", "true");
+      if (this.travelPrepCountEl) this.travelPrepCountEl.textContent = "0";
+      return;
     }
 
-    if (this.shoesPrepHudEl && this.shoesPrepIconEl) {
-      if (shoesItem) {
-        this.shoesPrepIconEl.src = `./assets/shop-icons/${this.getShopIconFile(shoesItem.texture)}`;
-        this.shoesPrepHudEl.classList.add("is-visible");
-        this.shoesPrepHudEl.setAttribute("aria-hidden", "false");
-      } else {
-        this.shoesPrepHudEl.classList.remove("is-visible");
-        this.shoesPrepHudEl.setAttribute("aria-hidden", "true");
-      }
-    }
+    this.travelPrepHudEl.classList.add("is-visible");
+    this.travelPrepHudEl.setAttribute("aria-hidden", "false");
+    this.travelPrepHudEl.setAttribute("aria-label", `준비한 옷 ${items.length}개 보기`);
+    if (this.travelPrepBagIconEl) this.travelPrepBagIconEl.src = "./assets/shop-icons/paper-bag.png";
+    if (this.travelPrepCountEl) this.travelPrepCountEl.textContent = String(items.length);
+    this.renderTravelPrepFan();
+  }
+
+  toggleTravelPrepFan() {
+    if (!this.travelPrepItems?.length) return;
+    this.isTravelPrepFanOpen = !this.isTravelPrepFanOpen;
+    this.renderTravelPrepFan();
+  }
+
+  renderTravelPrepFan() {
+    if (!this.travelPrepFanEl || !this.travelPrepHudEl) return;
+    const items = Array.isArray(this.travelPrepItems) ? this.travelPrepItems : [];
+    this.travelPrepFanEl.replaceChildren();
+    this.travelPrepHudEl.classList.toggle("is-open", this.isTravelPrepFanOpen && items.length > 0);
+    this.travelPrepFanEl.setAttribute("aria-hidden", this.isTravelPrepFanOpen ? "false" : "true");
+
+    const maxPerRing = 6;
+    items.forEach((item, index) => {
+      const ring = Math.floor(index / maxPerRing);
+      const ringStart = ring * maxPerRing;
+      const ringCount = Math.min(maxPerRing, items.length - ringStart);
+      const ringIndex = index - ringStart;
+      const spread = ringCount <= 1 ? 0 : 82;
+      const startAngle = 220;
+      const angle = startAngle + (ringCount <= 1 ? 0 : (spread * ringIndex) / (ringCount - 1));
+      const distance = 92 + ring * 48;
+      const radians = Phaser.Math.DegToRad(angle);
+      const x = Math.cos(radians) * distance;
+      const y = Math.sin(radians) * distance;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "travel-prep-fan-item";
+      button.style.setProperty("--fan-x", `${x.toFixed(1)}px`);
+      button.style.setProperty("--fan-y", `${y.toFixed(1)}px`);
+      button.style.setProperty("--fan-rotation", `${(angle - 260).toFixed(1)}deg`);
+      button.style.setProperty("--fan-delay", `${Math.min(index, 8) * 24}ms`);
+      button.setAttribute("aria-label", `${item.label} 준비됨`);
+      button.innerHTML = `
+        <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
+        <span>${item.label}</span>
+      `;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.showQuestToast(`${item.label} 준비했어요.`);
+      });
+      this.travelPrepFanEl.appendChild(button);
+    });
   }
 
   requestJjookPloggingHelp() {

@@ -1,13 +1,13 @@
-const CACHE_NAME = "cleaning-samgakji-v20260522-03";
+const CACHE_NAME = "cleaning-samgakji-v20260522-05";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./styles.css?v=65",
+  "./styles.css?v=66",
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=3",
-  "./src/main.js?v=35",
+  "./src/main.js?v=36",
   "./src/main.js",
   "./src/scenes/Preload.js",
   "./src/scenes/StartScene.js",
