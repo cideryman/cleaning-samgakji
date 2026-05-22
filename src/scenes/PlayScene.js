@@ -2451,7 +2451,9 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const followSpeed = this.isSpeedBuffActive ? 118 * GAME_CONFIG.speedBuffMultiplier : 118;
+    const baseFollowSpeed = this.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
+    const boostedFollowSpeed = this.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
+    const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
     const step = (this.game.loop.delta / 1000) * followSpeed;
     const angle = Phaser.Math.Angle.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
     const moveX = Math.cos(angle) * Math.min(step, distance - 88);

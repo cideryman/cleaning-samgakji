@@ -62,12 +62,14 @@ export default class InteractionSystem {
 
   isPlayerNearJjookNpc() {
     const scene = this.scene;
+    if (scene.isJjookFollowActive) return false;
     return isNear(scene.player, scene.jjookNpc, 120);
   }
 
   shouldPrioritizeJjookDialogue() {
     const scene = this.scene;
     return !scene.isInDialogue
+      && !scene.isJjookFollowActive
       && scene.jjookQuestState !== "locked"
       && scene.jjookQuestState !== "completed"
       && this.isPlayerNearJjookNpc();
