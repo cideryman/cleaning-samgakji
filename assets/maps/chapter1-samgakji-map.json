@@ -5259,6 +5259,410 @@
               "value": -18
             }
           ]
+        },
+        {
+          "id": 47,
+          "name": "traffic_front_west",
+          "type": "map_object",
+          "x": 472,
+          "y": 112,
+          "width": 48,
+          "height": 84,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_light"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 48
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 84
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.05
+            },
+            {
+              "name": "animation",
+              "type": "string",
+              "value": "pedestrian_light_cycle"
+            },
+            {
+              "name": "frame",
+              "type": "int",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "id": 48,
+          "name": "traffic_back_west",
+          "type": "map_object",
+          "x": 344,
+          "y": 210,
+          "width": 44,
+          "height": 78,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_light_back"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 44
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 78
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 190
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.02
+            }
+          ]
+        },
+        {
+          "id": 49,
+          "name": "crosswalk_sign_west",
+          "type": "map_object",
+          "x": 313,
+          "y": 219,
+          "width": 42,
+          "height": 75,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "crosswalk_sign"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 75
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
+            }
+          ]
+        },
+        {
+          "id": 50,
+          "name": "stop_sign_west",
+          "type": "map_object",
+          "x": 505,
+          "y": 117,
+          "width": 42,
+          "height": 73,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_stop_sign"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 73
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 190
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
+            }
+          ]
+        },
+        {
+          "id": 51,
+          "name": "traffic_front_east",
+          "type": "map_object",
+          "x": 1144,
+          "y": 112,
+          "width": 48,
+          "height": 84,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_light"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 48
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 84
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.05
+            },
+            {
+              "name": "animation",
+              "type": "string",
+              "value": "pedestrian_light_cycle"
+            },
+            {
+              "name": "frame",
+              "type": "int",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "id": 52,
+          "name": "traffic_back_east",
+          "type": "map_object",
+          "x": 1016,
+          "y": 210,
+          "width": 44,
+          "height": 78,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_light_back"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 44
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 78
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 190
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.02
+            }
+          ]
+        },
+        {
+          "id": 53,
+          "name": "crosswalk_sign_east",
+          "type": "map_object",
+          "x": 985,
+          "y": 219,
+          "width": 42,
+          "height": 75,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "crosswalk_sign"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 75
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
+            }
+          ]
+        },
+        {
+          "id": 54,
+          "name": "stop_sign_east",
+          "type": "map_object",
+          "x": 1177,
+          "y": 117,
+          "width": 42,
+          "height": 73,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_stop_sign"
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 73
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 190
+            },
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
+            }
+          ]
         }
       ]
     },
@@ -5564,7 +5968,7 @@
     }
   ],
   "nextlayerid": 6,
-  "nextobjectid": 47,
+  "nextobjectid": 55,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",

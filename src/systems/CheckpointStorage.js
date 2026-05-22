@@ -46,6 +46,8 @@ export default class CheckpointStorage {
         },
         jjookQuestState: "locked",
         sunisuniQuestState: "locked",
+        clothesQuestState: "locked",
+        travelPrepItems: [],
       },
     };
     return this.write(data);
@@ -76,6 +78,7 @@ export default class CheckpointStorage {
         hasAnnouncedRecycleQuest: Boolean(scene.hasAnnouncedRecycleQuest),
         hasAnnouncedJjookQuest: Boolean(scene.hasAnnouncedJjookQuest),
         hasAnnouncedSunisuniQuest: Boolean(scene.hasAnnouncedSunisuniQuest),
+        hasAnnouncedClothesQuest: Boolean(scene.hasAnnouncedClothesQuest),
         hasWallet: Boolean(scene.hasWallet),
         hasPrescription: Boolean(scene.hasPrescription),
         hasMedicine: Boolean(scene.hasMedicine),
@@ -96,6 +99,8 @@ export default class CheckpointStorage {
         } : null,
         jjookQuestState: scene.jjookQuestState ?? "locked",
         sunisuniQuestState: scene.sunisuniQuestState ?? "locked",
+        clothesQuestState: scene.clothesQuestState ?? "locked",
+        travelPrepItems: Array.isArray(scene.travelPrepItems) ? [...scene.travelPrepItems] : [],
       },
     };
     return this.write(data);
@@ -130,6 +135,7 @@ export default class CheckpointStorage {
     scene.hasAnnouncedRecycleQuest = Boolean(flags.hasAnnouncedRecycleQuest);
     scene.hasAnnouncedJjookQuest = Boolean(flags.hasAnnouncedJjookQuest);
     scene.hasAnnouncedSunisuniQuest = Boolean(flags.hasAnnouncedSunisuniQuest);
+    scene.hasAnnouncedClothesQuest = Boolean(flags.hasAnnouncedClothesQuest);
     scene.hasWallet = Boolean(flags.hasWallet);
     scene.hasPrescription = Boolean(flags.hasPrescription);
     scene.hasMedicine = Boolean(flags.hasMedicine);
@@ -145,6 +151,7 @@ export default class CheckpointStorage {
     this.applyNpcState(scene, data);
 
     scene.updateBacchusButton?.();
+    scene.updateTravelPrepHud?.();
     scene.updateHud?.();
     scene.questManager?.updateUI();
     this.hideCompletedQuestHud(scene);
@@ -173,6 +180,8 @@ export default class CheckpointStorage {
 
     scene.jjookQuestState = quests.jjookQuestState ?? "locked";
     scene.sunisuniQuestState = quests.sunisuniQuestState ?? "locked";
+    scene.clothesQuestState = quests.clothesQuestState ?? "locked";
+    scene.travelPrepItems = Array.isArray(quests.travelPrepItems) ? [...quests.travelPrepItems] : [];
   }
 
   static applyNpcState(scene, data) {
@@ -183,6 +192,7 @@ export default class CheckpointStorage {
     scene.hasAnnouncedRecycleQuest = scene.hasAnnouncedRecycleQuest || recycleUnlocked;
     scene.hasAnnouncedJjookQuest = scene.hasAnnouncedJjookQuest || scene.jjookQuestState !== "locked";
     scene.hasAnnouncedSunisuniQuest = scene.hasAnnouncedSunisuniQuest || scene.sunisuniQuestState !== "locked";
+    scene.hasAnnouncedClothesQuest = scene.hasAnnouncedClothesQuest || scene.clothesQuestState !== "locked";
 
     if (canActive || canCompleted || recycleUnlocked) {
       scene.moveYebiToRecyclingCenter?.();
@@ -215,6 +225,18 @@ export default class CheckpointStorage {
 
     if (scene.hasDroppedBroomUpgrade && !scene.hasBroomUpgrade) {
       scene.dropBroomUpgrade?.();
+    }
+
+    if (scene.clothesQuestState === "ready" || scene.clothesQuestState === "declined") {
+      scene.setQuestMarker?.("clothesQuest", scene.jjookNpc, "!");
+    } else if (scene.clothesQuestState === "shopping") {
+      scene.isJjookClothesEscortActive = true;
+      scene.setQuestMarker?.("clothesShop", scene.mapObjects?.clothing_store || {
+        active: true,
+        x: 580,
+        y: 174,
+        displayHeight: 96,
+      }, "!");
     }
   }
 

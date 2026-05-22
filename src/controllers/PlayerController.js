@@ -21,14 +21,20 @@ export default class PlayerController {
     });
 
     scene.keys.sweep.on("down", () => scene.handleSpaceAction());
-    scene.keys.specialEnter.on("down", () => scene.useYebiItem());
+    scene.keys.specialEnter.on("down", () => {
+      if (scene.clothingShopModal) {
+        scene.selectFocusedClothingShopOption();
+        return;
+      }
+      scene.useYebiItem();
+    });
   }
 
   update() {
     const scene = this.scene;
     if (!scene.player) return;
 
-    if (!scene.stateManager?.canMove() || scene.isInDialogue || scene.vendingMenuGroup) {
+    if (!scene.stateManager?.canMove() || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal) {
       scene.player.setVelocity(0, 0);
       return;
     }
@@ -134,7 +140,7 @@ export default class PlayerController {
     if (event.clientX > window.innerWidth / 2) return false;
 
     const blockedTarget = event.target.closest?.(
-      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay",
+      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay, .clothing-shop-modal",
     );
     return !blockedTarget;
   }

@@ -51,9 +51,14 @@ const EXTERNAL_ASSETS = [
   { key: "clothing_store", path: "assets/buildings/clothing-store.png" },
   { key: "hospital_interior", path: "assets/interiors/hospital-interior.png" },
   { key: "pharmacy_interior", path: "assets/interiors/pharmacy-interior.png" },
+  { key: "clothing_store_interior", path: "assets/interiors/clothing-store-interior.png" },
+  { key: "pedestrian_light_back", path: "assets/traffic/pedestrian-light-back.png" },
+  { key: "pedestrian_stop_sign", path: "assets/traffic/pedestrian-stop-sign.png" },
+  { key: "crosswalk_sign", path: "assets/traffic/crosswalk-sign.png" },
   { key: "hospital_doctor", path: "assets/portraits/hospital-doctor.png" },
   { key: "hospital_staff", path: "assets/portraits/hospital-staff.png" },
   { key: "chemist", path: "assets/portraits/pharmacist.png" },
+  { key: "clothing_shop_owner", path: "assets/portraits/clothing-shop-owner.png" },
   { key: "sunisuni_portrait_sick", path: "assets/portraits/sunisuni-sick.png" },
   { key: "sunisuni_portrait_smile", path: "assets/portraits/sunisuni-smile.png" },
   { key: "sunisuni_portrait_worried", path: "assets/portraits/sunisuni-worried.png" },
@@ -62,6 +67,23 @@ const EXTERNAL_ASSETS = [
   { key: "prescription_item", path: "assets/items/prescription.png" },
   { key: "medicine_bag", path: "assets/items/medicine-bag.png" },
   { key: "bill_5000", path: "assets/items/bill-5000.png" },
+  { key: "shop_sweatshirt", path: "assets/shop-icons/sweatshirt.png" },
+  { key: "shop_cotton_pants", path: "assets/shop-icons/cotton-pants.png" },
+  { key: "shop_shopping_bag", path: "assets/shop-icons/shopping-bag.png" },
+  { key: "shop_shoe_box", path: "assets/shop-icons/shoe-box.png" },
+  { key: "shop_shoe_box_front", path: "assets/shop-icons/shoe-box-front.png" },
+  { key: "shop_shoe_box_side", path: "assets/shop-icons/shoe-box-side.png" },
+  { key: "shop_paper_bag", path: "assets/shop-icons/paper-bag.png" },
+  { key: "shop_jeans", path: "assets/shop-icons/jeans.png" },
+  { key: "shop_denim_jacket", path: "assets/shop-icons/denim-jacket.png" },
+  { key: "shop_check_shirt", path: "assets/shop-icons/check-shirt.png" },
+  { key: "shop_jogger_pants", path: "assets/shop-icons/jogger-pants.png" },
+  { key: "shop_padded_jacket", path: "assets/shop-icons/padded-jacket.png" },
+  { key: "shop_hoodie_jacket", path: "assets/shop-icons/hoodie-jacket.png" },
+  { key: "shop_white_tshirt", path: "assets/shop-icons/white-tshirt.png" },
+  { key: "shop_running_shoes", path: "assets/shop-icons/running-shoes.png" },
+  { key: "shop_sneakers", path: "assets/shop-icons/sneakers.png" },
+  { key: "shop_canvas_shoes", path: "assets/shop-icons/canvas-shoes.png" },
   { key: "bacchus_item", path: "assets/ui/bacchus.png" },
   { key: "grass_tile", path: "assets/tiles/grass.png", fallback: "createGrassTileTexture" },
   { key: "path_tile", path: "assets/tiles/path.png", fallback: "createPathTileTexture" },
@@ -90,6 +112,7 @@ const SPRITESHEET_ASSETS = [
   { key: "jjook_walk_up", path: "assets/sprites/jjook-walk-up.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_left", path: "assets/sprites/jjook-walk-left.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_right", path: "assets/sprites/jjook-walk-right.png", frameWidth: 64, frameHeight: 96 },
+  { key: "pedestrian_light", path: "assets/traffic/pedestrian-light.png", frameWidth: 64, frameHeight: 112 },
   { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "heart_effect", path: "assets/sprites/heart-effect.png", frameWidth: 128, frameHeight: 128 },
@@ -136,6 +159,7 @@ export default class Preload extends Phaser.Scene {
   create() {
     this.createMissingExternalTextures();
     this.createPlayerAnimations();
+    this.createTrafficLightAnimations();
     this.createBlockTexture("clean_tile", 32, 32, "#f6fff3", "#6fcf97");
     this.createBlockTexture("sweep_hitbox", 96, 72, "#fff3a3", "#f2c94c");
 
@@ -172,6 +196,17 @@ export default class Preload extends Phaser.Scene {
       });
     });
 
+  }
+
+  createTrafficLightAnimations() {
+    if (this.anims.exists("pedestrian_light_cycle") || !this.textures.exists("pedestrian_light")) return;
+
+    this.anims.create({
+      key: "pedestrian_light_cycle",
+      frames: this.anims.generateFrameNumbers("pedestrian_light", { frames: [0, 1] }),
+      frameRate: 0.25,
+      repeat: -1,
+    });
   }
 
   createMissingExternalTextures() {

@@ -27,6 +27,11 @@ export default class InteractionSystem {
       return;
     }
 
+    if (this.isPlayerNearClothingStoreDoor() && !scene.isInDialogue) {
+      scene.handleClothingStoreInteraction();
+      return;
+    }
+
     if (this.shouldPrioritizeSunisuniDialogue()) {
       scene.handleSunisuniInteraction();
       return;
@@ -96,6 +101,14 @@ export default class InteractionSystem {
     const dx = Math.abs(scene.player.x - GAME_CONFIG.pharmacyDoor.x);
     const dy = Math.abs(scene.player.y - GAME_CONFIG.pharmacyDoor.y);
     return dx <= 68 && dy <= 54;
+  }
+
+  isPlayerNearClothingStoreDoor() {
+    const scene = this.scene;
+    if (!scene.player || !["shopping", "completed"].includes(scene.clothesQuestState)) return false;
+    const dx = Math.abs(scene.player.x - GAME_CONFIG.clothingStoreDoor.x);
+    const dy = Math.abs(scene.player.y - GAME_CONFIG.clothingStoreDoor.y);
+    return dx <= 78 && dy <= 58;
   }
 
   isPlayerNearVendingMachine() {

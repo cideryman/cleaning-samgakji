@@ -20,6 +20,21 @@ import QuestManager from "../systems/QuestManager.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import UIManager from "../systems/UIManager.js";
 
+const CLOTHING_SHOP_ITEMS = [
+  { key: "hoodie_jacket", label: "기본 후드집업", category: "outer", price: 39000, texture: "shop_hoodie_jacket" },
+  { key: "denim_jacket", label: "청자켓", category: "outer", price: 69000, texture: "shop_denim_jacket" },
+  { key: "padded_jacket", label: "브랜드 패딩", category: "outer", price: 129000, texture: "shop_padded_jacket" },
+  { key: "white_tshirt", label: "반팔 티셔츠", category: "top", price: 12000, texture: "shop_white_tshirt" },
+  { key: "check_shirt", label: "체크 셔츠", category: "top", price: 25000, texture: "shop_check_shirt" },
+  { key: "sweatshirt", label: "맨투맨", category: "top", price: 38000, texture: "shop_sweatshirt" },
+  { key: "cotton_pants", label: "면바지", category: "pants", price: 29000, texture: "shop_cotton_pants" },
+  { key: "jeans", label: "청바지", category: "pants", price: 45000, texture: "shop_jeans" },
+  { key: "jogger_pants", label: "조거팬츠", category: "pants", price: 22000, texture: "shop_jogger_pants" },
+  { key: "sneakers", label: "운동화", category: "shoes", price: 49000, texture: "shop_sneakers" },
+  { key: "canvas_shoes", label: "캔버스화", category: "shoes", price: 32000, texture: "shop_canvas_shoes" },
+  { key: "running_shoes", label: "브랜드 러닝화", category: "shoes", price: 89000, texture: "shop_running_shoes" },
+];
+
 export default class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
@@ -40,6 +55,7 @@ export default class PlayScene extends Phaser.Scene {
     this.drinkInventory = [];
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
+    this.isJjookClothesEscortActive = false;
     this.jjookFollowEndsAt = 0;
     this.jjookFollowTimer = null;
     this.jjookFollowCountdownEvent = null;
@@ -58,6 +74,13 @@ export default class PlayScene extends Phaser.Scene {
     this.isBacchusActive = false;
     this.bacchusTimer = null;
     this.bacchusCountdownEvent = null;
+    this.clothesQuestState = "locked";
+    this.hasAnnouncedClothesQuest = false;
+    this.travelPrepItems = [];
+    this.clothingShopModal = null;
+    this.clothingShopSelectedKeys = new Set();
+    this.selectedClothingShopIndex = 0;
+    this.jjookIdleTween = null;
     this.interiorSceneGroup = null;
     this.questMarkers = {};
     this.vendingMenuOptions = [];
@@ -85,6 +108,7 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.mapObjects = {};
     this.objectWalls = null;
     this.objectCollisionRects = [];
     // 챕터 및 경제 시스템 관련
@@ -112,6 +136,10 @@ export default class PlayScene extends Phaser.Scene {
     this.speedBuffTimerEl = document.querySelector("#speedBuffTimer");
     this.jjookFollowHudEl = document.querySelector("#jjookFollowHud");
     this.jjookFollowTimerEl = document.querySelector("#jjookFollowTimer");
+    this.clothesPrepHudEl = document.querySelector("#clothesPrepHud");
+    this.clothesPrepIconEl = document.querySelector("#clothesPrepIcon");
+    this.shoesPrepHudEl = document.querySelector("#shoesPrepHud");
+    this.shoesPrepIconEl = document.querySelector("#shoesPrepIcon");
     this.resultTrashCountEl = document.querySelector("#resultTrashCount");
     this.resultCanCountEl = document.querySelector("#resultCanCount");
     this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
@@ -177,6 +205,10 @@ export default class PlayScene extends Phaser.Scene {
     this.stateManager = new StateManager();
     this.dialogueSystem = new DialogueSystem(this);
     this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
+    this.dialogueManager.addActionHandlers({
+      START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
+      DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
+    });
     this.portraitManager = new PortraitManager(this);
     this.moneySystem = new MoneySystem(this);
     this.questManager = new QuestManager(this);
@@ -210,6 +242,7 @@ export default class PlayScene extends Phaser.Scene {
       window.removeEventListener("orientationchange", this.resizeHandler);
       this.scale.off(Phaser.Scale.Events.RESIZE, this.resizeHandler);
       this.portraitManager?.destroy();
+      this.closeClothingShopMenu();
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
       window.removeEventListener("beforeunload", this.pageAudioStopHandler);
       document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -225,6 +258,7 @@ export default class PlayScene extends Phaser.Scene {
     this.spawnTrashWave();
     this.createInput();
     this.updateHud();
+    this.updateTravelPrepHud();
     this.updateCameraZoom();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
 
@@ -258,6 +292,7 @@ export default class PlayScene extends Phaser.Scene {
     this.drinkInventory = [];
     this.isSpeedBuffActive = false;
     this.isJjookFollowActive = false;
+    this.isJjookClothesEscortActive = false;
     this.jjookFollowEndsAt = 0;
     this.jjookFollowTimer?.remove(false);
     this.jjookFollowCountdownEvent?.remove(false);
@@ -285,6 +320,14 @@ export default class PlayScene extends Phaser.Scene {
     this.bacchusButton?.setAttribute("hidden", "");
     this.bacchusButton?.classList.remove("is-active");
     if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = "";
+    this.clothesQuestState = "locked";
+    this.hasAnnouncedClothesQuest = false;
+    this.travelPrepItems = [];
+    this.clothingShopSelectedKeys = new Set();
+    this.selectedClothingShopIndex = 0;
+    this.closeClothingShopMenu?.();
+    this.clothesPrepHudEl?.classList.remove("is-visible");
+    this.shoesPrepHudEl?.classList.remove("is-visible");
     this.interiorSceneGroup?.clear(true, true);
     this.interiorSceneGroup = null;
     Object.values(this.questMarkers || {}).forEach((marker) => marker.text?.destroy());
@@ -315,6 +358,7 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.mapObjects = {};
     this.objectWalls = null;
     this.objectCollisionRects = [];
   }
@@ -336,16 +380,19 @@ export default class PlayScene extends Phaser.Scene {
 
   update(time, delta) {
     this.handleVendingMenuKeyboard();
+    this.handleClothingShopKeyboard();
     this.playerController.update(time, delta);
     this.checkRecycleQuestUnlock();
     this.checkJjookQuestUnlock();
     this.checkSunisuniQuestUnlock();
+    this.checkClothesQuestUnlock();
     this.checkWalletPickup();
     this.updateJjookFollower();
     this.updateSunisuniFollower();
     this.updateQuestMarkers();
     this.updateWorldDepths();
-    if (!this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
+    const canCompleteChapter = this.sunisuniQuestState !== "quest_complete" || this.clothesQuestState === "completed";
+    if (canCompleteChapter && !this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
       this.completeChapter1();
     }
   }
@@ -515,9 +562,24 @@ export default class PlayScene extends Phaser.Scene {
     this.saveCheckpoint("sunisuni_found");
   }
 
+  checkClothesQuestUnlock() {
+    if (!this.moneySystem || this.hasAnnouncedClothesQuest) return;
+    if (this.sunisuniQuestState !== "quest_complete") return;
+    if (this.moneySystem.money < GAME_CONFIG.clothesQuestUnlockMoney) return;
+
+    this.hasAnnouncedClothesQuest = true;
+    this.clothesQuestState = "ready";
+    this.createJjookQuestObjects();
+    this.setQuestMarker("clothesQuest", this.jjookNpc, "!");
+    this.showQuestToast("쭉쭉이가 서울 여행 준비 이야기를 하고 싶어 해요!", 10000);
+    this.showSpeechBubble(this.jjookNpc, "옷 보러 갈래?", 10000);
+    this.saveCheckpoint("clothes_ready");
+  }
+
   createMap() {
     this.objectWalls = this.physics.add.staticGroup();
     this.objectCollisionRects = [];
+    this.mapObjects = {};
 
     if (this.createTiledMap()) {
       return;
@@ -622,7 +684,9 @@ export default class PlayScene extends Phaser.Scene {
       const displayHeight = Number(props.displayHeight || object.height || 96);
       const x = object.x + (object.width || displayWidth) * originX;
       const y = object.y + (object.height || displayHeight) * originY;
-      const image = this.add.image(x, y, textureKey);
+      const image = props.animation
+        ? this.add.sprite(x, y, textureKey, Number(props.frame || 0))
+        : this.add.image(x, y, textureKey);
 
       image.setOrigin(originX, originY);
       image.setDisplaySize(displayWidth, displayHeight);
@@ -630,6 +694,11 @@ export default class PlayScene extends Phaser.Scene {
       image.setData("depthSortY", sortY);
       image.setDepth(this.getWorldDepth(sortY, Number(props.depthOffset ?? 0)));
       if (props.name) image.setName(props.name);
+      const objectKey = props.name || object.name;
+      if (objectKey) this.mapObjects[objectKey] = image;
+      if (props.animation && image.anims) {
+        image.anims.play(props.animation);
+      }
 
       if (this.shouldMapObjectCollide(object, props, textureKey)) {
         this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey);
@@ -788,7 +857,7 @@ export default class PlayScene extends Phaser.Scene {
         pointer.event?.stopPropagation();
         this.handleJjookInteraction();
       });
-      this.tweens.add({
+      this.jjookIdleTween = this.tweens.add({
         targets: this.jjookNpc,
         y: y - 5,
         duration: 780,
@@ -1363,6 +1432,14 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
+    if (this.sunisuniQuestState === "quest_complete" && this.clothesQuestState === "locked") {
+      this.ensureDevMoney(GAME_CONFIG.clothesQuestUnlockMoney);
+      this.hasAnnouncedClothesQuest = false;
+      this.checkClothesQuestUnlock();
+      this.showQuestToast("F4: 옷가게 퀘스트 시작");
+      return;
+    }
+
     this.showQuestToast("F4: 이미 마지막 퀘스트까지 열렸어.");
   }
 
@@ -1373,6 +1450,11 @@ export default class PlayScene extends Phaser.Scene {
 
   handleSpaceAction() {
     if (this.isInDialogue) {
+      return;
+    }
+
+    if (this.clothingShopModal) {
+      this.selectFocusedClothingShopOption();
       return;
     }
 
@@ -1412,6 +1494,10 @@ export default class PlayScene extends Phaser.Scene {
     return this.interactionSystem.isPlayerNearPharmacyDoor();
   }
 
+  isPlayerNearClothingStoreDoor() {
+    return this.interactionSystem.isPlayerNearClothingStoreDoor();
+  }
+
   isPlayerNearVendingMachine() {
     return this.interactionSystem.isPlayerNearVendingMachine();
   }
@@ -1438,6 +1524,18 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     if (this.jjookQuestState === "completed") {
+      if (this.clothesQuestState === "ready" || this.clothesQuestState === "declined") {
+        this.startClothesQuestDialogue();
+        return;
+      }
+
+      if (this.clothesQuestState === "shopping") {
+        this.dialogueSystem.start([
+          { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "옷가게는 맵 위쪽 상점가에 있어. 같이 가보자!" },
+        ]);
+        return;
+      }
+
       if (this.isJjookFollowActive) {
         this.dialogueSystem.start([
           { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "지금 같이 플로깅 중이야! 주변 쓰레기를 같이 치워보자." },
@@ -1458,6 +1556,320 @@ export default class PlayScene extends Phaser.Scene {
           ],
         },
       ]);
+    }
+  }
+
+  startClothesQuestDialogue() {
+    if (!this.dialogueManager?.has("zzuk_clothes_start_001")) {
+      this.dialogueSystem?.start([
+        { name: "쭉쭉이", portraitKey: "jjook_smile", text: "해냄아! 서울 여행 준비는 잘 되고 있어?" },
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjook_expectant",
+          text: "우리 여행 가기 전에 옷이라도 하나 사러 갈래?",
+          choices: [
+            { label: "응! 같이 가자!", onSelect: () => this.startClothesShoppingQuest() },
+            { label: "아직 고민중이야", onSelect: () => this.declineClothesShoppingQuest() },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    this.dialogueManager.startLoaded("zzuk_clothes_start_001");
+  }
+
+  startClothesShoppingQuest() {
+    this.clothesQuestState = "shopping";
+    this.hasAnnouncedClothesQuest = true;
+    this.isJjookClothesEscortActive = true;
+    this.stopJjookIdleTween();
+    this.clearQuestMarker("clothesQuest");
+    const shopTarget = this.mapObjects?.clothing_store || {
+      active: true,
+      x: GAME_CONFIG.clothingStoreDoor.x,
+      y: GAME_CONFIG.clothingStoreDoor.y,
+      displayHeight: 96,
+    };
+    this.setQuestMarker("clothesShop", shopTarget, "!");
+    this.showQuestToast("쭉쭉이와 함께 옷가게로 가요.", 6000);
+    this.showSpeechBubble(this.jjookNpc, "같이 가자!", 2800);
+    this.saveCheckpoint("clothes_shopping");
+  }
+
+  declineClothesShoppingQuest() {
+    this.clothesQuestState = "declined";
+    this.hasAnnouncedClothesQuest = true;
+    this.setQuestMarker("clothesQuest", this.jjookNpc, "!");
+    this.saveCheckpoint("clothes_declined");
+  }
+
+  handleClothingStoreInteraction() {
+    if (!["shopping", "completed"].includes(this.clothesQuestState)) {
+      this.showQuestToast("쭉쭉이와 먼저 이야기해 보자.");
+      return;
+    }
+
+    this.showInteriorScene("clothing_store_interior", "clothing");
+    this.isJjookClothesEscortActive = false;
+    this.stopNpcWalk(this.jjookNpc, "jjook");
+    this.dialogueSystem.start([
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "어서와~ 서울 여행 간다면서?" },
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "천천히 둘러봐! 마음에 드는 걸 골라보렴." },
+    ], () => this.openClothingShopMenu());
+  }
+
+  openClothingShopMenu() {
+    this.closeClothingShopMenu();
+    this.clothingShopSelectedKeys = new Set();
+    this.selectedClothingShopIndex = 0;
+    const stage = document.querySelector(".game-stage") || document.body;
+    const modal = document.createElement("div");
+    modal.className = "clothing-shop-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-label", "옷가게");
+    modal.innerHTML = `
+      <div class="clothing-shop-panel">
+        <div class="clothing-shop-header">
+          <strong>삼각옷방</strong>
+          <span>마음에 드는 것을 고른 뒤 한 번에 계산해요.</span>
+        </div>
+        <div class="clothing-shop-grid"></div>
+        <div class="clothing-shop-summary">선택한 상품 0개 / 합계 0원</div>
+        <div class="clothing-shop-footer">
+          <button type="button" class="clothing-shop-checkout">최종 선택</button>
+          <button type="button" class="clothing-shop-close">나가기</button>
+        </div>
+      </div>
+    `;
+    this.clothingShopModal = modal;
+    stage.appendChild(modal);
+
+    const grid = modal.querySelector(".clothing-shop-grid");
+    CLOTHING_SHOP_ITEMS.forEach((item) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "clothing-shop-item";
+      button.dataset.itemKey = item.key;
+      if (this.hasTravelPrepItem(item.key)) button.classList.add("is-owned");
+      button.innerHTML = `
+        <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
+        <span class="item-label">${item.label}</span>
+        <span class="item-price">${item.price.toLocaleString()}원</span>
+      `;
+      button.addEventListener("click", () => this.toggleClothingShopSelection(item.key));
+      grid.appendChild(button);
+    });
+
+    modal.querySelector(".clothing-shop-checkout")?.addEventListener("click", () => this.checkoutClothingShopSelection());
+    modal.querySelector(".clothing-shop-close")?.addEventListener("click", () => this.finishClothingShopVisit());
+    this.refreshClothingShopSelection();
+  }
+
+  closeClothingShopMenu() {
+    this.clothingShopModal?.remove();
+    this.clothingShopModal = null;
+    this.clothingShopSelectedKeys = new Set();
+  }
+
+  getShopIconFile(textureKey) {
+    return `${textureKey.replace(/^shop_/, "").replaceAll("_", "-")}.png`;
+  }
+
+  hasTravelPrepItem(itemKey) {
+    return this.travelPrepItems.some((entry) => entry.key === itemKey);
+  }
+
+  toggleClothingShopSelection(itemKey) {
+    const item = CLOTHING_SHOP_ITEMS.find((candidate) => candidate.key === itemKey);
+    if (!item) return;
+
+    if (this.hasTravelPrepItem(item.key)) {
+      this.showQuestToast("이미 준비한 물건이에요.");
+      return;
+    }
+
+    if (this.clothingShopSelectedKeys.has(item.key)) {
+      this.clothingShopSelectedKeys.delete(item.key);
+    } else {
+      this.clothingShopSelectedKeys.add(item.key);
+    }
+    this.refreshClothingShopSelection();
+  }
+
+  checkoutClothingShopSelection() {
+    const items = CLOTHING_SHOP_ITEMS.filter((item) => this.clothingShopSelectedKeys.has(item.key) && !this.hasTravelPrepItem(item.key));
+    if (!items.length) {
+      this.showQuestToast("먼저 살 물건을 골라주세요.");
+      return;
+    }
+
+    const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
+    if (!this.moneySystem?.deductMoney(totalPrice)) {
+      this.showClothingShopNotEnoughMoney(totalPrice);
+      return;
+    }
+
+    items.forEach((item) => {
+      this.travelPrepItems.push({
+        key: item.key,
+        category: item.category,
+        label: item.label,
+        texture: item.texture,
+      });
+    });
+    this.playItemPickupSound();
+    const previewItem = items[items.length - 1];
+    this.showFloatingItem(previewItem.texture, this.scale.width / 2, this.scale.height / 2 - 24, 86, true, { duration: 420 });
+    this.updateTravelPrepHud();
+    this.showQuestToast(`${items.length}개 준비 완료! -${totalPrice.toLocaleString()}원`);
+    if (this.clothesQuestState === "completed") {
+      this.saveCheckpoint("clothes_extra_items_bought");
+      this.openClothingShopMenu();
+      return;
+    }
+    this.completeClothesShoppingQuest();
+  }
+
+  completeClothesShoppingQuest() {
+    this.closeClothingShopMenu();
+    this.clothesQuestState = "completed";
+    this.clearQuestMarker("clothesShop");
+    this.clearQuestMarker("clothesQuest");
+    this.saveCheckpoint("clothes_completed");
+    this.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "이제 진짜 여행 가는 느낌 난다!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 다음엔 여행 가방도 차근차근 준비해야겠다." },
+    ], () => {
+      this.clearInteriorScene();
+      this.walkJjookBackToHome();
+      this.showQuestToast("다음 목표: 여행 가방 준비하기", 5000);
+    });
+  }
+
+  showClothingShopNotEnoughMoney(totalPrice) {
+    this.closeClothingShopMenu();
+    this.dialogueSystem.start([
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: `총 ${totalPrice.toLocaleString()}원이구나.` },
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "돈이 조금 모자란 것 같아. 다시 골라볼래?" },
+    ], () => this.openClothingShopMenu());
+  }
+
+  refreshClothingShopSelection() {
+    if (!this.clothingShopModal) return;
+    const buttons = Array.from(this.clothingShopModal.querySelectorAll(".clothing-shop-item"));
+    buttons.forEach((button, index) => {
+      const itemKey = button.dataset.itemKey;
+      button.classList.toggle("is-selected", this.clothingShopSelectedKeys.has(itemKey));
+      button.classList.toggle("is-focused", index === this.selectedClothingShopIndex);
+    });
+
+    const selectedItems = CLOTHING_SHOP_ITEMS.filter((item) => this.clothingShopSelectedKeys.has(item.key));
+    const totalPrice = selectedItems.reduce((sum, item) => sum + item.price, 0);
+    const summary = this.clothingShopModal.querySelector(".clothing-shop-summary");
+    if (summary) summary.textContent = `선택한 상품 ${selectedItems.length}개 / 합계 ${totalPrice.toLocaleString()}원`;
+    const focused = buttons[this.selectedClothingShopIndex];
+    focused?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    this.refreshClothingShopFooterFocus();
+  }
+
+  moveClothingShopFocus(delta) {
+    const count = CLOTHING_SHOP_ITEMS.length + 2;
+    this.selectedClothingShopIndex = (this.selectedClothingShopIndex + delta + count) % count;
+    this.refreshClothingShopSelection();
+    this.refreshClothingShopFooterFocus();
+  }
+
+  moveClothingShopFocusVertical(deltaRows) {
+    this.moveClothingShopFocus(deltaRows * this.getClothingShopColumnCount());
+  }
+
+  getClothingShopColumnCount() {
+    if (!this.clothingShopModal) return 4;
+    const grid = this.clothingShopModal.querySelector(".clothing-shop-grid");
+    const columns = window.getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
+    return Math.max(1, columns || 4);
+  }
+
+  refreshClothingShopFooterFocus() {
+    if (!this.clothingShopModal) return;
+    const checkout = this.clothingShopModal.querySelector(".clothing-shop-checkout");
+    const close = this.clothingShopModal.querySelector(".clothing-shop-close");
+    checkout?.classList.toggle("is-focused", this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length);
+    close?.classList.toggle("is-focused", this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length + 1);
+  }
+
+  selectFocusedClothingShopOption() {
+    if (!this.clothingShopModal) return false;
+    if (this.selectedClothingShopIndex < CLOTHING_SHOP_ITEMS.length) {
+      this.toggleClothingShopSelection(CLOTHING_SHOP_ITEMS[this.selectedClothingShopIndex].key);
+      return true;
+    }
+    if (this.selectedClothingShopIndex === CLOTHING_SHOP_ITEMS.length) {
+      this.checkoutClothingShopSelection();
+      return true;
+    }
+    this.finishClothingShopVisit();
+    return true;
+  }
+
+  handleClothingShopKeyboard() {
+    if (!this.clothingShopModal || !this.cursors || !this.keys) return;
+    const Key = Phaser.Input.Keyboard;
+    if (Key.JustDown(this.cursors.left) || Key.JustDown(this.keys.left)) {
+      this.moveClothingShopFocus(-1);
+    } else if (Key.JustDown(this.cursors.right) || Key.JustDown(this.keys.right)) {
+      this.moveClothingShopFocus(1);
+    } else if (Key.JustDown(this.cursors.up) || Key.JustDown(this.keys.up)) {
+      this.moveClothingShopFocusVertical(-1);
+    } else if (Key.JustDown(this.cursors.down) || Key.JustDown(this.keys.down)) {
+      this.moveClothingShopFocusVertical(1);
+    }
+  }
+
+  finishClothingShopVisit() {
+    this.closeClothingShopMenu();
+    this.clearInteriorScene();
+    if (this.clothesQuestState === "completed") {
+      return;
+    }
+
+    this.isJjookClothesEscortActive = true;
+    const message = this.travelPrepItems.length > 0
+      ? "좋아! 나머지는 다음에 또 골라보자."
+      : "괜찮아! 보는 것도 준비야. 다음에 다시 골라보자.";
+    this.showSpeechBubble(this.jjookNpc || this.player, message, 2600);
+  }
+
+  updateTravelPrepHud() {
+    const clothingItem = this.travelPrepItems?.find((item) => item.category === "top")
+      || this.travelPrepItems?.find((item) => item.category === "outer")
+      || this.travelPrepItems?.find((item) => item.category === "pants");
+    const shoesItem = this.travelPrepItems?.find((item) => item.category === "shoes")
+      || this.travelPrepItems?.find((item) => item.category === "pants");
+
+    if (this.clothesPrepHudEl && this.clothesPrepIconEl) {
+      if (clothingItem) {
+        this.clothesPrepIconEl.src = `./assets/shop-icons/${this.getShopIconFile(clothingItem.texture)}`;
+        this.clothesPrepHudEl.classList.add("is-visible");
+        this.clothesPrepHudEl.setAttribute("aria-hidden", "false");
+      } else {
+        this.clothesPrepHudEl.classList.remove("is-visible");
+        this.clothesPrepHudEl.setAttribute("aria-hidden", "true");
+      }
+    }
+
+    if (this.shoesPrepHudEl && this.shoesPrepIconEl) {
+      if (shoesItem) {
+        this.shoesPrepIconEl.src = `./assets/shop-icons/${this.getShopIconFile(shoesItem.texture)}`;
+        this.shoesPrepHudEl.classList.add("is-visible");
+        this.shoesPrepHudEl.setAttribute("aria-hidden", "false");
+      } else {
+        this.shoesPrepHudEl.classList.remove("is-visible");
+        this.shoesPrepHudEl.setAttribute("aria-hidden", "true");
+      }
     }
   }
 
@@ -2030,7 +2442,8 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   updateJjookFollower() {
-    if (!this.isJjookFollowActive || !this.jjookNpc || !this.player) return;
+    if ((!this.isJjookFollowActive && !this.isJjookClothesEscortActive) || !this.jjookNpc || !this.player) return;
+    this.stopJjookIdleTween();
 
     const distance = Phaser.Math.Distance.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
     if (distance <= 88) {
@@ -2047,6 +2460,85 @@ export default class PlayScene extends Phaser.Scene {
     this.jjookNpc.y += moveY;
     const directionKey = this.getDirectionKeyFromVector(moveX, moveY, this.jjookNpc.getData("directionKey") || "down");
     this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
+  }
+
+  buildNpcRouteThroughCrosswalk(start, target) {
+    const crossesRoad = (start.y > 300 && target.y < 260) || (start.y < 260 && target.y > 300);
+    if (!crossesRoad) return [target];
+
+    const crosswalks = [472, 1144];
+    const preferredX = crosswalks.reduce((best, x) => {
+      return Math.abs(x - target.x) < Math.abs(best - target.x) ? x : best;
+    }, crosswalks[0]);
+    return [
+      { x: preferredX, y: start.y },
+      { x: preferredX, y: target.y },
+      target,
+    ];
+  }
+
+  walkNpcToTarget(sprite, npcKey, target, { speed = 105, onComplete = null } = {}) {
+    if (!sprite?.active || !target) {
+      onComplete?.();
+      return;
+    }
+
+    if (sprite === this.jjookNpc) {
+      this.jjookIdleTween?.stop();
+      this.jjookIdleTween = null;
+    }
+    this.tweens.killTweensOf(sprite);
+
+    const route = this.buildNpcRouteThroughCrosswalk({ x: sprite.x, y: sprite.y }, target)
+      .filter((point) => Phaser.Math.Distance.Between(sprite.x, sprite.y, point.x, point.y) > 6);
+    const walkNext = (index = 0) => {
+      const point = route[index];
+      if (!point) {
+        this.setNpcDirectionTexture(sprite, npcKey, "down", false);
+        onComplete?.();
+        return;
+      }
+
+      let previousX = sprite.x;
+      let previousY = sprite.y;
+      const distance = Phaser.Math.Distance.Between(sprite.x, sprite.y, point.x, point.y);
+      this.tweens.add({
+        targets: sprite,
+        x: point.x,
+        y: point.y,
+        duration: Phaser.Math.Clamp((distance / speed) * 1000, 280, 5200),
+        ease: "Linear",
+        onUpdate: () => {
+          const dx = sprite.x - previousX;
+          const dy = sprite.y - previousY;
+          if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+            const directionKey = this.getDirectionKeyFromVector(dx, dy, sprite.getData("directionKey") || "down");
+            this.setNpcDirectionTexture(sprite, npcKey, directionKey, true);
+          }
+          previousX = sprite.x;
+          previousY = sprite.y;
+        },
+        onComplete: () => walkNext(index + 1),
+      });
+    };
+
+    walkNext();
+  }
+
+  stopJjookIdleTween() {
+    this.jjookIdleTween?.stop();
+    this.jjookIdleTween = null;
+    if (this.jjookNpc) this.tweens.killTweensOf(this.jjookNpc);
+  }
+
+  walkJjookBackToHome() {
+    if (!this.jjookNpc?.active) return;
+    this.isJjookClothesEscortActive = false;
+    this.isJjookFollowActive = false;
+    this.walkNpcToTarget(this.jjookNpc, "jjook", GAME_CONFIG.jjookSpawn, {
+      speed: 112,
+      onComplete: () => this.showSpeechBubble(this.jjookNpc, "나중에 또 같이 가자!", 2200),
+    });
   }
 
   updatePlayerDirection(velocity) {
@@ -2440,6 +2932,7 @@ export default class PlayScene extends Phaser.Scene {
         this.shouldBuyJjookColaAfterFollow = false;
         this.buyJjookThanksCola();
       }
+      this.walkJjookBackToHome();
     });
   }
 
@@ -2986,27 +3479,8 @@ export default class PlayScene extends Phaser.Scene {
     const target = GAME_CONFIG.sunisuniSpawn;
     this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
     this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
-
-    const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, target.x, target.y);
-    const duration = Phaser.Math.Clamp(distance * 12, 900, 4200);
-    let previousX = this.sunisuniNpc.x;
-    let previousY = this.sunisuniNpc.y;
-
-    this.tweens.add({
-      targets: this.sunisuniNpc,
-      x: target.x,
-      y: target.y,
-      duration,
-      ease: "Sine.easeInOut",
-      onUpdate: () => {
-        const dx = this.sunisuniNpc.x - previousX;
-        const dy = this.sunisuniNpc.y - previousY;
-        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
-          this.updateSunisuniDirection(dx, dy);
-        }
-        previousX = this.sunisuniNpc.x;
-        previousY = this.sunisuniNpc.y;
-      },
+    this.walkNpcToTarget(this.sunisuniNpc, "sunisuni", target, {
+      speed: 92,
       onComplete: () => {
         this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
         this.showSpeechBubble(this.sunisuniNpc, "많이 괜찮아졌어.", 2400);

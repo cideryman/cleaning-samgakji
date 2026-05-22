@@ -53,12 +53,13 @@ Large map objects:
 
 For buildings and large props, place an object on the `map_objects` layer and add these custom properties:
 
-- `texture`: Phaser texture key, such as `hospital_building`, `pharmacy_building`, `clothing_store`, `sunisuni_tree`, or `sunisuni_bench`
+- `texture`: Phaser texture key, such as `hospital_building`, `pharmacy_building`, `clothing_store`, `sunisuni_tree`, `sunisuni_bench`, `pedestrian_light`, `pedestrian_light_back`, `pedestrian_stop_sign`, or `crosswalk_sign`
 - `displayWidth`: rendered width in pixels
 - `displayHeight`: rendered height in pixels
 - `originX`: usually `0.5`
 - `originY`: usually `1`
 - `depth`: draw order. Higher values appear above lower values.
+- `animation`: optional animation key, such as `pedestrian_light_cycle`
 
 Keep big buildings out of the tileset unless they need to repeat as small 32px tiles. The tileset is best for ground, roads, paths, and small repeated decorations.
 
