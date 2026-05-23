@@ -92,24 +92,27 @@ export default class InteractionSystem {
   isPlayerNearHospitalDoor() {
     const scene = this.scene;
     if (!scene.player || !["going_hospital", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
-    const dx = Math.abs(scene.player.x - GAME_CONFIG.hospitalDoor.x);
-    const dy = Math.abs(scene.player.y - GAME_CONFIG.hospitalDoor.y);
+    const door = scene.getMapPoint?.("hospital_door", GAME_CONFIG.hospitalDoor) || GAME_CONFIG.hospitalDoor;
+    const dx = Math.abs(scene.player.x - door.x);
+    const dy = Math.abs(scene.player.y - door.y);
     return dx <= 72 && dy <= 56;
   }
 
   isPlayerNearPharmacyDoor() {
     const scene = this.scene;
     if (!scene.player || !["going_pharmacy", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
-    const dx = Math.abs(scene.player.x - GAME_CONFIG.pharmacyDoor.x);
-    const dy = Math.abs(scene.player.y - GAME_CONFIG.pharmacyDoor.y);
+    const door = scene.getMapPoint?.("pharmacy_door", GAME_CONFIG.pharmacyDoor) || GAME_CONFIG.pharmacyDoor;
+    const dx = Math.abs(scene.player.x - door.x);
+    const dy = Math.abs(scene.player.y - door.y);
     return dx <= 68 && dy <= 54;
   }
 
   isPlayerNearClothingStoreDoor() {
     const scene = this.scene;
     if (!scene.player || !["shopping", "completed"].includes(scene.clothesQuestState)) return false;
-    const dx = Math.abs(scene.player.x - GAME_CONFIG.clothingStoreDoor.x);
-    const dy = Math.abs(scene.player.y - GAME_CONFIG.clothingStoreDoor.y);
+    const door = scene.getMapPoint?.("clothing_store_door", GAME_CONFIG.clothingStoreDoor) || GAME_CONFIG.clothingStoreDoor;
+    const dx = Math.abs(scene.player.x - door.x);
+    const dy = Math.abs(scene.player.y - door.y);
     return dx <= 78 && dy <= 58;
   }
 
@@ -117,8 +120,12 @@ export default class InteractionSystem {
     const scene = this.scene;
     if (!scene.player || !scene.vendingMachine) return false;
 
-    const dx = Math.abs(scene.player.x - scene.vendingMachine.x);
-    const dy = Math.abs(scene.player.y - (scene.vendingMachine.y + 6));
+    const usePoint = scene.getMapPoint?.("vending_use", {
+      x: scene.vendingMachine.x,
+      y: scene.vendingMachine.y + 6,
+    }) || { x: scene.vendingMachine.x, y: scene.vendingMachine.y + 6 };
+    const dx = Math.abs(scene.player.x - usePoint.x);
+    const dy = Math.abs(scene.player.y - usePoint.y);
     return dx <= 82 && dy <= 74;
   }
 

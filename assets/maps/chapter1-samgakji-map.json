@@ -1451,7 +1451,7 @@
       "name": "ground",
       "opacity": 1,
       "type": "tilelayer",
-      "visible": true,
+      "visible": false,
       "width": 48,
       "x": 0,
       "y": 0
@@ -3163,54 +3163,6 @@
         1,
         1,
         1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
         0,
         0,
         0,
@@ -3355,6 +3307,30 @@
         1,
         1,
         1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
         1,
         1,
         1,
@@ -3379,6 +3355,30 @@
         1,
         1,
         1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
         1,
         1,
         1,
@@ -4363,35 +4363,20 @@
       "y": 0
     },
     {
+      "draworder": "topdown",
       "id": 5,
       "name": "map_objects",
-      "type": "objectgroup",
-      "draworder": "topdown",
-      "opacity": 1,
-      "visible": true,
-      "x": 0,
-      "y": 0,
       "objects": [
         {
+          "height": 120,
           "id": 31,
           "name": "hospital",
-          "type": "map_object",
-          "x": 72,
-          "y": 0,
-          "width": 160,
-          "height": 120,
-          "rotation": 0,
-          "visible": true,
+          "opacity": 1,
           "properties": [
             {
-              "name": "texture",
-              "type": "string",
-              "value": "hospital_building"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 160
+              "name": "depth",
+              "type": "float",
+              "value": 3.4
             },
             {
               "name": "displayHeight",
@@ -4399,6 +4384,11 @@
               "value": 120
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 160
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4409,32 +4399,28 @@
               "value": 1
             },
             {
+              "name": "texture",
+              "type": "string",
+              "value": "hospital_building"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 160,
+          "x": 72,
+          "y": 0
+        },
+        {
+          "height": 116,
+          "id": 32,
+          "name": "pharmacy",
+          "opacity": 1,
+          "properties": [
+            {
               "name": "depth",
               "type": "float",
               "value": 3.4
-            }
-          ]
-        },
-        {
-          "id": 32,
-          "name": "pharmacy",
-          "type": "map_object",
-          "x": 278,
-          "y": 4,
-          "width": 150,
-          "height": 116,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pharmacy_building"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 150
             },
             {
               "name": "displayHeight",
@@ -4442,6 +4428,11 @@
               "value": 116
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 150
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4452,27 +4443,33 @@
               "value": 1
             },
             {
+              "name": "texture",
+              "type": "string",
+              "value": "pharmacy_building"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 150,
+          "x": 278,
+          "y": 4
+        },
+        {
+          "height": 128,
+          "id": 33,
+          "name": "clothing_store",
+          "opacity": 1,
+          "properties": [
+            {
               "name": "depth",
               "type": "float",
               "value": 3.4
-            }
-          ]
-        },
-        {
-          "id": 33,
-          "name": "clothing_store",
-          "type": "map_object",
-          "x": 486,
-          "y": 0,
-          "width": 188,
-          "height": 128,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
-              "name": "texture",
-              "type": "string",
-              "value": "clothing_store"
+              "name": "displayHeight",
+              "type": "int",
+              "value": 128
             },
             {
               "name": "displayWidth",
@@ -4480,11 +4477,6 @@
               "value": 188
             },
             {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 128
-            },
-            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4494,81 +4486,39 @@
               "type": "float",
               "value": 1
             },
-            {
-              "name": "depth",
-              "type": "float",
-              "value": 3.4
-            }
-          ]
-        },
-        {
-          "id": 34,
-          "name": "park_bench_north",
-          "type": "map_object",
-          "x": 1090,
-          "y": 370,
-          "width": 128,
-          "height": 72,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
             {
               "name": "texture",
               "type": "string",
-              "value": "sunisuni_bench"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 128
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 72
-            },
-            {
-              "name": "originX",
-              "type": "float",
-              "value": 0.5
-            },
-            {
-              "name": "originY",
-              "type": "float",
-              "value": 1
-            },
+              "value": "clothing_store"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 188,
+          "x": 486,
+          "y": 0
+        },
+        {
+          "height": 72,
+          "id": 34,
+          "name": "park_bench_north",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depth",
               "type": "float",
               "value": 12.2
-            }
-          ]
-        },
-        {
-          "id": 35,
-          "name": "park_bench_east",
-          "type": "map_object",
-          "x": 1350,
-          "y": 452,
-          "width": 128,
-          "height": 72,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_bench"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 128
             },
             {
               "name": "displayHeight",
               "type": "int",
               "value": 72
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 128
             },
             {
               "name": "originX",
@@ -4581,32 +4531,72 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 14
-            }
-          ]
-        },
-        {
-          "id": 36,
-          "name": "sunisuni_bench",
-          "type": "map_object",
-          "x": 1134,
-          "y": 616,
-          "width": 136,
-          "height": 76,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
               "value": "sunisuni_bench"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 128,
+          "x": 1090,
+          "y": 370
+        },
+        {
+          "height": 72,
+          "id": 35,
+          "name": "park_bench_east",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 14
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 72
             },
             {
               "name": "displayWidth",
               "type": "int",
-              "value": 136
+              "value": 128
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_bench"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 128,
+          "x": 1350,
+          "y": 452
+        },
+        {
+          "height": 76,
+          "id": 36,
+          "name": "sunisuni_bench",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 15
             },
             {
               "name": "displayHeight",
@@ -4614,6 +4604,11 @@
               "value": 76
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 136
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4624,32 +4619,28 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 15
-            }
-          ]
-        },
-        {
-          "id": 37,
-          "name": "park_bench_south",
-          "type": "map_object",
-          "x": 1050,
-          "y": 770,
-          "width": 128,
-          "height": 72,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
               "value": "sunisuni_bench"
-            },
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 136,
+          "x": 1134,
+          "y": 616
+        },
+        {
+          "height": 72,
+          "id": 37,
+          "name": "park_bench_south",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 128
+              "name": "depth",
+              "type": "float",
+              "value": 20
             },
             {
               "name": "displayHeight",
@@ -4657,6 +4648,11 @@
               "value": 72
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 128
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4667,32 +4663,28 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 20
-            }
-          ]
-        },
-        {
-          "id": 38,
-          "name": "west_rest_bench",
-          "type": "map_object",
-          "x": 500,
-          "y": 530,
-          "width": 118,
-          "height": 66,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
               "value": "sunisuni_bench"
-            },
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 128,
+          "x": 1050,
+          "y": 770
+        },
+        {
+          "height": 66,
+          "id": 38,
+          "name": "west_rest_bench",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 118
+              "name": "depth",
+              "type": "float",
+              "value": 14
             },
             {
               "name": "displayHeight",
@@ -4700,6 +4692,11 @@
               "value": 66
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 118
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -4709,64 +4706,25 @@
               "type": "float",
               "value": 1
             },
-            {
-              "name": "depth",
-              "type": "float",
-              "value": 14
-            }
-          ]
-        },
-        {
-          "id": 39,
-          "name": "sunisuni_tree",
-          "type": "map_object",
-          "x": 1048,
-          "y": 438,
-          "width": 150,
-          "height": 176,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
             {
               "name": "texture",
               "type": "string",
-              "value": "sunisuni_tree"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 150
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 176
-            },
-            {
-              "name": "originX",
-              "type": "float",
-              "value": 0.5
-            },
-            {
-              "name": "originY",
-              "type": "float",
-              "value": 1
-            },
-            {
-              "name": "depth",
-              "type": "float",
-              "value": 12
-            },
-            {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
-              "type": "int",
-              "value": 36
-            },
+              "value": "sunisuni_bench"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 118,
+          "x": 500,
+          "y": 530
+        },
+        {
+          "height": 176,
+          "id": 39,
+          "name": "sunisuni_tree",
+          "opacity": 1,
+          "properties": [
             {
               "name": "collisionHeight",
               "type": "int",
@@ -4781,34 +4739,26 @@
               "name": "collisionOffsetY",
               "type": "int",
               "value": -18
-            }
-          ]
-        },
-        {
-          "id": 40,
-          "name": "park_tree_north_01",
-          "type": "map_object",
-          "x": 1240,
-          "y": 392,
-          "width": 132,
-          "height": 155,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
             },
             {
-              "name": "displayWidth",
+              "name": "collisionWidth",
               "type": "int",
-              "value": 132
+              "value": 36
+            },
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 12
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 155
+              "value": 176
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 150
             },
             {
               "name": "originX",
@@ -4821,20 +4771,24 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 11.8
-            },
-            {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
-              "type": "int",
-              "value": 34
-            },
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 150,
+          "x": 1048,
+          "y": 438
+        },
+        {
+          "height": 155,
+          "id": 40,
+          "name": "park_tree_north_01",
+          "opacity": 1,
+          "properties": [
             {
               "name": "collisionHeight",
               "type": "int",
@@ -4849,34 +4803,26 @@
               "name": "collisionOffsetY",
               "type": "int",
               "value": -18
-            }
-          ]
-        },
-        {
-          "id": 41,
-          "name": "park_tree_north_02",
-          "type": "map_object",
-          "x": 1390,
-          "y": 372,
-          "width": 124,
-          "height": 146,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
             },
             {
-              "name": "displayWidth",
+              "name": "collisionWidth",
               "type": "int",
-              "value": 124
+              "value": 34
+            },
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 11.8
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 146
+              "value": 155
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 132
             },
             {
               "name": "originX",
@@ -4887,6 +4833,45 @@
               "name": "originY",
               "type": "float",
               "value": 1
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 132,
+          "x": 1240,
+          "y": 392
+        },
+        {
+          "height": 146,
+          "id": 41,
+          "name": "park_tree_north_02",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "collisionHeight",
+              "type": "int",
+              "value": 24
+            },
+            {
+              "name": "collisionOffsetX",
+              "type": "int",
+              "value": 0
+            },
+            {
+              "name": "collisionOffsetY",
+              "type": "int",
+              "value": -18
+            },
+            {
+              "name": "collisionWidth",
+              "type": "int",
+              "value": 34
             },
             {
               "name": "depth",
@@ -4894,57 +4879,14 @@
               "value": 11.6
             },
             {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
+              "name": "displayHeight",
               "type": "int",
-              "value": 34
-            },
-            {
-              "name": "collisionHeight",
-              "type": "int",
-              "value": 24
-            },
-            {
-              "name": "collisionOffsetX",
-              "type": "int",
-              "value": 0
-            },
-            {
-              "name": "collisionOffsetY",
-              "type": "int",
-              "value": -18
-            }
-          ]
-        },
-        {
-          "id": 42,
-          "name": "park_tree_center_01",
-          "type": "map_object",
-          "x": 1268,
-          "y": 560,
-          "width": 148,
-          "height": 174,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
+              "value": 146
             },
             {
               "name": "displayWidth",
               "type": "int",
-              "value": 148
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 174
+              "value": 124
             },
             {
               "name": "originX",
@@ -4955,6 +4897,45 @@
               "name": "originY",
               "type": "float",
               "value": 1
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 124,
+          "x": 1390,
+          "y": 372
+        },
+        {
+          "height": 174,
+          "id": 42,
+          "name": "park_tree_center_01",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "collisionHeight",
+              "type": "int",
+              "value": 28
+            },
+            {
+              "name": "collisionOffsetX",
+              "type": "int",
+              "value": 0
+            },
+            {
+              "name": "collisionOffsetY",
+              "type": "int",
+              "value": -18
+            },
+            {
+              "name": "collisionWidth",
+              "type": "int",
+              "value": 36
             },
             {
               "name": "depth",
@@ -4962,57 +4943,14 @@
               "value": 15.4
             },
             {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
+              "name": "displayHeight",
               "type": "int",
-              "value": 36
-            },
-            {
-              "name": "collisionHeight",
-              "type": "int",
-              "value": 28
-            },
-            {
-              "name": "collisionOffsetX",
-              "type": "int",
-              "value": 0
-            },
-            {
-              "name": "collisionOffsetY",
-              "type": "int",
-              "value": -18
-            }
-          ]
-        },
-        {
-          "id": 43,
-          "name": "park_tree_center_02",
-          "type": "map_object",
-          "x": 1450,
-          "y": 594,
-          "width": 136,
-          "height": 160,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
+              "value": 174
             },
             {
               "name": "displayWidth",
               "type": "int",
-              "value": 136
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 160
+              "value": 148
             },
             {
               "name": "originX",
@@ -5023,6 +4961,45 @@
               "name": "originY",
               "type": "float",
               "value": 1
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 148,
+          "x": 1268,
+          "y": 560
+        },
+        {
+          "height": 160,
+          "id": 43,
+          "name": "park_tree_center_02",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "collisionHeight",
+              "type": "int",
+              "value": 26
+            },
+            {
+              "name": "collisionOffsetX",
+              "type": "int",
+              "value": 0
+            },
+            {
+              "name": "collisionOffsetY",
+              "type": "int",
+              "value": -18
+            },
+            {
+              "name": "collisionWidth",
+              "type": "int",
+              "value": 34
             },
             {
               "name": "depth",
@@ -5030,57 +5007,14 @@
               "value": 16
             },
             {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
+              "name": "displayHeight",
               "type": "int",
-              "value": 34
-            },
-            {
-              "name": "collisionHeight",
-              "type": "int",
-              "value": 26
-            },
-            {
-              "name": "collisionOffsetX",
-              "type": "int",
-              "value": 0
-            },
-            {
-              "name": "collisionOffsetY",
-              "type": "int",
-              "value": -18
-            }
-          ]
-        },
-        {
-          "id": 44,
-          "name": "park_tree_south_01",
-          "type": "map_object",
-          "x": 1194,
-          "y": 760,
-          "width": 152,
-          "height": 178,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
+              "value": 160
             },
             {
               "name": "displayWidth",
               "type": "int",
-              "value": 152
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 178
+              "value": 136
             },
             {
               "name": "originX",
@@ -5093,20 +5027,24 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 20.2
-            },
-            {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
-              "type": "int",
-              "value": 36
-            },
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 136,
+          "x": 1450,
+          "y": 594
+        },
+        {
+          "height": 178,
+          "id": 44,
+          "name": "park_tree_south_01",
+          "opacity": 1,
+          "properties": [
             {
               "name": "collisionHeight",
               "type": "int",
@@ -5121,34 +5059,26 @@
               "name": "collisionOffsetY",
               "type": "int",
               "value": -18
-            }
-          ]
-        },
-        {
-          "id": 45,
-          "name": "park_tree_south_02",
-          "type": "map_object",
-          "x": 1396,
-          "y": 812,
-          "width": 140,
-          "height": 164,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
             },
             {
-              "name": "displayWidth",
+              "name": "collisionWidth",
               "type": "int",
-              "value": 140
+              "value": 36
+            },
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 20.2
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 164
+              "value": 178
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 152
             },
             {
               "name": "originX",
@@ -5161,20 +5091,24 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 21.2
-            },
-            {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
-              "type": "int",
-              "value": 34
-            },
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 152,
+          "x": 1194,
+          "y": 760
+        },
+        {
+          "height": 164,
+          "id": 45,
+          "name": "park_tree_south_02",
+          "opacity": 1,
+          "properties": [
             {
               "name": "collisionHeight",
               "type": "int",
@@ -5189,34 +5123,26 @@
               "name": "collisionOffsetY",
               "type": "int",
               "value": -18
-            }
-          ]
-        },
-        {
-          "id": 46,
-          "name": "west_tree_rest",
-          "type": "map_object",
-          "x": 606,
-          "y": 620,
-          "width": 128,
-          "height": 150,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "sunisuni_tree"
             },
             {
-              "name": "displayWidth",
+              "name": "collisionWidth",
               "type": "int",
-              "value": 128
+              "value": 34
+            },
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 21.2
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 150
+              "value": 164
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 140
             },
             {
               "name": "originX",
@@ -5229,20 +5155,24 @@
               "value": 1
             },
             {
-              "name": "depth",
-              "type": "float",
-              "value": 16.4
-            },
-            {
-              "name": "collides",
-              "type": "bool",
-              "value": true
-            },
-            {
-              "name": "collisionWidth",
-              "type": "int",
-              "value": 34
-            },
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 140,
+          "x": 1396,
+          "y": 812
+        },
+        {
+          "height": 150,
+          "id": 46,
+          "name": "west_tree_rest",
+          "opacity": 1,
+          "properties": [
             {
               "name": "collisionHeight",
               "type": "int",
@@ -5257,34 +5187,26 @@
               "name": "collisionOffsetY",
               "type": "int",
               "value": -18
-            }
-          ]
-        },
-        {
-          "id": 47,
-          "name": "traffic_front_west",
-          "type": "map_object",
-          "x": 472,
-          "y": 112,
-          "width": 48,
-          "height": 84,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pedestrian_light"
             },
             {
-              "name": "displayWidth",
+              "name": "collisionWidth",
               "type": "int",
-              "value": 48
+              "value": 34
+            },
+            {
+              "name": "depth",
+              "type": "float",
+              "value": 16.4
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 84
+              "value": 150
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 128
             },
             {
               "name": "originX",
@@ -5297,9 +5219,28 @@
               "value": 1
             },
             {
-              "name": "sortY",
-              "type": "float",
-              "value": 294
+              "name": "texture",
+              "type": "string",
+              "value": "sunisuni_tree"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 128,
+          "x": 606,
+          "y": 620
+        },
+        {
+          "height": 84,
+          "id": 47,
+          "name": "traffic_front_west",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "animation",
+              "type": "string",
+              "value": "pedestrian_light_cycle"
             },
             {
               "name": "depthOffset",
@@ -5307,37 +5248,58 @@
               "value": 0.05
             },
             {
-              "name": "animation",
-              "type": "string",
-              "value": "pedestrian_light_cycle"
+              "name": "displayHeight",
+              "type": "int",
+              "value": 84
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 48
             },
             {
               "name": "frame",
               "type": "int",
               "value": 0
-            }
-          ]
-        },
-        {
-          "id": 48,
-          "name": "traffic_back_west",
-          "type": "map_object",
-          "x": 344,
-          "y": 210,
-          "width": 44,
-          "height": 78,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
             {
               "name": "texture",
               "type": "string",
-              "value": "pedestrian_light_back"
-            },
+              "value": "pedestrian_light"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 48,
+          "x": 472,
+          "y": 112
+        },
+        {
+          "height": 78,
+          "id": 48,
+          "name": "traffic_back_west",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 44
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.02
             },
             {
               "name": "displayHeight",
@@ -5345,6 +5307,11 @@
               "value": 78
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 44
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -5360,32 +5327,28 @@
               "value": 190
             },
             {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.02
-            }
-          ]
-        },
-        {
-          "id": 49,
-          "name": "crosswalk_sign_west",
-          "type": "map_object",
-          "x": 313,
-          "y": 219,
-          "width": 42,
-          "height": 75,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
-              "value": "crosswalk_sign"
-            },
+              "value": "pedestrian_light_back"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 44,
+          "x": 344,
+          "y": 210
+        },
+        {
+          "height": 75,
+          "id": 49,
+          "name": "crosswalk_sign_west",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 42
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
             },
             {
               "name": "displayHeight",
@@ -5393,6 +5356,11 @@
               "value": 75
             },
             {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
               "name": "originX",
               "type": "float",
               "value": 0.5
@@ -5408,37 +5376,38 @@
               "value": 294
             },
             {
+              "name": "texture",
+              "type": "string",
+              "value": "crosswalk_sign"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 42,
+          "x": 313,
+          "y": 219
+        },
+        {
+          "height": 73,
+          "id": 50,
+          "name": "stop_sign_west",
+          "opacity": 1,
+          "properties": [
+            {
               "name": "depthOffset",
               "type": "float",
               "value": 0.03
-            }
-          ]
-        },
-        {
-          "id": 50,
-          "name": "stop_sign_west",
-          "type": "map_object",
-          "x": 505,
-          "y": 117,
-          "width": 42,
-          "height": 73,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pedestrian_stop_sign"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 42
             },
             {
               "name": "displayHeight",
               "type": "int",
               "value": 73
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
             },
             {
               "name": "originX",
@@ -5456,52 +5425,28 @@
               "value": 190
             },
             {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.03
-            }
-          ]
-        },
-        {
-          "id": 51,
-          "name": "traffic_front_east",
-          "type": "map_object",
-          "x": 1144,
-          "y": 112,
-          "width": 48,
-          "height": 84,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
-              "value": "pedestrian_light"
-            },
+              "value": "pedestrian_stop_sign"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 42,
+          "x": 505,
+          "y": 117
+        },
+        {
+          "height": 84,
+          "id": 51,
+          "name": "traffic_front_east",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 48
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 84
-            },
-            {
-              "name": "originX",
-              "type": "float",
-              "value": 0.5
-            },
-            {
-              "name": "originY",
-              "type": "float",
-              "value": 1
-            },
-            {
-              "name": "sortY",
-              "type": "float",
-              "value": 294
+              "name": "animation",
+              "type": "string",
+              "value": "pedestrian_light_cycle"
             },
             {
               "name": "depthOffset",
@@ -5509,90 +5454,19 @@
               "value": 0.05
             },
             {
-              "name": "animation",
-              "type": "string",
-              "value": "pedestrian_light_cycle"
+              "name": "displayHeight",
+              "type": "int",
+              "value": 84
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 48
             },
             {
               "name": "frame",
               "type": "int",
               "value": 1
-            }
-          ]
-        },
-        {
-          "id": 52,
-          "name": "traffic_back_east",
-          "type": "map_object",
-          "x": 1016,
-          "y": 210,
-          "width": 44,
-          "height": 78,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pedestrian_light_back"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 44
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 78
-            },
-            {
-              "name": "originX",
-              "type": "float",
-              "value": 0.5
-            },
-            {
-              "name": "originY",
-              "type": "float",
-              "value": 1
-            },
-            {
-              "name": "sortY",
-              "type": "float",
-              "value": 190
-            },
-            {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.02
-            }
-          ]
-        },
-        {
-          "id": 53,
-          "name": "crosswalk_sign_east",
-          "type": "map_object",
-          "x": 985,
-          "y": 219,
-          "width": 42,
-          "height": 75,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "crosswalk_sign"
-            },
-            {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 42
-            },
-            {
-              "name": "displayHeight",
-              "type": "int",
-              "value": 75
             },
             {
               "name": "originX",
@@ -5610,37 +5484,38 @@
               "value": 294
             },
             {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.03
-            }
-          ]
-        },
-        {
-          "id": 54,
-          "name": "stop_sign_east",
-          "type": "map_object",
-          "x": 1177,
-          "y": 117,
-          "width": 42,
-          "height": 73,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
               "name": "texture",
               "type": "string",
-              "value": "pedestrian_stop_sign"
-            },
+              "value": "pedestrian_light"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 48,
+          "x": 1144,
+          "y": 112
+        },
+        {
+          "height": 78,
+          "id": 52,
+          "name": "traffic_back_east",
+          "opacity": 1,
+          "properties": [
             {
-              "name": "displayWidth",
-              "type": "int",
-              "value": 42
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.02
             },
             {
               "name": "displayHeight",
               "type": "int",
-              "value": 73
+              "value": 78
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 44
             },
             {
               "name": "originX",
@@ -5658,13 +5533,122 @@
               "value": 190
             },
             {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_light_back"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 44,
+          "x": 1016,
+          "y": 210
+        },
+        {
+          "height": 75,
+          "id": 53,
+          "name": "crosswalk_sign_east",
+          "opacity": 1,
+          "properties": [
+            {
               "name": "depthOffset",
               "type": "float",
               "value": 0.03
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 75
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 294
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "crosswalk_sign"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 42,
+          "x": 985,
+          "y": 219
+        },
+        {
+          "height": 73,
+          "id": 54,
+          "name": "stop_sign_east",
+          "opacity": 1,
+          "properties": [
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.03
+            },
+            {
+              "name": "displayHeight",
+              "type": "int",
+              "value": 73
+            },
+            {
+              "name": "displayWidth",
+              "type": "int",
+              "value": 42
+            },
+            {
+              "name": "originX",
+              "type": "float",
+              "value": 0.5
+            },
+            {
+              "name": "originY",
+              "type": "float",
+              "value": 1
+            },
+            {
+              "name": "sortY",
+              "type": "float",
+              "value": 190
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pedestrian_stop_sign"
+            }
+          ],
+          "rotation": 0,
+          "type": "map_object",
+          "visible": true,
+          "width": 42,
+          "x": 1177,
+          "y": 117
         }
-      ]
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
     },
     {
       "draworder": "topdown",
@@ -5672,298 +5656,322 @@
       "name": "spawn",
       "objects": [
         {
+          "height": 0,
           "id": 1,
           "name": "player_start",
-          "type": "",
-          "x": 170,
-          "y": 424,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 170,
+          "y": 424
         },
         {
+          "height": 0,
           "id": 2,
           "name": "broom_upgrade",
-          "type": "",
-          "x": 650,
-          "y": 420,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 650,
+          "y": 420
         },
         {
+          "height": 0,
           "id": 3,
           "name": "slime_spawn",
-          "type": "",
-          "x": 280,
-          "y": 420,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 280,
+          "y": 420
         },
         {
+          "height": 0,
           "id": 4,
           "name": "slime_spawn",
-          "type": "",
-          "x": 560,
-          "y": 360,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 560,
+          "y": 360
         },
         {
+          "height": 0,
           "id": 5,
           "name": "slime_spawn",
-          "type": "",
-          "x": 900,
-          "y": 300,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 900,
+          "y": 300
         },
         {
+          "height": 0,
           "id": 6,
           "name": "slime_spawn",
-          "type": "",
-          "x": 1030,
-          "y": 520,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1030,
+          "y": 520
         },
         {
+          "height": 0,
           "id": 7,
           "name": "slime_spawn",
-          "type": "",
-          "x": 1180,
-          "y": 350,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1180,
+          "y": 350
         },
         {
+          "height": 0,
           "id": 8,
           "name": "slime_spawn",
-          "type": "",
-          "x": 390,
-          "y": 610,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 390,
+          "y": 610
         },
         {
+          "height": 0,
           "id": 9,
           "name": "slime_spawn",
-          "type": "",
-          "x": 740,
-          "y": 700,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 740,
+          "y": 700
         },
         {
+          "height": 0,
           "id": 10,
           "name": "slime_spawn",
-          "type": "",
-          "x": 1160,
-          "y": 700,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1160,
+          "y": 700
         },
         {
+          "height": 0,
           "id": 11,
           "name": "slime_spawn",
-          "type": "",
-          "x": 970,
-          "y": 250,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 970,
+          "y": 250
         },
         {
+          "height": 0,
           "id": 12,
           "name": "slime_spawn",
-          "type": "",
-          "x": 250,
-          "y": 760,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 250,
+          "y": 760
         },
         {
+          "height": 0,
           "id": 13,
           "name": "flower",
-          "type": "",
-          "x": 820,
-          "y": 510,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 820,
+          "y": 510
         },
         {
+          "height": 0,
           "id": 14,
           "name": "flower",
-          "type": "",
-          "x": 910,
-          "y": 486,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 910,
+          "y": 486
         },
         {
+          "height": 0,
           "id": 15,
           "name": "flower",
-          "type": "",
-          "x": 1010,
-          "y": 500,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1010,
+          "y": 500
         },
         {
+          "height": 0,
           "id": 16,
           "name": "flower",
-          "type": "",
-          "x": 1110,
-          "y": 522,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1110,
+          "y": 522
         },
         {
+          "height": 0,
           "id": 17,
           "name": "flower",
-          "type": "",
-          "x": 930,
-          "y": 430,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 930,
+          "y": 430
         },
         {
+          "height": 0,
           "id": 18,
           "name": "flower",
-          "type": "",
-          "x": 1048,
-          "y": 422,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1048,
+          "y": 422
         },
         {
+          "height": 0,
           "id": 19,
           "name": "flower",
-          "type": "",
-          "x": 780,
-          "y": 610,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 780,
+          "y": 610
         },
         {
+          "height": 0,
           "id": 20,
           "name": "flower",
-          "type": "",
-          "x": 910,
-          "y": 630,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 910,
+          "y": 630
         },
         {
+          "height": 0,
           "id": 21,
           "name": "flower",
-          "type": "",
-          "x": 1040,
-          "y": 620,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1040,
+          "y": 620
         },
         {
+          "height": 0,
           "id": 22,
           "name": "flower",
-          "type": "",
-          "x": 1170,
-          "y": 620,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 1170,
+          "y": 620
         },
         {
+          "height": 0,
           "id": 23,
           "name": "flower",
-          "type": "",
-          "x": 690,
-          "y": 420,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 690,
+          "y": 420
         },
         {
+          "height": 0,
           "id": 24,
           "name": "flower",
-          "type": "",
-          "x": 610,
-          "y": 520,
-          "width": 0,
-          "height": 0,
+          "opacity": 1,
+          "point": true,
           "rotation": 0,
+          "type": "",
           "visible": true,
-          "point": true
+          "width": 0,
+          "x": 610,
+          "y": 520
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 56,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -5973,10 +5981,10 @@
           "y": 385
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 57,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -5986,10 +5994,10 @@
           "y": 415
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 58,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -5999,10 +6007,10 @@
           "y": 395
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 59,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6012,10 +6020,10 @@
           "y": 455
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 60,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6025,10 +6033,10 @@
           "y": 560
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 61,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6038,10 +6046,10 @@
           "y": 590
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 62,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6051,10 +6059,10 @@
           "y": 630
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 63,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6064,10 +6072,10 @@
           "y": 735
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 64,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6077,10 +6085,10 @@
           "y": 760
         },
         {
-          "ellipse": true,
           "height": 0,
           "id": 65,
           "name": "slime_spawn",
+          "opacity": 1,
           "point": true,
           "rotation": 0,
           "type": "",
@@ -6088,6 +6096,174 @@
           "width": 0,
           "x": 1385,
           "y": 790
+        },
+        {
+          "height": 0,
+          "id": 67,
+          "name": "hospital_door",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 152,
+          "y": 148
+        },
+        {
+          "height": 0,
+          "id": 68,
+          "name": "pharmacy_door",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 353,
+          "y": 148
+        },
+        {
+          "height": 0,
+          "id": 69,
+          "name": "clothing_store_door",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 580,
+          "y": 158
+        },
+        {
+          "height": 0,
+          "id": 70,
+          "name": "vending_machine",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 690,
+          "y": 465
+        },
+        {
+          "height": 0,
+          "id": 71,
+          "name": "vending_use",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 690,
+          "y": 471
+        },
+        {
+          "height": 0,
+          "id": 72,
+          "name": "recycling_center",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 940,
+          "y": 545
+        },
+        {
+          "height": 0,
+          "id": 73,
+          "name": "recycle_bin_can",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 804,
+          "y": 649
+        },
+        {
+          "height": 0,
+          "id": 74,
+          "name": "recycle_bin_normal",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 940,
+          "y": 649
+        },
+        {
+          "height": 0,
+          "id": 75,
+          "name": "recycle_bin_plastic",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 1076,
+          "y": 649
+        },
+        {
+          "height": 0,
+          "id": 76,
+          "name": "yebi_start",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 278,
+          "y": 416
+        },
+        {
+          "height": 0,
+          "id": 77,
+          "name": "yebi_recycle_stand",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 670,
+          "y": 573
+        },
+        {
+          "height": 0,
+          "id": 78,
+          "name": "jjook_start",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 560,
+          "y": 610
+        },
+        {
+          "height": 0,
+          "id": 79,
+          "name": "sunisuni_start",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 1198,
+          "y": 690
+        },
+        {
+          "height": 0,
+          "id": 80,
+          "name": "sunisuni_bench",
+          "point": true,
+          "rotation": 0,
+          "type": "logic_point",
+          "visible": true,
+          "width": 0,
+          "x": 1202,
+          "y": 692
         }
       ],
       "opacity": 1,
@@ -6098,7 +6274,7 @@
     }
   ],
   "nextlayerid": 6,
-  "nextobjectid": 66,
+  "nextobjectid": 81,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",
@@ -6113,7 +6289,7 @@
       "margin": 0,
       "name": "samgakji_tiles",
       "spacing": 0,
-      "tilecount": 33,
+      "tilecount": 40,
       "tileheight": 32,
       "tilewidth": 32
     }

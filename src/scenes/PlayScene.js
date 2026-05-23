@@ -154,6 +154,7 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.mapPoints = {};
     this.mapObjects = {};
     this.objectWalls = null;
     this.objectCollisionRects = [];
@@ -426,6 +427,7 @@ export default class PlayScene extends Phaser.Scene {
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
     this.finalFlowerPositions = null;
+    this.mapPoints = {};
     this.mapObjects = {};
     this.objectWalls = null;
     this.objectCollisionRects = [];
@@ -719,6 +721,10 @@ export default class PlayScene extends Phaser.Scene {
       const objectType = object.type || object.name;
       const x = object.x + (object.width || 0) / 2;
       const y = object.y + (object.height || 0) / 2;
+      this.setMapPoint(object.name, x, y);
+      if (objectType !== "logic_point") {
+        this.setMapPoint(objectType, x, y);
+      }
 
       if (objectType === "player_start") {
         this.playerStart = { x, y };
@@ -733,6 +739,15 @@ export default class PlayScene extends Phaser.Scene {
 
     this.slimeSpawnPoints = slimeSpawnPoints;
     this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
+  }
+
+  setMapPoint(key, x, y) {
+    if (!key || key === "slime_spawn" || key === "flower") return;
+    this.mapPoints[key] = { x, y };
+  }
+
+  getMapPoint(key, fallback) {
+    return this.mapPoints?.[key] || fallback;
   }
 
   getTiledObjectProperties(object) {
@@ -777,21 +792,12 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   shouldMapObjectCollide(object, props, textureKey) {
-    if (props.collides === true || props.collides === "true") return true;
-
-    const name = `${object.name || ""} ${textureKey || ""}`.toLowerCase();
-    return [
-      "tree",
-      "bench",
-      "building",
-      "store",
-      "pharmacy",
-      "hospital",
-      "traffic",
-      "pedestrian",
-      "stop_sign",
-      "crosswalk_sign",
-    ].some((keyword) => name.includes(keyword));
+    // Static map blocking is authored in Tiled's collision layer.
+    // Use this only for rare map objects that must create a code-side collider.
+    return props.codeCollides === true
+      || props.codeCollides === "true"
+      || props.collides === "code"
+      || props.collisionSource === "code";
   }
 
   addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey) {
@@ -871,12 +877,13 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createRecyclingCenter() {
-    const center = GAME_CONFIG.recyclingCenter;
+    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    const vendingPoint = this.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
     this.recycleBins = [];
 
     const vendingMachine = this.add.image(
-      GAME_CONFIG.vendingMachine.x,
-      GAME_CONFIG.vendingMachine.y,
+      vendingPoint.x,
+      vendingPoint.y,
       "vending_machine_full",
     );
     vendingMachine.setDisplaySize(96, 118);
@@ -891,15 +898,19 @@ export default class PlayScene extends Phaser.Scene {
     this.vendingMachine = vendingMachine;
     this.addObjectCollider(
       "vending_machine_collider",
-      GAME_CONFIG.vendingMachine.x,
-      GAME_CONFIG.vendingMachine.y + 20,
+      vendingPoint.x,
+      vendingPoint.y + 20,
       76,
       48,
     );
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
-      const x = center.x + binConfig.xOffset;
-      const y = center.y + binConfig.yOffset + 76;
+      const binPoint = this.getMapPoint(`recycle_bin_${binConfig.type}`, {
+        x: center.x + binConfig.xOffset,
+        y: center.y + binConfig.yOffset + 76,
+      });
+      const x = binPoint.x;
+      const y = binPoint.y;
       const zoneWidth = GAME_CONFIG.recycleBinHitboxWidth;
       const zoneHeight = GAME_CONFIG.recycleBinHitboxHeight;
       const zoneCenterY = y + 50;
@@ -955,15 +966,16 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   getYebiRecyclePosition() {
-    return {
-      x: GAME_CONFIG.recyclingCenter.x - 270,
-      y: GAME_CONFIG.recyclingCenter.y + 28,
-    };
+    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    return this.getMapPoint("yebi_recycle_stand", {
+      x: center.x - 270,
+      y: center.y + 28,
+    });
   }
 
   createJjookQuestObjects() {
     if (!this.jjookNpc) {
-      const { x, y } = GAME_CONFIG.jjookSpawn;
+      const { x, y } = this.getMapPoint("jjook_start", GAME_CONFIG.jjookSpawn);
       this.jjookNpc = this.add.sprite(x, y, NPC_TEXTURES.jjook.down, 1);
       this.setNpcDirectionTexture(this.jjookNpc, "jjook", "down", false);
       this.jjookNpc.setDepth(4.2);
@@ -1026,7 +1038,7 @@ export default class PlayScene extends Phaser.Scene {
   createSunisuniNpc() {
     if (!this.textures.exists(NPC_TEXTURES.sunisuni.down)) return;
 
-    const { x, y } = GAME_CONFIG.sunisuniSpawn;
+    const { x, y } = this.getMapPoint("sunisuni_start", GAME_CONFIG.sunisuniSpawn);
     this.sunisuniNpc = this.add.sprite(x, y, NPC_TEXTURES.sunisuni.down, 1);
     this.setSunisuniWaitingPose();
     this.sunisuniNpc.setDepth(4.15);
@@ -1144,8 +1156,12 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createYebiNpc() {
-    const fallbackX = this.playerStart.x + 108;
-    const fallbackY = this.playerStart.y - 8;
+    const startPoint = this.getMapPoint("yebi_start", {
+      x: this.playerStart.x + 108,
+      y: this.playerStart.y - 8,
+    });
+    const fallbackX = startPoint.x;
+    const fallbackY = startPoint.y;
     const x = this.isBlockedSpawnPoint(fallbackX, fallbackY) ? this.playerStart.x + 72 : fallbackX;
     const y = fallbackY;
 
@@ -1201,13 +1217,14 @@ export default class PlayScene extends Phaser.Scene {
   getYebiPathToRecyclingCenter(target) {
     const startX = this.yebiNpc?.x ?? this.playerStart.x;
     const startY = this.yebiNpc?.y ?? this.playerStart.y;
-    const upperLaneY = Math.min(startY - 70, GAME_CONFIG.vendingMachine.y - 118);
+    const vendingPoint = this.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
+    const upperLaneY = Math.min(startY - 70, vendingPoint.y - 118);
 
     return [
       { x: startX, y: upperLaneY },
       { x: startX + 130, y: upperLaneY },
-      { x: GAME_CONFIG.vendingMachine.x - 145, y: upperLaneY },
-      { x: GAME_CONFIG.vendingMachine.x + 155, y: upperLaneY },
+      { x: vendingPoint.x - 145, y: upperLaneY },
+      { x: vendingPoint.x + 155, y: upperLaneY },
       { x: target.x, y: upperLaneY },
       { x: target.x, y: target.y },
     ];
@@ -1707,8 +1724,7 @@ export default class PlayScene extends Phaser.Scene {
     this.clearQuestMarker("clothesQuest");
     const shopTarget = this.mapObjects?.clothing_store || {
       active: true,
-      x: GAME_CONFIG.clothingStoreDoor.x,
-      y: GAME_CONFIG.clothingStoreDoor.y,
+      ...this.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor),
       displayHeight: 96,
     };
     this.setQuestMarker("clothesShop", shopTarget, "!");
@@ -3153,11 +3169,12 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     if (key === "jjook") {
-      return horizontalPatrol(GAME_CONFIG.jjookSpawn.x + 66, 108);
+      const jjookStart = this.getMapPoint("jjook_start", GAME_CONFIG.jjookSpawn);
+      return horizontalPatrol(jjookStart.x + 66, 108);
     }
 
     if (key === "sunisuni") {
-      const bench = GAME_CONFIG.sunisuniBench;
+      const bench = this.getMapPoint("sunisuni_bench", GAME_CONFIG.sunisuniBench);
       return horizontalPatrol(bench.x - 8, 104);
     }
 
@@ -3281,7 +3298,7 @@ export default class PlayScene extends Phaser.Scene {
     this.jjookReturningHome = true;
     this.isJjookClothesEscortActive = false;
     this.isJjookFollowActive = false;
-    this.walkNpcToTarget(this.jjookNpc, "jjook", GAME_CONFIG.jjookSpawn, {
+    this.walkNpcToTarget(this.jjookNpc, "jjook", this.getMapPoint("jjook_start", GAME_CONFIG.jjookSpawn), {
       speed: 112,
       onComplete: () => {
         this.jjookReturningHome = false;
@@ -4235,7 +4252,7 @@ export default class PlayScene extends Phaser.Scene {
 
     this.pauseNpcRoaming("sunisuni");
     this.sunisuniReturningToBench = true;
-    const target = GAME_CONFIG.sunisuniSpawn;
+    const target = this.getMapPoint("sunisuni_start", GAME_CONFIG.sunisuniSpawn);
     this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
     this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
     this.walkNpcToTarget(this.sunisuniNpc, "sunisuni", target, {

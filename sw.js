@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260523-03";
+const CACHE_NAME = "cleaning-samgakji-v20260523-04";
 
 const PRECACHE_URLS = [
   "./",
