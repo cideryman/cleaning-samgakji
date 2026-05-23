@@ -24,12 +24,6 @@ export default class CleaningSystem {
 
     scene.playSweepSound();
     this.performSweepAt(sweepX, sweepY, width, height, scene.lastDirection);
-
-    if (scene.isJjookFollowActive && scene.jjookNpc?.active) {
-      const jjookWidth = width * 0.92;
-      const jjookHeight = height * 0.92;
-      this.performSweepAt(scene.jjookNpc.x, scene.jjookNpc.y + 8, jjookWidth, jjookHeight, null);
-    }
   }
 
   getSweepMultiplier() {
@@ -211,7 +205,7 @@ export default class CleaningSystem {
     }
   }
 
-  autoCleanTrash(trash) {
+  autoCleanTrash(trash, { shouldRespawn = false } = {}) {
     const scene = this.scene;
     if (!trash?.active || trash.getData("cleaned")) return;
 
@@ -229,5 +223,13 @@ export default class CleaningSystem {
     this.showCleanFeedback(trash.x, trash.y);
     this.showSlimePop(trash);
     scene.updateHud();
+
+    if (shouldRespawn) {
+      scene.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
+        if (scene.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
+          scene.slimeSystem.respawnSlime();
+        }
+      });
+    }
   }
 }

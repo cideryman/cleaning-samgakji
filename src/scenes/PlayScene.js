@@ -46,6 +46,33 @@ const CLOTHING_SHOP_CATEGORY_LABELS = Object.fromEntries(
   CLOTHING_SHOP_CATEGORIES.map((category) => [category.key, category.label]),
 );
 
+const NPC_ROAM_CONFIG = {
+  yebi: {
+    spriteProp: "yebiNpc",
+    npcKey: "yeobi",
+    speed: 58,
+    waitRangeMs: [2600, 5600],
+    messageChance: 42,
+    messages: ["캔은 캔 통에!", "오늘도 깨끗하게!", "분리수거는 차근차근!"],
+  },
+  jjook: {
+    spriteProp: "jjookNpc",
+    npcKey: "jjook",
+    speed: 70,
+    waitRangeMs: [2400, 5200],
+    messageChance: 36,
+    messages: ["걷기 좋은 날이야!", "물도 챙겨야지.", "조금 더 움직여볼까?"],
+  },
+  sunisuni: {
+    spriteProp: "sunisuniNpc",
+    npcKey: "sunisuni",
+    speed: 52,
+    waitRangeMs: [2800, 5800],
+    messageChance: 36,
+    messages: ["천천히 걸으면 좋아.", "약은 설명대로 먹어야 해.", "도와줘서 고마워."],
+  },
+};
+
 export default class PlayScene extends Phaser.Scene {
   constructor() {
     super("PlayScene");
@@ -95,6 +122,11 @@ export default class PlayScene extends Phaser.Scene {
     this.clothingShopStepIndex = 0;
     this.clothingShopMode = "category";
     this.jjookIdleTween = null;
+    this.jjookReturningHome = false;
+    this.sunisuniReturningToBench = false;
+    this.npcRoamState = {};
+    this.nextNpcAmbientBubbleAt = 0;
+    this.nextJjookAutoCleanAt = 0;
     this.interiorSceneGroup = null;
     this.questMarkers = {};
     this.vendingMenuOptions = [];
@@ -243,6 +275,7 @@ export default class PlayScene extends Phaser.Scene {
     this.isChapterComplete = false;
     
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.clearNpcRoaming();
       this.stopChapterMusic();
       this.restartButton?.removeEventListener("click", this.restartHandler);
       this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
@@ -282,6 +315,7 @@ export default class PlayScene extends Phaser.Scene {
     this.updateTravelPrepHud();
     this.updateCameraZoom();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
+    this.updateNpcRoaming(true);
 
     this.physics.add.collider(this.player, this.walls);
     if (this.objectWalls) {
@@ -348,6 +382,12 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedClothingShopIndex = 0;
     this.clothingShopStepIndex = 0;
     this.clothingShopMode = "category";
+    this.clearNpcRoaming?.();
+    this.npcRoamState = {};
+    this.nextNpcAmbientBubbleAt = 0;
+    this.jjookReturningHome = false;
+    this.sunisuniReturningToBench = false;
+    this.nextJjookAutoCleanAt = 0;
     this.isTravelPrepFanOpen = false;
     this.closeClothingShopMenu?.();
     this.travelPrepHudEl?.classList.remove("is-visible", "is-open");
@@ -417,6 +457,9 @@ export default class PlayScene extends Phaser.Scene {
     this.checkWalletPickup();
     this.updateJjookFollower();
     this.updateSunisuniFollower();
+    this.updateJjookAutoPlogging();
+    this.updateNpcRoaming();
+    this.separateNpcSprites();
     this.updateQuestMarkers();
     this.updateWorldDepths();
     const canCompleteChapter = this.sunisuniQuestState !== "quest_complete" || this.clothesQuestState === "completed";
@@ -518,6 +561,7 @@ export default class PlayScene extends Phaser.Scene {
     const textureKey = NPC_TEXTURES[npcKey]?.[directionKey] || NPC_TEXTURES[npcKey]?.down;
     if (!textureKey || !this.textures.exists(textureKey)) return;
 
+    const previousAnimKey = sprite.anims?.currentAnim?.key;
     sprite.setData("directionKey", directionKey);
     if (sprite.texture?.key !== textureKey) {
       sprite.setTexture(textureKey, 1);
@@ -527,7 +571,9 @@ export default class PlayScene extends Phaser.Scene {
 
     const animKey = NPC_WALK_ANIMS[npcKey]?.[directionKey];
     if (moving && animKey && this.anims.exists(animKey)) {
-      sprite.anims?.play(animKey, true);
+      if (previousAnimKey !== animKey || !sprite.anims?.isPlaying) {
+        sprite.anims?.play(animKey, true);
+      }
       return;
     }
 
@@ -837,12 +883,37 @@ export default class PlayScene extends Phaser.Scene {
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
       const x = center.x + binConfig.xOffset;
       const y = center.y + binConfig.yOffset + 76;
+      const zoneWidth = GAME_CONFIG.recycleBinHitboxWidth;
+      const zoneHeight = GAME_CONFIG.recycleBinHitboxHeight;
+      const zoneCenterY = y + 50;
+      const spotlight = this.add.ellipse(
+        x,
+        zoneCenterY,
+        zoneWidth - 8,
+        Math.min(72, zoneHeight * 0.58),
+        0xfff3a3,
+        0.22,
+      );
+      spotlight.setStrokeStyle(4, 0xffd75a, 0.62);
+      spotlight.setDepth(this.getWorldDepth(zoneCenterY, -0.22));
+      spotlight.setData("depthSortY", zoneCenterY);
+      this.tweens.add({
+        targets: spotlight,
+        alpha: { from: 0.2, to: 0.34 },
+        scaleX: { from: 0.96, to: 1.04 },
+        scaleY: { from: 0.96, to: 1.04 },
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+
       const bin = this.add.image(x, y, binConfig.texture);
-      bin.setDisplaySize(70, 78);
+      bin.setDisplaySize(76, 84);
       bin.setData("depthSortY", this.getDepthSortY(bin));
       bin.setDepth(this.getWorldDepth(bin.getData("depthSortY")));
 
-      const label = this.add.text(x, y + 58, binConfig.label, {
+      const label = this.add.text(x, y + 64, binConfig.label, {
         fontFamily: "Arial",
         fontSize: "13px",
         color: "#21352c",
@@ -855,14 +926,14 @@ export default class PlayScene extends Phaser.Scene {
 
       const zone = this.add.zone(
         x,
-        y + 60,
-        GAME_CONFIG.recycleBinHitboxWidth + 18,
-        GAME_CONFIG.recycleBinHitboxHeight + 28,
+        zoneCenterY,
+        zoneWidth,
+        zoneHeight,
       );
       this.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
-      this.recycleBins.push({ ...binConfig, x, y, bin, label, zone });
-      this.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 20, 54, 34);
+      this.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
+      this.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 58, 38);
     });
   }
 
@@ -1083,6 +1154,7 @@ export default class PlayScene extends Phaser.Scene {
   moveYebiToRecyclingCenter() {
     if (!this.yebiNpc) return;
 
+    this.pauseNpcRoaming("yebi");
     const position = this.getYebiRecyclePosition();
     this.tweens.killTweensOf(this.yebiNpc);
     this.yebiNpc.setPosition(position.x, position.y);
@@ -1101,6 +1173,7 @@ export default class PlayScene extends Phaser.Scene {
   walkYebiToRecyclingCenter() {
     if (!this.yebiNpc) return;
 
+    this.pauseNpcRoaming("yebi");
     const position = this.getYebiRecyclePosition();
     this.tweens.killTweensOf(this.yebiNpc);
     this.yebiNpc.setDepth(3.6);
@@ -1114,9 +1187,11 @@ export default class PlayScene extends Phaser.Scene {
     const upperLaneY = Math.min(startY - 70, GAME_CONFIG.vendingMachine.y - 118);
 
     return [
+      { x: startX, y: upperLaneY },
       { x: startX + 130, y: upperLaneY },
       { x: GAME_CONFIG.vendingMachine.x - 145, y: upperLaneY },
       { x: GAME_CONFIG.vendingMachine.x + 155, y: upperLaneY },
+      { x: target.x, y: upperLaneY },
       { x: target.x, y: target.y },
     ];
   }
@@ -1134,12 +1209,8 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const directionKey = this.getDirectionKeyFromVector(
-      target.x - this.yebiNpc.x,
-      target.y - this.yebiNpc.y,
-      this.yebiNpc.getData("directionKey") || "down",
-    );
-    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", directionKey, true);
+    let previousX = this.yebiNpc.x;
+    let previousY = this.yebiNpc.y;
     const walkingSpeed = GAME_CONFIG.playerSpeed * 0.72;
     this.tweens.add({
       targets: this.yebiNpc,
@@ -1147,6 +1218,16 @@ export default class PlayScene extends Phaser.Scene {
       y: target.y,
       duration: Math.max(420, (distance / walkingSpeed) * 1000),
       ease: "Linear",
+      onUpdate: () => {
+        const dx = this.yebiNpc.x - previousX;
+        const dy = this.yebiNpc.y - previousY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+          const directionKey = this.getDirectionKeyFromVector(dx, dy, this.yebiNpc.getData("directionKey") || "down");
+          this.setNpcDirectionTexture(this.yebiNpc, "yeobi", directionKey, true);
+        }
+        previousX = this.yebiNpc.x;
+        previousY = this.yebiNpc.y;
+      },
       onComplete: () => this.walkYebiAlongPath(path, index + 1),
     });
   }
@@ -1611,6 +1692,7 @@ export default class PlayScene extends Phaser.Scene {
     this.clothesQuestState = "shopping";
     this.hasAnnouncedClothesQuest = true;
     this.isJjookClothesEscortActive = true;
+    this.pauseNpcRoaming("jjook");
     this.stopJjookIdleTween();
     this.clearQuestMarker("clothesQuest");
     const shopTarget = this.mapObjects?.clothing_store || {
@@ -2260,6 +2342,7 @@ export default class PlayScene extends Phaser.Scene {
     this.dialogueSystem.start([
       { name: "해냄이", portraitKey: "haenaem_determined", text: "같이 가요. 천천히 병원까지 같이 걸어갈게요." },
     ], () => {
+      this.pauseNpcRoaming("sunisuni");
       this.sunisuniQuestState = "going_hospital";
       this.clearQuestMarker("sunisuniQuest");
       this.setQuestMarker("sunisuniHospital", this.sunisuniNpc, "!");
@@ -2742,19 +2825,78 @@ export default class PlayScene extends Phaser.Scene {
     this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
   }
 
+  updateJjookAutoPlogging() {
+    if (!this.isJjookFollowActive || !this.jjookNpc?.active || !this.trashSlimes) return;
+    if (this.isInDialogue || this.interiorSceneGroup || this.time.now < this.nextJjookAutoCleanAt) return;
+
+    const target = this.findNearestTrashTo(this.jjookNpc, GAME_CONFIG.jjookAutoCleanRadius);
+    if (!target) return;
+
+    this.nextJjookAutoCleanAt = this.time.now + GAME_CONFIG.jjookAutoCleanCooldownMs;
+    const direction = new Phaser.Math.Vector2(target.x - this.jjookNpc.x, target.y - this.jjookNpc.y);
+    if (direction.lengthSq() > 0) {
+      direction.normalize();
+      const directionKey = this.getDirectionKeyFromVector(direction.x, direction.y, this.jjookNpc.getData("directionKey") || "down");
+      this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
+    }
+
+    this.playSweepSound();
+    this.showSweepEffect(target.x, target.y, 78, 60, direction.lengthSq() > 0 ? direction : null);
+    this.time.delayedCall(90, () => {
+      if (!target?.active || target.getData("cleaned")) return;
+      const trashType = target.getData("trashType") || "normal";
+      if (trashType === "can") {
+        this.playCanCleanSound();
+      } else {
+        this.playCleanSound();
+      }
+      this.autoCleanTrash(target, { shouldRespawn: true });
+      if (Phaser.Math.Between(0, 99) < 20) {
+        this.showSpeechBubble(this.jjookNpc, "여기도 치울게!", 1200);
+      }
+    });
+  }
+
+  findNearestTrashTo(source, radius) {
+    if (!source || !this.trashSlimes) return null;
+
+    let nearest = null;
+    let nearestDistance = radius;
+    this.trashSlimes.children.iterate((trash) => {
+      if (!trash?.active || trash.getData("cleaned")) return;
+      const distance = Phaser.Math.Distance.Between(source.x, source.y, trash.x, trash.y);
+      if (distance <= nearestDistance) {
+        nearest = trash;
+        nearestDistance = distance;
+      }
+    });
+    return nearest;
+  }
+
   buildNpcRouteThroughCrosswalk(start, target) {
     const crossesRoad = (start.y > 300 && target.y < 260) || (start.y < 260 && target.y > 300);
-    if (!crossesRoad) return [target];
+    const toOrthogonalRoute = (points) => points.reduce((route, point) => {
+      const previous = route[route.length - 1] || start;
+      if (Math.abs(previous.x - point.x) > 6 && Math.abs(previous.y - point.y) > 6) {
+        route.push({ x: point.x, y: previous.y });
+      }
+      route.push(point);
+      return route;
+    }, []);
+
+    if (!crossesRoad) {
+      return toOrthogonalRoute([target]);
+    }
 
     const crosswalks = [472, 1144];
     const preferredX = crosswalks.reduce((best, x) => {
       return Math.abs(x - target.x) < Math.abs(best - target.x) ? x : best;
     }, crosswalks[0]);
-    return [
+    return toOrthogonalRoute([
       { x: preferredX, y: start.y },
       { x: preferredX, y: target.y },
       target,
-    ];
+    ]);
   }
 
   walkNpcToTarget(sprite, npcKey, target, { speed = 105, onComplete = null } = {}) {
@@ -2805,6 +2947,318 @@ export default class PlayScene extends Phaser.Scene {
     walkNext();
   }
 
+  updateNpcRoaming(force = false) {
+    Object.keys(NPC_ROAM_CONFIG).forEach((key) => {
+      if (this.canNpcRoam(key)) {
+        this.ensureNpcRoaming(key, force);
+      } else {
+        this.pauseNpcRoaming(key);
+      }
+    });
+  }
+
+  clearNpcRoaming() {
+    Object.values(this.npcRoamState || {}).forEach((state) => {
+      state?.timer?.remove(false);
+      state.timer = null;
+    });
+  }
+
+  canNpcRoam(key) {
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = config ? this[config.spriteProp] : null;
+    if (!config || !sprite?.active || !sprite.visible) return false;
+    if (this.isMissionComplete || this.isInDialogue || this.vendingMenuGroup || this.clothingShopModal || this.interiorSceneGroup) {
+      return false;
+    }
+
+    if (key === "yebi") {
+      const canState = this.questManager?.getQuestState?.() || "inactive";
+      const recycleState = this.questManager?.getRecycleQuestState?.() || "locked";
+      return canState !== "active" && recycleState !== "unlocked" && recycleState !== "active";
+    }
+
+    if (key === "jjook") {
+      if (this.jjookReturningHome || this.isJjookFollowActive || this.isJjookClothesEscortActive) return false;
+      if (["wallet_missing", "wallet_found", "choosing_drink"].includes(this.jjookQuestState)) return false;
+      if (["ready", "declined", "shopping"].includes(this.clothesQuestState)) return false;
+      return this.jjookQuestState === "completed";
+    }
+
+    if (key === "sunisuni") {
+      if (this.sunisuniReturningToBench || this.isSunisuniFollowing?.()) return false;
+      return this.sunisuniQuestState === "quest_complete";
+    }
+
+    return false;
+  }
+
+  ensureNpcRoaming(key, force = false) {
+    const state = this.getNpcRoamState(key);
+    if (force) {
+      this.pauseNpcRoaming(key);
+    }
+    if (state.isWalking || state.timer) return;
+
+    this.scheduleNpcRoamStep(key, Phaser.Math.Between(900, 2400));
+  }
+
+  getNpcRoamState(key) {
+    if (!this.npcRoamState[key]) {
+      this.npcRoamState[key] = {
+        isWalking: false,
+        timer: null,
+        lastTarget: null,
+      };
+    }
+    return this.npcRoamState[key];
+  }
+
+  pauseNpcRoaming(key) {
+    const state = this.npcRoamState?.[key];
+    if (!state) return;
+
+    state.timer?.remove(false);
+    state.timer = null;
+    if (state.isWalking) {
+      const config = NPC_ROAM_CONFIG[key];
+      const sprite = config ? this[config.spriteProp] : null;
+      if (sprite?.active) {
+        this.tweens.killTweensOf(sprite);
+        this.stopNpcWalk(sprite, config.npcKey);
+      }
+    }
+    state.isWalking = false;
+  }
+
+  scheduleNpcRoamStep(key, delayMs = 0) {
+    if (!this.canNpcRoam(key)) return;
+
+    const state = this.getNpcRoamState(key);
+    state.timer?.remove(false);
+    state.timer = this.time.delayedCall(delayMs, () => {
+      state.timer = null;
+      this.startNpcRoamStep(key);
+    });
+  }
+
+  startNpcRoamStep(key) {
+    if (!this.canNpcRoam(key)) return;
+
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = this[config.spriteProp];
+    const target = this.pickNpcRoamTarget(key);
+    if (!sprite?.active || !target) {
+      this.scheduleNpcRoamStep(key, Phaser.Math.Between(...config.waitRangeMs));
+      return;
+    }
+
+    const distance = Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y);
+    if (distance < 12) {
+      this.maybeShowNpcAmbientLine(key);
+      this.scheduleNpcRoamStep(key, Phaser.Math.Between(...config.waitRangeMs));
+      return;
+    }
+
+    this.walkNpcRoamToTarget(key, target);
+  }
+
+  walkNpcRoamToTarget(key, target) {
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = this[config.spriteProp];
+    const state = this.getNpcRoamState(key);
+    if (!sprite?.active || !target) return;
+
+    if (sprite === this.jjookNpc) {
+      this.jjookIdleTween?.stop();
+      this.jjookIdleTween = null;
+    }
+    this.tweens.killTweensOf(sprite);
+    state.isWalking = true;
+
+    let previousX = sprite.x;
+    let previousY = sprite.y;
+    const distance = Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y);
+    this.tweens.add({
+      targets: sprite,
+      x: target.x,
+      y: target.y,
+      duration: Phaser.Math.Clamp((distance / config.speed) * 1000, 320, 5200),
+      ease: "Linear",
+      onUpdate: () => {
+        const dx = sprite.x - previousX;
+        const dy = sprite.y - previousY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+          const directionKey = this.getDirectionKeyFromVector(dx, dy, sprite.getData("directionKey") || "down");
+          this.setNpcDirectionTexture(sprite, config.npcKey, directionKey, true);
+        }
+        previousX = sprite.x;
+        previousY = sprite.y;
+      },
+      onComplete: () => {
+        state.isWalking = false;
+        state.lastTarget = target;
+        this.stopNpcWalk(sprite, config.npcKey);
+        if (this.canNpcRoam(key)) {
+          this.maybeShowNpcAmbientLine(key);
+          this.scheduleNpcRoamStep(key, Phaser.Math.Between(...config.waitRangeMs));
+        }
+      },
+    });
+  }
+
+  pickNpcRoamTarget(key) {
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = this[config.spriteProp];
+    const points = this.getNpcRoamPoints(key);
+    if (!sprite?.active || !points.length) return null;
+
+    const usablePoints = points.filter((point) => {
+      const distance = Phaser.Math.Distance.Between(sprite.x, sprite.y, point.x, point.y);
+      return distance > 34 && !this.isNpcRoamPointBlocked(key, point.x, point.y);
+    });
+    if (!usablePoints.length) return null;
+    return Phaser.Utils.Array.GetRandom(usablePoints);
+  }
+
+  getNpcRoamPoints(key) {
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = config ? this[config.spriteProp] : null;
+    const laneY = sprite?.y || this.playerStart.y;
+    const horizontalPatrol = (centerX, radius = 92) => this.clampNpcRoamPoints([
+      { x: centerX - radius, y: laneY },
+      { x: centerX, y: laneY },
+      { x: centerX + radius, y: laneY },
+    ]);
+
+    if (key === "yebi") {
+      const canState = this.questManager?.getQuestState?.() || "inactive";
+      const recycleState = this.questManager?.getRecycleQuestState?.() || "locked";
+      if (canState === "completed" || recycleState === "completed") {
+        const anchor = this.getYebiRecyclePosition();
+        return horizontalPatrol(anchor.x, 112);
+      }
+
+      return horizontalPatrol(this.playerStart.x + 154, 96);
+    }
+
+    if (key === "jjook") {
+      return horizontalPatrol(GAME_CONFIG.jjookSpawn.x + 66, 108);
+    }
+
+    if (key === "sunisuni") {
+      const bench = GAME_CONFIG.sunisuniBench;
+      return horizontalPatrol(bench.x - 8, 104);
+    }
+
+    return [];
+  }
+
+  clampNpcRoamPoints(points) {
+    const bounds = this.physics?.world?.bounds;
+    const worldWidth = bounds?.width || GAME_CONFIG.worldWidth;
+    const worldHeight = bounds?.height || GAME_CONFIG.worldHeight;
+    return points.map((point) => ({
+      x: Phaser.Math.Clamp(point.x, 82, worldWidth - 82),
+      y: Phaser.Math.Clamp(point.y, 110, worldHeight - 70),
+    }));
+  }
+
+  isNpcRoamPointBlocked(key, x, y) {
+    if ((this.objectCollisionRects || []).some((rect) => Phaser.Geom.Rectangle.Contains(rect, x, y))) {
+      return true;
+    }
+
+    return this.getActiveNpcEntries().some((entry) => {
+      if (entry.key === key) return false;
+      return Phaser.Math.Distance.Between(x, y, entry.sprite.x, entry.sprite.y) < GAME_CONFIG.npcPersonalSpace + 14;
+    });
+  }
+
+  maybeShowNpcAmbientLine(key) {
+    const config = NPC_ROAM_CONFIG[key];
+    const sprite = config ? this[config.spriteProp] : null;
+    if (!config || !sprite?.active || !this.canNpcRoam(key)) return;
+    if (Phaser.Math.Between(0, 99) >= config.messageChance) return;
+    if (this.time.now < this.nextNpcAmbientBubbleAt) return;
+
+    const message = Phaser.Utils.Array.GetRandom(config.messages);
+    this.showSpeechBubble(sprite, message, 2200);
+    this.nextNpcAmbientBubbleAt = this.time.now + Phaser.Math.Between(3400, 6200);
+  }
+
+  separateNpcSprites() {
+    const npcs = this.getActiveNpcEntries();
+    if (npcs.length < 2) return;
+
+    const minDistance = GAME_CONFIG.npcPersonalSpace;
+    for (let i = 0; i < npcs.length - 1; i += 1) {
+      for (let j = i + 1; j < npcs.length; j += 1) {
+        const first = npcs[i];
+        const second = npcs[j];
+        const dx = second.sprite.x - first.sprite.x;
+        const dy = second.sprite.y - first.sprite.y;
+        const distance = Math.max(Phaser.Math.Distance.Between(first.sprite.x, first.sprite.y, second.sprite.x, second.sprite.y), 0.01);
+        if (distance >= minDistance) continue;
+
+        const firstMovable = this.isNpcSeparationMovable(first.key);
+        const secondMovable = this.isNpcSeparationMovable(second.key);
+        if (!firstMovable && !secondMovable) continue;
+
+        const push = (minDistance - distance) + 1;
+        const nx = dx / distance;
+        const ny = dy / distance;
+        if (firstMovable && secondMovable) {
+          this.tryMoveNpcBy(first.sprite, -nx * push * 0.5, -ny * push * 0.5);
+          this.tryMoveNpcBy(second.sprite, nx * push * 0.5, ny * push * 0.5);
+        } else if (firstMovable) {
+          this.tryMoveNpcBy(first.sprite, -nx * push, -ny * push);
+        } else {
+          this.tryMoveNpcBy(second.sprite, nx * push, ny * push);
+        }
+      }
+    }
+  }
+
+  getActiveNpcEntries() {
+    return [
+      { key: "yebi", sprite: this.yebiNpc },
+      { key: "jjook", sprite: this.jjookNpc },
+      { key: "sunisuni", sprite: this.sunisuniNpc },
+    ].filter(({ sprite }) => sprite?.active && sprite.visible);
+  }
+
+  isNpcSeparationMovable(key) {
+    if (key === "yebi") return this.canNpcRoam("yebi");
+    if (key === "jjook") {
+      return this.canNpcRoam("jjook")
+        || this.isJjookFollowActive
+        || this.isJjookClothesEscortActive
+        || this.jjookReturningHome;
+    }
+    if (key === "sunisuni") {
+      return this.canNpcRoam("sunisuni")
+        || this.isSunisuniFollowing?.()
+        || this.sunisuniReturningToBench;
+    }
+    return false;
+  }
+
+  tryMoveNpcBy(sprite, dx, dy) {
+    if (!sprite?.active) return false;
+
+    const bounds = this.physics?.world?.bounds;
+    const worldWidth = bounds?.width || GAME_CONFIG.worldWidth;
+    const worldHeight = bounds?.height || GAME_CONFIG.worldHeight;
+    const nextX = Phaser.Math.Clamp(sprite.x + dx, 82, worldWidth - 82);
+    const nextY = Phaser.Math.Clamp(sprite.y + dy, 110, worldHeight - 70);
+    if ((this.objectCollisionRects || []).some((rect) => Phaser.Geom.Rectangle.Contains(rect, nextX, nextY))) {
+      return false;
+    }
+    sprite.setPosition(nextX, nextY);
+    return true;
+  }
+
   stopJjookIdleTween() {
     this.jjookIdleTween?.stop();
     this.jjookIdleTween = null;
@@ -2813,11 +3267,17 @@ export default class PlayScene extends Phaser.Scene {
 
   walkJjookBackToHome() {
     if (!this.jjookNpc?.active) return;
+    this.pauseNpcRoaming("jjook");
+    this.jjookReturningHome = true;
     this.isJjookClothesEscortActive = false;
     this.isJjookFollowActive = false;
     this.walkNpcToTarget(this.jjookNpc, "jjook", GAME_CONFIG.jjookSpawn, {
       speed: 112,
-      onComplete: () => this.showSpeechBubble(this.jjookNpc, "나중에 또 같이 가자!", 2200),
+      onComplete: () => {
+        this.jjookReturningHome = false;
+        this.showSpeechBubble(this.jjookNpc, "나중에 또 같이 가자!", 2200);
+        this.updateNpcRoaming(true);
+      },
     });
   }
 
@@ -2856,9 +3316,15 @@ export default class PlayScene extends Phaser.Scene {
   tryDepositNearestRecycleBin() {
     if (!this.player || !this.recycleBins?.length) return false;
 
+    const playerPoints = [
+      { x: this.player.x, y: this.player.y },
+      { x: this.player.x, y: this.player.y + GAME_CONFIG.playerDisplayHeight * 0.22 },
+      { x: this.player.x, y: this.player.y - GAME_CONFIG.playerDisplayHeight * 0.16 },
+    ];
+
     const nearest = this.recycleBins.find(({ zone }) => {
       const bounds = zone.getBounds();
-      return Phaser.Geom.Rectangle.Contains(bounds, this.player.x, this.player.y);
+      return playerPoints.some((point) => Phaser.Geom.Rectangle.Contains(bounds, point.x, point.y));
     });
     if (!nearest) return false;
 
@@ -3190,6 +3656,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   activateJjookFollower({ buyColaOnComplete = false } = {}) {
+    this.pauseNpcRoaming("jjook");
     this.isJjookFollowActive = true;
     this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
     this.shouldBuyJjookColaAfterFollow = buyColaOnComplete;
@@ -3756,14 +4223,18 @@ export default class PlayScene extends Phaser.Scene {
   sendSunisuniBackToBench() {
     if (!this.sunisuniNpc?.active) return;
 
+    this.pauseNpcRoaming("sunisuni");
+    this.sunisuniReturningToBench = true;
     const target = GAME_CONFIG.sunisuniSpawn;
     this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
     this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
     this.walkNpcToTarget(this.sunisuniNpc, "sunisuni", target, {
       speed: 92,
       onComplete: () => {
+        this.sunisuniReturningToBench = false;
         this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
         this.showSpeechBubble(this.sunisuniNpc, "많이 괜찮아졌어.", 2400);
+        this.updateNpcRoaming(true);
       },
     });
   }
@@ -3901,8 +4372,8 @@ export default class PlayScene extends Phaser.Scene {
     });
   }
 
-  autoCleanTrash(trash) {
-    this.cleaningSystem.autoCleanTrash(trash);
+  autoCleanTrash(trash, options = {}) {
+    this.cleaningSystem.autoCleanTrash(trash, options);
   }
 
   restartGame() {

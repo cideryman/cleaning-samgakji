@@ -28,6 +28,9 @@ export const GAME_CONFIG = {
   slimeRespawnDelayMs: 12000,
   maxSlimes: 25,
   rewardPerSlime: 100,
+  npcPersonalSpace: 58,
+  jjookAutoCleanRadius: 118,
+  jjookAutoCleanCooldownMs: 850,
   recycleDepositReward: 100,
   recycleQuestUnlockMoney: 25000,
   jjookQuestUnlockMoney: 45000,
@@ -55,8 +58,8 @@ export const GAME_CONFIG = {
   vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 560, y: 610 },
   walletSpawn: { x: 250, y: 735 },
-  recycleBinHitboxWidth: 82,
-  recycleBinHitboxHeight: 90,
+  recycleBinHitboxWidth: 132,
+  recycleBinHitboxHeight: 126,
 };
 
 export const DRINK_OPTIONS = [
@@ -141,9 +144,9 @@ export const TRASH_TEXTURES = {
 };
 
 export const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -84, yOffset: 28, label: "\uCEA0/\uACE0\uCCA0" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -136, yOffset: 28, label: "\uCEA0/\uACE0\uCCA0" },
   { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "\uC885\uC774/\uC77C\uBC18" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 84, yOffset: 28, label: "\uD50C\uB77C\uC2A4\uD2F1" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 136, yOffset: 28, label: "\uD50C\uB77C\uC2A4\uD2F1" },
 ];
 
 export const DIALOGUE_OVERLAY_TEXTURES = {
