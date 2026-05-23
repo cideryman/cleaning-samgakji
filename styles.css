@@ -173,7 +173,7 @@ body.prologue-scene-active #game {
   position: absolute;
   top: max(14px, env(safe-area-inset-top));
   right: max(14px, env(safe-area-inset-right));
-  z-index: 140;
+  z-index: 280;
   min-width: 108px;
   min-height: 40px;
   border: 3px solid #6b4c3b;
@@ -186,6 +186,7 @@ body.prologue-scene-active #game {
   font-weight: 800;
   cursor: pointer;
   touch-action: manipulation;
+  pointer-events: auto;
 }
 
 .prologue-skip-button:active {

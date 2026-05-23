@@ -697,7 +697,6 @@ export default class PlayScene extends Phaser.Scene {
 
     this.applyTiledObjects(map);
     this.createTiledMapObjects(map);
-    this.createRoadBarriers();
     return true;
   }
 
@@ -869,20 +868,6 @@ export default class PlayScene extends Phaser.Scene {
       height,
     ));
     return zone;
-  }
-
-  createRoadBarriers() {
-    const roadY = 240;
-    const roadHeight = 160;
-    const roadBlocks = [
-      { name: "road_block_west", x: 192, width: 384 },
-      { name: "road_block_center", x: 768, width: 576 },
-      { name: "road_block_east", x: 1344, width: 384 },
-    ];
-
-    roadBlocks.forEach((block) => {
-      this.addObjectCollider(block.name, block.x, roadY, block.width, roadHeight);
-    });
   }
 
   createRecyclingCenter() {
@@ -1439,9 +1424,15 @@ export default class PlayScene extends Phaser.Scene {
     return positions;
   }
 
+  isCollisionTileBlocked(x, y) {
+    if (!this.walls?.getTileAtWorldXY) return false;
+
+    const tile = this.walls.getTileAtWorldXY(x, y, true);
+    return Boolean(tile && tile.index !== -1 && tile.collides);
+  }
+
   isBlockedSpawnPoint(x, y) {
     const blockedAreas = [
-      { left: 0, right: GAME_CONFIG.worldWidth, top: 150, bottom: 330 },
       { left: 0, right: 90, top: 0, bottom: GAME_CONFIG.worldHeight },
       { left: GAME_CONFIG.worldWidth - 90, right: GAME_CONFIG.worldWidth, top: 0, bottom: GAME_CONFIG.worldHeight },
       { left: 0, right: GAME_CONFIG.worldWidth, top: 0, bottom: 64 },
@@ -1452,6 +1443,8 @@ export default class PlayScene extends Phaser.Scene {
       return x >= area.left && x <= area.right && y >= area.top && y <= area.bottom;
     });
     if (isStaticAreaBlocked) return true;
+
+    if (this.isCollisionTileBlocked(x, y)) return true;
 
     return (this.objectCollisionRects || []).some((rect) => {
       return Phaser.Geom.Rectangle.Contains(rect, x, y);
