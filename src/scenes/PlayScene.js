@@ -46,6 +46,41 @@ const CLOTHING_SHOP_CATEGORY_LABELS = Object.fromEntries(
   CLOTHING_SHOP_CATEGORIES.map((category) => [category.key, category.label]),
 );
 
+const PACKING_CATEGORIES = [
+  { key: "clothes", label: "옷" },
+  { key: "toiletries", label: "세면도구" },
+  { key: "electronics", label: "전자기기" },
+  { key: "etc", label: "기타" },
+];
+
+const PACKING_CATEGORY_LABELS = Object.fromEntries(
+  PACKING_CATEGORIES.map((category) => [category.key, category.label]),
+);
+
+const PACKING_ITEMS = [
+  { key: "socks", label: "양말", category: "clothes", icon: "socks.png" },
+  { key: "underwear", label: "속옷", category: "clothes", icon: "underwear.png" },
+  { key: "pajamas", label: "잠옷", category: "clothes", icon: "pajamas.png" },
+  { key: "towel", label: "수건", category: "toiletries", icon: "towel.png" },
+  { key: "toothbrush", label: "칫솔", category: "toiletries", icon: "toothbrush.png" },
+  { key: "toothpaste", label: "치약", category: "toiletries", icon: "toothpaste.png" },
+  { key: "cosmetics", label: "화장품", category: "toiletries", icon: "cosmetics.png" },
+  { key: "razor", label: "면도기", category: "toiletries", icon: "razor.png" },
+  { key: "phone", label: "휴대폰", category: "electronics", icon: "phone.png" },
+  { key: "charger", label: "충전기", category: "electronics", icon: "charger.png" },
+  { key: "earphones", label: "이어폰", category: "electronics", icon: "earphones.png" },
+  { key: "power_bank", label: "보조배터리", category: "electronics", icon: "power-bank.png" },
+  { key: "wallet", label: "지갑", category: "etc", icon: "wallet.png" },
+  { key: "transit_card", label: "교통카드", category: "etc", icon: "transit-card.png" },
+  { key: "wet_tissue", label: "물티슈", category: "etc", icon: "wet-tissue.png" },
+  { key: "water", label: "물", category: "etc", icon: "water.png" },
+  { key: "snack", label: "간식", category: "etc", icon: "snack.png" },
+  { key: "umbrella", label: "우산", category: "etc", icon: "umbrella.png" },
+  { key: "medicine_bag", label: "약봉투", category: "etc", icon: "medicine-bag.png" },
+];
+
+const TRAVEL_ALLOWANCE_REWARD = 20000;
+
 const NPC_ROAM_CONFIG = {
   yebi: {
     spriteProp: "yebiNpc",
@@ -61,7 +96,7 @@ const NPC_ROAM_CONFIG = {
     speed: 70,
     waitRangeMs: [2400, 5200],
     messageChance: 36,
-    messages: ["걷기 좋은 날이야!", "물도 챙겨야지.", "조금 더 움직여볼까?"],
+    messages: ["걷기 좋은 날이야!", "물도 챙겨야지.", "서울 가면 뭐 먹지?", "나 기차 타는 거 기대돼.", "짐 너무 많이 싸면 힘들겠지?"],
   },
   sunisuni: {
     spriteProp: "sunisuniNpc",
@@ -115,12 +150,19 @@ export default class PlayScene extends Phaser.Scene {
     this.clothesQuestState = "locked";
     this.hasAnnouncedClothesQuest = false;
     this.travelPrepItems = [];
+    this.packingQuestState = "locked";
+    this.packingItems = [];
     this.isTravelPrepFanOpen = false;
     this.clothingShopModal = null;
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
     this.clothingShopStepIndex = 0;
     this.clothingShopMode = "category";
+    this.packingModal = null;
+    this.packingSelectedKeys = new Set();
+    this.selectedPackingIndex = 0;
+    this.packingStepIndex = 0;
+    this.packingMode = "category";
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -147,6 +189,7 @@ export default class PlayScene extends Phaser.Scene {
     this.helpAudioBuffer = null;
     this.clearSlimeAudioBuffer = null;
     this.bgmAudio = null;
+    this.sceneBgmAudio = null;
     this.bgmIndex = 1;
     this.bgmObjectUrl = null;
     this.hasStartedAudioLoad = false;
@@ -298,6 +341,7 @@ export default class PlayScene extends Phaser.Scene {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.resizeHandler);
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
+      this.closePackingMenu?.();
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
       window.removeEventListener("beforeunload", this.pageAudioStopHandler);
       document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -379,10 +423,17 @@ export default class PlayScene extends Phaser.Scene {
     this.clothesQuestState = "locked";
     this.hasAnnouncedClothesQuest = false;
     this.travelPrepItems = [];
+    this.packingQuestState = "locked";
+    this.packingItems = [];
     this.clothingShopSelectedKeys = new Set();
     this.selectedClothingShopIndex = 0;
     this.clothingShopStepIndex = 0;
     this.clothingShopMode = "category";
+    this.closePackingMenu?.();
+    this.packingSelectedKeys = new Set();
+    this.selectedPackingIndex = 0;
+    this.packingStepIndex = 0;
+    this.packingMode = "category";
     this.clearNpcRoaming?.();
     this.npcRoamState = {};
     this.nextNpcAmbientBubbleAt = 0;
@@ -423,6 +474,7 @@ export default class PlayScene extends Phaser.Scene {
     this.helpAudioBuffer = null;
     this.clearSlimeAudioBuffer = null;
     this.hasStartedAudioLoad = false;
+    this.stopSceneMusic?.({ resumeChapter: false });
     this.playerStart = { x: 170, y: 424 };
     this.broomSpawn = { x: 650, y: 420 };
     this.slimeSpawnPoints = [];
@@ -451,6 +503,7 @@ export default class PlayScene extends Phaser.Scene {
   update(time, delta) {
     this.handleVendingMenuKeyboard();
     this.handleClothingShopKeyboard();
+    this.handlePackingMenuKeyboard();
     this.playerController.update(time, delta);
     this.checkRecycleQuestUnlock();
     this.checkJjookQuestUnlock();
@@ -1576,6 +1629,13 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
+    if (this.clothesQuestState === "completed" && !["completed", "ending_complete"].includes(this.packingQuestState)) {
+      this.packingQuestState = "offered";
+      this.showQuestToast("F4: 짐싸기 퀘스트 준비");
+      this.startPackingOfferDialogue();
+      return;
+    }
+
     this.showQuestToast("F4: 이미 마지막 퀘스트까지 열렸어.");
   }
 
@@ -1591,6 +1651,11 @@ export default class PlayScene extends Phaser.Scene {
 
     if (this.clothingShopModal) {
       this.selectFocusedClothingShopOption();
+      return;
+    }
+
+    if (this.packingModal) {
+      this.selectFocusedPackingOption();
       return;
     }
 
@@ -1669,6 +1734,11 @@ export default class PlayScene extends Phaser.Scene {
         this.dialogueSystem.start([
           { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "옷가게는 맵 위쪽 상점가에 있어. 같이 가보자!" },
         ]);
+        return;
+      }
+
+      if (this.clothesQuestState === "completed" && !["completed", "ending_complete"].includes(this.packingQuestState)) {
+        this.startPackingOfferDialogue({ repeat: this.packingQuestState === "declined" });
         return;
       }
 
@@ -2058,20 +2128,511 @@ export default class PlayScene extends Phaser.Scene {
 
   completeClothesShoppingQuest() {
     this.closeClothingShopMenu();
+    this.clearInteriorScene();
     this.clothesQuestState = "completed";
+    this.packingQuestState = "offered";
     this.clearQuestMarker("clothesShop");
     this.clearQuestMarker("clothesQuest");
     this.saveCheckpoint("clothes_completed");
     this.dialogueSystem.start([
       { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
-      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "이제 진짜 여행 가는 느낌 난다!" },
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "오~ 이제 진짜 서울 가는 느낌 난다!" },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 다음엔 여행 가방도 차근차근 준비해야겠다." },
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjook_travel_bag",
+        text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
+        choices: [
+          { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => this.declinePackingQuest() },
+        ],
+      },
     ], () => {
       this.clearInteriorScene();
-      this.walkJjookBackToHome();
-      this.showQuestToast("다음 목표: 여행 가방 준비하기", 5000);
     });
+  }
+
+  startPackingOfferDialogue({ repeat = false } = {}) {
+    const lines = repeat
+      ? [
+          {
+            name: "쭉쭉이",
+            portraitKey: "jjook_travel_bag",
+            text: "이제 준비 다 됐어?",
+            choices: [
+              { label: "응! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+              { label: "아직 준비 중이야!", onSelect: () => this.declinePackingQuest(true) },
+            ],
+          },
+        ]
+      : [
+          {
+            name: "쭉쭉이",
+            portraitKey: "jjook_travel_bag",
+            text: "여행 짐도 슬슬 준비해볼까?",
+            choices: [
+              { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+              { label: "아니! 조금 더 둘러볼래!", onSelect: () => this.declinePackingQuest() },
+            ],
+          },
+        ];
+
+    this.dialogueSystem.start(lines);
+  }
+
+  declinePackingQuest(isRepeat = false) {
+    this.clearInteriorScene();
+    this.packingQuestState = "declined";
+    this.setQuestMarker("packingQuest", this.jjookNpc, "!");
+    this.saveCheckpoint("packing_declined");
+    this.dialogueSystem.start([
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjook_smile",
+        text: isRepeat ? "좋아! 천천히 준비해도 돼!" : "그래! 천천히 준비해도 돼!",
+      },
+    ], () => {
+      this.walkJjookBackToHome();
+      this.showQuestToast("준비가 끝나면 쭉쭉이에게 말해요.", 4200);
+    });
+  }
+
+  acceptPackingQuest() {
+    this.clearInteriorScene();
+    this.packingQuestState = "traveling_home";
+    this.clearQuestMarker("packingQuest");
+    this.saveCheckpoint("packing_started");
+    this.pauseNpcRoaming("jjook");
+    this.stopJjookIdleTween();
+    this.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "좋아! 집 가서 여행 준비 시작하자!" },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "응. 버스 타고 집에 가서 차근차근 챙겨볼게." },
+    ], () => this.startTravelHomeSequence());
+  }
+
+  startTravelHomeSequence() {
+    this.playSceneMusic("prologue_summer_bgm", 0.26);
+    this.showInteriorScene("ending_bus_home", "travel");
+    this.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스 타고 가니까 진짜 여행 준비가 시작된 느낌이야." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "오늘 산 옷도 챙기고, 필요한 것도 골라볼래." },
+    ], () => this.startPackingRoomScene());
+  }
+
+  startPackingRoomScene() {
+    this.playSceneMusic("prologue_room_bgm", 0.24);
+    this.showInteriorScene("ending_packing_room", "home");
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: "가방을 펼쳐두니까 조금 설렌다." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "정답은 없으니까, 내가 필요하다고 생각하는 짐을 골라보자." },
+    ], () => this.openPackingMenu());
+  }
+
+  openPackingMenu() {
+    this.closePackingMenu();
+    this.packingSelectedKeys = new Set(this.packingItems.map((item) => item.key));
+    this.selectedPackingIndex = 0;
+    this.packingStepIndex = 0;
+    this.packingMode = "category";
+    const stage = document.querySelector(".game-stage") || document.body;
+    const modal = document.createElement("div");
+    modal.className = "clothing-shop-modal packing-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-label", "여행 짐싸기");
+    modal.innerHTML = `
+      <div class="clothing-shop-panel packing-panel">
+        <div class="clothing-shop-header">
+          <strong>여행 가방</strong>
+          <span>필요한 짐을 골라 가방에 넣어요.</span>
+        </div>
+        <div class="clothing-shop-progress packing-progress"></div>
+        <div class="clothing-shop-body packing-body"></div>
+        <div class="clothing-shop-summary packing-summary"></div>
+        <div class="clothing-shop-footer packing-footer"></div>
+      </div>
+    `;
+    this.packingModal = modal;
+    stage.appendChild(modal);
+    this.renderPackingStep();
+  }
+
+  closePackingMenu() {
+    this.packingModal?.remove();
+    this.packingModal = null;
+    this.packingSelectedKeys = new Set();
+    this.selectedPackingIndex = 0;
+    this.packingStepIndex = 0;
+    this.packingMode = "category";
+  }
+
+  getCurrentPackingCategory() {
+    return PACKING_CATEGORIES[this.packingStepIndex] || PACKING_CATEGORIES[0];
+  }
+
+  getSelectedPackingItems() {
+    return PACKING_ITEMS.filter((item) => this.packingSelectedKeys.has(item.key));
+  }
+
+  getPackingIconSrc(item) {
+    return `./assets/packing/${item.icon}`;
+  }
+
+  renderPackingStep() {
+    if (!this.packingModal) return;
+
+    const progress = this.packingModal.querySelector(".packing-progress");
+    const body = this.packingModal.querySelector(".packing-body");
+    const footer = this.packingModal.querySelector(".packing-footer");
+    if (!progress || !body || !footer) return;
+
+    body.className = "clothing-shop-body packing-body";
+    body.innerHTML = "";
+    footer.innerHTML = "";
+    progress.innerHTML = this.renderPackingProgress();
+
+    if (this.packingMode === "review") {
+      this.renderPackingReview(body, footer);
+    } else {
+      this.renderPackingCategory(body, footer);
+    }
+    this.refreshPackingSelection();
+  }
+
+  renderPackingProgress() {
+    const steps = PACKING_CATEGORIES.map((category, index) => {
+      const isDone = index < this.packingStepIndex || this.packingMode === "review";
+      const isCurrent = index === this.packingStepIndex && this.packingMode !== "review";
+      const className = ["clothing-shop-step", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
+        .filter(Boolean)
+        .join(" ");
+      return `<span class="${className}">${category.label}</span>`;
+    }).join("");
+    const reviewClass = this.packingMode === "review" ? "clothing-shop-step is-current" : "clothing-shop-step";
+    return `${steps}<span class="${reviewClass}">가방 확인</span>`;
+  }
+
+  renderPackingCategory(body, footer) {
+    const category = this.getCurrentPackingCategory();
+    const selectedCount = this.getSelectedPackingItems().filter((item) => item.category === category.key).length;
+    const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+    const grid = document.createElement("div");
+    grid.className = "clothing-shop-grid packing-grid";
+    body.innerHTML = `
+      <div class="clothing-shop-category-title">
+        <strong>${category.label}</strong>
+        <span>필요한 만큼 골라도 돼요. 선택 ${selectedCount}개</span>
+      </div>
+    `;
+    body.appendChild(grid);
+
+    items.forEach((item) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "clothing-shop-item packing-item packing-option";
+      button.dataset.action = "toggle";
+      button.dataset.itemKey = item.key;
+      button.innerHTML = `
+        <img src="${this.getPackingIconSrc(item)}" alt="" aria-hidden="true" />
+        <span class="item-label">${item.label}</span>
+        <span class="item-price">${PACKING_CATEGORY_LABELS[item.category] || item.category}</span>
+      `;
+      button.addEventListener("click", () => this.togglePackingSelection(item.key));
+      grid.appendChild(button);
+    });
+
+    const previousCategory = PACKING_CATEGORIES[this.packingStepIndex - 1];
+    const nextCategory = PACKING_CATEGORIES[this.packingStepIndex + 1];
+    if (previousCategory) {
+      this.addPackingFooterButton(footer, `${previousCategory.label} 가기`, "previous-category", "secondary");
+    }
+    this.addPackingFooterButton(
+      footer,
+      nextCategory ? `${nextCategory.label} 가기` : "가방 확인하기",
+      "next-category",
+    );
+    this.renderPackingSummary();
+  }
+
+  renderPackingReview(body, footer) {
+    const selectedItems = this.getSelectedPackingItems();
+    body.classList.add("is-review");
+    body.innerHTML = `
+      <div class="clothing-shop-category-title">
+        <strong>가방 확인</strong>
+        <span>Space 또는 터치하면 가방에서 뺄 수 있어요.</span>
+      </div>
+      <div class="packing-bag-preview">
+        <img src="./assets/items/travel-bag.png" alt="" aria-hidden="true" />
+        <div class="clothing-shop-review-list packing-review-list"></div>
+      </div>
+    `;
+    const list = body.querySelector(".packing-review-list");
+
+    if (selectedItems.length === 0) {
+      list.innerHTML = '<div class="clothing-shop-empty">아직 가방에 넣은 짐이 없어요. 그래도 완료할 수 있어요.</div>';
+    } else {
+      selectedItems.forEach((item) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "clothing-shop-review-item packing-review-item packing-option";
+        row.dataset.action = "remove";
+        row.dataset.itemKey = item.key;
+        row.innerHTML = `
+          <img src="${this.getPackingIconSrc(item)}" alt="" aria-hidden="true" />
+          <span class="review-name">${item.label}</span>
+          <span class="review-category">${PACKING_CATEGORY_LABELS[item.category] || item.category}</span>
+          <span class="review-remove">가방에서 빼기</span>
+        `;
+        row.addEventListener("click", () => this.removePackingSelection(item.key));
+        list.appendChild(row);
+      });
+    }
+
+    const lastCategory = PACKING_CATEGORIES[PACKING_CATEGORIES.length - 1];
+    this.addPackingFooterButton(footer, `${lastCategory.label} 가기`, "previous-category", "secondary");
+    this.addPackingFooterButton(footer, "짐싸기 완료", "complete");
+    this.renderPackingSummary();
+  }
+
+  addPackingFooterButton(footer, label, action, tone = "primary") {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `clothing-shop-footer-button packing-option is-${tone}`;
+    button.dataset.action = action;
+    button.textContent = label;
+    button.addEventListener("click", () => this.handlePackingAction(action));
+    footer.appendChild(button);
+    return button;
+  }
+
+  handlePackingAction(action) {
+    if (action === "next-category") {
+      this.advancePackingStep();
+      return;
+    }
+
+    if (action === "previous-category") {
+      this.goBackPackingStep();
+      return;
+    }
+
+    if (action === "complete") {
+      this.completePackingSelection();
+    }
+  }
+
+  advancePackingStep() {
+    if (this.packingMode === "review") return;
+
+    if (this.packingStepIndex >= PACKING_CATEGORIES.length - 1) {
+      this.packingMode = "review";
+    } else {
+      this.packingStepIndex += 1;
+    }
+    this.selectedPackingIndex = 0;
+    this.renderPackingStep();
+  }
+
+  goBackPackingStep() {
+    if (this.packingMode === "review") {
+      this.packingMode = "category";
+      this.packingStepIndex = PACKING_CATEGORIES.length - 1;
+    } else if (this.packingStepIndex > 0) {
+      this.packingStepIndex -= 1;
+    }
+    this.selectedPackingIndex = 0;
+    this.renderPackingStep();
+  }
+
+  togglePackingSelection(itemKey) {
+    if (this.packingSelectedKeys.has(itemKey)) {
+      this.packingSelectedKeys.delete(itemKey);
+    } else {
+      this.packingSelectedKeys.add(itemKey);
+    }
+    this.renderPackingStep();
+  }
+
+  removePackingSelection(itemKey) {
+    this.packingSelectedKeys.delete(itemKey);
+    this.selectedPackingIndex = Math.max(0, this.selectedPackingIndex - 1);
+    this.renderPackingStep();
+  }
+
+  renderPackingSummary() {
+    if (!this.packingModal) return;
+
+    const summary = this.packingModal.querySelector(".packing-summary");
+    if (!summary) return;
+
+    const selectedItems = this.getSelectedPackingItems();
+    const countByCategory = Object.fromEntries(PACKING_CATEGORIES.map((category) => [category.key, 0]));
+    selectedItems.forEach((item) => {
+      countByCategory[item.category] = (countByCategory[item.category] || 0) + 1;
+    });
+    summary.innerHTML = `
+      <div class="packing-summary-grid">
+        <div><span>가방 속 짐</span><strong>${selectedItems.length}개</strong></div>
+        ${PACKING_CATEGORIES.map((category) => `
+          <div><span>${category.label}</span><strong>${countByCategory[category.key] || 0}개</strong></div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  refreshPackingSelection() {
+    if (!this.packingModal) return;
+    const buttons = this.getPackingOptionButtons();
+    buttons.forEach((button, index) => {
+      const itemKey = button.dataset.itemKey;
+      button.classList.toggle("is-selected", Boolean(itemKey && this.packingSelectedKeys.has(itemKey)));
+      button.classList.toggle("is-focused", index === this.selectedPackingIndex);
+    });
+
+    const focused = buttons[this.selectedPackingIndex];
+    focused?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    this.renderPackingSummary();
+  }
+
+  movePackingFocus(delta) {
+    const count = this.getPackingOptionButtons().length;
+    if (count <= 0) return;
+    this.selectedPackingIndex = (this.selectedPackingIndex + delta + count) % count;
+    this.refreshPackingSelection();
+  }
+
+  movePackingFocusVertical(deltaRows) {
+    this.movePackingFocus(deltaRows * this.getPackingColumnCount());
+  }
+
+  getPackingColumnCount() {
+    if (!this.packingModal || this.packingMode === "review") return 1;
+    const grid = this.packingModal.querySelector(".packing-grid");
+    if (!grid) return 1;
+    const columns = window.getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
+    return Math.max(1, columns || 3);
+  }
+
+  getPackingOptionButtons() {
+    if (!this.packingModal) return [];
+    return Array.from(this.packingModal.querySelectorAll(".packing-option"));
+  }
+
+  selectFocusedPackingOption() {
+    if (!this.packingModal) return false;
+    const option = this.getPackingOptionButtons()[this.selectedPackingIndex];
+    option?.click();
+    return true;
+  }
+
+  handlePackingMenuKeyboard() {
+    if (!this.packingModal || !this.cursors || !this.keys) return;
+    const Key = Phaser.Input.Keyboard;
+    if (Key.JustDown(this.cursors.left) || Key.JustDown(this.keys.left)) {
+      this.movePackingFocus(-1);
+    } else if (Key.JustDown(this.cursors.right) || Key.JustDown(this.keys.right)) {
+      this.movePackingFocus(1);
+    } else if (Key.JustDown(this.cursors.up) || Key.JustDown(this.keys.up)) {
+      this.movePackingFocusVertical(-1);
+    } else if (Key.JustDown(this.cursors.down) || Key.JustDown(this.keys.down)) {
+      this.movePackingFocusVertical(1);
+    }
+  }
+
+  completePackingSelection() {
+    this.packingItems = this.getSelectedPackingItems().map((item) => ({ ...item }));
+    this.closePackingMenu();
+    this.packingQuestState = "completed";
+    this.playItemPickupSound();
+    this.showFloatingItem("travel_bag", Math.max(384, (this.scale.width || 768) / 2), Math.max(240, (this.scale.height || 480) / 2), 116, true, { duration: 520, hold: 1000, floatY: -12 });
+    this.saveCheckpoint("packing_completed");
+    this.time.delayedCall(900, () => this.startPackedRoomSequence());
+  }
+
+  startPackedRoomSequence() {
+    this.showInteriorScene("ending_packed_room", "home");
+    const itemMessage = this.packingItems.length
+      ? `${this.packingItems.map((item) => item.label).join(", ")}까지 챙겼어.`
+      : "가방은 가볍게 준비했어.";
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: itemMessage },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 진짜 서울 가는구나…" },
+    ], () => this.startMotherAllowanceSequence());
+  }
+
+  startMotherAllowanceSequence() {
+    this.dialogueSystem.start([
+      { name: "엄마", portraitKey: "mother_allowance", text: "우리 해냄이 정말 열심히 준비했네." },
+      { name: "엄마", portraitKey: "mother_allowance_2", text: "서울 가서 맛있는 것도 먹고 와." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워. 잘 다녀올게!" },
+    ], () => {
+      this.moneySystem?.addMoney(TRAVEL_ALLOWANCE_REWARD);
+      this.showMoneyRewardAnimation(TRAVEL_ALLOWANCE_REWARD, {
+        label: "용돈",
+        icon: "./assets/ui/10000won.png",
+        framed: false,
+      });
+      this.playItemPickupSound();
+      this.saveCheckpoint("travel_allowance");
+      this.time.delayedCall(900, () => this.startTravelMorningSequence());
+    });
+  }
+
+  startTravelMorningSequence() {
+    this.showInteriorScene("ending_morning_room", "home");
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "가방도 챙겼고, 용돈도 받았어." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 역으로 가자." },
+    ], () => this.startStationSequence());
+  }
+
+  startStationSequence() {
+    this.playSceneMusic("prologue_park_bgm", 0.28);
+    this.showInteriorScene("ending_yeongju_station", "travel");
+    this.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "우와… 진짜 가는구나." },
+      { name: "해냄이", portraitKey: "haenaem_surprised", text: "조금 떨려… 그래도 준비했으니까 괜찮아." },
+    ], () => this.startTrainArrivalSequence());
+  }
+
+  startTrainArrivalSequence() {
+    this.showInteriorScene("ending_train_arrival", "travel");
+    this.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "기차가 온다! 놓치지 말고 타자." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 서울로 출발!" },
+    ], () => this.startSeoulArrivalSequence());
+  }
+
+  startSeoulArrivalSequence() {
+    this.showInteriorScene("ending_seoul_station", "travel");
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_surprised", text: "서울역이다… 사람이 정말 많아." },
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "천천히 같이 다니면 괜찮아!" },
+    ], () => this.startTravelMemorySequence());
+  }
+
+  startTravelMemorySequence() {
+    this.showInteriorScene("ending_gyeongbokgung", "travel");
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "내가 준비해서 온 여행이라 더 특별해." },
+    ], () => {
+      this.showInteriorScene("ending_amusement_park", "travel");
+      this.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_playful", text: "오늘 하루 오래 기억날 것 같아!" },
+        { name: "해냄이", portraitKey: "haenaem_touched", text: "응. 다음 여행도 내가 준비해보고 싶어." },
+      ], () => this.finishChapterOneEnding());
+    });
+  }
+
+  finishChapterOneEnding() {
+    this.packingQuestState = "ending_complete";
+    this.isChapterComplete = true;
+    this.saveCheckpoint("chapter1_ending_complete");
+    this.clearInteriorScene();
+    this.stopSceneMusic();
+    this.startChapterMusic();
+    this.showQuestToast("챕터 1 완료: 서울 여행 준비와 출발을 마쳤어요.", 6000);
+    this.walkJjookBackToHome();
   }
 
   showClothingShopNotEnoughMoney(totalPrice) {
@@ -2994,7 +3555,7 @@ export default class PlayScene extends Phaser.Scene {
     const config = NPC_ROAM_CONFIG[key];
     const sprite = config ? this[config.spriteProp] : null;
     if (!config || !sprite?.active || !sprite.visible) return false;
-    if (this.isMissionComplete || this.isInDialogue || this.vendingMenuGroup || this.clothingShopModal || this.interiorSceneGroup) {
+    if (this.isMissionComplete || this.isInDialogue || this.vendingMenuGroup || this.clothingShopModal || this.packingModal || this.interiorSceneGroup) {
       return false;
     }
 
@@ -4711,9 +5272,30 @@ export default class PlayScene extends Phaser.Scene {
   startChapterMusic() {
     if (!this.isSoundEnabled()) return;
 
+    this.stopSceneMusic({ resumeChapter: false });
     this.stopChapterMusic();
     this.bgmIndex = TILED_MAP_CONFIG.chapter;
     this.playNextChapterTrack();
+  }
+
+  playSceneMusic(key, volume = 0.26) {
+    if (!this.isSoundEnabled() || !this.cache.audio.exists(key)) return;
+
+    this.stopChapterMusic();
+    this.stopSceneMusic({ resumeChapter: false });
+    this.sceneBgmAudio = this.sound.add(key, { loop: true, volume });
+    this.sceneBgmAudio.play();
+  }
+
+  stopSceneMusic({ resumeChapter = false } = {}) {
+    if (this.sceneBgmAudio) {
+      this.sceneBgmAudio.stop();
+      this.sceneBgmAudio.destroy?.();
+      this.sceneBgmAudio = null;
+    }
+    if (resumeChapter) {
+      this.startChapterMusic();
+    }
   }
 
   playNextChapterTrack() {
@@ -4794,6 +5376,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   stopAudioForPageExit() {
+    this.stopSceneMusic({ resumeChapter: false });
     this.stopChapterMusic();
     this.sound?.stopAll?.();
   }

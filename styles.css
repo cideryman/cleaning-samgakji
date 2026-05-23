@@ -1000,6 +1000,68 @@ body.prologue-scene-active #game {
   box-shadow: 0 4px 0 #b8c1bd;
 }
 
+.packing-panel {
+  max-width: min(880px, 94vw);
+}
+
+.packing-item {
+  grid-template-rows: 76px auto auto;
+}
+
+.packing-item img {
+  width: 70px;
+  height: 70px;
+}
+
+.packing-bag-preview {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.packing-bag-preview > img {
+  width: 140px;
+  max-height: 170px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 5px 0 rgba(91, 70, 54, 0.24));
+}
+
+.packing-review-item {
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+}
+
+.packing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.packing-summary-grid div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #fff7e6;
+}
+
+.packing-summary-grid span {
+  overflow: hidden;
+  color: #6f5b46;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.packing-summary-grid strong {
+  color: #3d3229;
+  font-size: 16px;
+  font-weight: 900;
+}
+
 #sweepButton:active,
 .special-button:active,
 .bacchus-button:active,
@@ -1256,6 +1318,19 @@ body.app-fit-mode #game canvas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .packing-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .packing-bag-preview {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .packing-bag-preview > img {
+    width: 92px;
+    max-height: 118px;
+  }
+
   .clothing-shop-review-item {
     grid-template-columns: 44px minmax(0, 1fr) auto;
   }
@@ -1408,6 +1483,19 @@ body.app-fit-mode #game canvas {
 
   .clothing-shop-money-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .packing-summary-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .packing-bag-preview {
+    grid-template-columns: 118px minmax(0, 1fr);
+  }
+
+  .packing-bag-preview > img {
+    width: 112px;
+    max-height: 136px;
   }
 
   .clothing-shop-footer-button {

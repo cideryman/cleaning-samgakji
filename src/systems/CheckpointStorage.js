@@ -48,6 +48,8 @@ export default class CheckpointStorage {
         sunisuniQuestState: "locked",
         clothesQuestState: "locked",
         travelPrepItems: [],
+        packingQuestState: "locked",
+        packingItems: [],
       },
     };
     return this.write(data);
@@ -101,6 +103,8 @@ export default class CheckpointStorage {
         sunisuniQuestState: scene.sunisuniQuestState ?? "locked",
         clothesQuestState: scene.clothesQuestState ?? "locked",
         travelPrepItems: Array.isArray(scene.travelPrepItems) ? [...scene.travelPrepItems] : [],
+        packingQuestState: scene.packingQuestState ?? "locked",
+        packingItems: Array.isArray(scene.packingItems) ? [...scene.packingItems] : [],
       },
     };
     return this.write(data);
@@ -182,6 +186,8 @@ export default class CheckpointStorage {
     scene.sunisuniQuestState = quests.sunisuniQuestState ?? "locked";
     scene.clothesQuestState = quests.clothesQuestState ?? "locked";
     scene.travelPrepItems = Array.isArray(quests.travelPrepItems) ? [...quests.travelPrepItems] : [];
+    scene.packingQuestState = quests.packingQuestState ?? "locked";
+    scene.packingItems = Array.isArray(quests.packingItems) ? [...quests.packingItems] : [];
   }
 
   static applyNpcState(scene, data) {
@@ -237,6 +243,8 @@ export default class CheckpointStorage {
         y: 174,
         displayHeight: 96,
       }, "!");
+    } else if (scene.clothesQuestState === "completed" && ["offered", "declined"].includes(scene.packingQuestState)) {
+      scene.setQuestMarker?.("packingQuest", scene.jjookNpc, "!");
     }
   }
 

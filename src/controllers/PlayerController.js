@@ -26,6 +26,10 @@ export default class PlayerController {
         scene.selectFocusedClothingShopOption();
         return;
       }
+      if (scene.packingModal) {
+        scene.selectFocusedPackingOption();
+        return;
+      }
       scene.useYebiItem();
     });
   }
@@ -34,7 +38,7 @@ export default class PlayerController {
     const scene = this.scene;
     if (!scene.player) return;
 
-    if (!scene.stateManager?.canMove() || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal) {
+    if (!scene.stateManager?.canMove() || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal) {
       scene.player.setVelocity(0, 0);
       return;
     }
@@ -140,7 +144,7 @@ export default class PlayerController {
     if (event.clientX > window.innerWidth / 2) return false;
 
     const blockedTarget = event.target.closest?.(
-      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay, .clothing-shop-modal",
+      "#sweepButton, #specialButton, #fullscreenButton, #restartButton, .touch-controls, .game-header, .complete-overlay, .clothing-shop-modal, .packing-modal",
     );
     return !blockedTarget;
   }
