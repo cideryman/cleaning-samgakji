@@ -462,10 +462,6 @@ export default class PlayScene extends Phaser.Scene {
     this.separateNpcSprites();
     this.updateQuestMarkers();
     this.updateWorldDepths();
-    const canCompleteChapter = this.sunisuniQuestState !== "quest_complete" || this.clothesQuestState === "completed";
-    if (canCompleteChapter && !this.isChapterComplete && this.moneySystem && this.moneySystem.money >= GAME_CONFIG.chapter1TargetMoney) {
-      this.completeChapter1();
-    }
   }
 
   getWorldDepth(y, offset = 0) {
@@ -701,6 +697,7 @@ export default class PlayScene extends Phaser.Scene {
 
     this.applyTiledObjects(map);
     this.createTiledMapObjects(map);
+    this.createRoadBarriers();
     return true;
   }
 
@@ -784,7 +781,18 @@ export default class PlayScene extends Phaser.Scene {
     if (props.collides === true || props.collides === "true") return true;
 
     const name = `${object.name || ""} ${textureKey || ""}`.toLowerCase();
-    return ["tree", "bench", "building", "store", "pharmacy", "hospital"].some((keyword) => name.includes(keyword));
+    return [
+      "tree",
+      "bench",
+      "building",
+      "store",
+      "pharmacy",
+      "hospital",
+      "traffic",
+      "pedestrian",
+      "stop_sign",
+      "crosswalk_sign",
+    ].some((keyword) => name.includes(keyword));
   }
 
   addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey) {
@@ -826,6 +834,16 @@ export default class PlayScene extends Phaser.Scene {
       };
     }
 
+    if (["traffic", "pedestrian", "stop_sign", "crosswalk_sign"].some((keyword) => name.includes(keyword))) {
+      const height = Math.max(18, displayHeight * 0.2);
+      return {
+        width: Math.max(18, displayWidth * 0.44),
+        height,
+        offsetX: 0,
+        offsetY: -height * 0.55,
+      };
+    }
+
     const height = Math.max(32, displayHeight * 0.28);
     return {
       width: Math.max(96, displayWidth * 0.82),
@@ -851,6 +869,20 @@ export default class PlayScene extends Phaser.Scene {
       height,
     ));
     return zone;
+  }
+
+  createRoadBarriers() {
+    const roadY = 240;
+    const roadHeight = 160;
+    const roadBlocks = [
+      { name: "road_block_west", x: 192, width: 384 },
+      { name: "road_block_center", x: 768, width: 576 },
+      { name: "road_block_east", x: 1344, width: 384 },
+    ];
+
+    roadBlocks.forEach((block) => {
+      this.addObjectCollider(block.name, block.x, roadY, block.width, roadHeight);
+    });
   }
 
   createRecyclingCenter() {
@@ -1347,21 +1379,6 @@ export default class PlayScene extends Phaser.Scene {
     this.updateHud();
   }
   
-  completeChapter1() {
-    if (this.isChapterComplete) return;
-    this.isChapterComplete = true;
-    this.saveCheckpoint("chapter1_complete");
-    this.dialogueSystem.start([
-      { name: "알림", text: `목표 금액 ${GAME_CONFIG.chapter1TargetMoney.toLocaleString()}원을 달성했습니다!` },
-      { name: "알림", text: "다음 챕터로 이동합니다." }
-    ]);
-    // 추가 챕터 전환 로직
-    this.time.delayedCall(2000, () => {
-      // this.scene.restart() 또는 다음 챕터로 이동하는 코드
-      console.log("챕터 2로 전환 예정");
-    });
-  }
-
   createRandomSlimePositions() {
     if (this.slimeSpawnPoints.length > 0) {
       const positions = Phaser.Utils.Array.Shuffle([...this.slimeSpawnPoints])
@@ -1385,6 +1402,9 @@ export default class PlayScene extends Phaser.Scene {
       { left: 680, right: 1250, top: 220, bottom: 356 },
       { left: 300, right: 870, top: 570, bottom: 704 },
       { left: 860, right: 1250, top: 460, bottom: 565 },
+      { left: 1040, right: 1410, top: 360, bottom: 525 },
+      { left: 1030, right: 1430, top: 600, bottom: 825 },
+      { left: 1220, right: 1415, top: 440, bottom: 700 },
       { left: 160, right: 460, top: 488, bottom: 620 },
     ];
     const allPositions = [...existingPositions];
@@ -1421,14 +1441,11 @@ export default class PlayScene extends Phaser.Scene {
 
   isBlockedSpawnPoint(x, y) {
     const blockedAreas = [
-      { left: 190, right: 550, top: 175, bottom: 277 },
-      { left: 175, right: 485, top: 665, bottom: 760 },
-      { left: 875, right: 1295, top: 558, bottom: 824 },
-      { left: 1210, right: 1435, top: 80, bottom: 900 },
-      { left: 865, right: 1002, top: 184, bottom: 278 },
-      { left: 470, right: 760, top: 460, bottom: 650 },
-      { left: 48, right: 90, top: 70, bottom: 890 },
-      { left: 1446, right: 1490, top: 70, bottom: 890 },
+      { left: 0, right: GAME_CONFIG.worldWidth, top: 150, bottom: 330 },
+      { left: 0, right: 90, top: 0, bottom: GAME_CONFIG.worldHeight },
+      { left: GAME_CONFIG.worldWidth - 90, right: GAME_CONFIG.worldWidth, top: 0, bottom: GAME_CONFIG.worldHeight },
+      { left: 0, right: GAME_CONFIG.worldWidth, top: 0, bottom: 64 },
+      { left: 0, right: GAME_CONFIG.worldWidth, top: GAME_CONFIG.worldHeight - 64, bottom: GAME_CONFIG.worldHeight },
     ];
 
     const isStaticAreaBlocked = blockedAreas.some((area) => {
