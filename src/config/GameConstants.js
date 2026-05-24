@@ -51,6 +51,7 @@ export const GAME_CONFIG = {
   hospitalDoor: { x: 152, y: 148 },
   pharmacyDoor: { x: 353, y: 148 },
   clothingStoreDoor: { x: 580, y: 158 },
+  busStop: { x: 760, y: 260 },
   bacchusDurationMs: 60000,
   bacchusSweepMultiplier: 2,
   recyclingCenter: { x: 940, y: 545 },

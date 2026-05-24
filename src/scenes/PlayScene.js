@@ -8,7 +8,7 @@ import {
   RECYCLE_BIN_CONFIG,
   TILED_MAP_CONFIG,
 } from "../config/GameConstants.js";
-import { StateManager } from "../config/SceneState.js";
+import { SceneState, StateManager } from "../config/SceneState.js";
 import CleaningSystem from "../systems/CleaningSystem.js";
 import CheckpointStorage from "../systems/CheckpointStorage.js";
 import DialogueManager from "../systems/DialogueManager.js";
@@ -163,6 +163,9 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedPackingIndex = 0;
     this.packingStepIndex = 0;
     this.packingMode = "category";
+    this.travelBus = null;
+    this.travelBusStopObjects = [];
+    this.travelBusSequenceEvents = [];
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -342,6 +345,7 @@ export default class PlayScene extends Phaser.Scene {
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();
+      this.cleanupTravelBusStopSequence?.();
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
       window.removeEventListener("beforeunload", this.pageAudioStopHandler);
       document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
@@ -434,6 +438,10 @@ export default class PlayScene extends Phaser.Scene {
     this.selectedPackingIndex = 0;
     this.packingStepIndex = 0;
     this.packingMode = "category";
+    this.cleanupTravelBusStopSequence?.();
+    this.travelBus = null;
+    this.travelBusStopObjects = [];
+    this.travelBusSequenceEvents = [];
     this.clearNpcRoaming?.();
     this.npcRoamState = {};
     this.nextNpcAmbientBubbleAt = 0;
@@ -513,6 +521,7 @@ export default class PlayScene extends Phaser.Scene {
     this.updateJjookFollower();
     this.updateSunisuniFollower();
     this.updateJjookAutoPlogging();
+    this.checkTravelBusStopArrival();
     this.updateNpcRoaming();
     this.separateNpcSprites();
     this.updateQuestMarkers();
@@ -1737,8 +1746,15 @@ export default class PlayScene extends Phaser.Scene {
         return;
       }
 
-      if (this.clothesQuestState === "completed" && !["completed", "ending_complete"].includes(this.packingQuestState)) {
+      if (this.clothesQuestState === "completed" && ["offered", "declined"].includes(this.packingQuestState)) {
         this.startPackingOfferDialogue({ repeat: this.packingQuestState === "declined" });
+        return;
+      }
+
+      if (this.clothesQuestState === "completed" && this.packingQuestState === "going_bus_stop") {
+        this.dialogueSystem.start([
+          { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스정류장에서 만나자. 천천히 걸어와도 괜찮아!" },
+        ]);
         return;
       }
 
@@ -2199,7 +2215,7 @@ export default class PlayScene extends Phaser.Scene {
 
   acceptPackingQuest() {
     this.clearInteriorScene();
-    this.packingQuestState = "traveling_home";
+    this.packingQuestState = "going_bus_stop";
     this.clearQuestMarker("packingQuest");
     this.saveCheckpoint("packing_started");
     this.pauseNpcRoaming("jjook");
@@ -2207,7 +2223,185 @@ export default class PlayScene extends Phaser.Scene {
     this.dialogueSystem.start([
       { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "좋아! 집 가서 여행 준비 시작하자!" },
       { name: "해냄이", portraitKey: "haenaem_determined", text: "응. 버스 타고 집에 가서 차근차근 챙겨볼게." },
-    ], () => this.startTravelHomeSequence());
+    ], () => this.startBusStopBoardingSequence());
+  }
+
+  getTravelBusStopPoint() {
+    return this.getMapPoint("bus_stop", GAME_CONFIG.busStop);
+  }
+
+  createTravelBusStopObjects() {
+    this.cleanupTravelBusStopSequence();
+
+    const stop = this.getTravelBusStopPoint();
+    if (!stop) return null;
+
+    const waitingSpot = this.add.ellipse(stop.x, stop.y + 42, 104, 32, 0xf7d96f, 0.26);
+    waitingSpot.setStrokeStyle(2, 0x21352c, 0.32);
+    waitingSpot.setDepth(this.getWorldDepth(stop.y + 42, -0.35));
+
+    if (this.textures.exists("bus_stop_sign")) {
+      const sign = this.add.image(stop.x - 58, stop.y + 32, "bus_stop_sign");
+      sign.setOrigin(0.5, 1);
+      sign.setDisplaySize(38, 72);
+      sign.setDepth(this.getWorldDepth(stop.y + 32, 0.02));
+      this.travelBusStopObjects.push(sign);
+    }
+
+    this.travelBusStopObjects.push(waitingSpot);
+    return stop;
+  }
+
+  walkPlayerToTarget(target, { speed = 120, onComplete = null } = {}) {
+    if (!this.player || !target) {
+      onComplete?.();
+      return;
+    }
+
+    this.tweens.killTweensOf(this.player);
+    this.player.setVelocity(0, 0);
+
+    const route = this.buildNpcRouteThroughCrosswalk({ x: this.player.x, y: this.player.y }, target)
+      .filter((point) => Phaser.Math.Distance.Between(this.player.x, this.player.y, point.x, point.y) > 6);
+
+    const walkNext = (index = 0) => {
+      const point = route[index];
+      if (!point) {
+        this.player.setVelocity(0, 0);
+        this.playerController.stopWalkAnimation();
+        onComplete?.();
+        return;
+      }
+
+      let previousX = this.player.x;
+      let previousY = this.player.y;
+      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, point.x, point.y);
+      this.tweens.add({
+        targets: this.player,
+        x: point.x,
+        y: point.y,
+        duration: Phaser.Math.Clamp((distance / speed) * 1000, 320, 5200),
+        ease: "Linear",
+        onUpdate: () => {
+          const dx = this.player.x - previousX;
+          const dy = this.player.y - previousY;
+          if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+            this.playerController.updatePlayerDirection(new Phaser.Math.Vector2(dx, dy), true);
+            this.setDepthFromY(this.player, 0.05);
+          }
+          previousX = this.player.x;
+          previousY = this.player.y;
+        },
+        onComplete: () => walkNext(index + 1),
+      });
+    };
+
+    walkNext();
+  }
+
+  startBusStopBoardingSequence() {
+    const stop = this.createTravelBusStopObjects();
+    if (!stop) {
+      this.startTravelHomeSequence();
+      return;
+    }
+
+    this.packingQuestState = "going_bus_stop";
+    this.stateManager?.set(SceneState.PLAYING);
+    this.saveCheckpoint("packing_bus_stop");
+    this.pauseNpcRoaming("jjook");
+    this.stopJjookIdleTween();
+    this.showQuestToast("직접 버스정류장으로 걸어가요.", 3600);
+    this.showSpeechBubble(this.jjookNpc || this.player, "정류장에서 만나!", 2600);
+
+    const jjookTarget = { x: stop.x + 42, y: stop.y + 52 };
+    if (this.jjookNpc?.active) {
+      this.walkNpcToTarget(this.jjookNpc, "jjook", jjookTarget, { speed: 92 });
+    }
+  }
+
+  checkTravelBusStopArrival() {
+    if (this.packingQuestState !== "going_bus_stop" || this.travelBus) return;
+    if (!this.player || this.isInDialogue || this.interiorSceneGroup) return;
+
+    const stop = this.getTravelBusStopPoint();
+    if (!stop) return;
+
+    const arrivalPoint = { x: stop.x - 20, y: stop.y + 52 };
+    const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, arrivalPoint.x, arrivalPoint.y);
+    if (distance > 78) return;
+
+    this.startBusArrivalSequence(stop);
+  }
+
+  startBusArrivalSequence(stop) {
+    if (!stop) {
+      this.startTravelHomeSequence();
+      return;
+    }
+
+    this.packingQuestState = "boarding_bus";
+    this.stateManager?.set(SceneState.CUTSCENE);
+    this.player?.setVelocity(0, 0);
+    this.playerController?.stopWalkAnimation?.();
+    this.pauseNpcRoaming("jjook");
+    this.showQuestToast("버스가 도착했어요.", 2600);
+    this.showSpeechBubble(this.jjookNpc || this.player, "버스 왔다!", 2200);
+
+    const busY = stop.y + 10;
+    const startX = stop.x - 520;
+    const stopX = stop.x - 112;
+    this.travelBus = this.add.sprite(startX, busY, "bus_right", 0);
+    this.travelBus.setOrigin(0.5, 0.5);
+    this.travelBus.setDisplaySize(192, 96);
+    this.travelBus.setDepth(this.getWorldDepth(busY + 48, 0.08));
+    if (this.anims.exists("bus_right_drive")) {
+      this.travelBus.anims.play("bus_right_drive");
+    }
+
+    this.tweens.add({
+      targets: this.travelBus,
+      x: stopX,
+      duration: 1800,
+      ease: "Sine.easeOut",
+      onUpdate: () => this.travelBus?.setDepth(this.getWorldDepth(busY + 48, 0.08)),
+      onComplete: () => {
+        this.travelBus?.anims?.stop();
+        this.travelBus?.setFrame(3);
+        const pauseEvent = this.time.delayedCall(700, () => this.boardTravelBus());
+        this.travelBusSequenceEvents.push(pauseEvent);
+      },
+    });
+  }
+
+  boardTravelBus() {
+    this.showQuestToast("버스를 타고 집으로 가요.", 2600);
+    this.player?.setVisible(false);
+    this.jjookNpc?.setVisible(false);
+
+    this.cameras.main.fadeOut(650, 0, 0, 0);
+    const transitionEvent = this.time.delayedCall(700, () => {
+      this.cleanupTravelBusStopSequence();
+      this.player?.setVisible(true);
+      this.jjookNpc?.setVisible(true);
+      this.packingQuestState = "traveling_home";
+      this.stateManager?.set(SceneState.PLAYING);
+      this.cameras.main.fadeIn(420, 0, 0, 0);
+      this.startTravelHomeSequence();
+    });
+    this.travelBusSequenceEvents.push(transitionEvent);
+  }
+
+  cleanupTravelBusStopSequence() {
+    this.travelBusSequenceEvents?.forEach((event) => event?.remove?.(false));
+    this.travelBusSequenceEvents = [];
+    this.travelBusStopObjects?.forEach((object) => object?.destroy?.());
+    this.travelBusStopObjects = [];
+    if (this.travelBus) {
+      this.tweens.killTweensOf(this.travelBus);
+      this.travelBus.destroy();
+      this.travelBus = null;
+    }
   }
 
   startTravelHomeSequence() {
@@ -3555,6 +3749,7 @@ export default class PlayScene extends Phaser.Scene {
     const config = NPC_ROAM_CONFIG[key];
     const sprite = config ? this[config.spriteProp] : null;
     if (!config || !sprite?.active || !sprite.visible) return false;
+    if (this.stateManager && !this.stateManager.isPlaying()) return false;
     if (this.isMissionComplete || this.isInDialogue || this.vendingMenuGroup || this.clothingShopModal || this.packingModal || this.interiorSceneGroup) {
       return false;
     }
@@ -3569,6 +3764,7 @@ export default class PlayScene extends Phaser.Scene {
       if (this.jjookReturningHome || this.isJjookFollowActive || this.isJjookClothesEscortActive) return false;
       if (["wallet_missing", "wallet_found", "choosing_drink"].includes(this.jjookQuestState)) return false;
       if (["ready", "declined", "shopping"].includes(this.clothesQuestState)) return false;
+      if (["going_bus_stop", "boarding_bus"].includes(this.packingQuestState)) return false;
       return this.jjookQuestState === "completed";
     }
 

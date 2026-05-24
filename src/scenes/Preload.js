@@ -68,6 +68,7 @@ const EXTERNAL_ASSETS = [
   { key: "sunisuni_portrait_worried", path: "assets/portraits/sunisuni-worried.png" },
   { key: "sunisuni_bench", path: "assets/props/sunisuni-bench.png" },
   { key: "sunisuni_tree", path: "assets/props/sunisuni-tree.png" },
+  { key: "bus_stop_sign", path: "assets/props/bus-stop-sign.png" },
   { key: "prescription_item", path: "assets/items/prescription.png" },
   { key: "medicine_bag", path: "assets/items/medicine-bag.png" },
   { key: "bill_5000", path: "assets/items/bill-5000.png" },
@@ -126,6 +127,7 @@ const SPRITESHEET_ASSETS = [
   { key: "jjook_walk_up", path: "assets/sprites/jjook-walk-up.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_left", path: "assets/sprites/jjook-walk-left.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_right", path: "assets/sprites/jjook-walk-right.png", frameWidth: 64, frameHeight: 96 },
+  { key: "bus_right", path: "assets/vehicles/bus-right.png", frameWidth: 96, frameHeight: 48 },
   { key: "pedestrian_light", path: "assets/traffic/pedestrian-light.png", frameWidth: 64, frameHeight: 112 },
   { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
@@ -173,6 +175,7 @@ export default class Preload extends Phaser.Scene {
   create() {
     this.createMissingExternalTextures();
     this.createPlayerAnimations();
+    this.createVehicleAnimations();
     this.createTrafficLightAnimations();
     this.createBlockTexture("clean_tile", 32, 32, "#f6fff3", "#6fcf97");
     this.createBlockTexture("sweep_hitbox", 96, 72, "#fff3a3", "#f2c94c");
@@ -219,6 +222,17 @@ export default class Preload extends Phaser.Scene {
       key: "pedestrian_light_cycle",
       frames: this.anims.generateFrameNumbers("pedestrian_light", { frames: [0, 1] }),
       frameRate: 0.25,
+      repeat: -1,
+    });
+  }
+
+  createVehicleAnimations() {
+    if (this.anims.exists("bus_right_drive") || !this.textures.exists("bus_right")) return;
+
+    this.anims.create({
+      key: "bus_right_drive",
+      frames: this.anims.generateFrameNumbers("bus_right", { frames: [0, 1, 2, 1] }),
+      frameRate: 6,
       repeat: -1,
     });
   }

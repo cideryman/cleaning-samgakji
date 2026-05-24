@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260523-05";
+const CACHE_NAME = "cleaning-samgakji-v20260524-01";
 
 const PRECACHE_URLS = [
   "./",
@@ -110,6 +110,8 @@ const PRECACHE_URLS = [
   "./assets/portraits/sunisuni-worried.png",
   "./assets/props/sunisuni-bench.png",
   "./assets/props/sunisuni-tree.png",
+  "./assets/props/bus-stop-sign.png",
+  "./assets/vehicles/bus-right.png",
   "./assets/traffic/pedestrian-light.png",
   "./assets/traffic/pedestrian-light-back.png",
   "./assets/traffic/pedestrian-stop-sign.png",
