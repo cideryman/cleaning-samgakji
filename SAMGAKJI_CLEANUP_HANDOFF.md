@@ -37,6 +37,7 @@
 - `src/systems/PackingSystem.js`
 - `src/systems/ClothingShopSystem.js`
 - `src/systems/SunisuniQuestSystem.js`
+- `src/systems/JjookQuestSystem.js`
 
 최근 분리:
 
@@ -45,6 +46,7 @@
 - 짐싸기 UI/선택 처리: `PackingSystem`
 - 옷가게 UI/선택/계산/쇼핑백 HUD: `ClothingShopSystem`
 - 수니수니 병원/약국 대화 흐름, 따라오기 AI, 이펙트, 벤치 복귀: `SunisuniQuestSystem`
+- 쭉쭉이 플로깅 요청, 동행 따라오기, 자동 청소, 동행 종료: `JjookQuestSystem`
 
 아직 `PlayScene.js`에 남겨도 되는 것:
 
@@ -199,10 +201,11 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 
 다음에 이어서 한다면 아래 순서를 추천한다.
 
-1. `JjookQuestSystem` 분리
+1. 쭉쭉이 지갑/자판기/옷가게/버스정류장 흐름을 `JjookQuestSystem`에 추가 분리
 2. `YebiQuestSystem` 분리
 3. `TravelEndingSystem` 분리
 4. `AudioManager` 분리
 5. `MapObjectFactory` 분리
 
 `SunisuniQuestSystem`은 현재 수니수니 병원/약국 대화 흐름, 따라오기 AI, 하트/별 이펙트, 벤치 복귀를 담당한다. `PlayScene.js`에는 기존 호출을 보존하는 래퍼만 남아 있다.
+`JjookQuestSystem`은 현재 플로깅 요청, 쭉쭉이 동행, 자동 청소, 동행 종료와 콜라 보답을 담당한다. 지갑 찾기, 자판기 구매 시작, 옷가게, 짐싸기/버스 흐름은 아직 `PlayScene.js`에 남아 있다.

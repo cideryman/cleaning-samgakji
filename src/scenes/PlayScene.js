@@ -24,6 +24,7 @@ import VendingMachineSystem from "../systems/VendingMachineSystem.js";
 import PackingSystem from "../systems/PackingSystem.js";
 import ClothingShopSystem from "../systems/ClothingShopSystem.js";
 import SunisuniQuestSystem from "../systems/SunisuniQuestSystem.js";
+import JjookQuestSystem from "../systems/JjookQuestSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
 
@@ -126,6 +127,7 @@ export default class PlayScene extends Phaser.Scene {
     this.packingSystem = null;
     this.clothingShopSystem = null;
     this.sunisuniQuestSystem = null;
+    this.jjookQuestSystem = null;
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -281,6 +283,7 @@ export default class PlayScene extends Phaser.Scene {
     this.packingSystem = new PackingSystem(this);
     this.clothingShopSystem = new ClothingShopSystem(this);
     this.sunisuniQuestSystem = new SunisuniQuestSystem(this);
+    this.jjookQuestSystem = new JjookQuestSystem(this);
     this.playerController = new PlayerController(this);
     this.interactionSystem = new InteractionSystem(this);
     this.slimeSystem = new SlimeSystem(this);
@@ -2649,40 +2652,11 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   requestJjookPloggingHelp() {
-    if (this.isJjookFollowActive) {
-      this.dialogueSystem?.start([
-        { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "이미 같이 줍고 있잖아! 조금만 더 힘내자!" },
-      ]);
-      return;
-    }
-
-    const accepted = Phaser.Math.Between(0, 99) < 65;
-    if (accepted) {
-      const reasons = [
-        "좋아! 방금 몸도 풀렸고, 같이 걸으면 더 신나지!",
-        "좋아! 나도 오늘은 조금 더 움직이고 싶었어.",
-        "물론이지! 해냄이랑 같이하면 플로깅도 재밌어.",
-      ];
-      this.dialogueSystem?.start([
-        { name: "쭉쭉이", portraitKey: "jjook_plogging", text: Phaser.Utils.Array.GetRandom(reasons) },
-      ], () => this.activateJjookFollower({ buyColaOnComplete: true }));
-      return;
-    }
-
-    const reasons = [
-      "미안! 오늘은 다리가 조금 뻐근해서 쉬어야겠어.",
-      "지금은 물을 좀 마시고 쉬어야 할 것 같아. 다음에 꼭 도와줄게!",
-      "방금 운동을 너무 열심히 했나 봐. 조금 쉬고 싶어.",
-    ];
-    this.dialogueSystem?.start([
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: Phaser.Utils.Array.GetRandom(reasons) },
-    ]);
+    this.jjookQuestSystem?.requestPloggingHelp();
   }
 
   sayByeToJjook() {
-    this.dialogueSystem?.start([
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "좋아! 필요하면 또 불러줘." },
-    ]);
+    this.jjookQuestSystem?.sayBye();
   }
 
   // ---------------------------------------------------------------------------
@@ -2910,75 +2884,15 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   updateJjookFollower() {
-    if ((!this.isJjookFollowActive && !this.isJjookClothesEscortActive && !this.isJjookBusEscortActive) || !this.jjookNpc || !this.player) return;
-    this.stopJjookIdleTween();
-
-    const distance = Phaser.Math.Distance.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
-    const followDistance = this.isJjookBusEscortActive ? 76 : 88;
-    if (distance <= followDistance) {
-      this.stopNpcWalk(this.jjookNpc, "jjook");
-      return;
-    }
-
-    const baseFollowSpeed = this.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
-    const boostedFollowSpeed = this.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
-    const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
-    const step = (this.game.loop.delta / 1000) * followSpeed;
-    const angle = Phaser.Math.Angle.Between(this.jjookNpc.x, this.jjookNpc.y, this.player.x, this.player.y);
-    const moveX = Math.cos(angle) * Math.min(step, distance - followDistance);
-    const moveY = Math.sin(angle) * Math.min(step, distance - followDistance);
-    this.jjookNpc.x += moveX;
-    this.jjookNpc.y += moveY;
-    const directionKey = this.getDirectionKeyFromVector(moveX, moveY, this.jjookNpc.getData("directionKey") || "down");
-    this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
+    this.jjookQuestSystem?.updateFollower();
   }
 
   updateJjookAutoPlogging() {
-    if (!this.isJjookFollowActive || !this.jjookNpc?.active || !this.trashSlimes) return;
-    if (this.isInDialogue || this.interiorSceneGroup || this.time.now < this.nextJjookAutoCleanAt) return;
-
-    const target = this.findNearestTrashTo(this.jjookNpc, GAME_CONFIG.jjookAutoCleanRadius);
-    if (!target) return;
-
-    this.nextJjookAutoCleanAt = this.time.now + GAME_CONFIG.jjookAutoCleanCooldownMs;
-    const direction = new Phaser.Math.Vector2(target.x - this.jjookNpc.x, target.y - this.jjookNpc.y);
-    if (direction.lengthSq() > 0) {
-      direction.normalize();
-      const directionKey = this.getDirectionKeyFromVector(direction.x, direction.y, this.jjookNpc.getData("directionKey") || "down");
-      this.setNpcDirectionTexture(this.jjookNpc, "jjook", directionKey, true);
-    }
-
-    this.playSweepSound();
-    this.showSweepEffect(target.x, target.y, 78, 60, direction.lengthSq() > 0 ? direction : null);
-    this.time.delayedCall(90, () => {
-      if (!target?.active || target.getData("cleaned")) return;
-      const trashType = target.getData("trashType") || "normal";
-      if (trashType === "can") {
-        this.playCanCleanSound();
-      } else {
-        this.playCleanSound();
-      }
-      this.autoCleanTrash(target, { shouldRespawn: true });
-      if (Phaser.Math.Between(0, 99) < 20) {
-        this.showSpeechBubble(this.jjookNpc, "여기도 치울게!", 1200);
-      }
-    });
+    this.jjookQuestSystem?.updateAutoPlogging();
   }
 
   findNearestTrashTo(source, radius) {
-    if (!source || !this.trashSlimes) return null;
-
-    let nearest = null;
-    let nearestDistance = radius;
-    this.trashSlimes.children.iterate((trash) => {
-      if (!trash?.active || trash.getData("cleaned")) return;
-      const distance = Phaser.Math.Distance.Between(source.x, source.y, trash.x, trash.y);
-      if (distance <= nearestDistance) {
-        nearest = trash;
-        nearestDistance = distance;
-      }
-    });
-    return nearest;
+    return this.jjookQuestSystem?.findNearestTrashTo(source, radius) ?? null;
   }
 
   // ---------------------------------------------------------------------------
@@ -3376,26 +3290,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   stopJjookIdleTween() {
-    this.jjookIdleTween?.stop();
-    this.jjookIdleTween = null;
-    if (this.jjookNpc) this.tweens.killTweensOf(this.jjookNpc);
+    this.jjookQuestSystem?.stopIdleTween();
   }
 
   walkJjookBackToHome() {
-    if (!this.jjookNpc?.active) return;
-    this.pauseNpcRoaming("jjook");
-    this.jjookReturningHome = true;
-    this.isJjookClothesEscortActive = false;
-    this.isJjookFollowActive = false;
-    this.isJjookBusEscortActive = false;
-    this.walkNpcToTarget(this.jjookNpc, "jjook", this.getMapPoint("jjook_start", GAME_CONFIG.jjookSpawn), {
-      speed: 112,
-      onComplete: () => {
-        this.jjookReturningHome = false;
-        this.showSpeechBubble(this.jjookNpc, "나중에 또 같이 가자!", 2200);
-        this.updateNpcRoaming(true);
-      },
-    });
+    this.jjookQuestSystem?.walkBackToHome();
   }
 
   updatePlayerDirection(velocity) {
@@ -3589,31 +3488,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   activateJjookFollower({ buyColaOnComplete = false } = {}) {
-    this.pauseNpcRoaming("jjook");
-    this.isJjookFollowActive = true;
-    this.jjookFollowEndsAt = this.time.now + GAME_CONFIG.jjookFollowDurationMs;
-    this.shouldBuyJjookColaAfterFollow = buyColaOnComplete;
-    this.jjookFollowTimer?.remove(false);
-    this.jjookFollowCountdownEvent?.remove(false);
-    this.startEffectCountdown(this.jjookFollowHudEl, this.jjookFollowTimerEl, GAME_CONFIG.jjookFollowDurationMs, (event) => {
-      this.jjookFollowCountdownEvent = event;
-    });
-    this.showQuestToast("쭉쭉이가 1분 동안 플로깅을 도와줘.");
-    this.jjookFollowTimer = this.time.delayedCall(GAME_CONFIG.jjookFollowDurationMs, () => {
-      this.isJjookFollowActive = false;
-      this.jjookFollowCountdownEvent?.remove(false);
-      this.jjookFollowCountdownEvent = null;
-      this.hideEffectHud(this.jjookFollowHudEl, this.jjookFollowTimerEl);
-      this.showQuestToast("쭉쭉이: 그럼 다음에 또 봐!");
-      if (this.jjookNpc?.active) {
-        this.showSpeechBubble(this.jjookNpc, "그럼 다음에 또 봐!", 3600);
-      }
-      if (this.shouldBuyJjookColaAfterFollow) {
-        this.shouldBuyJjookColaAfterFollow = false;
-        this.buyJjookThanksCola();
-      }
-      this.walkJjookBackToHome();
-    });
+    this.jjookQuestSystem?.activateFollower({ buyColaOnComplete });
   }
 
   showBuffIcon(textureKey, label, duration) {
@@ -3643,15 +3518,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   buyJjookThanksCola() {
-    if (this.moneySystem?.deductMoney(GAME_CONFIG.drinkPrice)) {
-      this.showQuestToast("고마운 마음으로 쭉쭉이에게 콜라를 사줬어. -1,000원", 2600);
-      this.playItemPickupSound();
-      this.showSpeechBubble(this.jjookNpc || this.player, "콜라 고마워!", 2600);
-      return;
-    }
-
-    this.showQuestToast("콜라를 사주고 싶었지만 돈이 조금 부족해.", 2600);
-    this.showSpeechBubble(this.player, "다음엔 꼭 콜라 사줄게!", 2200);
+    this.jjookQuestSystem?.buyThanksCola();
   }
 
   // ---------------------------------------------------------------------------
