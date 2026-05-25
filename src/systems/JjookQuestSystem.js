@@ -68,7 +68,7 @@ export default class JjookQuestSystem {
     if (scene.jjookQuestState !== "completed") return;
 
     if (scene.clothesQuestState === "ready" || scene.clothesQuestState === "declined") {
-      scene.startClothesQuestDialogue();
+      this.startClothesQuestDialogue();
       return;
     }
 
@@ -111,6 +111,54 @@ export default class JjookQuestSystem {
         ],
       },
     ]);
+  }
+
+  startClothesQuestDialogue() {
+    const scene = this.scene;
+    if (!scene.dialogueManager?.has("zzuk_clothes_start_001")) {
+      scene.dialogueSystem?.start([
+        { name: "쭉쭉이", portraitKey: "jjook_smile", text: "해냄아! 서울 여행 준비는 잘 되고 있어?" },
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjook_expectant",
+          text: "우리 여행 가기 전에 옷이라도 하나 사러 갈래?",
+          choices: [
+            { label: "응! 같이 가자!", onSelect: () => this.startClothesShoppingQuest() },
+            { label: "아직 고민중이야", onSelect: () => this.declineClothesShoppingQuest() },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    scene.dialogueManager.startLoaded("zzuk_clothes_start_001");
+  }
+
+  startClothesShoppingQuest() {
+    const scene = this.scene;
+    scene.clothesQuestState = "shopping";
+    scene.hasAnnouncedClothesQuest = true;
+    scene.isJjookClothesEscortActive = true;
+    scene.pauseNpcRoaming("jjook");
+    this.stopIdleTween();
+    scene.clearQuestMarker("clothesQuest");
+    const shopTarget = scene.mapObjects?.clothing_store || {
+      active: true,
+      ...scene.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor),
+      displayHeight: 96,
+    };
+    scene.setQuestMarker("clothesShop", shopTarget, "!");
+    scene.showQuestToast("쭉쭉이와 함께 옷가게로 가요.", 6000);
+    scene.showSpeechBubble(scene.jjookNpc, "같이 가자!", 2800);
+    scene.saveCheckpoint("clothes_shopping");
+  }
+
+  declineClothesShoppingQuest() {
+    const scene = this.scene;
+    scene.clothesQuestState = "declined";
+    scene.hasAnnouncedClothesQuest = true;
+    scene.setQuestMarker("clothesQuest", scene.jjookNpc, "!");
+    scene.saveCheckpoint("clothes_declined");
   }
 
   updateFollower() {

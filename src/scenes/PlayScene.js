@@ -1836,48 +1836,15 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   startClothesQuestDialogue() {
-    if (!this.dialogueManager?.has("zzuk_clothes_start_001")) {
-      this.dialogueSystem?.start([
-        { name: "쭉쭉이", portraitKey: "jjook_smile", text: "해냄아! 서울 여행 준비는 잘 되고 있어?" },
-        {
-          name: "쭉쭉이",
-          portraitKey: "jjook_expectant",
-          text: "우리 여행 가기 전에 옷이라도 하나 사러 갈래?",
-          choices: [
-            { label: "응! 같이 가자!", onSelect: () => this.startClothesShoppingQuest() },
-            { label: "아직 고민중이야", onSelect: () => this.declineClothesShoppingQuest() },
-          ],
-        },
-      ]);
-      return;
-    }
-
-    this.dialogueManager.startLoaded("zzuk_clothes_start_001");
+    this.jjookQuestSystem?.startClothesQuestDialogue();
   }
 
   startClothesShoppingQuest() {
-    this.clothesQuestState = "shopping";
-    this.hasAnnouncedClothesQuest = true;
-    this.isJjookClothesEscortActive = true;
-    this.pauseNpcRoaming("jjook");
-    this.stopJjookIdleTween();
-    this.clearQuestMarker("clothesQuest");
-    const shopTarget = this.mapObjects?.clothing_store || {
-      active: true,
-      ...this.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor),
-      displayHeight: 96,
-    };
-    this.setQuestMarker("clothesShop", shopTarget, "!");
-    this.showQuestToast("쭉쭉이와 함께 옷가게로 가요.", 6000);
-    this.showSpeechBubble(this.jjookNpc, "같이 가자!", 2800);
-    this.saveCheckpoint("clothes_shopping");
+    this.jjookQuestSystem?.startClothesShoppingQuest();
   }
 
   declineClothesShoppingQuest() {
-    this.clothesQuestState = "declined";
-    this.hasAnnouncedClothesQuest = true;
-    this.setQuestMarker("clothesQuest", this.jjookNpc, "!");
-    this.saveCheckpoint("clothes_declined");
+    this.jjookQuestSystem?.declineClothesShoppingQuest();
   }
 
   handleClothingStoreInteraction() {
