@@ -43,6 +43,76 @@ export default class JjookQuestSystem {
     ]);
   }
 
+  handleInteraction() {
+    const scene = this.scene;
+    if (scene.isInDialogue || !scene.dialogueSystem || scene.jjookQuestState === "locked") return;
+    if (!scene.isPlayerNearJjookNpc()) return;
+
+    if (scene.jjookQuestState === "wallet_missing") {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
+        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
+      ], () => {
+        if (!scene.walletItem?.active && !scene.hasWallet) scene.spawnWalletItem();
+      });
+      return;
+    }
+
+    if (scene.jjookQuestState === "wallet_found") {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_found", text: "지갑을 찾아줘서 정말 고마워. 보답으로 시원한 음료수 하나 사줄게. 뭐 마실래?" },
+      ], () => scene.openVendingMenu({ completeQuestOnSelect: true }));
+      return;
+    }
+
+    if (scene.jjookQuestState !== "completed") return;
+
+    if (scene.clothesQuestState === "ready" || scene.clothesQuestState === "declined") {
+      scene.startClothesQuestDialogue();
+      return;
+    }
+
+    if (scene.clothesQuestState === "shopping") {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "옷가게는 맵 위쪽 상점가에 있어. 같이 가보자!" },
+      ]);
+      return;
+    }
+
+    if (scene.clothesQuestState === "completed" && ["offered", "declined"].includes(scene.packingQuestState)) {
+      scene.startPackingOfferDialogue({ repeat: scene.packingQuestState === "declined" });
+      return;
+    }
+
+    if (scene.clothesQuestState === "completed" && scene.packingQuestState === "going_bus_stop") {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스정류장에서 만나자. 천천히 걸어와도 괜찮아!" },
+      ]);
+      return;
+    }
+
+    if (scene.isJjookFollowActive) {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "지금 같이 플로깅 중이야! 주변 쓰레기를 같이 치워보자." },
+        { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 지금처럼 같이 깨끗하게 치우자!" },
+      ]);
+      return;
+    }
+
+    scene.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
+      {
+        name: "해냄이",
+        portraitKey: "haenaem_confused",
+        text: "쭉쭉이에게 뭐라고 말할까요?",
+        choices: [
+          { label: "플로깅을 도와줄래?", onSelect: () => this.requestPloggingHelp() },
+          { label: "다음에 보자.", onSelect: () => this.sayBye() },
+        ],
+      },
+    ]);
+  }
+
   updateFollower() {
     const scene = this.scene;
     if ((!scene.isJjookFollowActive && !scene.isJjookClothesEscortActive && !scene.isJjookBusEscortActive) || !scene.jjookNpc || !scene.player) return;
@@ -171,6 +241,40 @@ export default class JjookQuestSystem {
       }
       this.walkBackToHome();
     });
+  }
+
+  finishQuestWithoutDrink() {
+    const scene = this.scene;
+    scene.jjookQuestState = "completed";
+    scene.hasWallet = false;
+    scene.clearQuestMarker("jjookQuest");
+    this.activateFollower();
+    scene.shouldCompleteJjookAfterDrink = false;
+    scene.selectedDrink = null;
+    scene.saveCheckpoint("jjook_completed");
+    scene.dialogueSystem?.start([
+      { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "그럼 내가 쓰레기 줍는 것이라도 도와줄게!" },
+    ]);
+  }
+
+  finishQuest() {
+    const scene = this.scene;
+    scene.jjookQuestState = "completed";
+    scene.hasWallet = false;
+    scene.clearQuestMarker("jjookQuest");
+    if (scene.selectedDrink) {
+      scene.drinkInventory.push(scene.selectedDrink.key);
+      scene.showQuestToast(`${scene.selectedDrink.label}를 마셨어. 해냄이와 쭉쭉이 이동 속도 UP`);
+    }
+    scene.activateDrinkSpeedBuff();
+    this.activateFollower();
+    scene.shouldCompleteJjookAfterDrink = false;
+    scene.selectedDrink = null;
+    scene.saveCheckpoint("jjook_completed");
+    scene.dialogueSystem?.start([
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "잘 먹었어. 고마워! 시원하다!" },
+      { name: "쭉쭉이", portraitKey: "jjook_plogging", text: "나도 플로깅을 좋아해. 이제 내가 쓰레기 정리를 도와줄게. 같이 하자!" },
+    ]);
   }
 
   buyThanksCola() {
