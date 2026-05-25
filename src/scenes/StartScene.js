@@ -1,5 +1,20 @@
 import CheckpointStorage from "../systems/CheckpointStorage.js";
 
+const BASE_GAME_WIDTH = 768;
+const BASE_GAME_HEIGHT = 480;
+
+function isTouchDevice() {
+  return navigator.maxTouchPoints > 0 || window.matchMedia?.("(pointer: coarse)")?.matches;
+}
+
+function getViewportSize() {
+  const viewport = window.visualViewport;
+  return {
+    width: Math.max(Math.round(viewport?.width || window.innerWidth || BASE_GAME_WIDTH), 320),
+    height: Math.max(Math.round(viewport?.height || window.innerHeight || BASE_GAME_HEIGHT), 240),
+  };
+}
+
 export default class StartScene extends Phaser.Scene {
   constructor() {
     super("StartScene");
@@ -9,6 +24,7 @@ export default class StartScene extends Phaser.Scene {
 
   create() {
     document.body.classList.add("start-screen");
+    this.resizeForStartScreen();
     this.registry.set("soundEnabled", this.registry.get("soundEnabled") !== false);
 
     const centerX = this.scale.width / 2;
@@ -138,10 +154,25 @@ export default class StartScene extends Phaser.Scene {
 
   startNewGame() {
     CheckpointStorage.clear();
+    this.resizeForGameScenes();
     this.scene.start("PrologueScene");
   }
 
   continueGame() {
+    this.resizeForGameScenes();
     this.scene.start("PlayScene", { loadCheckpoint: true });
+  }
+
+  resizeForStartScreen() {
+    if (!isTouchDevice()) return;
+
+    const { width, height } = getViewportSize();
+    this.scale.resize(width, height);
+  }
+
+  resizeForGameScenes() {
+    if (!isTouchDevice()) return;
+
+    this.scale.resize(BASE_GAME_WIDTH, BASE_GAME_HEIGHT);
   }
 }

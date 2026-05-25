@@ -227,3 +227,12 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
   - `cleanupTravelBusStopSequence`
 - `startTravelHomeSequence` and later home/packing/train/ending cutscene flow still live in `PlayScene.js`.
 - Next safe step: move `startTravelHomeSequence` through the room packing entry point into `TravelEndingSystem`, while keeping the existing `PlayScene` wrapper names.
+
+## Start Screen Mobile Note
+
+- `src/scenes/StartScene.js` was adjusted so the start screen uses the actual mobile viewport size on touch devices.
+- When the player chooses new game or continue, `StartScene` resizes Phaser back to the main game base size `768x480`.
+- This is intentional: it removes the start illustration side margins on mobile without changing the main gameplay camera/layout.
+- If the start screen is edited again, keep this split:
+  - Start screen: viewport-sized on touch devices.
+  - Prologue/Play scenes: existing base game size.
