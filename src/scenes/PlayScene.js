@@ -1940,61 +1940,15 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   startPackingOfferDialogue({ repeat = false } = {}) {
-    const lines = repeat
-      ? [
-          {
-            name: "쭉쭉이",
-            portraitKey: "jjook_travel_bag",
-            text: "이제 준비 다 됐어?",
-            choices: [
-              { label: "응! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
-              { label: "아직 준비 중이야!", onSelect: () => this.declinePackingQuest(true) },
-            ],
-          },
-        ]
-      : [
-          {
-            name: "쭉쭉이",
-            portraitKey: "jjook_travel_bag",
-            text: "여행 짐도 슬슬 준비해볼까?",
-            choices: [
-              { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
-              { label: "아니! 조금 더 둘러볼래!", onSelect: () => this.declinePackingQuest() },
-            ],
-          },
-        ];
-
-    this.dialogueSystem.start(lines);
+    this.jjookQuestSystem?.startPackingOfferDialogue({ repeat });
   }
 
   declinePackingQuest(isRepeat = false) {
-    this.clearInteriorScene();
-    this.packingQuestState = "declined";
-    this.setQuestMarker("packingQuest", this.jjookNpc, "!");
-    this.saveCheckpoint("packing_declined");
-    this.dialogueSystem.start([
-      {
-        name: "쭉쭉이",
-        portraitKey: "jjook_smile",
-        text: isRepeat ? "좋아! 천천히 준비해도 돼!" : "그래! 천천히 준비해도 돼!",
-      },
-    ], () => {
-      this.walkJjookBackToHome();
-      this.showQuestToast("준비가 끝나면 쭉쭉이에게 말해요.", 4200);
-    });
+    this.jjookQuestSystem?.declinePackingQuest(isRepeat);
   }
 
   acceptPackingQuest() {
-    this.clearInteriorScene();
-    this.packingQuestState = "going_bus_stop";
-    this.clearQuestMarker("packingQuest");
-    this.saveCheckpoint("packing_started");
-    this.pauseNpcRoaming("jjook");
-    this.stopJjookIdleTween();
-    this.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "좋아! 집 가서 여행 준비 시작하자!" },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "응. 버스 타고 집에 가서 차근차근 챙겨볼게." },
-    ], () => this.startBusStopBoardingSequence());
+    this.jjookQuestSystem?.acceptPackingQuest();
   }
 
   getTravelBusStopPoint() {

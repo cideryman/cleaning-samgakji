@@ -80,7 +80,7 @@ export default class JjookQuestSystem {
     }
 
     if (scene.clothesQuestState === "completed" && ["offered", "declined"].includes(scene.packingQuestState)) {
-      scene.startPackingOfferDialogue({ repeat: scene.packingQuestState === "declined" });
+      this.startPackingOfferDialogue({ repeat: scene.packingQuestState === "declined" });
       return;
     }
 
@@ -196,13 +196,74 @@ export default class JjookQuestSystem {
         portraitKey: "jjook_travel_bag",
         text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
         choices: [
-          { label: "그래! 짐 싸러 가자!", onSelect: () => scene.acceptPackingQuest() },
-          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => scene.declinePackingQuest() },
+          { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => this.declinePackingQuest() },
         ],
       },
     ], () => {
       scene.clearInteriorScene();
     });
+  }
+
+  startPackingOfferDialogue({ repeat = false } = {}) {
+    const scene = this.scene;
+    const lines = repeat
+      ? [
+          {
+            name: "쭉쭉이",
+            portraitKey: "jjook_travel_bag",
+            text: "이제 준비 다 됐어?",
+            choices: [
+              { label: "응! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+              { label: "아직 준비 중이야!", onSelect: () => this.declinePackingQuest(true) },
+            ],
+          },
+        ]
+      : [
+          {
+            name: "쭉쭉이",
+            portraitKey: "jjook_travel_bag",
+            text: "여행 짐도 슬슬 준비해볼까?",
+            choices: [
+              { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+              { label: "아니! 조금 더 둘러볼래!", onSelect: () => this.declinePackingQuest() },
+            ],
+          },
+        ];
+
+    scene.dialogueSystem.start(lines);
+  }
+
+  declinePackingQuest(isRepeat = false) {
+    const scene = this.scene;
+    scene.clearInteriorScene();
+    scene.packingQuestState = "declined";
+    scene.setQuestMarker("packingQuest", scene.jjookNpc, "!");
+    scene.saveCheckpoint("packing_declined");
+    scene.dialogueSystem.start([
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjook_smile",
+        text: isRepeat ? "좋아! 천천히 준비해도 돼!" : "그래! 천천히 준비해도 돼!",
+      },
+    ], () => {
+      this.walkBackToHome();
+      scene.showQuestToast("준비가 끝나면 쭉쭉이에게 말해요.", 4200);
+    });
+  }
+
+  acceptPackingQuest() {
+    const scene = this.scene;
+    scene.clearInteriorScene();
+    scene.packingQuestState = "going_bus_stop";
+    scene.clearQuestMarker("packingQuest");
+    scene.saveCheckpoint("packing_started");
+    scene.pauseNpcRoaming("jjook");
+    this.stopIdleTween();
+    scene.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "좋아! 집 가서 여행 준비 시작하자!" },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "응. 버스 타고 집에 가서 차근차근 챙겨볼게." },
+    ], () => scene.startBusStopBoardingSequence());
   }
 
   updateFollower() {
