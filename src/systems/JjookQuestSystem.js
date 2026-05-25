@@ -161,6 +161,50 @@ export default class JjookQuestSystem {
     scene.saveCheckpoint("clothes_declined");
   }
 
+  handleClothingStoreInteraction() {
+    const scene = this.scene;
+    if (!["shopping", "completed"].includes(scene.clothesQuestState)) {
+      scene.showQuestToast("쭉쭉이와 먼저 이야기해 보자.");
+      return;
+    }
+
+    scene.playSceneMusic("ambient_clothing_shop_bgm", 0.25);
+    scene.showInteriorScene("clothing_store_interior", "clothing");
+    scene.isJjookClothesEscortActive = false;
+    scene.stopNpcWalk(scene.jjookNpc, "jjook");
+    scene.dialogueSystem.start([
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "어서와~ 서울 여행 간다면서?" },
+      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "천천히 둘러봐! 마음에 드는 걸 골라보렴." },
+    ], () => scene.openClothingShopMenu());
+  }
+
+  completeClothesShoppingQuest() {
+    const scene = this.scene;
+    scene.closeClothingShopMenu();
+    scene.clearInteriorScene();
+    scene.clothesQuestState = "completed";
+    scene.packingQuestState = "offered";
+    scene.clearQuestMarker("clothesShop");
+    scene.clearQuestMarker("clothesQuest");
+    scene.saveCheckpoint("clothes_completed");
+    scene.dialogueSystem.start([
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "오~ 이제 진짜 서울 가는 느낌 난다!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
+      {
+        name: "쭉쭉이",
+        portraitKey: "jjook_travel_bag",
+        text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
+        choices: [
+          { label: "그래! 짐 싸러 가자!", onSelect: () => scene.acceptPackingQuest() },
+          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => scene.declinePackingQuest() },
+        ],
+      },
+    ], () => {
+      scene.clearInteriorScene();
+    });
+  }
+
   updateFollower() {
     const scene = this.scene;
     if ((!scene.isJjookFollowActive && !scene.isJjookClothesEscortActive && !scene.isJjookBusEscortActive) || !scene.jjookNpc || !scene.player) return;

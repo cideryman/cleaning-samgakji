@@ -1848,19 +1848,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleClothingStoreInteraction() {
-    if (!["shopping", "completed"].includes(this.clothesQuestState)) {
-      this.showQuestToast("쭉쭉이와 먼저 이야기해 보자.");
-      return;
-    }
-
-    this.playSceneMusic("ambient_clothing_shop_bgm", 0.25);
-    this.showInteriorScene("clothing_store_interior", "clothing");
-    this.isJjookClothesEscortActive = false;
-    this.stopNpcWalk(this.jjookNpc, "jjook");
-    this.dialogueSystem.start([
-      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "어서와~ 서울 여행 간다면서?" },
-      { name: "옷가게 사장님", portraitKey: "clothing_shop_owner", text: "천천히 둘러봐! 마음에 드는 걸 골라보렴." },
-    ], () => this.openClothingShopMenu());
+    this.jjookQuestSystem?.handleClothingStoreInteraction();
   }
 
   // ---------------------------------------------------------------------------
@@ -1944,29 +1932,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   completeClothesShoppingQuest() {
-    this.closeClothingShopMenu();
-    this.clearInteriorScene();
-    this.clothesQuestState = "completed";
-    this.packingQuestState = "offered";
-    this.clearQuestMarker("clothesShop");
-    this.clearQuestMarker("clothesQuest");
-    this.saveCheckpoint("clothes_completed");
-    this.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
-      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "오~ 이제 진짜 서울 가는 느낌 난다!" },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
-      {
-        name: "쭉쭉이",
-        portraitKey: "jjook_travel_bag",
-        text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
-        choices: [
-          { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
-          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => this.declinePackingQuest() },
-        ],
-      },
-    ], () => {
-      this.clearInteriorScene();
-    });
+    this.jjookQuestSystem?.completeClothesShoppingQuest();
   }
 
   // ---------------------------------------------------------------------------
