@@ -44,7 +44,7 @@
 - 옷가게 데이터: `src/config/ClothingShopData.js`
 - 짐싸기 UI/선택 처리: `PackingSystem`
 - 옷가게 UI/선택/계산/쇼핑백 HUD: `ClothingShopSystem`
-- 수니수니 병원/약국 대화 흐름: `SunisuniQuestSystem`
+- 수니수니 병원/약국 대화 흐름, 따라오기 AI, 이펙트, 벤치 복귀: `SunisuniQuestSystem`
 
 아직 `PlayScene.js`에 남겨도 되는 것:
 
@@ -199,11 +199,10 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 
 다음에 이어서 한다면 아래 순서를 추천한다.
 
-1. 수니수니 따라오기/이펙트/벤치 복귀 로직을 `SunisuniQuestSystem`에 추가 분리
-2. `JjookQuestSystem` 분리
-3. `YebiQuestSystem` 분리
-4. `TravelEndingSystem` 분리
-5. `AudioManager` 분리
-6. `MapObjectFactory` 분리
+1. `JjookQuestSystem` 분리
+2. `YebiQuestSystem` 분리
+3. `TravelEndingSystem` 분리
+4. `AudioManager` 분리
+5. `MapObjectFactory` 분리
 
-`SunisuniQuestSystem`은 현재 병원/약국 대화 흐름만 담당한다. 따라오기 AI, 하트/별 이펙트, 벤치 복귀는 아직 `PlayScene.js`에 남아 있다.
+`SunisuniQuestSystem`은 현재 수니수니 병원/약국 대화 흐름, 따라오기 AI, 하트/별 이펙트, 벤치 복귀를 담당한다. `PlayScene.js`에는 기존 호출을 보존하는 래퍼만 남아 있다.

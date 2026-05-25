@@ -1,6 +1,86 @@
+import { GAME_CONFIG } from "../config/GameConstants.js";
+
 export default class SunisuniQuestSystem {
   constructor(scene) {
     this.scene = scene;
+  }
+
+  isFollowing() {
+    return ["going_hospital", "going_pharmacy"].includes(this.scene.sunisuniQuestState);
+  }
+
+  updateFollower() {
+    const scene = this.scene;
+    if (!this.isFollowing() || !scene.sunisuniNpc?.active || !scene.player) return;
+
+    const distance = Phaser.Math.Distance.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, scene.player.x, scene.player.y);
+    if (distance > GAME_CONFIG.sunisuniMaxDistance) {
+      scene.showSpeechBubble(scene.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
+    }
+    if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
+      scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
+      return;
+    }
+
+    const step = (scene.game.loop.delta / 1000) * GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
+    const angle = Phaser.Math.Angle.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, scene.player.x, scene.player.y);
+    const moveX = Math.cos(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
+    const moveY = Math.sin(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
+    scene.sunisuniNpc.x += moveX;
+    scene.sunisuniNpc.y += moveY;
+    this.updateDirection(moveX, moveY);
+  }
+
+  updateDirection(moveX, moveY) {
+    const scene = this.scene;
+    if (!scene.sunisuniNpc?.active) return;
+
+    const directionKey = scene.getDirectionKeyFromVector(moveX, moveY, scene.sunisuniNpc.getData("directionKey") || "down");
+    scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", directionKey, true);
+  }
+
+  playEffect(animKey, x, y) {
+    const scene = this.scene;
+    const textureByAnim = {
+      sweat_drop: "sweat_effect",
+      sunisuni_star: "star_effect",
+      sunisuni_heart: "heart_effect",
+    };
+    const textureKey = textureByAnim[animKey] || "sweat_effect";
+    if (!scene.anims.exists(animKey) || !scene.textures.exists(textureKey)) return;
+
+    const effect = scene.add.sprite(x, y, textureKey);
+    effect.setDisplaySize(48, 48);
+    effect.setDepth(9);
+    effect.play(animKey);
+    scene.tweens.add({
+      targets: effect,
+      y: y - 18,
+      alpha: 0,
+      duration: 1200,
+      ease: "Cubic.easeOut",
+      onComplete: () => effect.destroy(),
+    });
+  }
+
+  sendBackToBench() {
+    const scene = this.scene;
+    if (!scene.sunisuniNpc?.active) return;
+
+    scene.pauseNpcRoaming("sunisuni");
+    scene.sunisuniReturningToBench = true;
+    const target = scene.getMapPoint("sunisuni_start", GAME_CONFIG.sunisuniSpawn);
+    scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", "down", false);
+    scene.showSpeechBubble(scene.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
+    scene.walkNpcToTarget(scene.sunisuniNpc, "sunisuni", target, {
+      speed: 92,
+      onComplete: () => {
+        scene.sunisuniReturningToBench = false;
+        scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", "down", false);
+        scene.showSpeechBubble(scene.sunisuniNpc, "많이 괜찮아졌어.", 2400);
+        scene.updateNpcRoaming(true);
+      },
+    });
   }
 
   handleInteraction() {

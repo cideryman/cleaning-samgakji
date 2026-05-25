@@ -2898,35 +2898,15 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   isSunisuniFollowing() {
-    return ["going_hospital", "going_pharmacy"].includes(this.sunisuniQuestState);
+    return this.sunisuniQuestSystem?.isFollowing() ?? false;
   }
 
   updateSunisuniFollower() {
-    if (!this.isSunisuniFollowing() || !this.sunisuniNpc?.active || !this.player) return;
-
-    const distance = Phaser.Math.Distance.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, this.player.x, this.player.y);
-    if (distance > GAME_CONFIG.sunisuniMaxDistance) {
-      this.showSpeechBubble(this.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
-    }
-    if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
-      this.stopNpcWalk(this.sunisuniNpc, "sunisuni");
-      return;
-    }
-
-    const step = (this.game.loop.delta / 1000) * GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
-    const angle = Phaser.Math.Angle.Between(this.sunisuniNpc.x, this.sunisuniNpc.y, this.player.x, this.player.y);
-    const moveX = Math.cos(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
-    const moveY = Math.sin(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
-    this.sunisuniNpc.x += moveX;
-    this.sunisuniNpc.y += moveY;
-    this.updateSunisuniDirection(moveX, moveY);
+    this.sunisuniQuestSystem?.updateFollower();
   }
 
   updateSunisuniDirection(moveX, moveY) {
-    if (!this.sunisuniNpc?.active) return;
-
-    const directionKey = this.getDirectionKeyFromVector(moveX, moveY, this.sunisuniNpc.getData("directionKey") || "down");
-    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", directionKey, true);
+    this.sunisuniQuestSystem?.updateDirection(moveX, moveY);
   }
 
   updateJjookFollower() {
@@ -4122,26 +4102,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   playSunisuniEffect(animKey, x, y) {
-    const textureByAnim = {
-      sweat_drop: "sweat_effect",
-      sunisuni_star: "star_effect",
-      sunisuni_heart: "heart_effect",
-    };
-    const textureKey = textureByAnim[animKey] || "sweat_effect";
-    if (!this.anims.exists(animKey) || !this.textures.exists(textureKey)) return;
-
-    const effect = this.add.sprite(x, y, textureKey);
-    effect.setDisplaySize(48, 48);
-    effect.setDepth(9);
-    effect.play(animKey);
-    this.tweens.add({
-      targets: effect,
-      y: y - 18,
-      alpha: 0,
-      duration: 1200,
-      ease: "Cubic.easeOut",
-      onComplete: () => effect.destroy(),
-    });
+    this.sunisuniQuestSystem?.playEffect(animKey, x, y);
   }
 
   // ---------------------------------------------------------------------------
@@ -4194,22 +4155,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   sendSunisuniBackToBench() {
-    if (!this.sunisuniNpc?.active) return;
-
-    this.pauseNpcRoaming("sunisuni");
-    this.sunisuniReturningToBench = true;
-    const target = this.getMapPoint("sunisuni_start", GAME_CONFIG.sunisuniSpawn);
-    this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
-    this.showSpeechBubble(this.sunisuniNpc, "벤치로 가서 조금 쉴게.", 2200);
-    this.walkNpcToTarget(this.sunisuniNpc, "sunisuni", target, {
-      speed: 92,
-      onComplete: () => {
-        this.sunisuniReturningToBench = false;
-        this.setNpcDirectionTexture(this.sunisuniNpc, "sunisuni", "down", false);
-        this.showSpeechBubble(this.sunisuniNpc, "많이 괜찮아졌어.", 2400);
-        this.updateNpcRoaming(true);
-      },
-    });
+    this.sunisuniQuestSystem?.sendBackToBench();
   }
 
   useYebiItem() {
