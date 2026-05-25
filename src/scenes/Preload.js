@@ -42,6 +42,14 @@ const EXTERNAL_ASSETS = [
   { key: "prologue_desk", path: "assets/backgrounds/prologue-desk.png" },
   { key: "prologue_travel", path: "assets/backgrounds/prologue-travel.png" },
   { key: "prologue_entrance", path: "assets/backgrounds/prologue-entrance.png" },
+  { key: "start_park_background", path: "assets/backgrounds/start-park.png" },
+  { key: "start_title_1", path: "assets/ui/start-title-1.png" },
+  { key: "start_title_2", path: "assets/ui/start-title-2.png" },
+  { key: "button_start_game", path: "assets/ui/button-start-game.png" },
+  { key: "button_continue", path: "assets/ui/button-continue.png" },
+  { key: "button_sound_off", path: "assets/ui/button-sound-off.png" },
+  { key: "button_sound_on", path: "assets/ui/button-sound-on.png" },
+  { key: "button_settings", path: "assets/ui/button-settings.png" },
   { key: "vending_machine_full", path: "assets/vending/vending-machine-full.png" },
   { key: "vending_menu", path: "assets/vending/menu.png" },
   { key: "wallet_item", path: "assets/items/wallet.png" },
@@ -82,6 +90,7 @@ const EXTERNAL_ASSETS = [
   { key: "ending_seoul_station", path: "assets/endings/seoul-station.png" },
   { key: "ending_gyeongbokgung", path: "assets/endings/gyeongbokgung.png" },
   { key: "ending_amusement_park", path: "assets/endings/amusement-park.png" },
+  { key: "ending_chapter1_final", path: "assets/endings/chapter1-ending-scene.png" },
   { key: "shop_sweatshirt", path: "assets/shop-icons/sweatshirt.png" },
   { key: "shop_cotton_pants", path: "assets/shop-icons/cotton-pants.png" },
   { key: "shop_shopping_bag", path: "assets/shop-icons/shopping-bag.png" },
@@ -107,6 +116,7 @@ const EXTERNAL_ASSETS = [
   { key: "garden_tile", path: "assets/tiles/garden.png", fallback: "createGardenTileTexture" },
   { key: "road_tile", path: "assets/tiles/road.png", fallback: "createRoadTileTexture" },
   { key: "bench_tile", path: "assets/tiles/bench.png" },
+  { key: "vehicle_stop_line", path: "assets/tiles/vehicle-stop-line.png" },
   { key: "samgakji_tiles", path: "assets/tilesets/samgakji-tiles.png" },
 ];
 
@@ -127,7 +137,12 @@ const SPRITESHEET_ASSETS = [
   { key: "jjook_walk_up", path: "assets/sprites/jjook-walk-up.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_left", path: "assets/sprites/jjook-walk-left.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_right", path: "assets/sprites/jjook-walk-right.png", frameWidth: 64, frameHeight: 96 },
-  { key: "bus_right", path: "assets/vehicles/bus-right.png", frameWidth: 96, frameHeight: 48 },
+  { key: "bus_right", path: "assets/vehicles/bus-right.png", frameWidth: 384, frameHeight: 192 },
+  { key: "car_yellow_left", path: "assets/vehicles/car-yellow-left.png", frameWidth: 256, frameHeight: 128 },
+  { key: "car_blue_left", path: "assets/vehicles/car-blue-left.png", frameWidth: 256, frameHeight: 128 },
+  { key: "car_white_left", path: "assets/vehicles/car-white-left.png", frameWidth: 256, frameHeight: 128 },
+  { key: "car_red_right", path: "assets/vehicles/car-red-right.png", frameWidth: 256, frameHeight: 128 },
+  { key: "car_white_right", path: "assets/vehicles/car-white-right.png", frameWidth: 256, frameHeight: 128 },
   { key: "pedestrian_light", path: "assets/traffic/pedestrian-light.png", frameWidth: 64, frameHeight: 112 },
   { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
@@ -148,6 +163,16 @@ const AUDIO_ASSETS = [
   { key: "prologue_room_bgm", path: "assets/audio/prologue-room.wav" },
   { key: "prologue_summer_bgm", path: "assets/audio/prologue-summer.wav" },
   { key: "prologue_park_bgm", path: "assets/audio/prologue-park.wav" },
+  { key: "chapter1_ending_bgm", path: "assets/audio/chapter1-ending.wav" },
+  { key: "ambient_clothing_shop_bgm", path: "assets/audio/ambient-clothing-shop.wav" },
+  { key: "ambient_hospital_bgm", path: "assets/audio/ambient-hospital.wav" },
+  { key: "ambient_pharmacy_bgm", path: "assets/audio/ambient-pharmacy.wav" },
+  { key: "ambient_bus_bgm", path: "assets/audio/ambient-bus.wav" },
+  { key: "ambient_room_bgm", path: "assets/audio/ambient-room.wav" },
+  { key: "ambient_train_bgm", path: "assets/audio/ambient-train.wav" },
+  { key: "ambient_seoul_station_bgm", path: "assets/audio/ambient-seoul-station.wav" },
+  { key: "ambient_gyeongbokgung_bgm", path: "assets/audio/ambient-gyeongbokgung.wav" },
+  { key: "ambient_amusement_park_bgm", path: "assets/audio/ambient-amusement-park.wav" },
 ];
 
 export default class Preload extends Phaser.Scene {
@@ -220,20 +245,30 @@ export default class Preload extends Phaser.Scene {
 
     this.anims.create({
       key: "pedestrian_light_cycle",
-      frames: this.anims.generateFrameNumbers("pedestrian_light", { frames: [0, 1] }),
-      frameRate: 0.25,
+      frames: this.anims.generateFrameNumbers("pedestrian_light", { frames: [0] }),
+      frameRate: 1,
       repeat: -1,
     });
   }
 
   createVehicleAnimations() {
-    if (this.anims.exists("bus_right_drive") || !this.textures.exists("bus_right")) return;
+    const vehicleAnimations = [
+      ["bus_right_drive", "bus_right", [0, 1, 2, 1], 6],
+      ["car_yellow_left_drive", "car_yellow_left", [0, 1, 2, 1], 5],
+      ["car_blue_left_drive", "car_blue_left", [0, 1, 2, 1], 5],
+      ["car_white_left_drive", "car_white_left", [0, 1, 2, 1], 5],
+      ["car_red_right_drive", "car_red_right", [0, 1, 2, 1], 5],
+      ["car_white_right_drive", "car_white_right", [0, 1, 2, 1], 5],
+    ];
 
-    this.anims.create({
-      key: "bus_right_drive",
-      frames: this.anims.generateFrameNumbers("bus_right", { frames: [0, 1, 2, 1] }),
-      frameRate: 6,
-      repeat: -1,
+    vehicleAnimations.forEach(([animKey, textureKey, frames, frameRate]) => {
+      if (this.anims.exists(animKey) || !this.textures.exists(textureKey)) return;
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(textureKey, { frames }),
+        frameRate,
+        repeat: -1,
+      });
     });
   }
 

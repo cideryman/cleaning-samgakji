@@ -14,31 +14,22 @@ export default class StartScene extends Phaser.Scene {
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
-    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x9acb87);
-    this.add.rectangle(centerX, centerY, 620, 340, 0xedf6f0, 0.94).setStrokeStyle(5, 0x21352c);
-    this.add.text(centerX, centerY - 120, "\uC0BC\uAC01\uC9C0 \uB300\uCCAD\uC18C", {
-      fontFamily: "Arial",
-      fontSize: "42px",
-      color: "#21352c",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
-    this.add.text(centerX, centerY - 70, "\uD504\uB864\uB85C\uADF8  \uC5EC\uB984 \uBC29\uD559\uC758 \uC57D\uC18D", {
-      fontFamily: "Arial",
-      fontSize: "20px",
-      color: "#315545",
-    }).setOrigin(0.5);
+    this.addStartBackground(centerX, centerY);
+    this.addTitle(centerX, centerY);
 
     const hasCheckpoint = CheckpointStorage.hasSave();
-    const optionStartY = centerY + (hasCheckpoint ? -18 : 10);
+    const buttonLayout = hasCheckpoint
+      ? { startY: centerY + 6, gap: 62, width: 236, height: 48 }
+      : { startY: centerY + 70, gap: 64, width: 236, height: 50 };
     this.options = [];
 
     if (hasCheckpoint) {
-      this.options.push(this.createOption(centerX, optionStartY, "\uC774\uC5B4\uD558\uAE30", () => this.continueGame()));
-      this.options.push(this.createOption(centerX, optionStartY + 64, "\uCC98\uC74C\uBD80\uD130", () => this.startNewGame()));
-      this.options.push(this.createOption(centerX, optionStartY + 128, this.getSoundLabel(), () => this.toggleSound(), "sound"));
+      this.options.push(this.createOption(centerX, buttonLayout.startY, "이어하기", () => this.continueGame(), "action", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, "처음부터", () => this.startNewGame(), "action", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
     } else {
-      this.options.push(this.createOption(centerX, optionStartY, "\uC2DC\uC791\uD558\uAE30", () => this.startNewGame()));
-      this.options.push(this.createOption(centerX, optionStartY + 68, this.getSoundLabel(), () => this.toggleSound(), "sound"));
+      this.options.push(this.createOption(centerX, buttonLayout.startY, "게임 시작", () => this.startNewGame(), "action", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
     }
 
     this.input.keyboard.on("keydown-UP", () => this.moveSelection(-1));
@@ -48,23 +39,73 @@ export default class StartScene extends Phaser.Scene {
     this.updateSelection();
   }
 
-  createOption(x, y, label, action, kind = "action") {
-    const box = this.add.rectangle(x, y, 260, 52, 0xffffff).setStrokeStyle(4, 0x21352c);
-    const text = this.add.text(x, y, label, {
+  addStartBackground(centerX, centerY) {
+    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x91c77d);
+    if (!this.textures.exists("start_park_background")) return;
+
+    const bg = this.add.image(centerX, centerY, "start_park_background");
+    const source = this.textures.get("start_park_background").getSourceImage();
+    const scale = Math.max(this.scale.width / source.width, this.scale.height / source.height);
+    bg.setScale(scale);
+    bg.setDepth(0);
+
+    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x21352c, 0.12).setDepth(1);
+    this.add.rectangle(centerX, this.scale.height - 96, this.scale.width, 192, 0x21352c, 0.18).setDepth(1);
+  }
+
+  addTitle(centerX, centerY) {
+    const titleY = centerY - 126;
+    this.add.text(centerX + 3, titleY + 4, "삼각지 대청소", {
       fontFamily: "Arial",
-      fontSize: "24px",
-      color: "#21352c",
+      fontSize: "46px",
+      color: "#10261e",
       fontStyle: "bold",
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(2);
+
+    this.add.text(centerX, titleY, "삼각지 대청소", {
+      fontFamily: "Arial",
+      fontSize: "46px",
+      color: "#fff8d7",
+      fontStyle: "bold",
+      stroke: "#21352c",
+      strokeThickness: 8,
+    }).setOrigin(0.5).setDepth(3);
+
+    this.add.text(centerX, titleY + 52, "청소하고, 모으고, 여행을 준비해요", {
+      fontFamily: "Arial",
+      fontSize: "18px",
+      color: "#f5fff0",
+      stroke: "#21352c",
+      strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(3);
+  }
+
+  createOption(x, y, label, action, kind = "action", layout = { width: 236, height: 50 }) {
+    const shadow = this.add.rectangle(x + 3, y + 4, layout.width, layout.height, 0x10261e, 0.36);
+    shadow.setDepth(2);
+
+    const box = this.add.rectangle(x, y, layout.width, layout.height, 0xf7f2df, 0.94);
+    box.setStrokeStyle(4, 0x21352c, 0.96);
+    box.setDepth(3);
     box.setInteractive({ useHandCursor: true });
     box.on("pointerdown", () => action());
+
+    const text = this.add.text(x, y, label, {
+      fontFamily: "Arial",
+      fontSize: "23px",
+      color: "#21352c",
+      fontStyle: "bold",
+    });
+    text.setOrigin(0.5);
+    text.setDepth(4);
     text.setInteractive({ useHandCursor: true });
     text.on("pointerdown", () => action());
-    return { box, text, action, kind };
+
+    return { box, shadow, text, action, kind };
   }
 
   getSoundLabel() {
-    return this.registry.get("soundEnabled") === false ? "\uC18C\uB9AC \uCF1C\uAE30" : "\uC18C\uB9AC \uB044\uAE30";
+    return this.registry.get("soundEnabled") === false ? "소리 켜기" : "소리 끄기";
   }
 
   moveSelection(delta) {
@@ -79,15 +120,19 @@ export default class StartScene extends Phaser.Scene {
   updateSelection() {
     this.options.forEach((option, index) => {
       const isSelected = index === this.selectedIndex;
-      option.box.setFillStyle(isSelected ? 0xffd75a : 0xffffff);
-      option.box.setScale(isSelected ? 1.06 : 1);
+      option.box.setFillStyle(isSelected ? 0xffd75a : 0xf7f2df, isSelected ? 0.98 : 0.94);
+      option.box.setStrokeStyle(4, isSelected ? 0x10261e : 0x21352c, 1);
+      option.box.setScale(isSelected ? 1.04 : 1);
+      option.shadow.setScale(isSelected ? 1.04 : 1);
+      option.text.setScale(isSelected ? 1.04 : 1);
     });
   }
 
   toggleSound() {
     const nextValue = this.registry.get("soundEnabled") === false;
     this.registry.set("soundEnabled", nextValue);
-    this.options.find((option) => option.kind === "sound")?.text.setText(this.getSoundLabel());
+    const soundOption = this.options.find((option) => option.kind === "sound");
+    soundOption?.text.setText(this.getSoundLabel());
     this.updateSelection();
   }
 

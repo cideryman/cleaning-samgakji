@@ -247,6 +247,8 @@ export default class CheckpointStorage {
       scene.setQuestMarker?.("packingQuest", scene.jjookNpc, "!");
     } else if (scene.clothesQuestState === "completed" && scene.packingQuestState === "going_bus_stop") {
       scene.createTravelBusStopObjects?.();
+      scene.isJjookBusEscortActive = true;
+      scene.updateTravelBusRouteGuide?.();
     }
   }
 

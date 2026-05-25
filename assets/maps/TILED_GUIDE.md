@@ -25,6 +25,9 @@ row 2: sidewalk, sidewalk-diagonal, road, road-edge, building-roof, building-wal
 row 3: tree-top, tree-trunk, bush, small-tree, fence-horizontal, fence-vertical, water-drain, stairs
 row 4: bench, green-parasol, parasol-top, parasol-pole
 row 5: road-centerline, crosswalk, road-plain
+row 6: custom-grass, bush-1, bush-2, bush-3, bush-4, brick-curb, grass-curb-1, grass-curb-2
+row 7: grass-curb-3, grass-curb-4, weed-curb
+row 8: vehicle-stop-line
 ```
 
 Recommended layer names:
@@ -41,6 +44,21 @@ The game recognizes these object names or types in the `spawn` object layer:
 - `broom_upgrade`: where the bigger broom appears
 - `slime_spawn`: possible slime spawn points
 - `flower`: final flower positions after clearing the mission
+- `traffic_left_lane`: Y position for cars driving left on the upper road lane
+- `traffic_right_lane`: Y position for cars driving right on the lower road lane
+- `crosswalk_west`: X position for the west crosswalk and its vehicle stop lines
+- `crosswalk_east`: X position for the east crosswalk and its vehicle stop lines
+- `vehicle_stop_left_west`, `vehicle_stop_left_east`: exact stop-line points for cars driving left
+- `vehicle_stop_right_west`, `vehicle_stop_right_east`: exact stop-line points for cars driving right
+- `bus_stop`: bus stop position used by the travel bus event
+
+Road traffic behavior:
+
+- Cars move when the pedestrian signal is green.
+- Cars stop at `vehicle_stop_*` points when the pedestrian signal is red.
+- Move `traffic_left_lane` and `traffic_right_lane` up or down in Tiled to adjust each lane's Y position.
+- Move `vehicle_stop_left_*` and `vehicle_stop_right_*` in Tiled to adjust the exact stop positions.
+- Use the `vehicle-stop-line` tile to draw the visible road marking at the same point.
 
 Recommended object naming rules:
 
