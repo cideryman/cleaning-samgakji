@@ -21,6 +21,8 @@ import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import UIManager from "../systems/UIManager.js";
 import VendingMachineSystem from "../systems/VendingMachineSystem.js";
+import PackingSystem from "../systems/PackingSystem.js";
+import { PACKING_ITEMS } from "../config/PackingData.js";
 
 const CLOTHING_SHOP_ITEMS = [
   { key: "white_tshirt", label: "반팔 티셔츠", category: "top", price: 12000, texture: "shop_white_tshirt" },
@@ -47,39 +49,6 @@ const CLOTHING_SHOP_CATEGORIES = [
 const CLOTHING_SHOP_CATEGORY_LABELS = Object.fromEntries(
   CLOTHING_SHOP_CATEGORIES.map((category) => [category.key, category.label]),
 );
-
-const PACKING_CATEGORIES = [
-  { key: "clothes", label: "옷" },
-  { key: "toiletries", label: "세면도구" },
-  { key: "electronics", label: "전자기기" },
-  { key: "etc", label: "기타" },
-];
-
-const PACKING_CATEGORY_LABELS = Object.fromEntries(
-  PACKING_CATEGORIES.map((category) => [category.key, category.label]),
-);
-
-const PACKING_ITEMS = [
-  { key: "socks", label: "양말", category: "clothes", icon: "socks.png" },
-  { key: "underwear", label: "속옷", category: "clothes", icon: "underwear.png" },
-  { key: "pajamas", label: "잠옷", category: "clothes", icon: "pajamas.png" },
-  { key: "towel", label: "수건", category: "toiletries", icon: "towel.png" },
-  { key: "toothbrush", label: "칫솔", category: "toiletries", icon: "toothbrush.png" },
-  { key: "toothpaste", label: "치약", category: "toiletries", icon: "toothpaste.png" },
-  { key: "cosmetics", label: "화장품", category: "toiletries", icon: "cosmetics.png" },
-  { key: "razor", label: "면도기", category: "toiletries", icon: "razor.png" },
-  { key: "phone", label: "휴대폰", category: "electronics", icon: "phone.png" },
-  { key: "charger", label: "충전기", category: "electronics", icon: "charger.png" },
-  { key: "earphones", label: "이어폰", category: "electronics", icon: "earphones.png" },
-  { key: "power_bank", label: "보조배터리", category: "electronics", icon: "power-bank.png" },
-  { key: "wallet", label: "지갑", category: "etc", icon: "wallet.png" },
-  { key: "transit_card", label: "교통카드", category: "etc", icon: "transit-card.png" },
-  { key: "wet_tissue", label: "물티슈", category: "etc", icon: "wet-tissue.png" },
-  { key: "water", label: "물", category: "etc", icon: "water.png" },
-  { key: "snack", label: "간식", category: "etc", icon: "snack.png" },
-  { key: "umbrella", label: "우산", category: "etc", icon: "umbrella.png" },
-  { key: "medicine_bag", label: "약봉투", category: "etc", icon: "medicine-bag.png" },
-];
 
 const TRAVEL_ALLOWANCE_REWARD = 20000;
 
@@ -177,6 +146,7 @@ export default class PlayScene extends Phaser.Scene {
     this.roadTrafficSystem = null;
     this.routeGuideSystem = null;
     this.vendingMachineSystem = null;
+    this.packingSystem = null;
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -329,6 +299,7 @@ export default class PlayScene extends Phaser.Scene {
     this.roadTrafficSystem = new RoadTrafficSystem(this);
     this.routeGuideSystem = new RouteGuideSystem(this);
     this.vendingMachineSystem = new VendingMachineSystem(this);
+    this.packingSystem = new PackingSystem(this);
     this.playerController = new PlayerController(this);
     this.interactionSystem = new InteractionSystem(this);
     this.slimeSystem = new SlimeSystem(this);
@@ -2632,324 +2603,99 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   openPackingMenu() {
-    this.closePackingMenu();
-    this.packingSelectedKeys = new Set(this.packingItems.map((item) => item.key));
-    this.selectedPackingIndex = 0;
-    this.packingStepIndex = 0;
-    this.packingMode = "category";
-    const stage = document.querySelector(".game-stage") || document.body;
-    const modal = document.createElement("div");
-    modal.className = "clothing-shop-modal packing-modal";
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-label", "여행 짐싸기");
-    modal.innerHTML = `
-      <div class="clothing-shop-panel packing-panel">
-        <div class="clothing-shop-header">
-          <strong>여행 가방</strong>
-          <span>필요한 짐을 골라 가방에 넣어요.</span>
-        </div>
-        <div class="clothing-shop-progress packing-progress"></div>
-        <div class="clothing-shop-body packing-body"></div>
-        <div class="clothing-shop-summary packing-summary"></div>
-        <div class="clothing-shop-footer packing-footer"></div>
-      </div>
-    `;
-    this.packingModal = modal;
-    stage.appendChild(modal);
-    this.renderPackingStep();
+    this.packingSystem?.open();
   }
 
   closePackingMenu() {
-    this.packingModal?.remove();
-    this.packingModal = null;
-    this.packingSelectedKeys = new Set();
-    this.selectedPackingIndex = 0;
-    this.packingStepIndex = 0;
-    this.packingMode = "category";
+    this.packingSystem?.close();
   }
 
   getCurrentPackingCategory() {
-    return PACKING_CATEGORIES[this.packingStepIndex] || PACKING_CATEGORIES[0];
+    return this.packingSystem?.getCurrentCategory();
   }
 
   getSelectedPackingItems() {
-    return PACKING_ITEMS.filter((item) => this.packingSelectedKeys.has(item.key));
+    return this.packingSystem?.getSelectedItems() ?? [];
   }
 
   getPackingIconSrc(item) {
-    return `./assets/packing/${item.icon}`;
+    return this.packingSystem?.getIconSrc(item) ?? "";
   }
 
   renderPackingStep() {
-    if (!this.packingModal) return;
-
-    const progress = this.packingModal.querySelector(".packing-progress");
-    const body = this.packingModal.querySelector(".packing-body");
-    const footer = this.packingModal.querySelector(".packing-footer");
-    if (!progress || !body || !footer) return;
-
-    body.className = "clothing-shop-body packing-body";
-    body.innerHTML = "";
-    footer.innerHTML = "";
-    progress.innerHTML = this.renderPackingProgress();
-
-    if (this.packingMode === "review") {
-      this.renderPackingReview(body, footer);
-    } else {
-      this.renderPackingCategory(body, footer);
-    }
-    this.refreshPackingSelection();
+    this.packingSystem?.renderStep();
   }
 
   renderPackingProgress() {
-    const steps = PACKING_CATEGORIES.map((category, index) => {
-      const isDone = index < this.packingStepIndex || this.packingMode === "review";
-      const isCurrent = index === this.packingStepIndex && this.packingMode !== "review";
-      const className = ["clothing-shop-step", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
-        .filter(Boolean)
-        .join(" ");
-      return `<span class="${className}">${category.label}</span>`;
-    }).join("");
-    const reviewClass = this.packingMode === "review" ? "clothing-shop-step is-current" : "clothing-shop-step";
-    return `${steps}<span class="${reviewClass}">가방 확인</span>`;
+    return this.packingSystem?.renderProgress() ?? "";
   }
 
   renderPackingCategory(body, footer) {
-    const category = this.getCurrentPackingCategory();
-    const selectedCount = this.getSelectedPackingItems().filter((item) => item.category === category.key).length;
-    const items = PACKING_ITEMS.filter((item) => item.category === category.key);
-    const grid = document.createElement("div");
-    grid.className = "clothing-shop-grid packing-grid";
-    body.innerHTML = `
-      <div class="clothing-shop-category-title">
-        <strong>${category.label}</strong>
-        <span>필요한 만큼 골라도 돼요. 선택 ${selectedCount}개</span>
-      </div>
-    `;
-    body.appendChild(grid);
-
-    items.forEach((item) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "clothing-shop-item packing-item packing-option";
-      button.dataset.action = "toggle";
-      button.dataset.itemKey = item.key;
-      button.innerHTML = `
-        <img src="${this.getPackingIconSrc(item)}" alt="" aria-hidden="true" />
-        <span class="item-label">${item.label}</span>
-        <span class="item-price">${PACKING_CATEGORY_LABELS[item.category] || item.category}</span>
-      `;
-      button.addEventListener("click", () => this.togglePackingSelection(item.key));
-      grid.appendChild(button);
-    });
-
-    const previousCategory = PACKING_CATEGORIES[this.packingStepIndex - 1];
-    const nextCategory = PACKING_CATEGORIES[this.packingStepIndex + 1];
-    if (previousCategory) {
-      this.addPackingFooterButton(footer, `${previousCategory.label} 가기`, "previous-category", "secondary");
-    }
-    this.addPackingFooterButton(
-      footer,
-      nextCategory ? `${nextCategory.label} 가기` : "가방 확인하기",
-      "next-category",
-    );
-    this.renderPackingSummary();
+    this.packingSystem?.renderCategory(body, footer);
   }
 
   renderPackingReview(body, footer) {
-    const selectedItems = this.getSelectedPackingItems();
-    body.classList.add("is-review");
-    body.innerHTML = `
-      <div class="clothing-shop-category-title">
-        <strong>가방 확인</strong>
-        <span>Space 또는 터치하면 가방에서 뺄 수 있어요.</span>
-      </div>
-      <div class="packing-bag-preview">
-        <img src="./assets/items/travel-bag.png" alt="" aria-hidden="true" />
-        <div class="clothing-shop-review-list packing-review-list"></div>
-      </div>
-    `;
-    const list = body.querySelector(".packing-review-list");
-
-    if (selectedItems.length === 0) {
-      list.innerHTML = '<div class="clothing-shop-empty">아직 가방에 넣은 짐이 없어요. 그래도 완료할 수 있어요.</div>';
-    } else {
-      selectedItems.forEach((item) => {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "clothing-shop-review-item packing-review-item packing-option";
-        row.dataset.action = "remove";
-        row.dataset.itemKey = item.key;
-        row.innerHTML = `
-          <img src="${this.getPackingIconSrc(item)}" alt="" aria-hidden="true" />
-          <span class="review-name">${item.label}</span>
-          <span class="review-category">${PACKING_CATEGORY_LABELS[item.category] || item.category}</span>
-          <span class="review-remove">가방에서 빼기</span>
-        `;
-        row.addEventListener("click", () => this.removePackingSelection(item.key));
-        list.appendChild(row);
-      });
-    }
-
-    const lastCategory = PACKING_CATEGORIES[PACKING_CATEGORIES.length - 1];
-    this.addPackingFooterButton(footer, `${lastCategory.label} 가기`, "previous-category", "secondary");
-    this.addPackingFooterButton(footer, "짐싸기 완료", "complete");
-    this.renderPackingSummary();
+    this.packingSystem?.renderReview(body, footer);
   }
 
   addPackingFooterButton(footer, label, action, tone = "primary") {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `clothing-shop-footer-button packing-option is-${tone}`;
-    button.dataset.action = action;
-    button.textContent = label;
-    button.addEventListener("click", () => this.handlePackingAction(action));
-    footer.appendChild(button);
-    return button;
+    return this.packingSystem?.addFooterButton(footer, label, action, tone);
   }
 
   handlePackingAction(action) {
-    if (action === "next-category") {
-      this.advancePackingStep();
-      return;
-    }
-
-    if (action === "previous-category") {
-      this.goBackPackingStep();
-      return;
-    }
-
-    if (action === "complete") {
-      this.completePackingSelection();
-    }
+    this.packingSystem?.handleAction(action);
   }
 
   advancePackingStep() {
-    if (this.packingMode === "review") return;
-
-    if (this.packingStepIndex >= PACKING_CATEGORIES.length - 1) {
-      this.packingMode = "review";
-    } else {
-      this.packingStepIndex += 1;
-    }
-    this.selectedPackingIndex = 0;
-    this.renderPackingStep();
+    this.packingSystem?.advanceStep();
   }
 
   goBackPackingStep() {
-    if (this.packingMode === "review") {
-      this.packingMode = "category";
-      this.packingStepIndex = PACKING_CATEGORIES.length - 1;
-    } else if (this.packingStepIndex > 0) {
-      this.packingStepIndex -= 1;
-    }
-    this.selectedPackingIndex = 0;
-    this.renderPackingStep();
+    this.packingSystem?.goBackStep();
   }
 
   togglePackingSelection(itemKey) {
-    if (this.packingSelectedKeys.has(itemKey)) {
-      this.packingSelectedKeys.delete(itemKey);
-    } else {
-      this.packingSelectedKeys.add(itemKey);
-    }
-    this.renderPackingStep();
+    this.packingSystem?.toggleSelection(itemKey);
   }
 
   removePackingSelection(itemKey) {
-    this.packingSelectedKeys.delete(itemKey);
-    this.selectedPackingIndex = Math.max(0, this.selectedPackingIndex - 1);
-    this.renderPackingStep();
+    this.packingSystem?.removeSelection(itemKey);
   }
 
   renderPackingSummary() {
-    if (!this.packingModal) return;
-
-    const summary = this.packingModal.querySelector(".packing-summary");
-    if (!summary) return;
-
-    const selectedItems = this.getSelectedPackingItems();
-    const countByCategory = Object.fromEntries(PACKING_CATEGORIES.map((category) => [category.key, 0]));
-    selectedItems.forEach((item) => {
-      countByCategory[item.category] = (countByCategory[item.category] || 0) + 1;
-    });
-    summary.innerHTML = `
-      <div class="packing-summary-grid">
-        <div><span>가방 속 짐</span><strong>${selectedItems.length}개</strong></div>
-        ${PACKING_CATEGORIES.map((category) => `
-          <div><span>${category.label}</span><strong>${countByCategory[category.key] || 0}개</strong></div>
-        `).join("")}
-      </div>
-    `;
+    this.packingSystem?.renderSummary();
   }
 
   refreshPackingSelection() {
-    if (!this.packingModal) return;
-    const buttons = this.getPackingOptionButtons();
-    buttons.forEach((button, index) => {
-      const itemKey = button.dataset.itemKey;
-      button.classList.toggle("is-selected", Boolean(itemKey && this.packingSelectedKeys.has(itemKey)));
-      button.classList.toggle("is-focused", index === this.selectedPackingIndex);
-    });
-
-    const focused = buttons[this.selectedPackingIndex];
-    focused?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    this.renderPackingSummary();
+    this.packingSystem?.refreshSelection();
   }
 
   movePackingFocus(delta) {
-    const count = this.getPackingOptionButtons().length;
-    if (count <= 0) return;
-    this.selectedPackingIndex = (this.selectedPackingIndex + delta + count) % count;
-    this.refreshPackingSelection();
+    this.packingSystem?.moveFocus(delta);
   }
 
   movePackingFocusVertical(deltaRows) {
-    this.movePackingFocus(deltaRows * this.getPackingColumnCount());
+    this.packingSystem?.moveFocusVertical(deltaRows);
   }
 
   getPackingColumnCount() {
-    if (!this.packingModal || this.packingMode === "review") return 1;
-    const grid = this.packingModal.querySelector(".packing-grid");
-    if (!grid) return 1;
-    const columns = window.getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
-    return Math.max(1, columns || 3);
+    return this.packingSystem?.getColumnCount() ?? 1;
   }
 
   getPackingOptionButtons() {
-    if (!this.packingModal) return [];
-    return Array.from(this.packingModal.querySelectorAll(".packing-option"));
+    return this.packingSystem?.getOptionButtons() ?? [];
   }
 
   selectFocusedPackingOption() {
-    if (!this.packingModal) return false;
-    const option = this.getPackingOptionButtons()[this.selectedPackingIndex];
-    option?.click();
-    return true;
+    return this.packingSystem?.selectFocusedOption() ?? false;
   }
 
   handlePackingMenuKeyboard() {
-    if (!this.packingModal || !this.cursors || !this.keys) return;
-    const Key = Phaser.Input.Keyboard;
-    if (Key.JustDown(this.cursors.left) || Key.JustDown(this.keys.left)) {
-      this.movePackingFocus(-1);
-    } else if (Key.JustDown(this.cursors.right) || Key.JustDown(this.keys.right)) {
-      this.movePackingFocus(1);
-    } else if (Key.JustDown(this.cursors.up) || Key.JustDown(this.keys.up)) {
-      this.movePackingFocusVertical(-1);
-    } else if (Key.JustDown(this.cursors.down) || Key.JustDown(this.keys.down)) {
-      this.movePackingFocusVertical(1);
-    }
+    this.packingSystem?.handleKeyboard();
   }
 
   completePackingSelection() {
-    this.packingItems = this.getSelectedPackingItems().map((item) => ({ ...item }));
-    this.closePackingMenu();
-    this.packingQuestState = "completed";
-    this.playItemPickupSound();
-    this.showFloatingItem("travel_bag", Math.max(384, (this.scale.width || 768) / 2), Math.max(240, (this.scale.height || 480) / 2), 116, true, { duration: 520, hold: 1000, floatY: -12 });
-    this.saveCheckpoint("packing_completed");
-    this.time.delayedCall(900, () => this.startPackedRoomSequence());
+    this.packingSystem?.completeSelection();
   }
 
   // ---------------------------------------------------------------------------
