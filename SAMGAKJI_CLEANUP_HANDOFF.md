@@ -209,3 +209,21 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 
 `SunisuniQuestSystem`은 현재 수니수니 병원/약국 대화 흐름, 따라오기 AI, 하트/별 이펙트, 벤치 복귀를 담당한다. `PlayScene.js`에는 기존 호출을 보존하는 래퍼만 남아 있다.
 `JjookQuestSystem`은 현재 지갑 대화 진입, 자판기 보상 연결, 플로깅 요청, 옷가게 제안/수락/거절/입장/완료 후 짐싸기 제안, 짐싸기 제안 수락/거절, 쭉쭉이 동행, 자동 청소, 동행 종료와 콜라 보답을 담당한다. 지갑 아이템 생성/수거, 버스정류장 이동, 버스 탑승, 집/기차/서울/엔딩 흐름은 아직 `PlayScene.js`에 남아 있다.
+
+## Recent Refactor Notes
+
+- Added `src/systems/TravelEndingSystem.js`.
+- `TravelEndingSystem` now owns the bus stop route phase: bus stop object creation, bus stop arrival check, bus arrival tween, boarding transition, and bus stop cleanup.
+- `PlayScene.js` keeps wrapper methods with the old names for compatibility:
+  - `getTravelBusStopPoint`
+  - `createTravelBusStopObjects`
+  - `startBusStopBoardingSequence`
+  - `getTravelBusArrivalPoint`
+  - `updateQuestRouteGuide`
+  - `updateTravelBusRouteGuide`
+  - `checkTravelBusStopArrival`
+  - `startBusArrivalSequence`
+  - `boardTravelBus`
+  - `cleanupTravelBusStopSequence`
+- `startTravelHomeSequence` and later home/packing/train/ending cutscene flow still live in `PlayScene.js`.
+- Next safe step: move `startTravelHomeSequence` through the room packing entry point into `TravelEndingSystem`, while keeping the existing `PlayScene` wrapper names.
