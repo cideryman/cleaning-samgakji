@@ -5,12 +5,22 @@ Use these settings when making the Samgakji map in Tiled.
 - Map size: `48 x 30` tiles
 - Tile size: `32 x 32 px`
 - Final pixel size: `1536 x 960`
-- Tileset image: `assets/tilesets/samgakji-tiles.png`
-- Tileset name in Tiled: `samgakji_tiles`
+- Main tileset image: `assets/tilesets/samgakji-tiles.png`
+- Main tileset name in Tiled: `samgakji_tiles`
+- Extra tilesets are allowed. Keep their PNG files under `assets/tilesets/`.
 - Chapter 1 export path: `assets/maps/chapter1-samgakji-map.json`
 - Future chapter export path pattern: `assets/maps/chapter2-<short-name>-map.json`, `assets/maps/chapter3-<short-name>-map.json`, and so on
 
 The game currently loads `assets/maps/chapter1-samgakji-map.json` for Chapter 1. Edit that file in Tiled and export over the same path when you want Chapter 1 to change.
+
+Multiple tilesets:
+
+- You can add another tileset in Tiled and paint with it directly.
+- Put the image file in `assets/tilesets/`, for example `assets/tilesets/park_tileset.png`.
+- Give each tileset a unique Tiled name, for example `park_tileset`.
+- Export the map JSON with embedded tileset data. The game reads the JSON `tilesets` list and loads each referenced PNG automatically.
+- Do not rename a tileset after using it on the map unless you also re-export and test the game.
+- Avoid moving old tiles inside an existing tileset image, because the map stores tile IDs. Add new tiles into empty space or use a new tileset image instead.
 
 Chapter audio:
 

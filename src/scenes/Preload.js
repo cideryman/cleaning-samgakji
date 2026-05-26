@@ -151,6 +151,7 @@ const SPRITESHEET_ASSETS = [
 
 const TILED_MAP = {
   key: "chapter1_map",
+  jsonKey: "chapter1_map_json",
   path: "assets/maps/chapter1-samgakji-map.json",
 };
 
@@ -194,10 +195,22 @@ export default class Preload extends Phaser.Scene {
       this.load.audio(asset.key, asset.path);
     });
     this.load.json("dialogues", "src/data/dialogues.json");
+    this.load.json(TILED_MAP.jsonKey, TILED_MAP.path);
     this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
   }
 
   create() {
+    const didQueueTilesets = this.queueTiledTilesetImages();
+    if (didQueueTilesets) {
+      this.load.once(Phaser.Loader.Events.COMPLETE, () => this.finishCreate());
+      this.load.start();
+      return;
+    }
+
+    this.finishCreate();
+  }
+
+  finishCreate() {
     this.createMissingExternalTextures();
     this.createPlayerAnimations();
     this.createVehicleAnimations();
@@ -206,6 +219,44 @@ export default class Preload extends Phaser.Scene {
     this.createBlockTexture("sweep_hitbox", 96, 72, "#fff3a3", "#f2c94c");
 
     this.scene.start("StartScene");
+  }
+
+  queueTiledTilesetImages() {
+    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
+    if (!mapJson?.tilesets?.length) return false;
+
+    let queued = false;
+    const queuedKeys = new Set();
+    mapJson.tilesets.forEach((tileset) => {
+      if (!tileset?.name || !tileset?.image) return;
+      const textureKey = tileset.name;
+      if (this.textures.exists(textureKey) || queuedKeys.has(textureKey)) return;
+
+      this.load.image(textureKey, this.resolveTiledAssetPath(TILED_MAP.path, tileset.image));
+      queuedKeys.add(textureKey);
+      queued = true;
+    });
+
+    return queued;
+  }
+
+  resolveTiledAssetPath(mapPath, assetPath) {
+    if (/^(https?:)?\/\//.test(assetPath) || assetPath.startsWith("/")) {
+      return assetPath;
+    }
+
+    const baseParts = mapPath.split("/").slice(0, -1);
+    const parts = [...baseParts, ...assetPath.split(/[\\/]/)];
+    const normalized = [];
+    parts.forEach((part) => {
+      if (!part || part === ".") return;
+      if (part === "..") {
+        normalized.pop();
+        return;
+      }
+      normalized.push(part);
+    });
+    return normalized.join("/");
   }
 
   createPlayerAnimations() {

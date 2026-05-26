@@ -736,18 +736,13 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   createTiledMap() {
-    if (!this.cache.tilemap.exists(TILED_MAP_CONFIG.key) || !this.textures.exists(TILED_MAP_CONFIG.tilesetImageKey)) {
+    if (!this.cache.tilemap.exists(TILED_MAP_CONFIG.key)) {
       return false;
     }
 
     const map = this.make.tilemap({ key: TILED_MAP_CONFIG.key });
-    const sourceTileset = this.findTiledTileset(map);
-    if (!sourceTileset) {
-      return false;
-    }
-
-    const tileset = map.addTilesetImage(sourceTileset.name, TILED_MAP_CONFIG.tilesetImageKey);
-    if (!tileset) {
+    const tilesets = this.createTiledTilesets(map);
+    if (!tilesets.length) {
       return false;
     }
 
@@ -759,13 +754,13 @@ export default class PlayScene extends Phaser.Scene {
     TILED_MAP_CONFIG.visibleLayers.forEach((layerName, index) => {
       const layer = map.getLayer(layerName);
       if (layer) {
-        map.createLayer(layerName, tileset, 0, 0).setDepth(index);
+        map.createLayer(layerName, tilesets, 0, 0).setDepth(index);
       }
     });
 
     const collisionSource = map.getLayer(TILED_MAP_CONFIG.collisionLayer);
     if (collisionSource) {
-      this.walls = map.createLayer(TILED_MAP_CONFIG.collisionLayer, tileset, 0, 0);
+      this.walls = map.createLayer(TILED_MAP_CONFIG.collisionLayer, tilesets, 0, 0);
       this.walls.setVisible(false);
       this.walls.setCollisionByExclusion([-1]);
     } else {
@@ -775,6 +770,32 @@ export default class PlayScene extends Phaser.Scene {
     this.applyTiledObjects(map);
     this.createTiledMapObjects(map);
     return true;
+  }
+
+  createTiledTilesets(map) {
+    return map.tilesets
+      .map((sourceTileset) => {
+        const textureKey = this.getTiledTilesetTextureKey(sourceTileset);
+        if (!textureKey) return null;
+        return map.addTilesetImage(sourceTileset.name, textureKey);
+      })
+      .filter(Boolean);
+  }
+
+  getTiledTilesetTextureKey(sourceTileset) {
+    if (this.textures.exists(sourceTileset.name)) {
+      return sourceTileset.name;
+    }
+
+    if (
+      sourceTileset.name === TILED_MAP_CONFIG.tilesetName &&
+      this.textures.exists(TILED_MAP_CONFIG.tilesetImageKey)
+    ) {
+      return TILED_MAP_CONFIG.tilesetImageKey;
+    }
+
+    console.warn(`Missing tileset texture: ${sourceTileset.name}`);
+    return null;
   }
 
   findTiledTileset(map) {
