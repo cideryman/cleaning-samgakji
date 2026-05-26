@@ -744,6 +744,7 @@ body.prologue-scene-active #game {
   border-radius: 999px;
   background: #fffdf6;
   color: #6f5b46;
+  font: inherit;
   font-size: 13px;
   font-weight: 800;
   text-align: center;
@@ -852,10 +853,14 @@ body.prologue-scene-active #game {
 }
 
 .clothing-shop-item.is-focused,
+.clothing-shop-step.is-focused,
 .clothing-shop-footer-button.is-focused,
 .clothing-shop-review-item.is-focused {
-  outline: 4px solid #2f80ed;
-  outline-offset: 2px;
+  outline: 5px solid #135dff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px #ffffff, 0 5px 0 #135dff;
+  position: relative;
+  z-index: 1;
 }
 
 .clothing-shop-summary {
@@ -1006,6 +1011,19 @@ body.prologue-scene-active #game {
 
 .packing-item {
   grid-template-rows: 76px auto auto;
+}
+
+.packing-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow-x: hidden;
+}
+
+.packing-item .item-label,
+.packing-item .item-price {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .packing-item img {
@@ -1314,6 +1332,10 @@ body.app-fit-mode #game canvas {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .packing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .clothing-shop-money-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1469,6 +1491,10 @@ body.app-fit-mode #game canvas {
 
   .clothing-shop-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .packing-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .clothing-shop-item {

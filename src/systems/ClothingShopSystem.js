@@ -88,6 +88,7 @@ export default class ClothingShopSystem {
     body.innerHTML = "";
     footer.innerHTML = "";
     progress.innerHTML = this.renderProgress();
+    this.bindProgressButtons(progress);
 
     if (scene.clothingShopMode === "review") {
       this.renderReview(body, footer);
@@ -103,14 +104,31 @@ export default class ClothingShopSystem {
     const steps = CLOTHING_SHOP_CATEGORIES.map((category, index) => {
       const isDone = index < scene.clothingShopStepIndex || scene.clothingShopMode === "review";
       const isCurrent = index === scene.clothingShopStepIndex && scene.clothingShopMode !== "review";
-      const className = ["clothing-shop-step", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
+      const className = ["clothing-shop-step", "clothing-shop-option", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
         .filter(Boolean)
         .join(" ");
-      return `<span class="${className}">${category.label}</span>`;
+      return `<button type="button" class="${className}" data-action="category" data-category-index="${index}">${category.label}</button>`;
     }).join("");
 
-    const reviewClass = scene.clothingShopMode === "review" ? "clothing-shop-step is-current" : "clothing-shop-step";
-    return `${steps}<span class="${reviewClass}">확인</span>`;
+    const reviewClass = scene.clothingShopMode === "review"
+      ? "clothing-shop-step clothing-shop-option is-current"
+      : "clothing-shop-step clothing-shop-option";
+    return `${steps}<button type="button" class="${reviewClass}" data-action="review">계산하기</button>`;
+  }
+
+  bindProgressButtons(progress) {
+    progress.querySelectorAll("[data-action]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        if (action === "category") {
+          this.goToCategory(Number(button.dataset.categoryIndex || 0));
+          return;
+        }
+        if (action === "review") {
+          this.goToReview();
+        }
+      });
+    });
   }
 
   renderCategory(body, footer) {
@@ -120,12 +138,7 @@ export default class ClothingShopSystem {
     const items = CLOTHING_SHOP_ITEMS.filter((item) => item.category === category.key);
     const grid = document.createElement("div");
     grid.className = "clothing-shop-grid";
-    body.innerHTML = `
-      <div class="clothing-shop-category-title">
-        <strong>${category.label}</strong>
-        <span>${category.label}는 여러 개 골라도 돼요. 선택 ${selectedCount}개</span>
-      </div>
-    `;
+    grid.setAttribute("aria-label", `${category.label} ${selectedCount}개 선택`);
     body.appendChild(grid);
 
     items.forEach((item) => {
@@ -158,6 +171,7 @@ export default class ClothingShopSystem {
       nextCategory ? `${nextCategory.label} 보기` : "확인하기",
       "next-category",
     );
+    this.addFooterButton(footer, "계산하기", "review", "secondary");
     this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
@@ -229,6 +243,11 @@ export default class ClothingShopSystem {
       return;
     }
 
+    if (action === "review") {
+      this.goToReview();
+      return;
+    }
+
     if (action === "close") {
       this.finishVisit();
     }
@@ -243,6 +262,21 @@ export default class ClothingShopSystem {
     } else {
       scene.clothingShopStepIndex += 1;
     }
+    scene.selectedClothingShopIndex = 0;
+    this.renderStep();
+  }
+
+  goToCategory(index) {
+    const scene = this.scene;
+    scene.clothingShopMode = "category";
+    scene.clothingShopStepIndex = Phaser.Math.Clamp(index, 0, CLOTHING_SHOP_CATEGORIES.length - 1);
+    scene.selectedClothingShopIndex = 0;
+    this.renderStep();
+  }
+
+  goToReview() {
+    const scene = this.scene;
+    scene.clothingShopMode = "review";
     scene.selectedClothingShopIndex = 0;
     this.renderStep();
   }

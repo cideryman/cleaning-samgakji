@@ -4,6 +4,9 @@ import {
   PACKING_ITEMS,
 } from "../config/PackingData.js";
 
+const PACKING_PAGE_SIZE = 4;
+const PACKING_MOBILE_PAGE_SIZE = 2;
+
 export default class PackingSystem {
   constructor(scene) {
     this.scene = scene;
@@ -15,6 +18,7 @@ export default class PackingSystem {
     scene.packingSelectedKeys = new Set(scene.packingItems.map((item) => item.key));
     scene.selectedPackingIndex = 0;
     scene.packingStepIndex = 0;
+    scene.packingPageIndex = 0;
     scene.packingMode = "category";
 
     const stage = document.querySelector(".game-stage") || document.body;
@@ -46,6 +50,7 @@ export default class PackingSystem {
     scene.packingSelectedKeys = new Set();
     scene.selectedPackingIndex = 0;
     scene.packingStepIndex = 0;
+    scene.packingPageIndex = 0;
     scene.packingMode = "category";
   }
 
@@ -61,6 +66,10 @@ export default class PackingSystem {
 
   getIconSrc(item) {
     return `./assets/packing/${item.icon}`;
+  }
+
+  getPageSize() {
+    return window.innerWidth <= 560 ? PACKING_MOBILE_PAGE_SIZE : PACKING_PAGE_SIZE;
   }
 
   renderStep() {
@@ -104,17 +113,22 @@ export default class PackingSystem {
     const category = this.getCurrentCategory();
     const selectedCount = this.getSelectedItems().filter((item) => item.category === category.key).length;
     const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+    const pageSize = this.getPageSize();
+    const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+    scene.packingPageIndex = Phaser.Math.Clamp(scene.packingPageIndex || 0, 0, pageCount - 1);
+    const pageStart = scene.packingPageIndex * pageSize;
+    const pageItems = items.slice(pageStart, pageStart + pageSize);
     const grid = document.createElement("div");
     grid.className = "clothing-shop-grid packing-grid";
     body.innerHTML = `
       <div class="clothing-shop-category-title">
         <strong>${category.label}</strong>
-        <span>필요한 만큼 골라도 돼요. 선택 ${selectedCount}개</span>
+        <span>선택 ${selectedCount}개 · ${scene.packingPageIndex + 1}/${pageCount}</span>
       </div>
     `;
     body.appendChild(grid);
 
-    items.forEach((item) => {
+    pageItems.forEach((item) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "clothing-shop-item packing-item packing-option";
@@ -131,6 +145,10 @@ export default class PackingSystem {
 
     const previousCategory = PACKING_CATEGORIES[scene.packingStepIndex - 1];
     const nextCategory = PACKING_CATEGORIES[scene.packingStepIndex + 1];
+    if (pageCount > 1) {
+      this.addFooterButton(footer, "이전", "previous-page", "secondary");
+      this.addFooterButton(footer, "다음", "next-page", "secondary");
+    }
     if (previousCategory) {
       this.addFooterButton(footer, `${previousCategory.label} 가기`, "previous-category", "secondary");
     }
@@ -205,6 +223,16 @@ export default class PackingSystem {
       return;
     }
 
+    if (action === "next-page") {
+      this.movePage(1);
+      return;
+    }
+
+    if (action === "previous-page") {
+      this.movePage(-1);
+      return;
+    }
+
     if (action === "complete") {
       this.completeSelection();
     }
@@ -219,6 +247,7 @@ export default class PackingSystem {
     } else {
       scene.packingStepIndex += 1;
     }
+    scene.packingPageIndex = 0;
     scene.selectedPackingIndex = 0;
     this.renderStep();
   }
@@ -231,6 +260,17 @@ export default class PackingSystem {
     } else if (scene.packingStepIndex > 0) {
       scene.packingStepIndex -= 1;
     }
+    scene.packingPageIndex = 0;
+    scene.selectedPackingIndex = 0;
+    this.renderStep();
+  }
+
+  movePage(delta) {
+    const scene = this.scene;
+    const category = this.getCurrentCategory();
+    const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+    const pageCount = Math.max(1, Math.ceil(items.length / this.getPageSize()));
+    scene.packingPageIndex = (scene.packingPageIndex + delta + pageCount) % pageCount;
     scene.selectedPackingIndex = 0;
     this.renderStep();
   }
@@ -306,8 +346,8 @@ export default class PackingSystem {
     if (!scene.packingModal || scene.packingMode === "review") return 1;
     const grid = scene.packingModal.querySelector(".packing-grid");
     if (!grid) return 1;
-    const columns = window.getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length;
-    return Math.max(1, columns || 3);
+    const columns = grid.querySelectorAll(".packing-item").length;
+    return Math.max(1, columns || 1);
   }
 
   getOptionButtons() {
