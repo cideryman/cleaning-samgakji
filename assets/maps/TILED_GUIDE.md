@@ -20,9 +20,17 @@ Multiple tilesets:
 - Put the image file in `assets/tilesets/`, for example `assets/tilesets/park_tileset.png`.
 - Give each tileset a unique Tiled name, for example `park_tileset`.
 - For the current park set, add `assets/tilesets/park_tiles.tsx` in Tiled. Its tileset name is `park_tiles`.
-- Export the map JSON with embedded tileset data. The game reads the JSON `tilesets` list and loads each referenced PNG automatically.
+- Export the map JSON after editing. The game supports both embedded tileset data and external `.tsx` tileset references.
+- If the map JSON contains `"source":"../tilesets/example.tsx"`, the loader reads that `.tsx`, finds the PNG inside it, and loads the matching texture automatically.
 - Do not rename a tileset after using it on the map unless you also re-export and test the game.
 - Avoid moving old tiles inside an existing tileset image, because the map stores tile IDs. Add new tiles into empty space or use a new tileset image instead.
+
+Recommended choice:
+
+- Prefer external `.tsx` tilesets while the map is still growing.
+- This keeps each tileset independent in Tiled and makes it easier to add, replace, or remove a tileset later.
+- Embedded tilesets are also supported, but they are less convenient for ongoing map editing because the tileset metadata is copied into the map JSON.
+- For this project, use external `.tsx` tilesets by default unless there is a specific reason to embed.
 
 Chapter audio:
 
@@ -107,4 +115,4 @@ For a simple parasol, place `green-parasol` on the `objects` layer. For a larger
 
 Important export note:
 
-Export as JSON and embed the tileset data if Tiled offers that option. Phaser reads the JSON map and the `samgakji_tiles` image, but it does not need to load `.tsx` files at runtime.
+Export as JSON. Embedded tilesets are still fine, but external `.tsx` tilesets are also supported now. Keep the `.tsx` and its PNG under `assets/tilesets/`, and keep their relative paths valid after exporting.

@@ -4,7 +4,6 @@ import {
   NPC_TEXTURES,
   NPC_WALK_ANIMS,
   PLAYER_TEXTURES,
-  TILED_MAP_CONFIG,
 } from "../config/GameConstants.js";
 import { SceneState, StateManager } from "../config/SceneState.js";
 import CleaningSystem from "../systems/CleaningSystem.js";
@@ -22,6 +21,7 @@ import RoadTrafficSystem from "../systems/RoadTrafficSystem.js";
 import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
+import TiledMapSystem from "../systems/TiledMapSystem.js";
 import UIManager from "../systems/UIManager.js";
 import VendingMachineSystem from "../systems/VendingMachineSystem.js";
 import PackingSystem from "../systems/PackingSystem.js";
@@ -296,6 +296,7 @@ export default class PlayScene extends Phaser.Scene {
     this.questManager = new QuestManager(this);
     this.roadTrafficSystem = new RoadTrafficSystem(this);
     this.routeGuideSystem = new RouteGuideSystem(this);
+    this.tiledMapSystem = new TiledMapSystem(this);
     this.vendingMachineSystem = new VendingMachineSystem(this);
     this.packingSystem = new PackingSystem(this);
     this.clothingShopSystem = new ClothingShopSystem(this);
@@ -724,252 +725,15 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   createMap() {
-    this.objectWalls = this.physics.add.staticGroup();
-    this.objectCollisionRects = [];
-    this.mapObjects = {};
-
-    if (this.createTiledMap()) {
-      return;
-    }
-
-    this.createFallbackMap();
-  }
-
-  createTiledMap() {
-    if (!this.cache.tilemap.exists(TILED_MAP_CONFIG.key)) {
-      return false;
-    }
-
-    const map = this.make.tilemap({ key: TILED_MAP_CONFIG.key });
-    const tilesets = this.createTiledTilesets(map);
-    if (!tilesets.length) {
-      return false;
-    }
-
-    const worldWidth = map.widthInPixels || GAME_CONFIG.worldWidth;
-    const worldHeight = map.heightInPixels || GAME_CONFIG.worldHeight;
-    this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-    this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-
-    TILED_MAP_CONFIG.visibleLayers.forEach((layerName, index) => {
-      const layer = map.getLayer(layerName);
-      if (layer) {
-        map.createLayer(layerName, tilesets, 0, 0).setDepth(index);
-      }
-    });
-
-    const collisionSource = map.getLayer(TILED_MAP_CONFIG.collisionLayer);
-    if (collisionSource) {
-      this.walls = map.createLayer(TILED_MAP_CONFIG.collisionLayer, tilesets, 0, 0);
-      this.walls.setVisible(false);
-      this.walls.setCollisionByExclusion([-1]);
-    } else {
-      this.walls = this.physics.add.staticGroup();
-    }
-
-    this.applyTiledObjects(map);
-    this.createTiledMapObjects(map);
-    return true;
-  }
-
-  createTiledTilesets(map) {
-    return map.tilesets
-      .map((sourceTileset) => {
-        const textureKey = this.getTiledTilesetTextureKey(sourceTileset);
-        if (!textureKey) return null;
-        return map.addTilesetImage(sourceTileset.name, textureKey);
-      })
-      .filter(Boolean);
-  }
-
-  getTiledTilesetTextureKey(sourceTileset) {
-    if (this.textures.exists(sourceTileset.name)) {
-      return sourceTileset.name;
-    }
-
-    if (
-      sourceTileset.name === TILED_MAP_CONFIG.tilesetName &&
-      this.textures.exists(TILED_MAP_CONFIG.tilesetImageKey)
-    ) {
-      return TILED_MAP_CONFIG.tilesetImageKey;
-    }
-
-    console.warn(`Missing tileset texture: ${sourceTileset.name}`);
-    return null;
-  }
-
-  findTiledTileset(map) {
-    return map.tilesets.find((tileset) => {
-      return tileset.name === TILED_MAP_CONFIG.tilesetName || tileset.name === TILED_MAP_CONFIG.tilesetImageKey;
-    }) || map.tilesets[0];
-  }
-
-  applyTiledObjects(map) {
-    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.objectLayer);
-    if (!objectLayer) {
-      return;
-    }
-
-    const slimeSpawnPoints = [];
-    const flowerPositions = [];
-
-    objectLayer.objects.forEach((object) => {
-      const objectType = object.type || object.name;
-      const x = object.x + (object.width || 0) / 2;
-      const y = object.y + (object.height || 0) / 2;
-      this.setMapPoint(object.name, x, y);
-      if (objectType !== "logic_point") {
-        this.setMapPoint(objectType, x, y);
-      }
-
-      if (objectType === "player_start") {
-        this.playerStart = { x, y };
-      } else if (objectType === "broom_upgrade") {
-        this.broomSpawn = { x, y };
-      } else if (objectType === "slime_spawn") {
-        slimeSpawnPoints.push([x, y]);
-      } else if (objectType === "flower") {
-        flowerPositions.push([x, y]);
-      }
-    });
-
-    this.slimeSpawnPoints = slimeSpawnPoints;
-    this.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
-  }
-
-  setMapPoint(key, x, y) {
-    if (!key || key === "slime_spawn" || key === "flower") return;
-    this.mapPoints[key] = { x, y };
+    this.tiledMapSystem?.createMap();
   }
 
   getMapPoint(key, fallback) {
-    return this.mapPoints?.[key] || fallback;
-  }
-
-  getTiledObjectProperties(object) {
-    return Object.fromEntries((object.properties || []).map((property) => [property.name, property.value]));
-  }
-
-  createTiledMapObjects(map) {
-    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.mapObjectsLayer);
-    if (!objectLayer) return;
-
-    objectLayer.objects.forEach((object) => {
-      const props = this.getTiledObjectProperties(object);
-      const textureKey = props.texture || object.type || object.name;
-      if (!textureKey || !this.textures.exists(textureKey)) return;
-
-      const originX = Number(props.originX ?? 0.5);
-      const originY = Number(props.originY ?? 1);
-      const displayWidth = Number(props.displayWidth || object.width || 96);
-      const displayHeight = Number(props.displayHeight || object.height || 96);
-      const x = object.x + (object.width || displayWidth) * originX;
-      const y = object.y + (object.height || displayHeight) * originY;
-      const image = props.animation
-        ? this.add.sprite(x, y, textureKey, Number(props.frame || 0))
-        : this.add.image(x, y, textureKey);
-
-      image.setOrigin(originX, originY);
-      image.setDisplaySize(displayWidth, displayHeight);
-      const sortY = Number(props.sortY ?? this.getDepthSortY(image));
-      image.setData("depthSortY", sortY);
-      image.setDepth(this.getWorldDepth(sortY, Number(props.depthOffset ?? 0)));
-      if (props.name) image.setName(props.name);
-      const objectKey = props.name || object.name;
-      if (objectKey) this.mapObjects[objectKey] = image;
-      if (props.animation && image.anims) {
-        image.anims.play(props.animation);
-      }
-
-      if (this.shouldMapObjectCollide(object, props, textureKey)) {
-        this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey);
-      }
-    });
-  }
-
-  shouldMapObjectCollide(object, props, textureKey) {
-    // Static map blocking is authored in Tiled's collision layer.
-    // Use this only for rare map objects that must create a code-side collider.
-    return props.codeCollides === true
-      || props.codeCollides === "true"
-      || props.collides === "code"
-      || props.collisionSource === "code";
-  }
-
-  addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey) {
-    const defaults = this.getMapObjectColliderDefaults(object, textureKey, displayWidth, displayHeight);
-    const width = Number(props.collisionWidth ?? defaults.width);
-    const height = Number(props.collisionHeight ?? defaults.height);
-    const offsetX = Number(props.collisionOffsetX ?? defaults.offsetX);
-    const offsetY = Number(props.collisionOffsetY ?? defaults.offsetY);
-
-    this.addObjectCollider(
-      `${object.name || props.texture || "map_object"}_collider`,
-      x + offsetX,
-      y + offsetY,
-      width,
-      height,
-    );
-  }
-
-  getMapObjectColliderDefaults(object, textureKey, displayWidth, displayHeight) {
-    const name = `${object.name || ""} ${textureKey || ""}`.toLowerCase();
-
-    if (name.includes("tree")) {
-      const height = Math.max(24, displayHeight * 0.16);
-      return {
-        width: Math.max(32, displayWidth * 0.25),
-        height,
-        offsetX: 0,
-        offsetY: -height * 0.65,
-      };
-    }
-
-    if (name.includes("bench")) {
-      const height = Math.max(26, displayHeight * 0.36);
-      return {
-        width: Math.max(82, displayWidth * 0.86),
-        height,
-        offsetX: 0,
-        offsetY: -height * 0.55,
-      };
-    }
-
-    if (["traffic", "pedestrian", "stop_sign", "crosswalk_sign"].some((keyword) => name.includes(keyword))) {
-      const height = Math.max(18, displayHeight * 0.2);
-      return {
-        width: Math.max(18, displayWidth * 0.44),
-        height,
-        offsetX: 0,
-        offsetY: -height * 0.55,
-      };
-    }
-
-    const height = Math.max(32, displayHeight * 0.28);
-    return {
-      width: Math.max(96, displayWidth * 0.82),
-      height,
-      offsetX: 0,
-      offsetY: -height * 0.5,
-    };
+    return this.tiledMapSystem?.getMapPoint(key, fallback) || fallback;
   }
 
   addObjectCollider(name, x, y, width, height) {
-    if (!this.objectWalls) {
-      this.objectWalls = this.physics.add.staticGroup();
-    }
-
-    const zone = this.add.zone(x, y, width, height);
-    this.physics.add.existing(zone, true);
-    zone.setName(name);
-    this.objectWalls.add(zone);
-    this.objectCollisionRects.push(new Phaser.Geom.Rectangle(
-      x - width / 2,
-      y - height / 2,
-      width,
-      height,
-    ));
-    return zone;
+    return this.tiledMapSystem?.addObjectCollider(name, x, y, width, height) || null;
   }
 
   // ---------------------------------------------------------------------------
@@ -1229,69 +993,6 @@ export default class PlayScene extends Phaser.Scene {
 
   startYebiIdleBob() {
     this.yebiQuestSystem?.startIdleBob();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Fallback Map Construction
-  // ---------------------------------------------------------------------------
-
-  createFallbackMap() {
-    this.physics.world.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
-    this.cameras.main.setBounds(0, 0, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight);
-
-    this.add.rectangle(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, 0x6c7a55);
-    this.addTiledRect(768, 480, GAME_CONFIG.worldWidth, GAME_CONFIG.worldHeight, "grass_tile");
-
-    this.addTiledRect(475, 420, 1200, 118, "path_tile");
-    this.addTiledRect(652, 392, 122, 386, "path_tile");
-    this.addTiledRect(870, 300, 910, 104, "path_tile", -18);
-    this.addTiledRect(1012, 512, 690, 78, "sidewalk_tile", -14);
-    this.addTiledRect(480, 625, 830, 82, "sidewalk_tile", -18);
-    this.addTiledRect(176, 650, 352, 82, "path_tile");
-    this.addTiledRect(168, 760, 336, 88, "sidewalk_tile", -18);
-    this.add.ellipse(650, 420, 194, 154, 0xd8c59a);
-
-    this.add.rectangle(1090, 690, 426, 274, 0xb8c1bd);
-    this.addTiledRect(1090, 690, 342, 190, "building_tile");
-    this.add.rectangle(1090, 575, 240, 18, 0xe8f3ef);
-    this.add.rectangle(1390, 480, 292, GAME_CONFIG.worldHeight, 0x52645d);
-    this.addTiledRect(1442, 480, 112, GAME_CONFIG.worldHeight, "road_tile");
-    this.add.rectangle(1478, 480, 6, 900, 0xffffff).setAngle(-12);
-
-    this.add.rectangle(310, 226, 500, 96, 0x60704c);
-    this.add.rectangle(260, 710, 460, 92, 0x60704c);
-    this.add.rectangle(934, 226, 140, 62, 0x60704c);
-
-    this.addTiledRect(158, 342, 316, 172, "garden_tile");
-    this.addTiledRect(180, 540, 360, 128, "garden_tile");
-    this.addTiledRect(502, 350, 170, 84, "garden_tile");
-    this.addTiledRect(246, 526, 270, 148, "garden_tile");
-    this.addTiledRect(1030, 418, 310, 132, "garden_tile");
-    this.addTiledRect(1028, 496, 286, 110, "grass_tile");
-
-    this.walls = this.physics.add.staticGroup();
-    this.addWall(768, 30, GAME_CONFIG.worldWidth, 60);
-    this.addWall(768, 930, GAME_CONFIG.worldWidth, 60);
-    this.addWall(30, 480, 60, GAME_CONFIG.worldHeight);
-    this.addWall(1506, 480, 60, GAME_CONFIG.worldHeight);
-    this.addWall(370, 226, 360, 86);
-    this.addWall(330, 710, 310, 82);
-    this.addWall(1090, 690, 410, 258);
-    this.addWall(1390, 480, 292, GAME_CONFIG.worldHeight);
-    this.addWall(934, 226, 130, 52);
-  }
-
-  addWall(x, y, width, height) {
-    const wall = this.add.rectangle(x, y, width, height, 0x6c7a55);
-    wall.setVisible(false);
-    this.physics.add.existing(wall, true);
-    this.walls.add(wall);
-  }
-
-  addTiledRect(x, y, width, height, texture, angle = 0) {
-    const tile = this.add.tileSprite(x, y, width, height, texture);
-    tile.setAngle(angle);
-    return tile;
   }
 
   // ---------------------------------------------------------------------------
@@ -1741,74 +1442,6 @@ export default class PlayScene extends Phaser.Scene {
     this.clothingShopSystem?.close();
   }
 
-  getShopIconFile(textureKey) {
-    return this.clothingShopSystem?.getShopIconFile(textureKey) ?? "";
-  }
-
-  hasTravelPrepItem(itemKey) {
-    return this.clothingShopSystem?.hasTravelPrepItem(itemKey) ?? false;
-  }
-
-  getCurrentClothingCategory() {
-    return this.clothingShopSystem?.getCurrentCategory();
-  }
-
-  getSelectedClothingShopItems() {
-    return this.clothingShopSystem?.getSelectedItems() ?? [];
-  }
-
-  getSelectedClothingShopTotal() {
-    return this.clothingShopSystem?.getSelectedTotal() ?? 0;
-  }
-
-  formatShopMoney(amount) {
-    return this.clothingShopSystem?.formatMoney(amount) ?? `${Math.max(0, amount).toLocaleString()}원`;
-  }
-
-  renderClothingShopStep() {
-    this.clothingShopSystem?.renderStep();
-  }
-
-  renderClothingShopProgress() {
-    return this.clothingShopSystem?.renderProgress() ?? "";
-  }
-
-  renderClothingShopCategory(body, footer) {
-    this.clothingShopSystem?.renderCategory(body, footer);
-  }
-
-  renderClothingShopReview(body, footer) {
-    this.clothingShopSystem?.renderReview(body, footer);
-  }
-
-  addClothingShopFooterButton(footer, label, action, tone = "primary") {
-    return this.clothingShopSystem?.addFooterButton(footer, label, action, tone);
-  }
-
-  handleClothingShopAction(action) {
-    this.clothingShopSystem?.handleAction(action);
-  }
-
-  advanceClothingShopStep() {
-    this.clothingShopSystem?.advanceStep();
-  }
-
-  goBackClothingShopStep() {
-    this.clothingShopSystem?.goBackStep();
-  }
-
-  toggleClothingShopSelection(itemKey) {
-    this.clothingShopSystem?.toggleSelection(itemKey);
-  }
-
-  removeClothingShopSelection(itemKey) {
-    this.clothingShopSystem?.removeSelection(itemKey);
-  }
-
-  checkoutClothingShopSelection() {
-    this.clothingShopSystem?.checkoutSelection();
-  }
-
   completeClothesShoppingQuest() {
     this.jjookQuestSystem?.completeClothesShoppingQuest();
   }
@@ -1837,53 +1470,6 @@ export default class PlayScene extends Phaser.Scene {
     return this.travelEndingSystem?.createBusStopObjects();
   }
 
-  walkPlayerToTarget(target, { speed = 120, onComplete = null } = {}) {
-    if (!this.player || !target) {
-      onComplete?.();
-      return;
-    }
-
-    this.tweens.killTweensOf(this.player);
-    this.player.setVelocity(0, 0);
-
-    const route = this.buildNpcRouteThroughCrosswalk({ x: this.player.x, y: this.player.y }, target)
-      .filter((point) => Phaser.Math.Distance.Between(this.player.x, this.player.y, point.x, point.y) > 6);
-
-    const walkNext = (index = 0) => {
-      const point = route[index];
-      if (!point) {
-        this.player.setVelocity(0, 0);
-        this.playerController.stopWalkAnimation();
-        onComplete?.();
-        return;
-      }
-
-      let previousX = this.player.x;
-      let previousY = this.player.y;
-      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, point.x, point.y);
-      this.tweens.add({
-        targets: this.player,
-        x: point.x,
-        y: point.y,
-        duration: Phaser.Math.Clamp((distance / speed) * 1000, 320, 5200),
-        ease: "Linear",
-        onUpdate: () => {
-          const dx = this.player.x - previousX;
-          const dy = this.player.y - previousY;
-          if (Math.abs(dx) + Math.abs(dy) > 0.1) {
-            this.playerController.updatePlayerDirection(new Phaser.Math.Vector2(dx, dy), true);
-            this.setDepthFromY(this.player, 0.05);
-          }
-          previousX = this.player.x;
-          previousY = this.player.y;
-        },
-        onComplete: () => walkNext(index + 1),
-      });
-    };
-
-    walkNext();
-  }
-
   startBusStopBoardingSequence() {
     this.travelEndingSystem?.startBusStopBoardingSequence();
   }
@@ -1892,36 +1478,20 @@ export default class PlayScene extends Phaser.Scene {
     return this.travelEndingSystem?.getBusArrivalPoint();
   }
 
-  updateQuestRouteGuide() {
-    this.travelEndingSystem?.updateQuestRouteGuide();
-  }
-
   updateTravelBusRouteGuide() {
     this.travelEndingSystem?.updateBusRouteGuide();
+  }
+
+  updateQuestRouteGuide() {
+    this.travelEndingSystem?.updateQuestRouteGuide();
   }
 
   checkTravelBusStopArrival() {
     this.travelEndingSystem?.checkBusStopArrival();
   }
 
-  startBusArrivalSequence(stop) {
-    this.travelEndingSystem?.startBusArrivalSequence(stop);
-  }
-
-  boardTravelBus() {
-    this.travelEndingSystem?.boardTravelBus();
-  }
-
   cleanupTravelBusStopSequence() {
     this.travelEndingSystem?.cleanupBusStopSequence();
-  }
-
-  startTravelHomeSequence() {
-    this.travelEndingSystem?.startTravelHomeSequence();
-  }
-
-  startPackingRoomScene() {
-    this.travelEndingSystem?.startPackingRoomScene();
   }
 
   // ---------------------------------------------------------------------------
@@ -1936,82 +1506,6 @@ export default class PlayScene extends Phaser.Scene {
     this.packingSystem?.close();
   }
 
-  getCurrentPackingCategory() {
-    return this.packingSystem?.getCurrentCategory();
-  }
-
-  getSelectedPackingItems() {
-    return this.packingSystem?.getSelectedItems() ?? [];
-  }
-
-  getPackingIconSrc(item) {
-    return this.packingSystem?.getIconSrc(item) ?? "";
-  }
-
-  renderPackingStep() {
-    this.packingSystem?.renderStep();
-  }
-
-  renderPackingProgress() {
-    return this.packingSystem?.renderProgress() ?? "";
-  }
-
-  renderPackingCategory(body, footer) {
-    this.packingSystem?.renderCategory(body, footer);
-  }
-
-  renderPackingReview(body, footer) {
-    this.packingSystem?.renderReview(body, footer);
-  }
-
-  addPackingFooterButton(footer, label, action, tone = "primary") {
-    return this.packingSystem?.addFooterButton(footer, label, action, tone);
-  }
-
-  handlePackingAction(action) {
-    this.packingSystem?.handleAction(action);
-  }
-
-  advancePackingStep() {
-    this.packingSystem?.advanceStep();
-  }
-
-  goBackPackingStep() {
-    this.packingSystem?.goBackStep();
-  }
-
-  togglePackingSelection(itemKey) {
-    this.packingSystem?.toggleSelection(itemKey);
-  }
-
-  removePackingSelection(itemKey) {
-    this.packingSystem?.removeSelection(itemKey);
-  }
-
-  renderPackingSummary() {
-    this.packingSystem?.renderSummary();
-  }
-
-  refreshPackingSelection() {
-    this.packingSystem?.refreshSelection();
-  }
-
-  movePackingFocus(delta) {
-    this.packingSystem?.moveFocus(delta);
-  }
-
-  movePackingFocusVertical(deltaRows) {
-    this.packingSystem?.moveFocusVertical(deltaRows);
-  }
-
-  getPackingColumnCount() {
-    return this.packingSystem?.getColumnCount() ?? 1;
-  }
-
-  getPackingOptionButtons() {
-    return this.packingSystem?.getOptionButtons() ?? [];
-  }
-
   selectFocusedPackingOption() {
     return this.packingSystem?.selectFocusedOption() ?? false;
   }
@@ -2020,20 +1514,12 @@ export default class PlayScene extends Phaser.Scene {
     this.packingSystem?.handleKeyboard();
   }
 
-  completePackingSelection() {
-    this.packingSystem?.completeSelection();
-  }
-
   // ---------------------------------------------------------------------------
   // Chapter One Ending Sequence
   // ---------------------------------------------------------------------------
 
   startPackedRoomSequence() {
     this.travelEndingSystem?.startPackedRoomSequence();
-  }
-
-  startMotherAllowanceSequence() {
-    this.travelEndingSystem?.startMotherAllowanceSequence();
   }
 
   startTravelMorningSequence() {
@@ -2769,32 +2255,8 @@ export default class PlayScene extends Phaser.Scene {
     this.vendingMachineSystem?.handleKeyboard();
   }
 
-  updateVendingSelection() {
-    this.vendingMachineSystem?.updateSelection();
-  }
-
-  selectVendingOption(index) {
-    this.vendingMachineSystem?.selectOption(index);
-  }
-
   selectHighlightedVendingOption() {
     this.vendingMachineSystem?.selectHighlightedOption();
-  }
-
-  selectDrink(drink) {
-    this.vendingMachineSystem?.selectDrink(drink);
-  }
-
-  playVendingPaymentAnimation(drink) {
-    this.vendingMachineSystem?.playPaymentAnimation(drink);
-  }
-
-  dropSelectedDrink(drink) {
-    this.vendingMachineSystem?.dropDrink(drink);
-  }
-
-  finishPurchasedDrink(drink) {
-    this.vendingMachineSystem?.finishPurchasedDrink(drink);
   }
 
   finishJjookQuestWithoutDrink() {

@@ -155,6 +155,8 @@ const TILED_MAP = {
   path: "assets/maps/chapter1-samgakji-map.json",
 };
 
+const TILED_TILESET_TEXT_KEY_PREFIX = "tiled_tileset_source:";
+
 const AUDIO_ASSETS = [
   { key: "thanks_voice", path: "assets/audio/thanks.mp3" },
   { key: "collect_cans_voice", path: "assets/audio/collect-cans.mp3" },
@@ -200,6 +202,21 @@ export default class Preload extends Phaser.Scene {
   }
 
   create() {
+    const didQueueExternalTilesets = this.queueExternalTiledTilesetSources();
+    if (didQueueExternalTilesets) {
+      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+        this.normalizeExternalTiledTilesets();
+        this.queueTiledTilesetImagesThenFinish();
+      });
+      this.load.start();
+      return;
+    }
+
+    this.normalizeExternalTiledTilesets();
+    this.queueTiledTilesetImagesThenFinish();
+  }
+
+  queueTiledTilesetImagesThenFinish() {
     const didQueueTilesets = this.queueTiledTilesetImages();
     if (didQueueTilesets) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => this.finishCreate());
@@ -240,13 +257,100 @@ export default class Preload extends Phaser.Scene {
     return queued;
   }
 
+  queueExternalTiledTilesetSources() {
+    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
+    if (!mapJson?.tilesets?.length) return false;
+
+    let queued = false;
+    const queuedKeys = new Set();
+    mapJson.tilesets.forEach((tileset) => {
+      if (!tileset?.source || tileset.image) return;
+      const sourcePath = this.resolveTiledAssetPath(TILED_MAP.path, tileset.source);
+      const textKey = this.getTiledTilesetTextKey(sourcePath);
+      if (this.cache.text.exists(textKey) || queuedKeys.has(textKey)) return;
+
+      this.load.text(textKey, sourcePath);
+      queuedKeys.add(textKey);
+      queued = true;
+    });
+
+    return queued;
+  }
+
+  normalizeExternalTiledTilesets() {
+    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
+    if (!mapJson?.tilesets?.length) return;
+
+    let didChange = false;
+    const normalizedTilesets = mapJson.tilesets.map((tileset) => {
+      if (!tileset?.source || tileset.image) return tileset;
+
+      const sourcePath = this.resolveTiledAssetPath(TILED_MAP.path, tileset.source);
+      const textKey = this.getTiledTilesetTextKey(sourcePath);
+      const tilesetText = this.cache.text.get(textKey);
+      const externalTileset = this.parseTiledTilesetSource(tilesetText, sourcePath);
+      if (!externalTileset) {
+        console.warn(`Unable to read external Tiled tileset: ${tileset.source}`);
+        return tileset;
+      }
+
+      didChange = true;
+      return {
+        firstgid: tileset.firstgid,
+        ...externalTileset,
+      };
+    });
+
+    if (!didChange) return;
+
+    mapJson.tilesets = normalizedTilesets;
+    const tilemapCacheEntry = this.cache.tilemap.get(TILED_MAP.key);
+    const tilemapData = tilemapCacheEntry?.data || tilemapCacheEntry;
+    if (tilemapData?.tilesets) {
+      tilemapData.tilesets = normalizedTilesets.map((tileset) => ({ ...tileset }));
+    }
+  }
+
+  parseTiledTilesetSource(tilesetText, sourcePath) {
+    if (!tilesetText || typeof DOMParser === "undefined") return null;
+
+    const doc = new DOMParser().parseFromString(tilesetText, "application/xml");
+    if (doc.querySelector("parsererror")) return null;
+
+    const tileset = doc.querySelector("tileset");
+    const image = doc.querySelector("tileset > image");
+    if (!tileset?.getAttribute("name") || !image?.getAttribute("source")) return null;
+
+    return {
+      columns: Number(tileset.getAttribute("columns") || 0),
+      image: this.resolveTiledAssetPath(sourcePath, image.getAttribute("source")),
+      imageheight: Number(image.getAttribute("height") || 0),
+      imagewidth: Number(image.getAttribute("width") || 0),
+      margin: Number(tileset.getAttribute("margin") || 0),
+      name: tileset.getAttribute("name"),
+      spacing: Number(tileset.getAttribute("spacing") || 0),
+      tilecount: Number(tileset.getAttribute("tilecount") || 0),
+      tileheight: Number(tileset.getAttribute("tileheight") || 32),
+      tilewidth: Number(tileset.getAttribute("tilewidth") || 32),
+    };
+  }
+
+  getTiledTilesetTextKey(sourcePath) {
+    return `${TILED_TILESET_TEXT_KEY_PREFIX}${sourcePath}`;
+  }
+
   resolveTiledAssetPath(mapPath, assetPath) {
     if (/^(https?:)?\/\//.test(assetPath) || assetPath.startsWith("/")) {
       return assetPath;
     }
 
+    const normalizedAssetPath = assetPath.replaceAll("\\", "/");
+    if (/^(assets|src|vendor)\//.test(normalizedAssetPath)) {
+      return normalizedAssetPath;
+    }
+
     const baseParts = mapPath.split("/").slice(0, -1);
-    const parts = [...baseParts, ...assetPath.split(/[\\/]/)];
+    const parts = [...baseParts, ...normalizedAssetPath.split("/")];
     const normalized = [];
     parts.forEach((part) => {
       if (!part || part === ".") return;

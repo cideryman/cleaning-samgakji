@@ -270,33 +270,76 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
   - Add the `.tsx` tileset inside Tiled.
   - Paint directly in Tiled.
   - Export over `assets/maps/chapter1-samgakji-map.json`.
-  - Keep embedded tileset data enabled when exporting JSON.
+- Prefer external `.tsx` tilesets while the map is still growing.
+- Embedded tilesets are supported too, but external `.tsx` is the recommended default because it keeps tileset metadata separate from the map JSON and is easier for ongoing Tiled editing.
 - Do not rename a tileset after it is already used by the map unless the map JSON is updated too.
 - Do not move existing tiles around inside `samgakji-tiles.png`; append new tiles or add a new tileset instead.
 
 ### Known Issue: `park_tiles`
 
-- The user added `park_tiles` as an extra Tiled tileset, but it currently causes an error in-game.
-- Do not assume the multi-tileset workflow is fully stable yet.
-- Next time, inspect without changing gameplay first:
-  - Check the exported `assets/maps/chapter1-samgakji-map.json` tileset entry for `park_tiles`.
-  - Confirm the `image` path resolves correctly from the map JSON location.
-  - Confirm the tileset `name` in Tiled exactly matches the texture key loaded by `Preload.js`.
-  - Confirm `assets/tilesets/park_tiles.tsx` and `assets/tilesets/park_tiles.png` dimensions match `32x32` tile settings.
-  - Check browser console/build output for the exact missing texture or tileset error.
-- For now, this is only documented here; no code fix was applied for this issue.
+- The user added `park_tiles` as an extra Tiled tileset.
+- Cause found: the map JSON stores `park_tiles` as an external TSX reference:
+  - `"source":"../tilesets/park_tiles.tsx"`
+  - The previous loader only supported embedded tilesets with direct `image` fields.
+- Fix applied in `src/scenes/Preload.js`:
+  - Load external `.tsx` tileset files referenced by the Tiled JSON.
+  - Parse the TSX `<tileset>` and `<image>` metadata.
+  - Normalize the cached map JSON and tilemap JSON into embedded tileset-shaped objects before `PlayScene` creates the map.
+  - Then queue each tileset PNG image by its Tiled tileset name.
+- This means future extra tilesets can be added in Tiled as external TSX files, as long as the `.tsx` and PNG remain under `assets/tilesets/` and paths stay valid.
+- Current check: `chapter1-samgakji-map.json` references `park_tiles`, but no placed tile currently uses gid `65+`; only `samgakji_tiles` is used on the tile layers right now.
+- Build passed after this change with `npm.cmd run build`; generated `dist/` was removed.
 
 ## Next Map Refactor Candidate
 
-- `PlayScene.js` still owns too much Tiled map setup.
-- Safe next extraction target: a future `TiledMapSystem` or `MapLoaderSystem`.
-- Candidate methods to move together:
+- Added `src/systems/TiledMapSystem.js`.
+- `TiledMapSystem` now owns Tiled map setup and code-side map object collider helpers.
+- `PlayScene.js` keeps only the compatibility wrapper methods still used by existing callers:
   - `createMap`
-  - `createTiledMap`
-  - `createTiledTilesets`
-  - `getTiledTilesetTextureKey`
-  - `applyTiledObjects`
-  - `createTiledMapObjects`
-  - map-object fallback helpers that only exist to bridge Tiled objects and code defaults
-- Keep old `PlayScene` wrapper methods temporarily during extraction so gameplay does not break.
-- After extraction, check whether `findTiledTileset` is unused and remove it only if build/search confirms it is safe.
+  - `getMapPoint`
+  - `addObjectCollider`
+- This keeps existing systems working while reducing direct map-loading responsibility in `PlayScene.js`.
+- Build check after this change passed with `npm.cmd run build`; generated `dist/` was removed.
+- Follow-up step also moved fallback map construction into `TiledMapSystem`:
+  - `createFallbackMap`
+  - `addWall`
+  - `addTiledRect`
+- The temporary `PlayScene.js` wrappers for these fallback helpers were later removed after search confirmed no external callers.
+- Build check after this follow-up also passed with `npm.cmd run build`; generated `dist/` was removed.
+- Unused Tiled compatibility wrappers were removed from `PlayScene.js` after search confirmed no external callers.
+- Current line counts after this step:
+  - `src/scenes/PlayScene.js`: about 2420 lines
+  - `src/systems/TiledMapSystem.js`: about 269 lines
+- Next safe map cleanup:
+  - `findTiledTileset` was confirmed unused and removed from both `PlayScene.js` and `TiledMapSystem.js`.
+  - Keep `getMapPoint()` and `addObjectCollider()` wrappers longer because many systems still call them through `scene`.
+
+## Latest Wrapper Cleanup
+
+- Removed unused `PlayScene.js` compatibility wrappers for logic that already lives in dedicated systems:
+  - Clothing shop internals now stay in `ClothingShopSystem`.
+  - Packing modal internals now stay in `PackingSystem`.
+  - Vending menu internals now stay in `VendingMachineSystem`.
+  - Travel ending internals now stay in `TravelEndingSystem`.
+- Kept thin wrappers where current systems still call through `scene`, especially keyboard/control entry points and checkpoint restore hooks:
+  - `openClothingShopMenu`
+  - `closeClothingShopMenu`
+  - `completeClothesShoppingQuest`
+  - `selectFocusedClothingShopOption`
+  - `handleClothingShopKeyboard`
+  - `openPackingMenu`
+  - `closePackingMenu`
+  - `selectFocusedPackingOption`
+  - `handlePackingMenuKeyboard`
+  - `openVendingMenu`
+  - `handleVendingMenuKeyboard`
+  - `selectHighlightedVendingOption`
+  - `playVendingPaymentAnimationLike`
+  - bus stop checkpoint helpers such as `createTravelBusStopObjects` and `updateTravelBusRouteGuide`
+- Build check passed after this cleanup with `npm.cmd run build`; generated `dist/` was removed.
+
+## Next Refactor Step
+
+- Continue shrinking `PlayScene.js` by moving one owner area at a time.
+- Recommended next target: route/quest marker wrapper cleanup, because `RouteGuideSystem` already owns most route drawing.
+- Avoid moving dialogue content and quest state transitions in the same patch. They are riskier and should be extracted only after the wrappers and pure UI helpers are settled.
