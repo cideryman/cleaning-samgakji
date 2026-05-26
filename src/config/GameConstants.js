@@ -23,7 +23,7 @@ export const GAME_CONFIG = {
   feedbackSparkleCount: 14,
   canFeedbackSparkleCount: 18,
   slimeSpawnMinDistance: 72,
-  wideCameraZoom: 1.3,
+  wideCameraZoom: 0.9,
   joystickRadius: 78,
   slimeRespawnDelayMs: 12000,
   maxSlimes: 25,
