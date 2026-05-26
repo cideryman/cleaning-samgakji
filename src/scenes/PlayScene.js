@@ -13,7 +13,9 @@ import CheckpointStorage from "../systems/CheckpointStorage.js";
 import DialogueManager from "../systems/DialogueManager.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import AudioManager from "../systems/AudioManager.js";
+import InteriorSceneSystem from "../systems/InteriorSceneSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
+import ConsumableSystem from "../systems/ConsumableSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
 import PortraitManager from "../systems/PortraitManager.js";
 import QuestManager from "../systems/QuestManager.js";
@@ -134,6 +136,8 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiQuestSystem = null;
     this.audioManager = null;
     this.sceneControlSystem = null;
+    this.interiorSceneSystem = null;
+    this.consumableSystem = null;
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -216,16 +220,19 @@ export default class PlayScene extends Phaser.Scene {
     this.sweepHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.handlePrimaryAction();
     };
     this.specialHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.useYebiItem();
     };
     this.bacchusHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.useBacchusItem();
     };
     this.travelPrepHandler = (event) => {
@@ -277,6 +284,8 @@ export default class PlayScene extends Phaser.Scene {
     this.dialogueSystem = new DialogueSystem(this);
     this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
     this.audioManager = new AudioManager(this);
+    this.interiorSceneSystem = new InteriorSceneSystem(this);
+    this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
@@ -959,6 +968,7 @@ export default class PlayScene extends Phaser.Scene {
     vendingMachine.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.handleVendingMachineInteraction();
     });
     this.vendingMachine = vendingMachine;
@@ -1049,6 +1059,7 @@ export default class PlayScene extends Phaser.Scene {
       this.jjookNpc.on("pointerdown", (pointer) => {
         pointer.event?.preventDefault();
         pointer.event?.stopPropagation();
+        if (this.isWorldInputBlocked()) return;
         this.handleJjookInteraction();
       });
       this.jjookIdleTween = this.tweens.add({
@@ -1114,6 +1125,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.handleSunisuniInteraction();
     });
   }
@@ -1129,6 +1141,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleVendingMachineInteraction() {
+    if (this.isWorldInputBlocked()) return;
     if (this.isInDialogue || this.vendingMenuGroup) return;
     if (!this.isPlayerNearVendingMachine()) return;
 
@@ -1246,6 +1259,7 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
+      if (this.isWorldInputBlocked()) return;
       this.handlePrimaryAction();
     });
     this.tweens.add({
@@ -1686,6 +1700,18 @@ export default class PlayScene extends Phaser.Scene {
   // Interaction Facade
   // ---------------------------------------------------------------------------
 
+  isWorldInputBlocked() {
+    return Boolean(
+      this.isMissionComplete
+      || this.isInDialogue
+      || this.vendingMenuGroup
+      || this.clothingShopModal
+      || this.packingModal
+      || this.interiorSceneGroup
+      || (this.stateManager && !this.stateManager.canInteract()),
+    );
+  }
+
   handleSpaceAction() {
     if (this.isInDialogue) {
       return;
@@ -1706,10 +1732,15 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
+    if (this.isWorldInputBlocked()) {
+      return;
+    }
+
     this.handlePrimaryAction();
   }
 
   handlePrimaryAction() {
+    if (this.isWorldInputBlocked()) return;
     this.interactionSystem.handlePrimaryAction();
   }
 
@@ -1750,6 +1781,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleJjookInteraction() {
+    if (this.isWorldInputBlocked()) return;
     this.jjookQuestSystem?.handleInteraction();
   }
 
@@ -1766,6 +1798,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleClothingStoreInteraction() {
+    if (this.isWorldInputBlocked()) return;
     this.jjookQuestSystem?.handleClothingStoreInteraction();
   }
 
@@ -2181,6 +2214,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleSunisuniInteraction() {
+    if (this.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handleInteraction();
   }
 
@@ -2197,6 +2231,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleHospitalInteraction() {
+    if (this.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handleHospitalInteraction();
   }
 
@@ -2233,6 +2268,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handlePharmacyInteraction() {
+    if (this.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handlePharmacyInteraction();
   }
 
@@ -3160,59 +3196,15 @@ export default class PlayScene extends Phaser.Scene {
 
 
   showInteriorScene(textureKey, type = "hospital") {
-    this.clearInteriorScene();
-    document.body.classList.add("interior-scene-active");
-    document.body.dataset.interiorScene = type;
-    this.interiorSceneGroup = this.add.group();
-    this.interiorSceneType = type;
-
-    const viewportWidth = Math.max(768, this.scale.width || 768);
-    const viewportHeight = Math.max(480, this.scale.height || 480);
-    const centerX = viewportWidth / 2;
-    const centerY = viewportHeight / 2;
-    const overscan = 1.18;
-    const fillColor = type === "pharmacy" ? 0xe9ded2 : 0xded2c4;
-
-    const solidBack = this.add.rectangle(
-      centerX,
-      centerY,
-      viewportWidth * 2,
-      viewportHeight * 2,
-      fillColor,
-      1,
-    );
-    solidBack.setScrollFactor(0);
-    solidBack.setDepth(58);
-    this.interiorSceneGroup.add(solidBack);
-
-    const dim = this.add.rectangle(centerX, centerY, viewportWidth * 2, viewportHeight * 2, 0x000000, 0.35);
-    dim.setScrollFactor(0);
-    dim.setDepth(59);
-    this.interiorSceneGroup.add(dim);
-
-    const bg = this.add.image(centerX, centerY, textureKey);
-    bg.setScrollFactor(0);
-    this.fitInteriorBackground(bg, viewportWidth * overscan, viewportHeight * overscan);
-    bg.setDepth(60);
-    this.interiorSceneGroup.add(bg);
+    this.interiorSceneSystem?.show(textureKey, type);
   }
 
   fitInteriorBackground(image, targetWidth, targetHeight) {
-    const texture = this.textures.get(image.texture.key);
-    const source = texture?.getSourceImage?.();
-    const sourceWidth = Math.max(1, source?.width || image.width || 1);
-    const sourceHeight = Math.max(1, source?.height || image.height || 1);
-    const scale = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
-    image.setScale(scale);
+    this.interiorSceneSystem?.fitBackground(image, targetWidth, targetHeight);
   }
 
   clearInteriorScene() {
-    this.interiorSceneGroup?.clear(true, true);
-    this.interiorSceneGroup = null;
-    this.interiorSpeaker = null;
-    this.interiorSceneType = null;
-    document.body.classList.remove("interior-scene-active");
-    delete document.body.dataset.interiorScene;
+    this.interiorSceneSystem?.clear();
   }
 
   handleDialogueLineChange(line) {
@@ -3224,66 +3216,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   showFloatingItem(textureKey, x, y, size = 64, fixedToCamera = false, options = {}) {
-    if (!this.textures.exists(textureKey)) {
-      options.onComplete?.();
-      return;
-    }
-
-    const item = this.add.image(x, y, textureKey);
-    item.setDepth(72);
-    if (fixedToCamera) item.setScrollFactor(0);
-    if (typeof size === "object") {
-      item.setDisplaySize(size.width, size.height);
-    } else {
-      item.setDisplaySize(size, size);
-    }
-    item.setAlpha(0);
-    this.tweens.add({
-      targets: item,
-      alpha: 1,
-      y: y + (options.floatY ?? -18),
-      duration: options.duration ?? 280,
-      ease: "Back.easeOut",
-      yoyo: true,
-      hold: options.hold ?? 760,
-      onComplete: () => {
-        item.destroy();
-        options.onComplete?.();
-      },
-    });
+    this.interiorSceneSystem?.showFloatingItem(textureKey, x, y, size, fixedToCamera, options);
   }
 
   playVendingPaymentAnimationLike(textureKey, onComplete) {
-    const bill = this.add.image(384, 250, textureKey);
-    bill.setScrollFactor(0);
-    bill.setDisplaySize(132, 80);
-    bill.setDepth(71);
-    bill.setAlpha(0);
-    this.playTone({ frequency: 880, duration: 0.08, type: "triangle", volume: 0.06 });
-    this.tweens.add({
-      targets: bill,
-      alpha: 1,
-      y: 205,
-      duration: 240,
-      ease: "Back.easeOut",
-      onComplete: () => {
-        this.playTone({ frequency: 1240, duration: 0.08, type: "square", volume: 0.045 });
-        this.tweens.add({
-          targets: bill,
-          x: 520,
-          y: 220,
-          scaleX: bill.scaleX * 0.25,
-          scaleY: bill.scaleY * 0.25,
-          alpha: 0,
-          duration: 460,
-          ease: "Cubic.easeIn",
-          onComplete: () => {
-            bill.destroy();
-            onComplete?.();
-          },
-        });
-      },
-    });
+    this.interiorSceneSystem?.playPaymentAnimation(textureKey, onComplete);
   }
 
   playSunisuniEffect(animKey, x, y) {
@@ -3295,48 +3232,11 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   updateBacchusButton() {
-    if (!this.bacchusButton) return;
-
-    if (!this.hasBacchus && !this.isBacchusActive) {
-      this.bacchusButton.setAttribute("hidden", "");
-      this.bacchusButton.classList.remove("is-active");
-      if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = "";
-      return;
-    }
-
-    this.bacchusButton.removeAttribute("hidden");
-    this.bacchusButton.classList.toggle("is-active", this.isBacchusActive);
+    this.consumableSystem?.updateBacchusButton();
   }
 
   useBacchusItem() {
-    if (!this.hasBacchus || this.isBacchusActive) return;
-
-    this.hasBacchus = false;
-    this.isBacchusActive = true;
-    this.updateBacchusButton();
-    this.playItemPickupSound();
-    this.showQuestToast("힘이 나는 것 같아!");
-    this.showSpeechBubble(this.player, "조금 더 깨끗하게 치울 수 있겠어!", 1800);
-    this.showCleanFeedback(this.player.x, this.player.y, true);
-
-    const endAt = this.time.now + GAME_CONFIG.bacchusDurationMs;
-    this.bacchusCountdownEvent?.remove(false);
-    this.bacchusCountdownEvent = this.time.addEvent({
-      delay: 250,
-      loop: true,
-      callback: () => {
-        const remaining = Math.max(0, Math.ceil((endAt - this.time.now) / 1000));
-        if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = `${remaining}`;
-      },
-    });
-    this.bacchusTimer?.remove(false);
-    this.bacchusTimer = this.time.delayedCall(GAME_CONFIG.bacchusDurationMs, () => {
-      this.isBacchusActive = false;
-      this.bacchusCountdownEvent?.remove(false);
-      this.bacchusCountdownEvent = null;
-      this.updateBacchusButton();
-      this.showQuestToast("박카스 효과가 끝났어요.");
-    });
+    this.consumableSystem?.useBacchusItem();
   }
 
   sendSunisuniBackToBench() {

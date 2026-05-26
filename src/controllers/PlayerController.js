@@ -30,6 +30,7 @@ export default class PlayerController {
         scene.selectFocusedPackingOption();
         return;
       }
+      if (scene.isWorldInputBlocked?.()) return;
       scene.useYebiItem();
     });
   }
@@ -38,7 +39,15 @@ export default class PlayerController {
     const scene = this.scene;
     if (!scene.player) return;
 
-    if (!scene.stateManager?.canMove() || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal) {
+    if (
+      !scene.stateManager?.canMove()
+      || scene.isMissionComplete
+      || scene.isInDialogue
+      || scene.vendingMenuGroup
+      || scene.clothingShopModal
+      || scene.packingModal
+      || scene.interiorSceneGroup
+    ) {
       scene.player.setVelocity(0, 0);
       return;
     }
@@ -130,6 +139,7 @@ export default class PlayerController {
   startFloatingJoystick(event) {
     const scene = this.scene;
     if (scene.isMissionComplete || scene.activeJoystickPointerId !== null) return;
+    if (scene.isWorldInputBlocked?.()) return;
     if (!this.isJoystickStartEvent(event)) return;
 
     event.preventDefault();
