@@ -29,8 +29,6 @@ import TravelEndingSystem from "../systems/TravelEndingSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
 
-const TRAVEL_ALLOWANCE_REWARD = 20000;
-
 const NPC_ROAM_CONFIG = {
   yebi: {
     spriteProp: "yebiNpc",
@@ -2042,21 +2040,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   startTravelHomeSequence() {
-    this.playSceneMusic("ambient_bus_bgm", 0.26);
-    this.showInteriorScene("ending_bus_home", "travel");
-    this.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스 타고 가니까 진짜 여행 준비가 시작된 느낌이야." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "오늘 산 옷도 챙기고, 필요한 것도 골라볼래." },
-    ], () => this.startPackingRoomScene());
+    this.travelEndingSystem?.startTravelHomeSequence();
   }
 
   startPackingRoomScene() {
-    this.playSceneMusic("ambient_room_bgm", 0.24);
-    this.showInteriorScene("ending_packing_room", "home");
-    this.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: "가방을 펼쳐두니까 조금 설렌다." },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "정답은 없으니까, 내가 필요하다고 생각하는 짐을 골라보자." },
-    ], () => this.openPackingMenu());
+    this.travelEndingSystem?.startPackingRoomScene();
   }
 
   // ---------------------------------------------------------------------------
@@ -2164,133 +2152,43 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   startPackedRoomSequence() {
-    this.playSceneMusic("ambient_room_bgm", 0.24);
-    this.showInteriorScene("ending_packed_room", "home");
-    const itemMessage = this.packingItems.length
-      ? `${this.packingItems.map((item) => item.label).join(", ")}까지 챙겼어.`
-      : "가방은 가볍게 준비했어.";
-    this.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: itemMessage },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 진짜 서울 가는구나…" },
-    ], () => this.startMotherAllowanceSequence());
+    this.travelEndingSystem?.startPackedRoomSequence();
   }
 
   startMotherAllowanceSequence() {
-    this.dialogueSystem.start([
-      { name: "엄마", portraitKey: "mother_allowance", text: "우리 해냄이 정말 열심히 준비했네." },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "서울 가서 맛있는 것도 먹고 와." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워. 잘 다녀올게!" },
-    ], () => {
-      this.moneySystem?.addMoney(TRAVEL_ALLOWANCE_REWARD);
-      this.showMoneyRewardAnimation(TRAVEL_ALLOWANCE_REWARD, {
-        label: "용돈",
-        icon: "./assets/ui/10000won.png",
-        framed: false,
-      });
-      this.playItemPickupSound();
-      this.saveCheckpoint("travel_allowance");
-      this.time.delayedCall(900, () => this.startTravelMorningSequence());
-    });
+    this.travelEndingSystem?.startMotherAllowanceSequence();
   }
 
   startTravelMorningSequence() {
-    this.playSceneMusic("ambient_room_bgm", 0.24);
-    this.showInteriorScene("ending_morning_room", "home");
-    this.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "가방도 챙겼고, 용돈도 받았어." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 역으로 가자." },
-    ], () => this.startStationSequence());
+    this.travelEndingSystem?.startTravelMorningSequence();
   }
 
   startStationSequence() {
-    this.playSceneMusic("ambient_train_bgm", 0.26);
-    this.showInteriorScene("ending_yeongju_station", "travel");
-    this.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "우와… 진짜 가는구나." },
-      { name: "해냄이", portraitKey: "haenaem_surprised", text: "조금 떨려… 그래도 준비했으니까 괜찮아." },
-    ], () => this.startTrainArrivalSequence());
+    this.travelEndingSystem?.startStationSequence();
   }
 
   startTrainArrivalSequence() {
-    this.playSceneMusic("ambient_train_bgm", 0.28);
-    this.showInteriorScene("ending_train_arrival", "travel");
-    this.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "기차가 온다! 놓치지 말고 타자." },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 서울로 출발!" },
-    ], () => this.startSeoulArrivalSequence());
+    this.travelEndingSystem?.startTrainArrivalSequence();
   }
 
   startSeoulArrivalSequence() {
-    this.playSceneMusic("ambient_seoul_station_bgm", 0.26);
-    this.showInteriorScene("ending_seoul_station", "travel");
-    this.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_surprised", text: "서울역이다… 사람이 정말 많아." },
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "천천히 같이 다니면 괜찮아!" },
-    ], () => this.startTravelMemorySequence());
+    this.travelEndingSystem?.startSeoulArrivalSequence();
   }
 
   startTravelMemorySequence() {
-    this.playSceneMusic("ambient_gyeongbokgung_bgm", 0.26);
-    this.showInteriorScene("ending_gyeongbokgung", "travel");
-    this.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "내가 준비해서 온 여행이라 더 특별해." },
-    ], () => {
-      this.playSceneMusic("ambient_amusement_park_bgm", 0.26);
-      this.showInteriorScene("ending_amusement_park", "travel");
-      this.dialogueSystem.start([
-        { name: "쭉쭉이", portraitKey: "jjook_playful", text: "오늘 하루 오래 기억날 것 같아!" },
-        { name: "해냄이", portraitKey: "haenaem_touched", text: "응. 다음 여행도 내가 준비해보고 싶어." },
-      ], () => this.finishChapterOneEnding());
-    });
+    this.travelEndingSystem?.startTravelMemorySequence();
   }
 
   finishChapterOneEnding() {
-    this.packingQuestState = "ending_complete";
-    this.isChapterComplete = true;
-    this.saveCheckpoint("chapter1_ending_complete");
-    this.showChapterOneEndingScene();
+    this.travelEndingSystem?.finishChapterOneEnding();
   }
 
   showChapterOneEndingScene() {
-    this.clearInteriorScene();
-    this.stopSceneMusic();
-    this.stopChapterMusic();
-    this.playSceneMusic("chapter1_ending_bgm", 0.34);
-    this.stateManager?.set(SceneState.CUTSCENE);
-    this.player?.setVelocity(0, 0);
-    this.playerController?.stopWalkAnimation?.();
-    this.showInteriorScene("ending_chapter1_final", "ending");
-
-    const viewportWidth = Math.max(768, this.scale.width || 768);
-    const viewportHeight = Math.max(480, this.scale.height || 480);
-    const centerX = viewportWidth / 2;
-    const promptY = Math.min(viewportHeight - 46, viewportHeight * 0.9);
-    const promptBack = this.add.rectangle(centerX, promptY, Math.min(560, viewportWidth - 56), 54, 0x21352c, 0.72);
-    promptBack.setScrollFactor(0);
-    promptBack.setDepth(74);
-    promptBack.setStrokeStyle(3, 0xf7d96f, 0.9);
-    const prompt = this.add.text(centerX, promptY, "스페이스 또는 화면 터치로 시작화면으로", {
-      fontFamily: "Arial",
-      fontSize: "22px",
-      color: "#fff3d0",
-      fontStyle: "bold",
-      align: "center",
-    }).setOrigin(0.5);
-    prompt.setScrollFactor(0);
-    prompt.setDepth(75);
-    this.interiorSceneGroup?.addMultiple?.([promptBack, prompt]);
-
-    this.input.keyboard.once("keydown-SPACE", () => this.returnToStartScreenFromEnding());
-    this.input.once("pointerdown", () => this.returnToStartScreenFromEnding());
+    this.travelEndingSystem?.showChapterOneEndingScene();
   }
 
   returnToStartScreenFromEnding() {
-    if (this.packingQuestState !== "ending_complete") return;
-    this.stopSceneMusic();
-    this.stopChapterMusic();
-    this.clearInteriorScene();
-    document.body.classList.add("start-screen");
-    this.scene.start("StartScene");
+    this.travelEndingSystem?.returnToStartScreenFromEnding();
   }
 
   // ---------------------------------------------------------------------------
