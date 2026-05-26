@@ -18,20 +18,7 @@ export default class InteractionSystem {
 
     if (scene.tryDepositNearestRecycleBin()) return;
 
-    if (this.isPlayerNearHospitalDoor() && !scene.isInDialogue) {
-      scene.handleHospitalInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearPharmacyDoor() && !scene.isInDialogue) {
-      scene.handlePharmacyInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearClothingStoreDoor() && !scene.isInDialogue) {
-      scene.handleClothingStoreInteraction();
-      return;
-    }
+    if (this.handlePriorityLocationInteraction()) return;
 
     if (this.shouldPrioritizeSunisuniDialogue()) {
       scene.handleSunisuniInteraction();
@@ -59,6 +46,28 @@ export default class InteractionSystem {
     }
 
     scene.trySweep();
+  }
+
+  handlePriorityLocationInteraction() {
+    const scene = this.scene;
+    if (scene.isInDialogue) return false;
+
+    if (this.isPlayerNearHospitalDoor()) {
+      scene.handleHospitalInteraction();
+      return true;
+    }
+
+    if (this.isPlayerNearPharmacyDoor()) {
+      scene.handlePharmacyInteraction();
+      return true;
+    }
+
+    if (this.isPlayerNearClothingStoreDoor()) {
+      scene.handleClothingStoreInteraction();
+      return true;
+    }
+
+    return false;
   }
 
   isPlayerNearJjookNpc() {

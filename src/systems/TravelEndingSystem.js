@@ -12,27 +12,45 @@ export default class TravelEndingSystem {
     return this.scene.getMapPoint("bus_stop", GAME_CONFIG.busStop);
   }
 
-  createBusStopObjects() {
+  createPermanentBusStopObjects() {
     const scene = this.scene;
-    this.cleanupBusStopSequence();
+    this.cleanupPermanentBusStopObjects();
 
     const stop = this.getBusStopPoint();
     if (!stop) return null;
 
+    scene.permanentBusStopObjects = [];
     const waitingSpot = scene.add.ellipse(stop.x, stop.y + 42, 104, 32, 0xf7d96f, 0.26);
     waitingSpot.setStrokeStyle(2, 0x21352c, 0.32);
     waitingSpot.setDepth(scene.getWorldDepth(stop.y + 42, -0.35));
+    scene.permanentBusStopObjects.push(waitingSpot);
 
     if (scene.textures.exists("bus_stop_sign")) {
       const sign = scene.add.image(stop.x - 58, stop.y + 32, "bus_stop_sign");
       sign.setOrigin(0.5, 1);
       sign.setDisplaySize(38, 72);
       sign.setDepth(scene.getWorldDepth(stop.y + 32, 0.02));
-      scene.travelBusStopObjects.push(sign);
+      scene.permanentBusStopObjects.push(sign);
     }
 
-    scene.travelBusStopObjects.push(waitingSpot);
     return stop;
+  }
+
+  cleanupPermanentBusStopObjects() {
+    const scene = this.scene;
+    scene.permanentBusStopObjects?.forEach((object) => object?.destroy?.());
+    scene.permanentBusStopObjects = [];
+  }
+
+  createBusStopObjects() {
+    const scene = this.scene;
+    this.cleanupBusStopSequence();
+
+    if (!scene.permanentBusStopObjects?.length) {
+      return this.createPermanentBusStopObjects();
+    }
+
+    return this.getBusStopPoint();
   }
 
   startBusStopBoardingSequence() {

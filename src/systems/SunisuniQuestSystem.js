@@ -86,6 +86,7 @@ export default class SunisuniQuestSystem {
   handleInteraction() {
     const scene = this.scene;
     if (scene.isInDialogue || !scene.dialogueSystem || scene.sunisuniQuestState === "locked") return;
+    if (this.isFollowing() && scene.interactionSystem?.handlePriorityLocationInteraction()) return;
     if (!scene.isPlayerNearSunisuniNpc()) return;
 
     if (scene.sunisuniQuestState === "sunisuni_found") {

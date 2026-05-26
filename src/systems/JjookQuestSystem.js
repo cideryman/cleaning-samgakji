@@ -46,6 +46,7 @@ export default class JjookQuestSystem {
   handleInteraction() {
     const scene = this.scene;
     if (scene.isInDialogue || !scene.dialogueSystem || scene.jjookQuestState === "locked") return;
+    if (scene.isJjookClothesEscortActive && scene.interactionSystem?.handlePriorityLocationInteraction()) return;
     if (!scene.isPlayerNearJjookNpc()) return;
 
     if (scene.jjookQuestState === "wallet_missing") {

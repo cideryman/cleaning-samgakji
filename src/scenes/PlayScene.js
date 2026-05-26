@@ -122,6 +122,7 @@ export default class PlayScene extends Phaser.Scene {
     this.packingStepIndex = 0;
     this.packingMode = "category";
     this.travelBus = null;
+    this.permanentBusStopObjects = [];
     this.travelBusStopObjects = [];
     this.travelBusSequenceEvents = [];
     this.nextBusEscortWaitToastAt = 0;
@@ -339,6 +340,7 @@ export default class PlayScene extends Phaser.Scene {
       this.closePackingMenu?.();
       this.vendingMachineSystem?.close();
       this.cleanupTravelBusStopSequence?.();
+      this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
       this.roadTrafficSystem?.cleanup();
       this.routeGuideSystem?.destroy();
       window.removeEventListener("pagehide", this.pageAudioStopHandler);
@@ -347,6 +349,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.travelEndingSystem?.createPermanentBusStopObjects?.();
     this.createSunisuniAnimations();
     this.createRecyclingCenter();
     this.createYebiNpc();
@@ -440,7 +443,9 @@ export default class PlayScene extends Phaser.Scene {
     this.packingStepIndex = 0;
     this.packingMode = "category";
     this.cleanupTravelBusStopSequence?.();
+    this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
     this.travelBus = null;
+    this.permanentBusStopObjects = [];
     this.travelBusStopObjects = [];
     this.travelBusSequenceEvents = [];
     this.nextBusEscortWaitToastAt = 0;
@@ -2325,7 +2330,7 @@ export default class PlayScene extends Phaser.Scene {
       { name: "엄마", portraitKey: "mother_calm", text: "쓰레기를 빗자루로 치우고 스스로 보상을 모아보자." },
       { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어. 내가 직접 깨끗하게 치워볼게!" },
     ];
-    this.dialogueSystem.start(dialogue, () => this.showYebiQuestDialogue());
+    this.dialogueSystem.start(dialogue, () => this.yebiQuestSystem?.markCanQuestAvailable());
   }
 
   // ---------------------------------------------------------------------------

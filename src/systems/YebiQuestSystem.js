@@ -21,6 +21,15 @@ export default class YebiQuestSystem {
     scene.saveCheckpoint("recycle_unlocked");
   }
 
+  markCanQuestAvailable() {
+    const scene = this.scene;
+    if (!scene.yebiNpc || !scene.questManager) return;
+    if (scene.questManager.getQuestState?.() !== "inactive") return;
+    if (scene.questManager.getRecycleQuestState?.() !== "locked") return;
+
+    scene.setQuestMarker?.("canQuest", scene.yebiNpc, "?");
+  }
+
   getRecyclePosition() {
     const scene = this.scene;
     const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
