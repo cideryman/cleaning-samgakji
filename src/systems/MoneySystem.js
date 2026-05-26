@@ -36,6 +36,7 @@ export default class MoneySystem {
     this.uiElements.count500.textContent = count500;
     this.uiElements.count100.textContent = count100;
     this.uiElements.totalMoney.textContent = `\u20A9${this.money.toLocaleString()}`;
+    this.scene.uiManager?.updateNextQuestHint?.();
   }
 
   processCanBonus(isCan) {

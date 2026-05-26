@@ -1739,6 +1739,30 @@ body.app-fit-mode #game canvas {
   text-shadow: 1px 1px 0 #000000;
 }
 
+.next-quest-hint {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  max-width: 150px;
+  margin-left: 2px;
+  padding: 3px 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 24px;
+  background: rgba(255, 217, 102, 0.16);
+  color: #ffe58a;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.next-quest-hint.is-hidden {
+  display: none;
+}
+
 .can-quest-hud {
   position: absolute;
   top: 62px;
@@ -2077,6 +2101,13 @@ body.app-fit-mode #game canvas {
   .trash-inventory-item span {
     min-width: 11px;
     font-size: 13px;
+  }
+
+  .next-quest-hint {
+    max-width: 112px;
+    min-height: 22px;
+    padding: 3px 6px;
+    font-size: 12px;
   }
 
   .can-quest-hud {

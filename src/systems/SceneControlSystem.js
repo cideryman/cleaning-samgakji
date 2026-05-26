@@ -3,6 +3,19 @@ export default class SceneControlSystem {
     this.scene = scene;
   }
 
+  isWorldInputBlocked() {
+    const scene = this.scene;
+    return Boolean(
+      scene.isMissionComplete
+      || scene.isInDialogue
+      || scene.vendingMenuGroup
+      || scene.clothingShopModal
+      || scene.packingModal
+      || scene.interiorSceneGroup
+      || (scene.stateManager && !scene.stateManager.canInteract()),
+    );
+  }
+
   restartGame() {
     const scene = this.scene;
     scene.completeOverlay?.classList.remove("is-visible");

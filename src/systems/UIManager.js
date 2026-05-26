@@ -5,6 +5,12 @@ export default class UIManager {
     this.scene = scene;
     this.questToastQueue = [];
     this.isShowingQuestToast = false;
+    this.nextQuestHintEl = document.querySelector("#nextQuestHint");
+    this.nextQuestHintRefreshEvent = this.scene.time.addEvent({
+      delay: 500,
+      loop: true,
+      callback: () => this.updateNextQuestHint(),
+    });
   }
 
   showQuestToast(message, duration = 1700) {
@@ -123,5 +129,57 @@ export default class UIManager {
       scene.specialButton.hidden = !scene.hasUnlockedYebi || scene.hasUsedYebi;
       scene.specialButton.classList.toggle("is-ready", scene.hasUnlockedYebi && !scene.hasUsedYebi);
     }
+
+    this.updateNextQuestHint();
+  }
+
+  updateNextQuestHint() {
+    if (!this.nextQuestHintEl) return;
+
+    const hint = this.getNextQuestHint();
+    if (!hint) {
+      this.nextQuestHintEl.classList.add("is-hidden");
+      this.nextQuestHintEl.setAttribute("aria-hidden", "true");
+      this.nextQuestHintEl.textContent = "";
+      return;
+    }
+
+    this.nextQuestHintEl.textContent = hint;
+    this.nextQuestHintEl.classList.remove("is-hidden");
+    this.nextQuestHintEl.setAttribute("aria-hidden", "false");
+  }
+
+  getNextQuestHint() {
+    const scene = this.scene;
+    const money = scene.moneySystem?.money ?? 0;
+    const questManager = scene.questManager;
+    if (!questManager) return "";
+
+    const recycleState = questManager.getRecycleQuestState?.() ?? "locked";
+    if (recycleState === "locked" && !scene.hasAnnouncedRecycleQuest) {
+      return this.formatQuestHint("분리수거", GAME_CONFIG.recycleQuestUnlockMoney, money);
+    }
+
+    if (recycleState === "completed" && scene.jjookQuestState === "locked" && !scene.hasAnnouncedJjookQuest) {
+      return this.formatQuestHint("쭉쭉이", GAME_CONFIG.jjookQuestUnlockMoney, money);
+    }
+
+    if (scene.jjookQuestState === "completed" && scene.sunisuniQuestState === "locked" && !scene.hasAnnouncedSunisuniQuest) {
+      return this.formatQuestHint("병원", GAME_CONFIG.sunisuniQuestUnlockMoney, money);
+    }
+
+    if (scene.sunisuniQuestState === "quest_complete" && scene.clothesQuestState === "locked" && !scene.hasAnnouncedClothesQuest) {
+      return this.formatQuestHint("여행 준비", GAME_CONFIG.clothesQuestUnlockMoney, money);
+    }
+
+    return "";
+  }
+
+  formatQuestHint(label, targetMoney, currentMoney) {
+    const remaining = Math.max(0, targetMoney - currentMoney);
+    if (remaining <= 0) {
+      return `다음: ${label} 가능`;
+    }
+    return `다음: ${label} ${targetMoney.toLocaleString()}원`;
   }
 }

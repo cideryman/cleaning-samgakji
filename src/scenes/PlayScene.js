@@ -220,19 +220,19 @@ export default class PlayScene extends Phaser.Scene {
     this.sweepHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.handlePrimaryAction();
     };
     this.specialHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.useYebiItem();
     };
     this.bacchusHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.useBacchusItem();
     };
     this.travelPrepHandler = (event) => {
@@ -968,7 +968,7 @@ export default class PlayScene extends Phaser.Scene {
     vendingMachine.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.handleVendingMachineInteraction();
     });
     this.vendingMachine = vendingMachine;
@@ -1059,7 +1059,7 @@ export default class PlayScene extends Phaser.Scene {
       this.jjookNpc.on("pointerdown", (pointer) => {
         pointer.event?.preventDefault();
         pointer.event?.stopPropagation();
-        if (this.isWorldInputBlocked()) return;
+        if (this.sceneControlSystem?.isWorldInputBlocked()) return;
         this.handleJjookInteraction();
       });
       this.jjookIdleTween = this.tweens.add({
@@ -1125,7 +1125,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.handleSunisuniInteraction();
     });
   }
@@ -1141,7 +1141,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleVendingMachineInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     if (this.isInDialogue || this.vendingMenuGroup) return;
     if (!this.isPlayerNearVendingMachine()) return;
 
@@ -1259,7 +1259,7 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
-      if (this.isWorldInputBlocked()) return;
+      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
       this.handlePrimaryAction();
     });
     this.tweens.add({
@@ -1700,18 +1700,6 @@ export default class PlayScene extends Phaser.Scene {
   // Interaction Facade
   // ---------------------------------------------------------------------------
 
-  isWorldInputBlocked() {
-    return Boolean(
-      this.isMissionComplete
-      || this.isInDialogue
-      || this.vendingMenuGroup
-      || this.clothingShopModal
-      || this.packingModal
-      || this.interiorSceneGroup
-      || (this.stateManager && !this.stateManager.canInteract()),
-    );
-  }
-
   handleSpaceAction() {
     if (this.isInDialogue) {
       return;
@@ -1732,7 +1720,7 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.isWorldInputBlocked()) {
+    if (this.sceneControlSystem?.isWorldInputBlocked()) {
       return;
     }
 
@@ -1740,7 +1728,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handlePrimaryAction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.interactionSystem.handlePrimaryAction();
   }
 
@@ -1781,7 +1769,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleJjookInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.jjookQuestSystem?.handleInteraction();
   }
 
@@ -1798,7 +1786,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleClothingStoreInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.jjookQuestSystem?.handleClothingStoreInteraction();
   }
 
@@ -2214,7 +2202,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   handleSunisuniInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handleInteraction();
   }
 
@@ -2231,7 +2219,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handleHospitalInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handleHospitalInteraction();
   }
 
@@ -2268,7 +2256,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   handlePharmacyInteraction() {
-    if (this.isWorldInputBlocked()) return;
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.sunisuniQuestSystem?.handlePharmacyInteraction();
   }
 

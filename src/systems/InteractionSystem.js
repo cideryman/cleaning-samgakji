@@ -8,7 +8,7 @@ export default class InteractionSystem {
 
   handlePrimaryAction() {
     const scene = this.scene;
-    if (scene.isWorldInputBlocked?.()) return;
+    if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!scene.stateManager?.canInteract()) return;
 
     if (scene.hasTrashInSweepRange()) {

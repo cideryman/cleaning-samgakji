@@ -30,7 +30,7 @@ export default class PlayerController {
         scene.selectFocusedPackingOption();
         return;
       }
-      if (scene.isWorldInputBlocked?.()) return;
+      if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
       scene.useYebiItem();
     });
   }
@@ -139,7 +139,7 @@ export default class PlayerController {
   startFloatingJoystick(event) {
     const scene = this.scene;
     if (scene.isMissionComplete || scene.activeJoystickPointerId !== null) return;
-    if (scene.isWorldInputBlocked?.()) return;
+    if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!this.isJoystickStartEvent(event)) return;
 
     event.preventDefault();
