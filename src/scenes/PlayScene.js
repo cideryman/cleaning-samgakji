@@ -12,12 +12,14 @@ import CleaningSystem from "../systems/CleaningSystem.js";
 import CheckpointStorage from "../systems/CheckpointStorage.js";
 import DialogueManager from "../systems/DialogueManager.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
+import AudioManager from "../systems/AudioManager.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
 import PortraitManager from "../systems/PortraitManager.js";
 import QuestManager from "../systems/QuestManager.js";
 import RoadTrafficSystem from "../systems/RoadTrafficSystem.js";
 import RouteGuideSystem from "../systems/RouteGuideSystem.js";
+import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import UIManager from "../systems/UIManager.js";
 import VendingMachineSystem from "../systems/VendingMachineSystem.js";
@@ -26,6 +28,7 @@ import ClothingShopSystem from "../systems/ClothingShopSystem.js";
 import SunisuniQuestSystem from "../systems/SunisuniQuestSystem.js";
 import JjookQuestSystem from "../systems/JjookQuestSystem.js";
 import TravelEndingSystem from "../systems/TravelEndingSystem.js";
+import YebiQuestSystem from "../systems/YebiQuestSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
 
@@ -128,6 +131,9 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestSystem = null;
     this.jjookQuestSystem = null;
     this.travelEndingSystem = null;
+    this.yebiQuestSystem = null;
+    this.audioManager = null;
+    this.sceneControlSystem = null;
     this.jjookIdleTween = null;
     this.jjookReturningHome = false;
     this.sunisuniReturningToBench = false;
@@ -270,6 +276,8 @@ export default class PlayScene extends Phaser.Scene {
     this.stateManager = new StateManager();
     this.dialogueSystem = new DialogueSystem(this);
     this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
+    this.audioManager = new AudioManager(this);
+    this.sceneControlSystem = new SceneControlSystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
       DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
@@ -285,6 +293,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniQuestSystem = new SunisuniQuestSystem(this);
     this.jjookQuestSystem = new JjookQuestSystem(this);
     this.travelEndingSystem = new TravelEndingSystem(this);
+    this.yebiQuestSystem = new YebiQuestSystem(this);
     this.playerController = new PlayerController(this);
     this.interactionSystem = new InteractionSystem(this);
     this.slimeSystem = new SlimeSystem(this);
@@ -647,18 +656,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   checkRecycleQuestUnlock() {
-    if (!this.moneySystem || !this.questManager || this.hasAnnouncedRecycleQuest) return;
-    if (this.moneySystem.money < GAME_CONFIG.recycleQuestUnlockMoney) return;
-
-    this.hasAnnouncedRecycleQuest = true;
-    const didUnlock = this.questManager.unlockRecycleQuest();
-    if (!didUnlock) return;
-
-    this.moveYebiToRecyclingCenter();
-    this.setQuestMarker("recycleQuest", this.yebiNpc, "!");
-    this.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
-    this.showSpeechBubble(this.yebiNpc, "분리수거장으로 와!", 10000);
-    this.saveCheckpoint("recycle_unlocked");
+    this.yebiQuestSystem?.checkRecycleQuestUnlock();
   }
 
   checkJjookQuestUnlock() {
@@ -1034,11 +1032,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   getYebiRecyclePosition() {
-    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
-    return this.getMapPoint("yebi_recycle_stand", {
-      x: center.x - 270,
-      y: center.y + 28,
-    });
+    return this.yebiQuestSystem?.getRecyclePosition() || this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
   }
 
   // ---------------------------------------------------------------------------
@@ -1265,100 +1259,23 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   moveYebiToRecyclingCenter() {
-    if (!this.yebiNpc) return;
-
-    this.pauseNpcRoaming("yebi");
-    const position = this.getYebiRecyclePosition();
-    this.tweens.killTweensOf(this.yebiNpc);
-    this.yebiNpc.setPosition(position.x, position.y);
-    this.yebiNpc.setDepth(3.6);
-    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
-    this.tweens.add({
-      targets: this.yebiNpc,
-      y: position.y - 5,
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
+    this.yebiQuestSystem?.moveYebiToRecyclingCenter();
   }
 
   walkYebiToRecyclingCenter() {
-    if (!this.yebiNpc) return;
-
-    this.pauseNpcRoaming("yebi");
-    const position = this.getYebiRecyclePosition();
-    this.tweens.killTweensOf(this.yebiNpc);
-    this.yebiNpc.setDepth(3.6);
-    const path = this.getYebiPathToRecyclingCenter(position);
-    this.walkYebiAlongPath(path, 0);
+    this.yebiQuestSystem?.walkYebiToRecyclingCenter();
   }
 
   getYebiPathToRecyclingCenter(target) {
-    const startX = this.yebiNpc?.x ?? this.playerStart.x;
-    const startY = this.yebiNpc?.y ?? this.playerStart.y;
-    const vendingPoint = this.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
-    const upperLaneY = Math.min(startY - 70, vendingPoint.y - 118);
-
-    return [
-      { x: startX, y: upperLaneY },
-      { x: startX + 130, y: upperLaneY },
-      { x: vendingPoint.x - 145, y: upperLaneY },
-      { x: vendingPoint.x + 155, y: upperLaneY },
-      { x: target.x, y: upperLaneY },
-      { x: target.x, y: target.y },
-    ];
+    return this.yebiQuestSystem?.getPathToRecyclingCenter(target) || [];
   }
 
   walkYebiAlongPath(path, index) {
-    if (!this.yebiNpc || index >= path.length) {
-      this.startYebiIdleBob();
-      return;
-    }
-
-    const target = path[index];
-    const distance = Phaser.Math.Distance.Between(this.yebiNpc.x, this.yebiNpc.y, target.x, target.y);
-    if (distance < 4) {
-      this.walkYebiAlongPath(path, index + 1);
-      return;
-    }
-
-    let previousX = this.yebiNpc.x;
-    let previousY = this.yebiNpc.y;
-    const walkingSpeed = GAME_CONFIG.playerSpeed * 0.72;
-    this.tweens.add({
-      targets: this.yebiNpc,
-      x: target.x,
-      y: target.y,
-      duration: Math.max(420, (distance / walkingSpeed) * 1000),
-      ease: "Linear",
-      onUpdate: () => {
-        const dx = this.yebiNpc.x - previousX;
-        const dy = this.yebiNpc.y - previousY;
-        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
-          const directionKey = this.getDirectionKeyFromVector(dx, dy, this.yebiNpc.getData("directionKey") || "down");
-          this.setNpcDirectionTexture(this.yebiNpc, "yeobi", directionKey, true);
-        }
-        previousX = this.yebiNpc.x;
-        previousY = this.yebiNpc.y;
-      },
-      onComplete: () => this.walkYebiAlongPath(path, index + 1),
-    });
+    this.yebiQuestSystem?.walkAlongPath(path, index);
   }
 
   startYebiIdleBob() {
-    if (!this.yebiNpc) return;
-
-    const idleY = this.yebiNpc.y;
-    this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
-    this.tweens.add({
-      targets: this.yebiNpc,
-      y: idleY - 5,
-      duration: 900,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
+    this.yebiQuestSystem?.startIdleBob();
   }
 
   // ---------------------------------------------------------------------------
@@ -2368,79 +2285,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   showYebiQuestDialogue() {
-    if (this.isInDialogue || !this.dialogueSystem || !this.questManager) return;
-
-    const recycleState = this.questManager.getRecycleQuestState();
-    if (recycleState === "unlocked") {
-      this.dialogueSystem.start([
-        { name: "여비", portraitKey: "yeobi", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
-        { name: "여비", portraitKey: "yeobi", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
-        {
-          name: "여비",
-          portraitKey: "yeobi",
-          text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
-          choices: [{ label: "해볼게", onSelect: () => this.questManager.startRecycleQuest() }],
-        },
-      ]);
-      return;
-    }
-
-    if (recycleState === "active") {
-      const quest = this.questManager.recycleQuest;
-      this.dialogueSystem.start([
-        { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
-      ]);
-      return;
-    }
-
-    if (recycleState === "completed") {
-      this.dialogueSystem.start([
-        { name: "여비", portraitKey: "yeobi", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
-      ]);
-      return;
-    }
-
-    const questState = this.questManager.getQuestState();
-    if (questState === "inactive") {
-      this.dialogueSystem.start([
-        {
-          name: "여비",
-          portraitKey: "yeobi",
-          text: "안녕! 혹시 나 좀 도와줄 수 있어?",
-          choices: [
-            {
-              label: "예",
-              onSelect: () => {
-                this.dialogueSystem.start([
-                  { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어요. 캔을 모아볼게요!" },
-                  { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
-                ], () => this.questManager.startQuest());
-              },
-            },
-            {
-              label: "아니오",
-              onSelect: () => {
-                this.dialogueSystem.start([
-                  { name: "여비", portraitKey: "yeobi", text: "아... 그래. 다음에 꼭 부탁할게." },
-                ]);
-              },
-            },
-          ],
-        },
-      ]);
-      return;
-    }
-
-    if (questState === "active") {
-      this.dialogueSystem.start([
-        { name: "여비", portraitKey: "yeobi", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
-      ]);
-      return;
-    }
-
-    this.dialogueSystem.start([
-      { name: "여비", portraitKey: "yeobi", text: "오늘도 고마워. 깨끗한 거리를 같이 만들자!" },
-    ]);
+    this.yebiQuestSystem?.showQuestDialogue();
   }
 
   isPlayerNearYebiNpc() {
@@ -2938,60 +2783,11 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   tryDepositNearestRecycleBin() {
-    if (!this.player || !this.recycleBins?.length) return false;
-
-    const playerPoints = [
-      { x: this.player.x, y: this.player.y },
-      { x: this.player.x, y: this.player.y + GAME_CONFIG.playerDisplayHeight * 0.22 },
-      { x: this.player.x, y: this.player.y - GAME_CONFIG.playerDisplayHeight * 0.16 },
-    ];
-
-    const nearest = this.recycleBins.find(({ zone }) => {
-      const bounds = zone.getBounds();
-      return playerPoints.some((point) => Phaser.Geom.Rectangle.Contains(bounds, point.x, point.y));
-    });
-    if (!nearest) return false;
-
-    this.depositRecycleItem(nearest.type, nearest.bin);
-    return true;
+    return this.yebiQuestSystem?.tryDepositNearestRecycleBin() ?? false;
   }
 
   depositRecycleItem(type, binSprite) {
-    const inventoryCount = this.recyclingInventory[type] || 0;
-    if (inventoryCount <= 0) {
-      const message = type === "plastic"
-        ? "플라스틱을 아직 못 주웠어."
-        : "이건 여기가 아니야.";
-      this.showSpeechBubble(this.player, message);
-      this.playTone({ frequency: 220, duration: 0.09, type: "square", volume: 0.035 });
-      return;
-    }
-
-    const recycleState = this.questManager?.getRecycleQuestState();
-    if (recycleState === "locked" || recycleState === "unlocked") {
-      this.showSpeechBubble(this.player, "여비 아저씨에게 먼저 물어보자!");
-      return;
-    }
-
-    if (recycleState === "active") {
-      const didDepositForQuest = this.questManager?.depositRecycleItem(type);
-      if (!didDepositForQuest) return;
-
-      this.recyclingInventory[type] -= 1;
-      this.showRecycleDepositEffect(binSprite || this.player, type);
-      this.playItemPickupSound();
-      this.updateHud();
-      return;
-    }
-
-    const depositCount = inventoryCount;
-    const reward = depositCount * GAME_CONFIG.recycleDepositReward;
-    this.recyclingInventory[type] = 0;
-    this.showRecycleDepositEffect(binSprite || this.player, type, depositCount);
-    this.moneySystem?.addMoney(reward);
-    this.playItemPickupSound();
-    this.showQuestToast(`${this.getRecycleTypeLabel(type)} ${depositCount}개 분리수거! +${reward.toLocaleString()}원`);
-    this.updateHud();
+    this.yebiQuestSystem?.depositRecycleItem(type, binSprite);
   }
 
   // ---------------------------------------------------------------------------
@@ -3102,54 +2898,11 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   showRecycleDepositEffect(target, type, count = 1) {
-    const colorByType = {
-      can: 0x6fcf97,
-      normal: 0x79c6ff,
-      plastic: 0xf2c94c,
-    };
-    const color = colorByType[type] || 0xffffff;
-    this.showSpeechBubble(target, count > 1 ? `${count}개 쏙!` : "쏙!");
-
-    const itemTexture = this.getRandomTrashTexture(type);
-    if (this.textures.exists(itemTexture)) {
-      const item = this.add.image(target.x, target.y - 88, itemTexture);
-      const itemSize = this.getTrashDisplaySize(itemTexture, type);
-      item.setDepth(8);
-      item.setDisplaySize(itemSize.width, itemSize.height);
-      this.tweens.add({
-        targets: item,
-        y: target.y - 18,
-        scaleX: item.scaleX * 0.35,
-        scaleY: item.scaleY * 0.35,
-        alpha: 0,
-        duration: 360,
-        ease: "Cubic.easeIn",
-        onComplete: () => item.destroy(),
-      });
-    }
-
-    for (let i = 0; i < 12; i += 1) {
-      const sparkle = this.add.circle(target.x, target.y, Phaser.Math.Between(3, 5), color, 0.95);
-      sparkle.setDepth(7);
-      this.tweens.add({
-        targets: sparkle,
-        x: target.x + Phaser.Math.Between(-32, 32),
-        y: target.y + Phaser.Math.Between(-42, 16),
-        alpha: 0,
-        duration: 420,
-        ease: "Cubic.easeOut",
-        onComplete: () => sparkle.destroy(),
-      });
-    }
+    this.yebiQuestSystem?.showDepositEffect(target, type, count);
   }
 
   getRecycleTypeLabel(type) {
-    const labelByType = {
-      can: "캔",
-      normal: "일반 쓰레기",
-      plastic: "플라스틱",
-    };
-    return labelByType[type] || "쓰레기";
+    return this.yebiQuestSystem?.getTypeLabel(type) || "쓰레기";
   }
 
   // ---------------------------------------------------------------------------
@@ -3217,18 +2970,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   activateRecycleMasterReward() {
-    if (this.isRecycleMaster) return;
-
-    this.isRecycleMaster = true;
-    this.playMoneyRewardSound();
-    this.showCleanFeedback(this.player.x, this.player.y, true);
-    this.showQuestToast("분리수거 보상 개방! 맞는 통에 넣으면 100원");
-    this.dialogueSystem?.start([
-      { name: "여비", portraitKey: "yeobi", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
-      { name: "여비", portraitKey: "yeobi", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
-    ]);
-    this.dropBroomUpgrade();
-    this.saveCheckpoint("recycle_completed");
+    this.yebiQuestSystem?.activateRecycleMasterReward();
   }
 
   dropBroomUpgrade() {
@@ -3602,36 +3344,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   useYebiItem() {
-    if (!this.hasUnlockedYebi || this.hasUsedYebi || this.isMissionComplete) {
-      return;
-    }
-
-    this.hasUsedYebi = true;
-    this.hasUnlockedYebi = false;
-    this.specialButton.hidden = true;
-    this.specialButton.setAttribute("aria-hidden", "true");
-    this.specialButton.classList.remove("is-ready");
-    this.playHelpVoice();
-    this.playSpecialUseSound();
-    this.showYebiCleanCutscene();
-
-    const remainingTrash = this.trashSlimes
-      .getChildren()
-      .filter((trash) => trash.active && !trash.getData("cleaned"));
-    const targets = Phaser.Utils.Array.Shuffle(remainingTrash).slice(
-      0,
-      GAME_CONFIG.yebiRemoveCount,
-    );
-
-    targets.forEach((trash, index) => {
-      this.time.delayedCall(index * 80, () => {
-        this.autoCleanTrash(trash);
-      });
-    });
+    this.yebiQuestSystem?.useItem();
   }
 
   showYebiCleanCutscene() {
-    this.showYebiCenterMessage("내가 도울게");
+    this.yebiQuestSystem?.showCleanCutscene();
   }
 
   showYebiCenterMessage(
@@ -3645,92 +3362,13 @@ export default class PlayScene extends Phaser.Scene {
       faceOnly = false,
     } = {},
   ) {
-    const npc = this.add.sprite(384, 220, NPC_TEXTURES.yeobi.down, 1);
-    npc.setScrollFactor(0);
-    const npcFinalScale = faceOnly ? 1.7 : 1;
-    if (faceOnly) {
-      npc.setCrop(12, 0, 40, 48);
-      npc.y = 224;
-    } else {
-      npc.setDisplaySize(112, 168);
-    }
-    npc.setDepth(50);
-    npc.setAlpha(0);
-    npc.setScale(0.35);
-
-    const flash = this.add.ellipse(384, 240, 230, 160, flashColor, 0.36);
-    flash.setScrollFactor(0);
-    flash.setStrokeStyle(6, strokeColor, 0.92);
-    flash.setDepth(49);
-    flash.setAlpha(0);
-
-    const captionPanel = this.add.rectangle(384, 132, panelWidth, 42, 0xffffff, 0.96);
-    captionPanel.setScrollFactor(0);
-    captionPanel.setStrokeStyle(4, 0x21352c);
-    captionPanel.setDepth(51);
-    captionPanel.setAlpha(0);
-
-    const captionText = this.add.text(384, 131, caption, {
-      fontFamily: "Arial",
-      fontSize: "22px",
-      color: "#21352c",
-      fontStyle: "bold",
-    });
-    captionText.setOrigin(0.5);
-    captionText.setScrollFactor(0);
-    captionText.setDepth(52);
-    captionText.setAlpha(0);
-
-    this.tweens.add({
-      targets: npc,
-      alpha: 1,
-      scaleX: npcFinalScale,
-      scaleY: npcFinalScale,
-      duration: 180,
-      ease: "Back.easeOut",
-    });
-    this.tweens.add({
-      targets: [flash, captionPanel, captionText],
-      alpha: 1,
-      scaleX: 1,
-      scaleY: 1,
-      duration: 180,
-      ease: "Back.easeOut",
-    });
-
-    for (let i = 0; i < sparkleCount; i += 1) {
-      const sparkle = this.add.circle(
-        384,
-        240,
-        Phaser.Math.Between(3, 6),
-        i % 2 === 0 ? 0xffffff : flashColor,
-        0.95,
-      );
-      sparkle.setScrollFactor(0);
-      sparkle.setDepth(51);
-      this.tweens.add({
-        targets: sparkle,
-        x: 384 + Phaser.Math.Between(-150, 150),
-        y: 240 + Phaser.Math.Between(-95, 105),
-        alpha: 0,
-        duration: Phaser.Math.Between(520, 820),
-        ease: "Cubic.easeOut",
-        onComplete: () => sparkle.destroy(),
-      });
-    }
-
-    this.time.delayedCall(holdMs, () => {
-      this.tweens.add({
-        targets: [npc, flash, captionPanel, captionText],
-        alpha: 0,
-        duration: 220,
-        onComplete: () => {
-          npc.destroy();
-          flash.destroy();
-          captionPanel.destroy();
-          captionText.destroy();
-        },
-      });
+    this.yebiQuestSystem?.showCenterMessage(caption, {
+      panelWidth,
+      holdMs,
+      sparkleCount,
+      flashColor,
+      strokeColor,
+      faceOnly,
     });
   }
 
@@ -3743,71 +3381,27 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   restartGame() {
-    this.completeOverlay?.classList.remove("is-visible");
-    this.completeOverlay?.setAttribute("aria-hidden", "true");
-    this.restartButton?.removeEventListener("click", this.restartHandler);
-    this.scene.restart();
+    this.sceneControlSystem?.restartGame();
   }
 
   toggleFullscreen(event) {
-    event?.preventDefault();
-
-    const target = document.querySelector(".game-shell") || document.documentElement;
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-      document.body.classList.remove("app-fit-mode");
-      this.unlockScreenOrientation();
-      return;
-    }
-
-    if (target.requestFullscreen) {
-      target
-        .requestFullscreen()
-        .then(() => this.lockLandscapeOrientation())
-        .catch(() => this.toggleAppFitMode());
-    } else if (target.webkitRequestFullscreen) {
-      target.webkitRequestFullscreen();
-      this.lockLandscapeOrientation();
-    } else {
-      this.toggleAppFitMode();
-    }
+    this.sceneControlSystem?.toggleFullscreen(event);
   }
 
   handleFullscreenChange() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      document.body.classList.remove("app-fit-mode");
-      this.unlockScreenOrientation();
-    }
-
-    this.time.delayedCall(80, () => this.scale.refresh());
+    this.sceneControlSystem?.handleFullscreenChange();
   }
 
   toggleAppFitMode() {
-    document.body.classList.toggle("app-fit-mode");
-    if (document.body.classList.contains("app-fit-mode")) {
-      this.lockLandscapeOrientation();
-    } else {
-      this.unlockScreenOrientation();
-    }
-
-    window.scrollTo(0, 1);
-    this.scale.refresh();
+    this.sceneControlSystem?.toggleAppFitMode();
   }
 
   lockLandscapeOrientation() {
-    const orientation = screen.orientation;
-    if (!orientation?.lock) return;
-
-    orientation.lock("landscape").catch(() => {
-      // Some mobile browsers, especially iOS Safari, do not allow web pages to lock orientation.
-    });
+    this.sceneControlSystem?.lockLandscapeOrientation();
   }
 
   unlockScreenOrientation() {
-    const orientation = screen.orientation;
-    if (!orientation?.unlock) return;
-
-    orientation.unlock();
+    this.sceneControlSystem?.unlockScreenOrientation();
   }
 
   showUpgradePulse() {
@@ -3838,336 +3432,107 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   getAudioContext() {
-    if (!this.audioContext) {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-      this.audioContext = new AudioContextClass();
-    }
-
-    if (this.audioContext.state === "suspended") {
-      this.audioContext.resume();
-    }
-
-    return this.audioContext;
+    return this.audioManager?.getAudioContext() ?? null;
   }
 
   isSoundEnabled() {
-    return this.registry.get("soundEnabled") !== false;
+    return this.audioManager?.isSoundEnabled() ?? false;
   }
 
   unlockAudio() {
-    if (!this.isSoundEnabled()) return;
-
-    const context = this.getAudioContext();
-    if (context?.state === "suspended") {
-      context.resume();
-    }
-
-    if (this.sound?.context?.state === "suspended") {
-      this.sound.context.resume();
-    }
-
-    this.loadThanksAudioBuffer();
+    this.audioManager?.unlockAudio();
   }
 
   loadThanksAudioBuffer() {
-    if (!this.isSoundEnabled()) return;
-    if (this.hasStartedAudioLoad || this.thanksAudioBuffer) return;
-
-    const context = this.getAudioContext();
-    if (!context) return;
-
-    this.hasStartedAudioLoad = true;
-    fetch(new URL("assets/audio/thanks.mp3", window.location.href))
-      .then((response) => response.arrayBuffer())
-      .then((buffer) => context.decodeAudioData(buffer))
-      .then((decodedBuffer) => {
-        this.thanksAudioBuffer = decodedBuffer;
-      })
-      .catch(() => {
-        this.hasStartedAudioLoad = false;
-      });
+    this.audioManager?.loadThanksAudioBuffer();
   }
 
   loadAudioBuffer(path, assign) {
-    const context = this.getAudioContext();
-    if (!context) return Promise.reject(new Error("AudioContext unavailable"));
-
-    return fetch(new URL(path, window.location.href))
-      .then((response) => response.arrayBuffer())
-      .then((buffer) => context.decodeAudioData(buffer))
-      .then((decodedBuffer) => {
-        this[assign] = decodedBuffer;
-        return decodedBuffer;
-      });
+    return this.audioManager?.loadAudioBuffer(path, assign) ?? Promise.reject(new Error("AudioManager unavailable"));
   }
 
   playAudioBuffer(buffer) {
-    const context = this.getAudioContext();
-    if (!this.isSoundEnabled() || !context || !buffer) return false;
-
-    const source = context.createBufferSource();
-    const gain = context.createGain();
-    source.buffer = buffer;
-    gain.gain.value = 0.95;
-    source.connect(gain);
-    gain.connect(context.destination);
-    source.start();
-    return true;
+    return this.audioManager?.playAudioBuffer(buffer) ?? false;
   }
 
   playTone({ frequency, duration, type = "sine", volume = 0.08, delay = 0 }) {
-    if (!this.isSoundEnabled()) return;
-
-    const context = this.getAudioContext();
-    if (!context) return;
-    if (context.state === "suspended") {
-      context.resume();
-    }
-
-    const startTime = context.currentTime + delay;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, startTime);
-    gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(startTime);
-    oscillator.stop(startTime + duration + 0.02);
+    this.audioManager?.playTone({ frequency, duration, type, volume, delay });
   }
 
   playSweepSound() {
-    this.playTone({ frequency: 520, duration: 0.08, type: "triangle", volume: 0.05 });
-    this.playTone({ frequency: 260, duration: 0.11, type: "sawtooth", volume: 0.025, delay: 0.03 });
+    this.audioManager?.playSweepSound();
   }
 
   playCleanSound() {
-    this.playTone({ frequency: 740, duration: 0.09, type: "square", volume: 0.045 });
-    this.playTone({ frequency: 980, duration: 0.12, type: "triangle", volume: 0.055, delay: 0.06 });
+    this.audioManager?.playCleanSound();
   }
 
   playCanCleanSound() {
-    this.playTone({ frequency: 880, duration: 0.07, type: "square", volume: 0.045 });
-    this.playTone({ frequency: 1175, duration: 0.1, type: "triangle", volume: 0.05, delay: 0.05 });
+    this.audioManager?.playCanCleanSound();
   }
 
   playItemPickupSound() {
-    this.playTone({ frequency: 660, duration: 0.08, type: "triangle", volume: 0.055 });
-    this.playTone({ frequency: 880, duration: 0.1, type: "triangle", volume: 0.06, delay: 0.06 });
-    this.playTone({ frequency: 1320, duration: 0.12, type: "sine", volume: 0.045, delay: 0.13 });
+    this.audioManager?.playItemPickupSound();
   }
 
   playMoneyRewardSound() {
-    this.playTone({ frequency: 523, duration: 0.1, type: "triangle", volume: 0.06 });
-    this.playTone({ frequency: 784, duration: 0.12, type: "triangle", volume: 0.07, delay: 0.08 });
-    this.playTone({ frequency: 1046, duration: 0.16, type: "sine", volume: 0.06, delay: 0.18 });
-    this.playTone({ frequency: 1568, duration: 0.2, type: "sine", volume: 0.05, delay: 0.3 });
+    this.audioManager?.playMoneyRewardSound();
   }
 
   playSpecialUseSound() {
-    this.playTone({ frequency: 392, duration: 0.16, type: "triangle", volume: 0.06 });
-    this.playTone({ frequency: 784, duration: 0.22, type: "triangle", volume: 0.07, delay: 0.08 });
-    this.playTone({ frequency: 1175, duration: 0.24, type: "sine", volume: 0.055, delay: 0.18 });
+    this.audioManager?.playSpecialUseSound();
   }
 
   playMissionCompleteSound() {
-    [523, 659, 784, 1046].forEach((frequency, index) => {
-      this.playTone({
-        frequency,
-        duration: 0.24,
-        type: "triangle",
-        volume: 0.07,
-        delay: index * 0.12,
-      });
-    });
+    this.audioManager?.playMissionCompleteSound();
   }
 
   playThanksVoice() {
-    if (!this.isSoundEnabled()) return;
-
-    this.unlockAudio();
-    if (this.playAudioBuffer(this.thanksAudioBuffer)) {
-      return;
-    }
-
-    this.loadAudioBuffer("assets/audio/thanks.mp3", "thanksAudioBuffer")
-      .then(() => this.playThanksVoice())
-      .catch(() => {
-        this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.07 });
-        this.playTone({ frequency: 880, duration: 0.18, type: "triangle", volume: 0.07, delay: 0.12 });
-      });
+    this.audioManager?.playThanksVoice();
   }
 
   playCollectCansVoice() {
-    if (!this.isSoundEnabled()) return;
-
-    this.unlockAudio();
-    if (this.playAudioBuffer(this.collectCansAudioBuffer)) {
-      return;
-    }
-
-    this.loadAudioBuffer("assets/audio/collect-cans.mp3", "collectCansAudioBuffer")
-      .then(() => this.playCollectCansVoice())
-      .catch(() => {
-        this.playTone({ frequency: 392, duration: 0.14, type: "triangle", volume: 0.06 });
-        this.playTone({ frequency: 523, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
-      });
+    this.audioManager?.playCollectCansVoice();
   }
 
   playHelpVoice() {
-    if (!this.isSoundEnabled()) return;
-
-    this.unlockAudio();
-    if (this.playAudioBuffer(this.helpAudioBuffer)) {
-      return;
-    }
-
-    this.loadAudioBuffer("assets/audio/i-will-help.mp3", "helpAudioBuffer")
-      .then(() => this.playHelpVoice())
-      .catch(() => {
-        this.playTone({ frequency: 523, duration: 0.14, type: "triangle", volume: 0.06 });
-        this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
-      });
+    this.audioManager?.playHelpVoice();
   }
 
   playClearSlimeVoice() {
-    if (!this.isSoundEnabled()) return;
-
-    this.unlockAudio();
-    if (this.playAudioBuffer(this.clearSlimeAudioBuffer)) {
-      return;
-    }
-
-    this.loadAudioBuffer("assets/audio/clear-slime.mp3", "clearSlimeAudioBuffer")
-      .then(() => this.playClearSlimeVoice())
-      .catch(() => {
-        this.playTone({ frequency: 440, duration: 0.14, type: "triangle", volume: 0.06 });
-        this.playTone({ frequency: 587, duration: 0.16, type: "triangle", volume: 0.06, delay: 0.1 });
-      });
+    this.audioManager?.playClearSlimeVoice();
   }
 
   startChapterMusic() {
-    if (!this.isSoundEnabled()) return;
-
-    this.stopSceneMusic({ resumeChapter: false });
-    this.stopChapterMusic();
-    this.bgmIndex = TILED_MAP_CONFIG.chapter;
-    this.playNextChapterTrack();
+    this.audioManager?.startChapterMusic();
   }
 
   playSceneMusic(key, volume = 0.26) {
-    if (!this.isSoundEnabled() || !this.cache.audio.exists(key)) return;
-
-    this.stopChapterMusic();
-    this.stopSceneMusic({ resumeChapter: false });
-    this.sceneBgmAudio = this.sound.add(key, { loop: true, volume });
-    this.sceneBgmAudio.play();
+    this.audioManager?.playSceneMusic(key, volume);
   }
 
   stopSceneMusic({ resumeChapter = false } = {}) {
-    if (this.sceneBgmAudio) {
-      this.sceneBgmAudio.stop();
-      this.sceneBgmAudio.destroy?.();
-      this.sceneBgmAudio = null;
-    }
-    if (resumeChapter) {
-      this.startChapterMusic();
-    }
+    this.audioManager?.stopSceneMusic({ resumeChapter });
   }
 
   playNextChapterTrack() {
-    if (!this.isSoundEnabled()) return;
-
-    const cachedKey = `chapter${this.bgmIndex}_bgm`;
-    if (this.cache.audio.exists(cachedKey)) {
-      this.bgmAudio = this.sound.add(cachedKey, { volume: 0.32 });
-      this.bgmAudio.once("complete", () => {
-        this.bgmIndex += 1;
-        this.playNextChapterTrack();
-      });
-      this.bgmAudio.play();
-      return;
-    }
-
-    const trackPaths = [
-      `assets/audio/chapter${this.bgmIndex}.mp3`,
-      `assets/chapter${this.bgmIndex}.mp3`,
-    ];
-    this.fetchFirstExistingTrack(trackPaths)
-      .then((response) => {
-        if (!response) {
-          if (this.bgmIndex !== TILED_MAP_CONFIG.chapter) {
-            this.bgmIndex = TILED_MAP_CONFIG.chapter;
-            this.playNextChapterTrack();
-          }
-          return null;
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        if (!blob) return;
-
-        this.bgmObjectUrl = URL.createObjectURL(blob);
-        this.bgmAudio = new Audio(this.bgmObjectUrl);
-        this.bgmAudio.volume = 0.32;
-        this.bgmAudio.addEventListener(
-          "ended",
-          () => {
-            this.cleanupBgmObjectUrl();
-            this.bgmIndex += 1;
-            this.playNextChapterTrack();
-          },
-          { once: true },
-        );
-        this.bgmAudio.play().catch(() => {});
-      })
-      .catch(() => {});
+    this.audioManager?.playNextChapterTrack();
   }
 
   fetchFirstExistingTrack(paths) {
-    const [path, ...rest] = paths;
-    if (!path) {
-      return Promise.resolve(null);
-    }
-
-    return fetch(new URL(path, window.location.href), { cache: "no-store" }).then((response) => {
-      if (response.ok) {
-        return response;
-      }
-      return this.fetchFirstExistingTrack(rest);
-    });
+    return this.audioManager?.fetchFirstExistingTrack(paths) ?? Promise.resolve(null);
   }
 
   stopChapterMusic() {
-    if (this.bgmAudio) {
-      if (typeof this.bgmAudio.stop === "function") {
-        this.bgmAudio.stop();
-        this.bgmAudio.destroy?.();
-      } else {
-        this.bgmAudio.pause();
-        this.bgmAudio.removeAttribute("src");
-      }
-      this.bgmAudio = null;
-    }
-    this.cleanupBgmObjectUrl();
+    this.audioManager?.stopChapterMusic();
   }
 
   stopAudioForPageExit() {
-    this.stopSceneMusic({ resumeChapter: false });
-    this.stopChapterMusic();
-    this.sound?.stopAll?.();
+    this.audioManager?.stopAudioForPageExit();
   }
 
   cleanupBgmObjectUrl() {
-    if (this.bgmObjectUrl) {
-      URL.revokeObjectURL(this.bgmObjectUrl);
-      this.bgmObjectUrl = null;
-    }
+    this.audioManager?.cleanupBgmObjectUrl();
   }
 
   // ---------------------------------------------------------------------------

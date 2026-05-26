@@ -1,0 +1,477 @@
+import { GAME_CONFIG } from "../config/GameConstants.js";
+
+export default class YebiQuestSystem {
+  constructor(scene) {
+    this.scene = scene;
+  }
+
+  checkRecycleQuestUnlock() {
+    const scene = this.scene;
+    if (!scene.moneySystem || !scene.questManager || scene.hasAnnouncedRecycleQuest) return;
+    if (scene.moneySystem.money < GAME_CONFIG.recycleQuestUnlockMoney) return;
+
+    scene.hasAnnouncedRecycleQuest = true;
+    const didUnlock = scene.questManager.unlockRecycleQuest();
+    if (!didUnlock) return;
+
+    this.moveYebiToRecyclingCenter();
+    scene.setQuestMarker("recycleQuest", scene.yebiNpc, "!");
+    scene.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
+    scene.showSpeechBubble(scene.yebiNpc, "분리수거장으로 와!", 10000);
+    scene.saveCheckpoint("recycle_unlocked");
+  }
+
+  getRecyclePosition() {
+    const scene = this.scene;
+    const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    return scene.getMapPoint("yebi_recycle_stand", {
+      x: center.x - 270,
+      y: center.y + 28,
+    });
+  }
+
+  moveYebiToRecyclingCenter() {
+    const scene = this.scene;
+    if (!scene.yebiNpc) return;
+
+    scene.pauseNpcRoaming("yebi");
+    const position = this.getRecyclePosition();
+    scene.tweens.killTweensOf(scene.yebiNpc);
+    scene.yebiNpc.setPosition(position.x, position.y);
+    scene.yebiNpc.setDepth(3.6);
+    scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", "down", false);
+    scene.tweens.add({
+      targets: scene.yebiNpc,
+      y: position.y - 5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  walkYebiToRecyclingCenter() {
+    const scene = this.scene;
+    if (!scene.yebiNpc) return;
+
+    scene.pauseNpcRoaming("yebi");
+    const position = this.getRecyclePosition();
+    scene.tweens.killTweensOf(scene.yebiNpc);
+    scene.yebiNpc.setDepth(3.6);
+    const path = this.getPathToRecyclingCenter(position);
+    this.walkAlongPath(path, 0);
+  }
+
+  getPathToRecyclingCenter(target) {
+    const scene = this.scene;
+    const startX = scene.yebiNpc?.x ?? scene.playerStart.x;
+    const startY = scene.yebiNpc?.y ?? scene.playerStart.y;
+    const vendingPoint = scene.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
+    const upperLaneY = Math.min(startY - 70, vendingPoint.y - 118);
+
+    return [
+      { x: startX, y: upperLaneY },
+      { x: startX + 130, y: upperLaneY },
+      { x: vendingPoint.x - 145, y: upperLaneY },
+      { x: vendingPoint.x + 155, y: upperLaneY },
+      { x: target.x, y: upperLaneY },
+      { x: target.x, y: target.y },
+    ];
+  }
+
+  walkAlongPath(path, index) {
+    const scene = this.scene;
+    if (!scene.yebiNpc || index >= path.length) {
+      this.startIdleBob();
+      return;
+    }
+
+    const target = path[index];
+    const distance = Phaser.Math.Distance.Between(scene.yebiNpc.x, scene.yebiNpc.y, target.x, target.y);
+    if (distance < 4) {
+      this.walkAlongPath(path, index + 1);
+      return;
+    }
+
+    let previousX = scene.yebiNpc.x;
+    let previousY = scene.yebiNpc.y;
+    const walkingSpeed = GAME_CONFIG.playerSpeed * 0.72;
+    scene.tweens.add({
+      targets: scene.yebiNpc,
+      x: target.x,
+      y: target.y,
+      duration: Math.max(420, (distance / walkingSpeed) * 1000),
+      ease: "Linear",
+      onUpdate: () => {
+        const dx = scene.yebiNpc.x - previousX;
+        const dy = scene.yebiNpc.y - previousY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+          const directionKey = scene.getDirectionKeyFromVector(
+            dx,
+            dy,
+            scene.yebiNpc.getData("directionKey") || "down",
+          );
+          scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, true);
+        }
+        previousX = scene.yebiNpc.x;
+        previousY = scene.yebiNpc.y;
+      },
+      onComplete: () => this.walkAlongPath(path, index + 1),
+    });
+  }
+
+  startIdleBob() {
+    const scene = this.scene;
+    if (!scene.yebiNpc) return;
+
+    const idleY = scene.yebiNpc.y;
+    scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", "down", false);
+    scene.tweens.add({
+      targets: scene.yebiNpc,
+      y: idleY - 5,
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+  }
+
+  showQuestDialogue() {
+    const scene = this.scene;
+    if (scene.isInDialogue || !scene.dialogueSystem || !scene.questManager) return;
+
+    const recycleState = scene.questManager.getRecycleQuestState();
+    if (recycleState === "unlocked") {
+      scene.dialogueSystem.start([
+        { name: "여비", portraitKey: "yeobi", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
+        { name: "여비", portraitKey: "yeobi", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
+        {
+          name: "여비",
+          portraitKey: "yeobi",
+          text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
+          choices: [{ label: "해볼게", onSelect: () => scene.questManager.startRecycleQuest() }],
+        },
+      ]);
+      return;
+    }
+
+    if (recycleState === "active") {
+      const quest = scene.questManager.recycleQuest;
+      scene.dialogueSystem.start([
+        { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
+      ]);
+      return;
+    }
+
+    if (recycleState === "completed") {
+      scene.dialogueSystem.start([
+        { name: "여비", portraitKey: "yeobi", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
+      ]);
+      return;
+    }
+
+    const questState = scene.questManager.getQuestState();
+    if (questState === "inactive") {
+      scene.dialogueSystem.start([
+        {
+          name: "여비",
+          portraitKey: "yeobi",
+          text: "안녕! 혹시 나 좀 도와줄 수 있어?",
+          choices: [
+            {
+              label: "예",
+              onSelect: () => {
+                scene.dialogueSystem.start([
+                  { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어요. 캔을 모아볼게요!" },
+                  { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
+                ], () => scene.questManager.startQuest());
+              },
+            },
+            {
+              label: "아니오",
+              onSelect: () => {
+                scene.dialogueSystem.start([
+                  { name: "여비", portraitKey: "yeobi", text: "아... 그래. 다음에 꼭 부탁할게." },
+                ]);
+              },
+            },
+          ],
+        },
+      ]);
+      return;
+    }
+
+    if (questState === "active") {
+      scene.dialogueSystem.start([
+        { name: "여비", portraitKey: "yeobi", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
+      ]);
+      return;
+    }
+
+    scene.dialogueSystem.start([
+      { name: "여비", portraitKey: "yeobi", text: "오늘도 고마워. 깨끗한 거리를 같이 만들자!" },
+    ]);
+  }
+
+  tryDepositNearestRecycleBin() {
+    const scene = this.scene;
+    if (!scene.player || !scene.recycleBins?.length) return false;
+
+    const playerPoints = [
+      { x: scene.player.x, y: scene.player.y },
+      { x: scene.player.x, y: scene.player.y + GAME_CONFIG.playerDisplayHeight * 0.22 },
+      { x: scene.player.x, y: scene.player.y - GAME_CONFIG.playerDisplayHeight * 0.16 },
+    ];
+
+    const nearest = scene.recycleBins.find(({ zone }) => {
+      const bounds = zone.getBounds();
+      return playerPoints.some((point) => Phaser.Geom.Rectangle.Contains(bounds, point.x, point.y));
+    });
+    if (!nearest) return false;
+
+    this.depositRecycleItem(nearest.type, nearest.bin);
+    return true;
+  }
+
+  depositRecycleItem(type, binSprite) {
+    const scene = this.scene;
+    const inventoryCount = scene.recyclingInventory[type] || 0;
+    if (inventoryCount <= 0) {
+      const message = type === "plastic"
+        ? "플라스틱을 아직 못 주웠어."
+        : "이건 여기가 아니야.";
+      scene.showSpeechBubble(scene.player, message);
+      scene.playTone({ frequency: 220, duration: 0.09, type: "square", volume: 0.035 });
+      return;
+    }
+
+    const recycleState = scene.questManager?.getRecycleQuestState();
+    if (recycleState === "locked" || recycleState === "unlocked") {
+      scene.showSpeechBubble(scene.player, "여비 아저씨에게 먼저 물어보자!");
+      return;
+    }
+
+    if (recycleState === "active") {
+      const didDepositForQuest = scene.questManager?.depositRecycleItem(type);
+      if (!didDepositForQuest) return;
+
+      scene.recyclingInventory[type] -= 1;
+      this.showDepositEffect(binSprite || scene.player, type);
+      scene.playItemPickupSound();
+      scene.updateHud();
+      return;
+    }
+
+    const depositCount = inventoryCount;
+    const reward = depositCount * GAME_CONFIG.recycleDepositReward;
+    scene.recyclingInventory[type] = 0;
+    this.showDepositEffect(binSprite || scene.player, type, depositCount);
+    scene.moneySystem?.addMoney(reward);
+    scene.playItemPickupSound();
+    scene.showQuestToast(`${this.getTypeLabel(type)} ${depositCount}개 분리수거! +${reward.toLocaleString()}원`);
+    scene.updateHud();
+  }
+
+  showDepositEffect(target, type, count = 1) {
+    const scene = this.scene;
+    const colorByType = {
+      can: 0x6fcf97,
+      normal: 0x79c6ff,
+      plastic: 0xf2c94c,
+    };
+    const color = colorByType[type] || 0xffffff;
+    scene.showSpeechBubble(target, count > 1 ? `${count}개 쏙!` : "쏙!");
+
+    const itemTexture = scene.getRandomTrashTexture(type);
+    if (scene.textures.exists(itemTexture)) {
+      const item = scene.add.image(target.x, target.y - 88, itemTexture);
+      const itemSize = scene.getTrashDisplaySize(itemTexture, type);
+      item.setDepth(8);
+      item.setDisplaySize(itemSize.width, itemSize.height);
+      scene.tweens.add({
+        targets: item,
+        y: target.y - 18,
+        scaleX: item.scaleX * 0.35,
+        scaleY: item.scaleY * 0.35,
+        alpha: 0,
+        duration: 360,
+        ease: "Cubic.easeIn",
+        onComplete: () => item.destroy(),
+      });
+    }
+
+    for (let i = 0; i < 12; i += 1) {
+      const sparkle = scene.add.circle(target.x, target.y, Phaser.Math.Between(3, 5), color, 0.95);
+      sparkle.setDepth(7);
+      scene.tweens.add({
+        targets: sparkle,
+        x: target.x + Phaser.Math.Between(-32, 32),
+        y: target.y + Phaser.Math.Between(-42, 16),
+        alpha: 0,
+        duration: 420,
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
+  }
+
+  getTypeLabel(type) {
+    const labelByType = {
+      can: "캔",
+      normal: "일반 쓰레기",
+      plastic: "플라스틱",
+    };
+    return labelByType[type] || "쓰레기";
+  }
+
+  activateRecycleMasterReward() {
+    const scene = this.scene;
+    if (scene.isRecycleMaster) return;
+
+    scene.isRecycleMaster = true;
+    scene.playMoneyRewardSound();
+    scene.showCleanFeedback(scene.player.x, scene.player.y, true);
+    scene.showQuestToast("분리수거 보상 개방! 맞는 통에 넣으면 100원");
+    scene.dialogueSystem?.start([
+      { name: "여비", portraitKey: "yeobi", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
+      { name: "여비", portraitKey: "yeobi", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
+    ]);
+    scene.dropBroomUpgrade();
+    scene.saveCheckpoint("recycle_completed");
+  }
+
+  useItem() {
+    const scene = this.scene;
+    if (!scene.hasUnlockedYebi || scene.hasUsedYebi || scene.isMissionComplete) {
+      return;
+    }
+
+    scene.hasUsedYebi = true;
+    scene.hasUnlockedYebi = false;
+    scene.specialButton.hidden = true;
+    scene.specialButton.setAttribute("aria-hidden", "true");
+    scene.specialButton.classList.remove("is-ready");
+    scene.playHelpVoice();
+    scene.playSpecialUseSound();
+    this.showCleanCutscene();
+
+    const remainingTrash = scene.trashSlimes
+      .getChildren()
+      .filter((trash) => trash.active && !trash.getData("cleaned"));
+    const targets = Phaser.Utils.Array.Shuffle(remainingTrash).slice(
+      0,
+      GAME_CONFIG.yebiRemoveCount,
+    );
+
+    targets.forEach((trash, index) => {
+      scene.time.delayedCall(index * 80, () => {
+        scene.autoCleanTrash(trash);
+      });
+    });
+  }
+
+  showCleanCutscene() {
+    this.showCenterMessage("내가 도울게");
+  }
+
+  showCenterMessage(
+    caption,
+    {
+      panelWidth = 164,
+      holdMs = 780,
+      sparkleCount = 28,
+      flashColor = 0xfff3a3,
+      strokeColor = 0xf2c94c,
+      faceOnly = false,
+    } = {},
+  ) {
+    const scene = this.scene;
+    const npc = scene.add.sprite(384, 220, "yeobi_walk_down", 1);
+    npc.setScrollFactor(0);
+    const npcFinalScale = faceOnly ? 1.7 : 1;
+    if (faceOnly) {
+      npc.setCrop(12, 0, 40, 48);
+      npc.y = 224;
+    } else {
+      npc.setDisplaySize(112, 168);
+    }
+    npc.setDepth(50);
+    npc.setAlpha(0);
+    npc.setScale(0.35);
+
+    const flash = scene.add.ellipse(384, 240, 230, 160, flashColor, 0.36);
+    flash.setScrollFactor(0);
+    flash.setStrokeStyle(6, strokeColor, 0.92);
+    flash.setDepth(49);
+    flash.setAlpha(0);
+
+    const captionPanel = scene.add.rectangle(384, 132, panelWidth, 42, 0xffffff, 0.96);
+    captionPanel.setScrollFactor(0);
+    captionPanel.setStrokeStyle(4, 0x21352c);
+    captionPanel.setDepth(51);
+    captionPanel.setAlpha(0);
+
+    const captionText = scene.add.text(384, 131, caption, {
+      fontFamily: "Arial",
+      fontSize: "22px",
+      color: "#21352c",
+      fontStyle: "bold",
+    });
+    captionText.setOrigin(0.5);
+    captionText.setScrollFactor(0);
+    captionText.setDepth(52);
+    captionText.setAlpha(0);
+
+    scene.tweens.add({
+      targets: npc,
+      alpha: 1,
+      scaleX: npcFinalScale,
+      scaleY: npcFinalScale,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+    scene.tweens.add({
+      targets: [flash, captionPanel, captionText],
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 180,
+      ease: "Back.easeOut",
+    });
+
+    for (let i = 0; i < sparkleCount; i += 1) {
+      const sparkle = scene.add.circle(
+        384,
+        240,
+        Phaser.Math.Between(3, 6),
+        i % 2 === 0 ? 0xffffff : flashColor,
+        0.95,
+      );
+      sparkle.setScrollFactor(0);
+      sparkle.setDepth(51);
+      scene.tweens.add({
+        targets: sparkle,
+        x: 384 + Phaser.Math.Between(-150, 150),
+        y: 240 + Phaser.Math.Between(-95, 105),
+        alpha: 0,
+        duration: Phaser.Math.Between(520, 820),
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
+
+    scene.time.delayedCall(holdMs, () => {
+      scene.tweens.add({
+        targets: [npc, flash, captionPanel, captionText],
+        alpha: 0,
+        duration: 220,
+        onComplete: () => {
+          npc.destroy();
+          flash.destroy();
+          captionPanel.destroy();
+          captionText.destroy();
+        },
+      });
+    });
+  }
+}
