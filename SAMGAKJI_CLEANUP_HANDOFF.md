@@ -248,3 +248,55 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 - Recycling center creation moved from `PlayScene.createRecyclingCenter()` into `YebiQuestSystem.createRecyclingCenter()`.
 - `PlayScene.createRecyclingCenter()` is now only a compatibility wrapper.
 - Build check after this change passed with `npm.cmd run build`; generated `dist/` was removed.
+
+## Tiled Tileset Workflow Notes
+
+- Active map file is `assets/maps/chapter1-samgakji-map.json`.
+- The old extra map file `assets/maps/samgakji-map.json` was removed earlier because it was not used by the game.
+- Tiled maps now support multiple tilesets.
+- `Preload.js` loads the map JSON first, reads the `tilesets` list, and queues each tileset image found in the exported map.
+- `PlayScene.createTiledMap()` now builds map layers with all loaded Tiled tilesets instead of assuming a single hard-coded tileset.
+- Current extra tileset added for editing:
+  - `assets/tilesets/park_tiles.png`
+  - `assets/tilesets/park_tiles.tsx`
+  - Tiled tileset name: `park_tiles`
+  - Tile size: `32x32`
+  - Image size: `512x512`
+  - Columns: `16`
+  - Tile count: `256`
+- User-facing Tiled instructions live in `assets/maps/TILED_GUIDE.md`.
+- Recommended Tiled workflow:
+  - Add new PNG/TSX tilesets under `assets/tilesets/`.
+  - Add the `.tsx` tileset inside Tiled.
+  - Paint directly in Tiled.
+  - Export over `assets/maps/chapter1-samgakji-map.json`.
+  - Keep embedded tileset data enabled when exporting JSON.
+- Do not rename a tileset after it is already used by the map unless the map JSON is updated too.
+- Do not move existing tiles around inside `samgakji-tiles.png`; append new tiles or add a new tileset instead.
+
+### Known Issue: `park_tiles`
+
+- The user added `park_tiles` as an extra Tiled tileset, but it currently causes an error in-game.
+- Do not assume the multi-tileset workflow is fully stable yet.
+- Next time, inspect without changing gameplay first:
+  - Check the exported `assets/maps/chapter1-samgakji-map.json` tileset entry for `park_tiles`.
+  - Confirm the `image` path resolves correctly from the map JSON location.
+  - Confirm the tileset `name` in Tiled exactly matches the texture key loaded by `Preload.js`.
+  - Confirm `assets/tilesets/park_tiles.tsx` and `assets/tilesets/park_tiles.png` dimensions match `32x32` tile settings.
+  - Check browser console/build output for the exact missing texture or tileset error.
+- For now, this is only documented here; no code fix was applied for this issue.
+
+## Next Map Refactor Candidate
+
+- `PlayScene.js` still owns too much Tiled map setup.
+- Safe next extraction target: a future `TiledMapSystem` or `MapLoaderSystem`.
+- Candidate methods to move together:
+  - `createMap`
+  - `createTiledMap`
+  - `createTiledTilesets`
+  - `getTiledTilesetTextureKey`
+  - `applyTiledObjects`
+  - `createTiledMapObjects`
+  - map-object fallback helpers that only exist to bridge Tiled objects and code defaults
+- Keep old `PlayScene` wrapper methods temporarily during extraction so gameplay does not break.
+- After extraction, check whether `findTiledTileset` is unused and remove it only if build/search confirms it is safe.
