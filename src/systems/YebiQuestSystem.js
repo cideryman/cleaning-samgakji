@@ -1,8 +1,99 @@
-import { GAME_CONFIG } from "../config/GameConstants.js";
+import { GAME_CONFIG, RECYCLE_BIN_CONFIG } from "../config/GameConstants.js";
 
 export default class YebiQuestSystem {
   constructor(scene) {
     this.scene = scene;
+  }
+
+  createRecyclingCenter() {
+    const scene = this.scene;
+    const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    const vendingPoint = scene.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
+    scene.recycleBins = [];
+
+    const vendingMachine = scene.add.image(
+      vendingPoint.x,
+      vendingPoint.y,
+      "vending_machine_full",
+    );
+    vendingMachine.setDisplaySize(96, 118);
+    vendingMachine.setData("depthSortY", scene.getDepthSortY(vendingMachine));
+    vendingMachine.setDepth(scene.getWorldDepth(vendingMachine.getData("depthSortY")));
+    vendingMachine.setInteractive({ useHandCursor: true });
+    vendingMachine.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+      if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
+      scene.handleVendingMachineInteraction();
+    });
+    scene.vendingMachine = vendingMachine;
+    scene.addObjectCollider(
+      "vending_machine_collider",
+      vendingPoint.x,
+      vendingPoint.y + 20,
+      76,
+      48,
+    );
+
+    RECYCLE_BIN_CONFIG.forEach((binConfig) => {
+      const binPoint = scene.getMapPoint(`recycle_bin_${binConfig.type}`, {
+        x: center.x + binConfig.xOffset,
+        y: center.y + binConfig.yOffset + 76,
+      });
+      const x = binPoint.x;
+      const y = binPoint.y;
+      const zoneWidth = GAME_CONFIG.recycleBinHitboxWidth;
+      const zoneHeight = GAME_CONFIG.recycleBinHitboxHeight;
+      const zoneCenterY = y + GAME_CONFIG.recycleBinHitboxYOffset;
+      const spotlight = scene.add.ellipse(
+        x,
+        zoneCenterY,
+        zoneWidth - 8,
+        Math.min(104, zoneHeight * 0.62),
+        0xfff3a3,
+        0.22,
+      );
+      spotlight.setStrokeStyle(4, 0xffd75a, 0.62);
+      spotlight.setDepth(scene.getWorldDepth(zoneCenterY, -0.22));
+      spotlight.setData("depthSortY", zoneCenterY);
+      scene.tweens.add({
+        targets: spotlight,
+        alpha: { from: 0.2, to: 0.34 },
+        scaleX: { from: 0.96, to: 1.04 },
+        scaleY: { from: 0.96, to: 1.04 },
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
+
+      const bin = scene.add.image(x, y, binConfig.texture);
+      bin.setDisplaySize(76, 84);
+      bin.setData("depthSortY", scene.getDepthSortY(bin));
+      bin.setDepth(scene.getWorldDepth(bin.getData("depthSortY")));
+
+      const label = scene.add.text(x, y + 64, binConfig.label, {
+        fontFamily: "Arial",
+        fontSize: "13px",
+        color: "#21352c",
+        fontStyle: "bold",
+        backgroundColor: "rgba(255,255,255,0.78)",
+        padding: { left: 5, right: 5, top: 2, bottom: 2 },
+      });
+      label.setOrigin(0.5);
+      label.setDepth(bin.depth + 0.04);
+
+      const zone = scene.add.zone(
+        x,
+        zoneCenterY,
+        zoneWidth,
+        zoneHeight,
+      );
+      scene.physics.add.existing(zone, true);
+      zone.setData("recycleType", binConfig.type);
+      scene.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
+      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 58, 38);
+    });
   }
 
   checkRecycleQuestUnlock() {
@@ -191,7 +282,7 @@ export default class YebiQuestSystem {
               label: "예",
               onSelect: () => {
                 scene.dialogueSystem.start([
-                  { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어요. 캔을 모아볼게요!" },
+                  { name: "해냄이", portraitKey: "haenaem_confused", text: "네. 어떤 걸 도와드리면 될까요?" },
                   { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
                 ], () => scene.questManager.startQuest());
               },

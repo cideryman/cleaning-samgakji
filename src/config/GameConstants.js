@@ -23,7 +23,7 @@ export const GAME_CONFIG = {
   feedbackSparkleCount: 14,
   canFeedbackSparkleCount: 18,
   slimeSpawnMinDistance: 72,
-  wideCameraZoom: 0.9,
+  wideCameraZoom: 1,
   joystickRadius: 78,
   slimeRespawnDelayMs: 12000,
   maxSlimes: 25,
@@ -58,8 +58,9 @@ export const GAME_CONFIG = {
   vendingMachine: { x: 690, y: 465 },
   jjookSpawn: { x: 560, y: 610 },
   walletSpawn: { x: 250, y: 735 },
-  recycleBinHitboxWidth: 132,
-  recycleBinHitboxHeight: 126,
+  recycleBinHitboxWidth: 128,
+  recycleBinHitboxHeight: 184,
+  recycleBinHitboxYOffset: 22,
 };
 
 export const DRINK_OPTIONS = [

@@ -4,7 +4,6 @@ import {
   NPC_TEXTURES,
   NPC_WALK_ANIMS,
   PLAYER_TEXTURES,
-  RECYCLE_BIN_CONFIG,
   TILED_MAP_CONFIG,
 } from "../config/GameConstants.js";
 import { SceneState, StateManager } from "../config/SceneState.js";
@@ -957,93 +956,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   createRecyclingCenter() {
-    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
-    const vendingPoint = this.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
-    this.recycleBins = [];
-
-    const vendingMachine = this.add.image(
-      vendingPoint.x,
-      vendingPoint.y,
-      "vending_machine_full",
-    );
-    vendingMachine.setDisplaySize(96, 118);
-    vendingMachine.setData("depthSortY", this.getDepthSortY(vendingMachine));
-    vendingMachine.setDepth(this.getWorldDepth(vendingMachine.getData("depthSortY")));
-    vendingMachine.setInteractive({ useHandCursor: true });
-    vendingMachine.on("pointerdown", (pointer) => {
-      pointer.event?.preventDefault();
-      pointer.event?.stopPropagation();
-      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
-      this.handleVendingMachineInteraction();
-    });
-    this.vendingMachine = vendingMachine;
-    this.addObjectCollider(
-      "vending_machine_collider",
-      vendingPoint.x,
-      vendingPoint.y + 20,
-      76,
-      48,
-    );
-
-    RECYCLE_BIN_CONFIG.forEach((binConfig) => {
-      const binPoint = this.getMapPoint(`recycle_bin_${binConfig.type}`, {
-        x: center.x + binConfig.xOffset,
-        y: center.y + binConfig.yOffset + 76,
-      });
-      const x = binPoint.x;
-      const y = binPoint.y;
-      const zoneWidth = GAME_CONFIG.recycleBinHitboxWidth;
-      const zoneHeight = GAME_CONFIG.recycleBinHitboxHeight;
-      const zoneCenterY = y + 50;
-      const spotlight = this.add.ellipse(
-        x,
-        zoneCenterY,
-        zoneWidth - 8,
-        Math.min(72, zoneHeight * 0.58),
-        0xfff3a3,
-        0.22,
-      );
-      spotlight.setStrokeStyle(4, 0xffd75a, 0.62);
-      spotlight.setDepth(this.getWorldDepth(zoneCenterY, -0.22));
-      spotlight.setData("depthSortY", zoneCenterY);
-      this.tweens.add({
-        targets: spotlight,
-        alpha: { from: 0.2, to: 0.34 },
-        scaleX: { from: 0.96, to: 1.04 },
-        scaleY: { from: 0.96, to: 1.04 },
-        duration: 1200,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-
-      const bin = this.add.image(x, y, binConfig.texture);
-      bin.setDisplaySize(76, 84);
-      bin.setData("depthSortY", this.getDepthSortY(bin));
-      bin.setDepth(this.getWorldDepth(bin.getData("depthSortY")));
-
-      const label = this.add.text(x, y + 64, binConfig.label, {
-        fontFamily: "Arial",
-        fontSize: "13px",
-        color: "#21352c",
-        fontStyle: "bold",
-        backgroundColor: "rgba(255,255,255,0.78)",
-        padding: { left: 5, right: 5, top: 2, bottom: 2 },
-      });
-      label.setOrigin(0.5);
-      label.setDepth(bin.depth + 0.04);
-
-      const zone = this.add.zone(
-        x,
-        zoneCenterY,
-        zoneWidth,
-        zoneHeight,
-      );
-      this.physics.add.existing(zone, true);
-      zone.setData("recycleType", binConfig.type);
-      this.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
-      this.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 58, 38);
-    });
+    this.yebiQuestSystem?.createRecyclingCenter();
   }
 
   getYebiRecyclePosition() {

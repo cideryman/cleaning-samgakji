@@ -236,3 +236,15 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 - If the start screen is edited again, keep this split:
   - Start screen: viewport-sized on touch devices.
   - Prologue/Play scenes: existing base game size.
+
+## Recent Gameplay And Refactor Notes
+
+- Mobile landscape camera zoom is back to `1` via `GAME_CONFIG.wideCameraZoom`.
+- Recycling bin interaction was widened without overlapping neighboring bins:
+  - `recycleBinHitboxWidth: 128`
+  - `recycleBinHitboxHeight: 184`
+  - `recycleBinHitboxYOffset: 22`
+- The hitbox is intentionally taller rather than wider, so the player can recycle from front/back while the three bin zones remain separate.
+- Recycling center creation moved from `PlayScene.createRecyclingCenter()` into `YebiQuestSystem.createRecyclingCenter()`.
+- `PlayScene.createRecyclingCenter()` is now only a compatibility wrapper.
+- Build check after this change passed with `npm.cmd run build`; generated `dist/` was removed.
