@@ -33,6 +33,7 @@ export default class PlayerController {
       if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
       scene.useYebiItem();
     });
+    scene.input.on("pointerdown", (pointer, currentlyOver = []) => this.handleMouseMovePointerDown(pointer, currentlyOver));
   }
 
   update() {
@@ -49,15 +50,20 @@ export default class PlayerController {
       || scene.interiorSceneGroup
     ) {
       scene.player.setVelocity(0, 0);
+      scene.mouseMoveTarget = null;
       return;
     }
 
-    let horizontal =
+    const keyboardHorizontal =
       Number(scene.cursors.right.isDown || scene.keys.right.isDown) -
       Number(scene.cursors.left.isDown || scene.keys.left.isDown);
-    let vertical =
+    const keyboardVertical =
       Number(scene.cursors.down.isDown || scene.keys.down.isDown) -
       Number(scene.cursors.up.isDown || scene.keys.up.isDown);
+    const isKeyboardMoving = keyboardHorizontal !== 0 || keyboardVertical !== 0;
+
+    let horizontal = keyboardHorizontal;
+    let vertical = keyboardVertical;
 
     if (horizontal === 0 && vertical === 0 && scene.joystickVector.lengthSq() > 0) {
       horizontal = scene.joystickVector.x;
@@ -65,6 +71,18 @@ export default class PlayerController {
     }
 
     const velocity = new Phaser.Math.Vector2(horizontal, vertical);
+    if (velocity.lengthSq() > 0) {
+      scene.mouseMoveTarget = null;
+    } else if (scene.mouseMoveTarget && !isKeyboardMoving) {
+      const dx = scene.mouseMoveTarget.x - scene.player.x;
+      const dy = scene.mouseMoveTarget.y - scene.player.y;
+      if (Math.hypot(dx, dy) <= 10) {
+        scene.mouseMoveTarget = null;
+      } else {
+        velocity.set(dx, dy);
+      }
+    }
+
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       scene.lastDirection.copy(velocity);
@@ -75,6 +93,17 @@ export default class PlayerController {
 
     const speed = this.getPlayerSpeed();
     scene.player.setVelocity(velocity.x * speed, velocity.y * speed);
+  }
+
+  handleMouseMovePointerDown(pointer, currentlyOver = []) {
+    const scene = this.scene;
+    if (pointer.pointerType !== "mouse" || pointer.button !== 0) return;
+    if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
+    if (!scene.stateManager?.canMove()) return;
+    if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+    if (currentlyOver.length > 0) return;
+
+    scene.mouseMoveTarget = { x: pointer.worldX, y: pointer.worldY };
   }
 
   getPlayerSpeed() {

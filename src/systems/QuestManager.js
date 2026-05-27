@@ -1,3 +1,5 @@
+import { CanQuestState, RecycleQuestState } from "../config/QuestStates.js";
+
 export default class QuestManager {
   constructor(scene) {
     this.scene = scene;
@@ -221,16 +223,16 @@ export default class QuestManager {
   }
 
   getQuestState() {
-    if (this.canQuest.isCompleted) return "completed";
-    if (this.canQuest.isActive) return "active";
-    return "inactive";
+    if (this.canQuest.isCompleted) return CanQuestState.COMPLETED;
+    if (this.canQuest.isActive) return CanQuestState.ACTIVE;
+    return CanQuestState.INACTIVE;
   }
 
   getRecycleQuestState() {
-    if (this.recycleQuest.isCompleted) return "completed";
-    if (this.recycleQuest.isActive) return "active";
-    if (this.recycleQuest.isUnlocked) return "unlocked";
-    return "locked";
+    if (this.recycleQuest.isCompleted) return RecycleQuestState.COMPLETED;
+    if (this.recycleQuest.isActive) return RecycleQuestState.ACTIVE;
+    if (this.recycleQuest.isUnlocked) return RecycleQuestState.UNLOCKED;
+    return RecycleQuestState.LOCKED;
   }
 
   updateUI() {

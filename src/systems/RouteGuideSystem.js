@@ -1,4 +1,11 @@
 import { GAME_CONFIG } from "../config/GameConstants.js";
+import {
+  ClothesQuestState,
+  JjookQuestState,
+  PackingQuestState,
+  RecycleQuestState,
+  SunisuniQuestState,
+} from "../config/QuestStates.js";
 
 export default class RouteGuideSystem {
   constructor(scene) {
@@ -57,7 +64,7 @@ export default class RouteGuideSystem {
 
   getActiveRouteGuide() {
     const scene = this.scene;
-    if (scene.packingQuestState === "going_bus_stop") {
+    if (scene.packingQuestState === PackingQuestState.GOING_BUS_STOP) {
       return {
         key: "bus_stop",
         target: scene.getTravelBusArrivalPoint(),
@@ -66,7 +73,7 @@ export default class RouteGuideSystem {
     }
 
     const recycleQuestState = scene.questManager?.getRecycleQuestState?.();
-    if (["unlocked", "active"].includes(recycleQuestState)) {
+    if ([RecycleQuestState.UNLOCKED, RecycleQuestState.ACTIVE].includes(recycleQuestState)) {
       return {
         key: "recycling_center",
         target: scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter),
@@ -74,7 +81,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    if (["wallet_missing", "wallet_found"].includes(scene.jjookQuestState) && scene.jjookNpc?.active) {
+    if ([JjookQuestState.WALLET_MISSING, JjookQuestState.WALLET_FOUND].includes(scene.jjookQuestState) && scene.jjookNpc?.active) {
       return {
         key: "jjook",
         target: { x: scene.jjookNpc.x, y: scene.jjookNpc.y },
@@ -82,7 +89,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    if (scene.sunisuniQuestState === "sunisuni_found" && scene.sunisuniNpc?.active) {
+    if (scene.sunisuniQuestState === SunisuniQuestState.FOUND && scene.sunisuniNpc?.active) {
       return {
         key: "sunisuni",
         target: { x: scene.sunisuniNpc.x, y: scene.sunisuniNpc.y },
@@ -90,7 +97,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    if (scene.sunisuniQuestState === "going_hospital") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.GOING_HOSPITAL) {
       return {
         key: "hospital",
         target: scene.getMapPoint("hospital_door", GAME_CONFIG.hospitalDoor),
@@ -98,7 +105,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    if (scene.sunisuniQuestState === "going_pharmacy") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.GOING_PHARMACY) {
       return {
         key: "pharmacy",
         target: scene.getMapPoint("pharmacy_door", GAME_CONFIG.pharmacyDoor),
@@ -106,7 +113,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    if (scene.clothesQuestState === "shopping") {
+    if (scene.clothesQuestState === ClothesQuestState.SHOPPING) {
       return {
         key: "clothing_store",
         target: scene.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor),

@@ -1,4 +1,10 @@
 ﻿import { GAME_CONFIG } from "../config/GameConstants.js";
+import {
+  ClothesQuestState,
+  JjookQuestState,
+  RecycleQuestState,
+  SunisuniQuestState,
+} from "../config/QuestStates.js";
 
 export default class UIManager {
   constructor(scene) {
@@ -155,20 +161,20 @@ export default class UIManager {
     const questManager = scene.questManager;
     if (!questManager) return "";
 
-    const recycleState = questManager.getRecycleQuestState?.() ?? "locked";
-    if (recycleState === "locked" && !scene.hasAnnouncedRecycleQuest) {
+    const recycleState = questManager.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
+    if (recycleState === RecycleQuestState.LOCKED && !scene.hasAnnouncedRecycleQuest) {
       return this.formatQuestHint("분리수거", GAME_CONFIG.recycleQuestUnlockMoney, money);
     }
 
-    if (recycleState === "completed" && scene.jjookQuestState === "locked" && !scene.hasAnnouncedJjookQuest) {
+    if (recycleState === RecycleQuestState.COMPLETED && scene.jjookQuestState === JjookQuestState.LOCKED && !scene.hasAnnouncedJjookQuest) {
       return this.formatQuestHint("쭉쭉이", GAME_CONFIG.jjookQuestUnlockMoney, money);
     }
 
-    if (scene.jjookQuestState === "completed" && scene.sunisuniQuestState === "locked" && !scene.hasAnnouncedSunisuniQuest) {
+    if (scene.jjookQuestState === JjookQuestState.COMPLETED && scene.sunisuniQuestState === SunisuniQuestState.LOCKED && !scene.hasAnnouncedSunisuniQuest) {
       return this.formatQuestHint("병원", GAME_CONFIG.sunisuniQuestUnlockMoney, money);
     }
 
-    if (scene.sunisuniQuestState === "quest_complete" && scene.clothesQuestState === "locked" && !scene.hasAnnouncedClothesQuest) {
+    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE && scene.clothesQuestState === ClothesQuestState.LOCKED && !scene.hasAnnouncedClothesQuest) {
       return this.formatQuestHint("여행 준비", GAME_CONFIG.clothesQuestUnlockMoney, money);
     }
 

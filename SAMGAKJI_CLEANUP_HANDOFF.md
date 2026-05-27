@@ -434,3 +434,110 @@ Standing rule for future features:
 - New static data goes into `config` or `data`.
 - New dialogue should prefer `data/dialogues` when practical.
 - `PlayScene` may instantiate systems, call update hooks, expose compatibility wrappers, and pass state, but should not become the home for new feature logic.
+
+## Latest Initial State Refactor
+
+- Added `src/config/InitialGameState.js`.
+- `createInitialGameState()` now owns the default values for run/game state such as:
+  - cleaning counters
+  - recycle inventory and flags
+  - Jjook/Sunisuni/clothes/packing quest flags
+  - travel bus transient state
+  - modal selection defaults
+  - route/marker/interior transient containers
+  - map point/object fallback containers
+- `PlayScene.constructor()` now applies `Object.assign(this, createInitialGameState())` instead of manually listing those defaults.
+- `PlayScene.resetRunState()` now performs cleanup side effects first, then reapplies `createInitialGameState()`.
+- This was intentionally only a defaults centralization step:
+  - Checkpoint format was not changed.
+  - Quest state string values were not changed.
+  - Timer cleanup, DOM cleanup, and system cleanup still happen in `PlayScene.resetRunState()` before defaults are reapplied.
+  - Phaser vectors such as `lastDirection` and `joystickVector` still live in `PlayScene`, because they need existing Phaser vector instances reset rather than plain object replacement.
+- Verification after this change:
+  - Node syntax check passed for `src/config/InitialGameState.js`.
+  - Node syntax check passed for `src/scenes/PlayScene.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
+- Suggested next safe step:
+  - Add `src/config/QuestStates.js`.
+  - Convert one owner area at a time, starting with the most self-contained state checks.
+  - Do not rename state values while converting; import constants that preserve the existing string values.
+
+## Latest Quest State Constants Refactor
+
+- Added `src/config/QuestStates.js`.
+- This file centralizes existing quest state string values without renaming them.
+- Added state groups:
+  - `QuestState`
+  - `CanQuestState`
+  - `RecycleQuestState`
+  - `JjookQuestState`
+  - `SunisuniQuestState`
+  - `ClothesQuestState`
+  - `PackingQuestState`
+- First adoption pass was intentionally small:
+  - `src/config/InitialGameState.js` now uses quest state constants for default quest states.
+  - `src/systems/QuestManager.js` now returns `CanQuestState` and `RecycleQuestState` constants from its state getter methods.
+  - `src/systems/RouteGuideSystem.js` now uses constants for route-trigger state checks.
+- Behavior should remain unchanged because all constants preserve the previous raw string values.
+- This is not a full migration yet. Many raw state strings still exist in `PlayScene.js`, `YebiQuestSystem`, `JjookQuestSystem`, `SunisuniQuestSystem`, `CheckpointStorage`, `TravelEndingSystem`, and UI hint logic.
+- Suggested next safe conversion order:
+  1. `YebiQuestSystem`, because it mostly depends on `CanQuestState` and `RecycleQuestState`.
+  2. `UIManager` quest hint checks.
+  3. `CheckpointStorage` restore marker checks, carefully and in a separate patch.
+  4. `JjookQuestSystem` and `SunisuniQuestSystem`, one file at a time.
+  5. Remaining `PlayScene.js` bridge checks last.
+- Verification after this change:
+  - Node syntax check passed for `src/config/QuestStates.js`.
+  - Node syntax check passed for `src/config/InitialGameState.js`.
+  - Node syntax check passed for `src/systems/QuestManager.js`.
+  - Node syntax check passed for `src/systems/RouteGuideSystem.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
+
+## Latest PC Mouse Movement Note
+
+- Added optional PC mouse movement while keeping keyboard movement and Space interaction.
+- `PlayerController` now handles Phaser canvas `pointerdown` events:
+  - Only left mouse clicks set a movement target.
+  - Touch input is ignored here and continues to use the existing joystick flow.
+  - Clicks on interactive game objects are ignored as movement targets, so NPC/object clicks do not accidentally move the player.
+  - Keyboard/WASD/arrow movement cancels the current mouse movement target immediately.
+  - Menus, dialogue, interior/cutscene states, and blocked world input clear or prevent mouse movement.
+- `InitialGameState` now includes `mouseMoveTarget: null`.
+- Yebi NPC click now calls `showYebiQuestDialogue()` directly instead of routing through general primary action, matching the user request for NPC left-click dialogue.
+- Existing Space behavior is unchanged: it still runs the normal interaction priority through `handlePrimaryAction()`.
+- Verification after this change:
+  - Node syntax check passed for `src/controllers/PlayerController.js`.
+  - Node syntax check passed for `src/config/InitialGameState.js`.
+  - Node syntax check passed for `src/scenes/PlayScene.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
+- Future improvement if needed:
+  - Add click-to-NPC auto-walk and talk on arrival. Current implementation only makes direct NPC clicks trigger the existing dialogue handler; it does not pathfind to distant NPCs.
+
+## Latest Quest State Constants Adoption
+
+- Continued the `QuestStates.js` migration in a narrow, behavior-preserving pass.
+- Updated `src/systems/YebiQuestSystem.js` to use:
+  - `CanQuestState.INACTIVE`
+  - `CanQuestState.ACTIVE`
+  - `RecycleQuestState.LOCKED`
+  - `RecycleQuestState.UNLOCKED`
+  - `RecycleQuestState.ACTIVE`
+  - `RecycleQuestState.COMPLETED`
+- Updated `src/systems/UIManager.js` next-quest hint checks to use:
+  - `RecycleQuestState`
+  - `JjookQuestState`
+  - `SunisuniQuestState`
+  - `ClothesQuestState`
+- No quest state string values were renamed. This is still a safety refactor only.
+- Verification after this change:
+  - Node syntax check passed for `src/systems/YebiQuestSystem.js`.
+  - Node syntax check passed for `src/systems/UIManager.js`.
+  - Node syntax check passed for `src/config/QuestStates.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
+- Suggested next safe conversion:
+  - `CheckpointStorage` marker/restore state checks, because it reads several quest states but must be changed carefully.
+  - Keep that patch limited to imports and comparisons only. Do not change save format yet.

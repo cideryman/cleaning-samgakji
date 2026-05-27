@@ -1,4 +1,5 @@
 import { GAME_CONFIG, RECYCLE_BIN_CONFIG } from "../config/GameConstants.js";
+import { CanQuestState, RecycleQuestState } from "../config/QuestStates.js";
 import { SceneState } from "../config/SceneState.js";
 
 const RECYCLE_INTRO_TRIGGER_DISTANCE = 132;
@@ -128,7 +129,7 @@ export default class YebiQuestSystem {
     if (this.hasTriggeredRecycleIntro || this.isRecycleIntroApproachActive) return;
     if (!scene.player?.active || !scene.yebiNpc?.active || !scene.questManager) return;
     if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return;
-    if (scene.questManager.getRecycleQuestState?.() !== "unlocked") return;
+    if (scene.questManager.getRecycleQuestState?.() !== RecycleQuestState.UNLOCKED) return;
 
     const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
     const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, center.x, center.y);
@@ -215,8 +216,8 @@ export default class YebiQuestSystem {
   markCanQuestAvailable() {
     const scene = this.scene;
     if (!scene.yebiNpc || !scene.questManager) return;
-    if (scene.questManager.getQuestState?.() !== "inactive") return;
-    if (scene.questManager.getRecycleQuestState?.() !== "locked") return;
+    if (scene.questManager.getQuestState?.() !== CanQuestState.INACTIVE) return;
+    if (scene.questManager.getRecycleQuestState?.() !== RecycleQuestState.LOCKED) return;
 
     scene.setQuestMarker?.("canQuest", scene.yebiNpc, "?");
   }
@@ -341,7 +342,7 @@ export default class YebiQuestSystem {
     if (scene.isInDialogue || !scene.dialogueSystem || !scene.questManager) return;
 
     const recycleState = scene.questManager.getRecycleQuestState();
-    if (recycleState === "unlocked") {
+    if (recycleState === RecycleQuestState.UNLOCKED) {
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
         { name: "여비", portraitKey: "yeobi", text: "일반 쓰레기, 캔, 플라스틱을 맞는 통에 넣으면 보상을 받을 수 있어." },
@@ -355,7 +356,7 @@ export default class YebiQuestSystem {
       return;
     }
 
-    if (recycleState === "active") {
+    if (recycleState === RecycleQuestState.ACTIVE) {
       const quest = scene.questManager.recycleQuest;
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
@@ -363,7 +364,7 @@ export default class YebiQuestSystem {
       return;
     }
 
-    if (recycleState === "completed") {
+    if (recycleState === RecycleQuestState.COMPLETED) {
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
       ]);
@@ -371,7 +372,7 @@ export default class YebiQuestSystem {
     }
 
     const questState = scene.questManager.getQuestState();
-    if (questState === "inactive") {
+    if (questState === CanQuestState.INACTIVE) {
       scene.dialogueSystem.start([
         {
           name: "여비",
@@ -401,7 +402,7 @@ export default class YebiQuestSystem {
       return;
     }
 
-    if (questState === "active") {
+    if (questState === CanQuestState.ACTIVE) {
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "아직 캔 20개 모으는 중이구나? 힘내!" },
       ]);
@@ -446,12 +447,12 @@ export default class YebiQuestSystem {
     }
 
     const recycleState = scene.questManager?.getRecycleQuestState();
-    if (recycleState === "locked" || recycleState === "unlocked") {
+    if (recycleState === RecycleQuestState.LOCKED || recycleState === RecycleQuestState.UNLOCKED) {
       scene.showSpeechBubble(scene.player, "여비 아저씨에게 먼저 물어보자!");
       return;
     }
 
-    if (recycleState === "active") {
+    if (recycleState === RecycleQuestState.ACTIVE) {
       const didDepositForQuest = scene.questManager?.depositRecycleItem(type);
       if (!didDepositForQuest) return;
 
