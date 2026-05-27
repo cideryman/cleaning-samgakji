@@ -98,7 +98,8 @@ export default class PlayerController {
   handleMouseMovePointerDown(pointer, currentlyOver = []) {
     const scene = this.scene;
     const button = pointer.event?.button ?? pointer.button;
-    if (pointer.pointerType !== "mouse" || button !== 0) return;
+    const pointerType = pointer.event?.pointerType || pointer.pointerType || "mouse";
+    if (pointerType !== "mouse" || button !== 0) return;
     if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!scene.stateManager?.canMove()) return;
     if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
