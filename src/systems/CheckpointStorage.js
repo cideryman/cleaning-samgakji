@@ -1,3 +1,10 @@
+import {
+  ClothesQuestState,
+  JjookQuestState,
+  PackingQuestState,
+  SunisuniQuestState,
+} from "../config/QuestStates.js";
+
 const SAVE_KEY = "samgakji_checkpoint_v1";
 const SAVE_VERSION = 1;
 
@@ -44,11 +51,11 @@ export default class CheckpointStorage {
           isCompleted: false,
           current: { normal: 0, can: 0, plastic: 0 },
         },
-        jjookQuestState: "locked",
-        sunisuniQuestState: "locked",
-        clothesQuestState: "locked",
+        jjookQuestState: JjookQuestState.LOCKED,
+        sunisuniQuestState: SunisuniQuestState.LOCKED,
+        clothesQuestState: ClothesQuestState.LOCKED,
         travelPrepItems: [],
-        packingQuestState: "locked",
+        packingQuestState: PackingQuestState.LOCKED,
         packingItems: [],
       },
     };
@@ -99,11 +106,11 @@ export default class CheckpointStorage {
           isCompleted: Boolean(recycleQuest.isCompleted),
           current: { ...(recycleQuest.current ?? { normal: 0, can: 0, plastic: 0 }) },
         } : null,
-        jjookQuestState: scene.jjookQuestState ?? "locked",
-        sunisuniQuestState: scene.sunisuniQuestState ?? "locked",
-        clothesQuestState: scene.clothesQuestState ?? "locked",
+        jjookQuestState: scene.jjookQuestState ?? JjookQuestState.LOCKED,
+        sunisuniQuestState: scene.sunisuniQuestState ?? SunisuniQuestState.LOCKED,
+        clothesQuestState: scene.clothesQuestState ?? ClothesQuestState.LOCKED,
         travelPrepItems: Array.isArray(scene.travelPrepItems) ? [...scene.travelPrepItems] : [],
-        packingQuestState: scene.packingQuestState ?? "locked",
+        packingQuestState: scene.packingQuestState ?? PackingQuestState.LOCKED,
         packingItems: Array.isArray(scene.packingItems) ? [...scene.packingItems] : [],
       },
     };
@@ -182,11 +189,11 @@ export default class CheckpointStorage {
       };
     }
 
-    scene.jjookQuestState = quests.jjookQuestState ?? "locked";
-    scene.sunisuniQuestState = quests.sunisuniQuestState ?? "locked";
-    scene.clothesQuestState = quests.clothesQuestState ?? "locked";
+    scene.jjookQuestState = quests.jjookQuestState ?? JjookQuestState.LOCKED;
+    scene.sunisuniQuestState = quests.sunisuniQuestState ?? SunisuniQuestState.LOCKED;
+    scene.clothesQuestState = quests.clothesQuestState ?? ClothesQuestState.LOCKED;
     scene.travelPrepItems = Array.isArray(quests.travelPrepItems) ? [...quests.travelPrepItems] : [];
-    scene.packingQuestState = quests.packingQuestState ?? "locked";
+    scene.packingQuestState = quests.packingQuestState ?? PackingQuestState.LOCKED;
     scene.packingItems = Array.isArray(quests.packingItems) ? [...quests.packingItems] : [];
   }
 
@@ -196,20 +203,20 @@ export default class CheckpointStorage {
     const canCompleted = Boolean(quests.canQuest?.isCompleted);
     const recycleUnlocked = Boolean(quests.recycleQuest?.isUnlocked || quests.recycleQuest?.isActive || quests.recycleQuest?.isCompleted);
     scene.hasAnnouncedRecycleQuest = scene.hasAnnouncedRecycleQuest || recycleUnlocked;
-    scene.hasAnnouncedJjookQuest = scene.hasAnnouncedJjookQuest || scene.jjookQuestState !== "locked";
-    scene.hasAnnouncedSunisuniQuest = scene.hasAnnouncedSunisuniQuest || scene.sunisuniQuestState !== "locked";
-    scene.hasAnnouncedClothesQuest = scene.hasAnnouncedClothesQuest || scene.clothesQuestState !== "locked";
+    scene.hasAnnouncedJjookQuest = scene.hasAnnouncedJjookQuest || scene.jjookQuestState !== JjookQuestState.LOCKED;
+    scene.hasAnnouncedSunisuniQuest = scene.hasAnnouncedSunisuniQuest || scene.sunisuniQuestState !== SunisuniQuestState.LOCKED;
+    scene.hasAnnouncedClothesQuest = scene.hasAnnouncedClothesQuest || scene.clothesQuestState !== ClothesQuestState.LOCKED;
 
     if (canActive || canCompleted || recycleUnlocked) {
       scene.moveYebiToRecyclingCenter?.();
     }
 
-    if (scene.jjookQuestState !== "locked") {
+    if (scene.jjookQuestState !== JjookQuestState.LOCKED) {
       scene.createJjookQuestObjects?.();
       scene.clearQuestMarker?.("jjookQuest");
     }
 
-    if (scene.sunisuniQuestState !== "locked" && scene.sunisuniNpc) {
+    if (scene.sunisuniQuestState !== SunisuniQuestState.LOCKED && scene.sunisuniNpc) {
       scene.sunisuniNpc.setVisible(true);
       scene.sunisuniNpc.setActive(true);
       scene.setSunisuniWaitingPose?.();
@@ -223,9 +230,9 @@ export default class CheckpointStorage {
       scene.setQuestMarker?.("canQuest", scene.yebiNpc, "!");
     }
 
-    if (scene.sunisuniQuestState === "sunisuni_found") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.FOUND) {
       scene.setQuestMarker?.("sunisuniQuest", scene.sunisuniNpc, "!");
-    } else if (scene.sunisuniQuestState === "going_hospital") {
+    } else if (scene.sunisuniQuestState === SunisuniQuestState.GOING_HOSPITAL) {
       scene.setQuestMarker?.("sunisuniHospital", scene.sunisuniNpc, "!");
     }
 
@@ -233,9 +240,9 @@ export default class CheckpointStorage {
       scene.dropBroomUpgrade?.();
     }
 
-    if (scene.clothesQuestState === "ready" || scene.clothesQuestState === "declined") {
+    if (scene.clothesQuestState === ClothesQuestState.READY || scene.clothesQuestState === ClothesQuestState.DECLINED) {
       scene.setQuestMarker?.("clothesQuest", scene.jjookNpc, "!");
-    } else if (scene.clothesQuestState === "shopping") {
+    } else if (scene.clothesQuestState === ClothesQuestState.SHOPPING) {
       scene.isJjookClothesEscortActive = true;
       scene.setQuestMarker?.("clothesShop", scene.mapObjects?.clothing_store || {
         active: true,
@@ -243,9 +250,15 @@ export default class CheckpointStorage {
         y: 174,
         displayHeight: 96,
       }, "!");
-    } else if (scene.clothesQuestState === "completed" && ["offered", "declined"].includes(scene.packingQuestState)) {
+    } else if (
+      scene.clothesQuestState === ClothesQuestState.COMPLETED
+      && [PackingQuestState.OFFERED, PackingQuestState.DECLINED].includes(scene.packingQuestState)
+    ) {
       scene.setQuestMarker?.("packingQuest", scene.jjookNpc, "!");
-    } else if (scene.clothesQuestState === "completed" && scene.packingQuestState === "going_bus_stop") {
+    } else if (
+      scene.clothesQuestState === ClothesQuestState.COMPLETED
+      && scene.packingQuestState === PackingQuestState.GOING_BUS_STOP
+    ) {
       scene.createTravelBusStopObjects?.();
       scene.isJjookBusEscortActive = true;
       scene.updateTravelBusRouteGuide?.();

@@ -30,16 +30,20 @@ export const SunisuniQuestState = {
 export const ClothesQuestState = {
   LOCKED: QuestState.LOCKED,
   READY: QuestState.READY,
+  DECLINED: "declined",
   SHOPPING: "shopping",
   COMPLETED: QuestState.COMPLETED,
 };
 
 export const PackingQuestState = {
   LOCKED: QuestState.LOCKED,
+  OFFERED: "offered",
+  DECLINED: "declined",
   GOING_BUS_STOP: "going_bus_stop",
   BOARDING_BUS: "boarding_bus",
   TRAVELING_HOME: "traveling_home",
   COMPLETED: QuestState.COMPLETED,
+  ENDING_COMPLETE: "ending_complete",
 };
 
 export const RecycleQuestState = {

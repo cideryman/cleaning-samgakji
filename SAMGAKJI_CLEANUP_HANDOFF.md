@@ -589,3 +589,51 @@ Standing rule for future features:
 - Suggested next safe conversion:
   - `CheckpointStorage` marker/restore state checks, because it reads several quest states but must be changed carefully.
   - Keep that patch limited to imports and comparisons only. Do not change save format yet.
+
+## Latest Checkpoint Quest State Refactor
+
+- Continued the `QuestStates.js` migration in the next safe owner file.
+- Added missing constants that preserve existing raw string values:
+  - `ClothesQuestState.DECLINED`
+  - `PackingQuestState.OFFERED`
+  - `PackingQuestState.DECLINED`
+  - `PackingQuestState.ENDING_COMPLETE`
+- Updated `src/systems/CheckpointStorage.js` to import quest state constants and use them for:
+  - prologue save defaults
+  - scene checkpoint fallback values
+  - restored scene defaults
+  - restore-time marker checks
+  - restore-time bus stop route checks
+- Save format was not changed. Stored values are still the same strings as before.
+- Verification after this change:
+  - Node syntax check passed for `src/systems/CheckpointStorage.js`.
+  - Node syntax check passed for `src/config/QuestStates.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` passed when rerun outside the sandbox after the sandbox blocked access while loading `vite.config.js`.
+  - Generated `dist/` was removed.
+- Suggested next safe conversion:
+  - `JjookQuestSystem.js`, because it owns many clothes/packing state transitions.
+  - Keep that patch to imports, comparisons, and assignments only.
+  - Do not change dialogue content or quest flow at the same time.
+
+## Mobile Loading Speed Plan
+
+- Current symptom: mobile loading feels slow as assets have grown.
+- Likely causes to measure first:
+  - Many large PNG backgrounds/interior scenes are preloaded even before the player reaches those scenes.
+  - Multiple high-resolution sprite/portrait/BGM assets are loaded up front.
+  - PWA/service-worker cache can preserve old bundles, so testing may mix old and new load behavior.
+- First measurement step:
+  - Add a lightweight preload timing log in development only, or inspect the Network panel on a phone/desktop mobile emulator.
+  - Record largest assets by transfer size and decode time.
+- Recommended implementation order:
+  1. Keep StartScene assets minimal: title background, logo, start buttons, only the first BGM if needed.
+  2. Split PlayScene preload into groups: core map/player/trash first, then lazy-load interiors/endings only when their scene starts.
+  3. Lazy-load heavy BGM and ambient tracks by situation: shop, hospital, pharmacy, bus, train, ending.
+  4. Compress oversized PNGs. Keep pixel sprites lossless, but consider WebP for large illustration backgrounds if Safari/PWA behavior is verified.
+  5. Add explicit asset manifests by chapter so Chapter 1 can load only what it needs.
+  6. Update PWA cache version whenever asset loading changes, so mobile home-screen installs do not reuse stale caches.
+- Refactor boundary:
+  - Do not put lazy-loading logic directly into `PlayScene.js`.
+  - Prefer an `AssetLoadSystem` or extend `Preload.js`/scene-specific loader helpers.
+  - Keep the first optimization patch small: lazy-load one heavy category, such as ending/interior backgrounds, then verify mobile.
