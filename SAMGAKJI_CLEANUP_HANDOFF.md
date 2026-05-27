@@ -516,6 +516,54 @@ Standing rule for future features:
 - Future improvement if needed:
   - Add click-to-NPC auto-walk and talk on arrival. Current implementation only makes direct NPC clicks trigger the existing dialogue handler; it does not pathfind to distant NPCs.
 
+### PC Mouse Movement Follow-Up
+
+- A follow-up fix changed mouse movement target coordinates to use `pointer.positionToCamera(scene.cameras.main)` instead of raw `pointer.worldX/worldY`.
+  - Reason: the game uses Phaser scaling/camera zoom, so explicit camera conversion is more reliable for canvas click positions.
+- Another follow-up loosened mouse pointer type detection:
+  - It now reads `pointer.event?.pointerType || pointer.pointerType || "mouse"`.
+  - Reason: some Phaser/browser combinations may leave `pointer.pointerType` empty even for mouse input, which can cause floor-click movement to be ignored.
+- If PC floor-click movement still does not work, next suspected blocker:
+  - `currentlyOver.length > 0` may be true because a map/object hit area is under the cursor.
+  - Possible fix: ignore only interactive NPCs/shops/buttons as movement blockers, while allowing ordinary world object overlap clicks to set a movement target.
+
+### Mouse Movement Feature Ideas And Difficulty
+
+1. Long-distance left-click with obstacle avoidance/pathfinding.
+   - Difficulty: medium to high.
+   - Current click movement is straight-line movement toward a target point.
+   - To avoid obstacles, the game needs pathfinding over map collision data.
+   - Recommended approach:
+     - Use Tiled collision layer or generated collision rectangles as the source of blocked cells.
+     - Build a simple grid over the world, likely 24px or 32px cells.
+     - Use A* pathfinding from player cell to clicked cell.
+     - Move through waypoints one by one.
+   - Risks:
+     - Needs careful tuning around narrow passages, NPCs, bins, trees, benches, and map object colliders.
+     - Road/crosswalk rules could later conflict with free pathfinding unless route rules are included.
+     - Should not be mixed into `PlayScene`; put it in `PlayerController` plus possibly a new `PathfindingSystem`.
+   - Recommendation:
+     - Do not add immediately during light refactoring.
+     - Add later as a focused feature after click movement is stable.
+
+2. Hold left mouse button and continuously move toward the cursor without repeated clicks.
+   - Difficulty: low to medium.
+   - This is much easier than pathfinding.
+   - Current movement target is set only on `pointerdown`.
+   - Add mouse hold tracking so `pointermove` updates `mouseMoveTarget` while the left button is held.
+   - Suggested implementation:
+     - Add `isMouseMoveHeld` to `InitialGameState`.
+     - In `PlayerController`, listen to scene `pointerdown`, `pointermove`, `pointerup`, and maybe `pointerupoutside`.
+     - On left mouse down over walkable floor, set hold true and update target.
+     - On pointer move while held, update target continuously.
+     - On pointer up, keep moving to the last target or stop, depending desired feel. RPG-style usually keeps moving to last point; action-style stops on release.
+   - Risks:
+     - Must not interfere with dragging/mobile joystick.
+     - Must not update target while the cursor is over UI, dialogue, modal, or interactive NPC/shop objects.
+   - Recommendation:
+     - Reasonable next improvement once basic PC click movement is confirmed working.
+     - Keep it inside `PlayerController`; `PlayScene` should not gain new movement logic.
+
 ## Latest Quest State Constants Adoption
 
 - Continued the `QuestStates.js` migration in a narrow, behavior-preserving pass.
