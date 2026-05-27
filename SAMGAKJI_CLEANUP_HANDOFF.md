@@ -356,3 +356,81 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
 - Continue shrinking `PlayScene.js` by moving one owner area at a time.
 - Recommended next target: route/quest marker wrapper cleanup, because `RouteGuideSystem` already owns most route drawing.
 - Avoid moving dialogue content and quest state transitions in the same patch. They are riskier and should be extracted only after the wrappers and pure UI helpers are settled.
+
+## External Refactor Review And Direction
+
+The user shared an external review of the current architecture. Overall assessment: the review matches the current direction. `PlayScene.js` has been reduced a lot and the `systems/` split is working, but the project is still in a transitional structure where `PlayScene` acts as scene, composer, state container, and compatibility bridge.
+
+Important interpretation for future Codex work:
+
+- Do not aim for `PlayScene.js` to become zero lines.
+- The right target is for `PlayScene` to be a scene composer and bridge only.
+- Short-term target: keep reducing toward roughly 2000 lines.
+- Mid-term target: 1200-1500 lines.
+- Long-term target: 800-1000 lines, only if it can be done safely.
+- Never shrink `PlayScene` by scattering unclear dependencies across systems. Move one owner area at a time.
+
+Recommended refactor order from here:
+
+1. State initialization extraction.
+   - Add something like `src/config/InitialGameState.js` or `src/state/createInitialGameState.js`.
+   - Move default run flags, quest states, inventories, timers, and unlock flags into one factory.
+   - First step should only centralize defaults. Do not redesign checkpoint format in the same patch.
+   - Goal: make `constructor()` and `resetRunState()` shorter and easier to compare.
+
+2. Quest state constants.
+   - Add `src/config/QuestStates.js`.
+   - Replace direct strings gradually, starting with one system at a time.
+   - Good first targets: `SunisuniQuestSystem`, `JjookQuestSystem`, `RouteGuideSystem`, then `PlayScene` bridge checks.
+   - Avoid changing state names and behavior in the same patch. This is a safety refactor.
+
+3. Preload asset list extraction.
+   - `Preload.js` is large and will keep growing.
+   - Add `src/config/assets/` modules such as `coreAssets.js`, `questAssets.js`, `shopAssets.js`, `endingAssets.js`, `audioAssets.js`.
+   - Keep `Preload.js` responsible for loading mechanics, Tiled TSX parsing, and Phaser calls.
+   - Move only static asset arrays first.
+
+4. DOM/UI binding extraction.
+   - Current `PlayScene.create()` still owns many DOM lookups and event listener registrations.
+   - Consider `src/systems/DomInputSystem.js` or `src/systems/HtmlUiBindingSystem.js`.
+   - This should own DOM element lookup, listener attach/detach, and mobile button bindings.
+   - Keep actual game logic in existing systems.
+
+5. Dialogue JSON migration, starting small.
+   - Do not move every dialogue at once.
+   - Recommended first target: hospital/pharmacy dialogue because educational text changes often.
+   - Then move Sunisuni, Jjook, ending, and finally Yebi.
+   - Keep `DialogueSystem` display-only and use `DialogueManager` for JSON lookup/action dispatch.
+
+6. Save/checkpoint structure cleanup before Chapter 2.
+   - `CheckpointStorage` currently works but depends heavily on scene fields.
+   - Do not redesign this during ordinary feature work.
+   - Before Chapter 2, consider a versioned state shape:
+     `{ version, chapter, money, player, quests, inventory, flags, unlocked }`.
+   - This should be planned as its own migration step.
+
+Git and build hygiene notes from the review:
+
+- Keep `dist/`, `node_modules/`, `photothumb.db`, `Thumbs.db`, `.DS_Store`, and unused original asset folders out of GitHub.
+- Recommended `.gitignore` entries:
+  - `node_modules/`
+  - `dist/`
+  - `.DS_Store`
+  - `Thumbs.db`
+  - `photothumb.db`
+  - `*.db`
+- Current Phaser vendor script warnings from Vite are not urgent. Keep the vendor Phaser approach for now unless the user explicitly asks to move Phaser into npm imports.
+
+What not to do yet:
+
+- Do not convert to TypeScript now.
+- Do not migrate Phaser from `vendor/phaser.min.js` to npm now.
+- Do not rewrite the entire checkpoint system during Chapter 1 stabilization.
+- Do not move all dialogue to JSON at once.
+
+Standing rule for future features:
+
+- New quest logic goes into a system file.
+- New static data goes into `config` or `data`.
+- New dialogue should prefer `data/dialogues` when practical.
+- `PlayScene` may instantiate systems, call update hooks, expose compatibility wrappers, and pass state, but should not become the home for new feature logic.
