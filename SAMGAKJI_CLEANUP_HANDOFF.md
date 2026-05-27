@@ -338,6 +338,19 @@ rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
   - bus stop checkpoint helpers such as `createTravelBusStopObjects` and `updateTravelBusRouteGuide`
 - Build check passed after this cleanup with `npm.cmd run build`; generated `dist/` was removed.
 
+## Latest Yebi Route Flow Note
+
+- Recycling quest route guidance intentionally still targets the recycling center, not Yebi.
+- When recycle quest state is `unlocked`, `YebiQuestSystem.update()` now watches for the player arriving near the recycling center.
+- On arrival, Yebi briefly approaches the player, world input is paused with `SceneState.CUTSCENE`, then the existing recycle quest dialogue starts through `YebiQuestSystem.showQuestDialogue()`.
+- `PlayScene.update()` only calls `this.yebiQuestSystem?.update(time, delta);`; the arrival detection and approach flow live in `YebiQuestSystem`.
+- Recycling bin hitbox values were not changed in this step. Keep the current non-overlapping bin range unless the user explicitly asks again.
+- Verification after this change:
+  - Node syntax check passed for `src/systems/YebiQuestSystem.js`.
+  - Node syntax check passed for `src/scenes/PlayScene.js`.
+  - `git diff --check` passed with only Windows line-ending warnings.
+  - `npm.cmd run build` could not complete because local `vite` was not installed/available.
+
 ## Next Refactor Step
 
 - Continue shrinking `PlayScene.js` by moving one owner area at a time.

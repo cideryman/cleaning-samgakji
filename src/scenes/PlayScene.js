@@ -525,6 +525,7 @@ export default class PlayScene extends Phaser.Scene {
     this.handlePackingMenuKeyboard();
     this.playerController.update(time, delta);
     this.checkRecycleQuestUnlock();
+    this.yebiQuestSystem?.update(time, delta);
     this.checkJjookQuestUnlock();
     this.checkSunisuniQuestUnlock();
     this.checkClothesQuestUnlock();

@@ -1,8 +1,15 @@
 import { GAME_CONFIG, RECYCLE_BIN_CONFIG } from "../config/GameConstants.js";
+import { SceneState } from "../config/SceneState.js";
+
+const RECYCLE_INTRO_TRIGGER_DISTANCE = 132;
+const RECYCLE_INTRO_TALK_OFFSET_X = 58;
+const RECYCLE_INTRO_TALK_OFFSET_Y = 12;
 
 export default class YebiQuestSystem {
   constructor(scene) {
     this.scene = scene;
+    this.hasTriggeredRecycleIntro = false;
+    this.isRecycleIntroApproachActive = false;
   }
 
   createRecyclingCenter() {
@@ -110,6 +117,99 @@ export default class YebiQuestSystem {
     scene.showQuestToast("여비 아저씨가 분리수거장에서 기다리고 있어!", 10000);
     scene.showSpeechBubble(scene.yebiNpc, "분리수거장으로 와!", 10000);
     scene.saveCheckpoint("recycle_unlocked");
+  }
+
+  update() {
+    this.checkRecycleIntroArrival();
+  }
+
+  checkRecycleIntroArrival() {
+    const scene = this.scene;
+    if (this.hasTriggeredRecycleIntro || this.isRecycleIntroApproachActive) return;
+    if (!scene.player?.active || !scene.yebiNpc?.active || !scene.questManager) return;
+    if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return;
+    if (scene.questManager.getRecycleQuestState?.() !== "unlocked") return;
+
+    const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, center.x, center.y);
+    if (distance > RECYCLE_INTRO_TRIGGER_DISTANCE) return;
+
+    this.hasTriggeredRecycleIntro = true;
+    this.approachPlayerForRecycleIntro();
+  }
+
+  approachPlayerForRecycleIntro() {
+    const scene = this.scene;
+    if (!scene.yebiNpc?.active || !scene.player?.active) {
+      this.showQuestDialogue();
+      return;
+    }
+
+    this.isRecycleIntroApproachActive = true;
+    scene.pauseNpcRoaming("yebi");
+    scene.tweens.killTweensOf(scene.yebiNpc);
+    scene.player.setVelocity?.(0, 0);
+    scene.playerController?.stopWalkAnimation?.();
+    scene.stateManager?.set(SceneState.CUTSCENE);
+
+    const target = this.getRecycleIntroTalkPosition();
+    const distance = Phaser.Math.Distance.Between(scene.yebiNpc.x, scene.yebiNpc.y, target.x, target.y);
+    if (distance <= 24) {
+      this.finishRecycleIntroApproach();
+      return;
+    }
+
+    let previousX = scene.yebiNpc.x;
+    let previousY = scene.yebiNpc.y;
+    scene.tweens.add({
+      targets: scene.yebiNpc,
+      x: target.x,
+      y: target.y,
+      duration: Math.max(360, (distance / (GAME_CONFIG.playerSpeed * 0.86)) * 1000),
+      ease: "Linear",
+      onUpdate: () => {
+        const dx = scene.yebiNpc.x - previousX;
+        const dy = scene.yebiNpc.y - previousY;
+        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
+          const directionKey = scene.getDirectionKeyFromVector(
+            dx,
+            dy,
+            scene.yebiNpc.getData("directionKey") || "down",
+          );
+          scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, true);
+        }
+        previousX = scene.yebiNpc.x;
+        previousY = scene.yebiNpc.y;
+      },
+      onComplete: () => this.finishRecycleIntroApproach(),
+    });
+  }
+
+  getRecycleIntroTalkPosition() {
+    const scene = this.scene;
+    const offsetX = scene.yebiNpc.x <= scene.player.x
+      ? -RECYCLE_INTRO_TALK_OFFSET_X
+      : RECYCLE_INTRO_TALK_OFFSET_X;
+
+    return {
+      x: Phaser.Math.Clamp(scene.player.x + offsetX, 32, GAME_CONFIG.worldWidth - 32),
+      y: Phaser.Math.Clamp(scene.player.y + RECYCLE_INTRO_TALK_OFFSET_Y, 32, GAME_CONFIG.worldHeight - 32),
+    };
+  }
+
+  finishRecycleIntroApproach() {
+    const scene = this.scene;
+    this.isRecycleIntroApproachActive = false;
+    if (scene.yebiNpc && scene.player) {
+      const directionKey = scene.getDirectionKeyFromVector(
+        scene.player.x - scene.yebiNpc.x,
+        scene.player.y - scene.yebiNpc.y,
+        scene.yebiNpc.getData("directionKey") || "down",
+      );
+      scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, false);
+    }
+    scene.stateManager?.set(SceneState.PLAYING);
+    this.showQuestDialogue();
   }
 
   markCanQuestAvailable() {
