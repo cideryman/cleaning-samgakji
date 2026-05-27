@@ -97,13 +97,15 @@ export default class PlayerController {
 
   handleMouseMovePointerDown(pointer, currentlyOver = []) {
     const scene = this.scene;
-    if (pointer.pointerType !== "mouse" || pointer.button !== 0) return;
+    const button = pointer.event?.button ?? pointer.button;
+    if (pointer.pointerType !== "mouse" || button !== 0) return;
     if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!scene.stateManager?.canMove()) return;
     if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
     if (currentlyOver.length > 0) return;
 
-    scene.mouseMoveTarget = { x: pointer.worldX, y: pointer.worldY };
+    const worldPoint = pointer.positionToCamera(scene.cameras.main);
+    scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
   }
 
   getPlayerSpeed() {
