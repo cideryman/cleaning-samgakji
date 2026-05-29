@@ -165,6 +165,7 @@ export default class PlayScene extends Phaser.Scene {
     this.isChapterComplete = false;
     
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.npcBubbleEvent?.destroy();
       this.clearNpcRoaming();
       this.stopChapterMusic();
       this.htmlUiBindingSystem?.unbind();
@@ -198,6 +199,13 @@ export default class PlayScene extends Phaser.Scene {
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
     this.updateNpcRoaming(true);
+    
+    // 3️⃣ 45~75초 주기로 마을 주민 랜덤 한 줄 말풍선 대사 연출 (주민 기억 & 서울 기대감)
+    this.npcBubbleEvent = this.time.addEvent({
+      delay: Phaser.Math.Between(45000, 75000),
+      loop: true,
+      callback: () => this.triggerRandomNpcBubble(),
+    });
 
     this.physics.add.collider(this.player, this.walls);
     if (this.objectWalls) {
@@ -2557,5 +2565,82 @@ export default class PlayScene extends Phaser.Scene {
 
   updateHud() {
     this.uiManager.updateHud();
+  }
+
+  // --- 3️⃣ & 7️⃣ & 8️⃣ 주민 기억 시스템 & 서울 기대감 NPC 랜덤 대사 격발기 ---
+  triggerRandomNpcBubble() {
+    // 맵 상에 살아있는 NPC 후보 수집
+    const npcs = [];
+    if (this.yebiNpc && this.yebiNpc.active) npcs.push({ name: "yebi", sprite: this.yebiNpc });
+    if (this.jjookNpc && this.jjookNpc.active) npcs.push({ name: "jjook", sprite: this.jjookNpc });
+    if (this.sunisuniNpc && this.sunisuniNpc.active) npcs.push({ name: "sunisuni", sprite: this.sunisuniNpc });
+
+    if (npcs.length === 0) return;
+
+    // 무작위 NPC 1명 선택
+    const npc = Phaser.Utils.Array.GetRandom(npcs);
+    const speech = this.getNpcRememberSpeech(npc.name);
+    
+    // UIManager의 showSpeechBubble를 사용해 머리 위에 대사 연출 (3.6초 노출)
+    this.uiManager.showSpeechBubble(npc.sprite, speech, 3600);
+  }
+
+  getNpcRememberSpeech(npcName) {
+    const money = this.moneySystem?.money ?? 0;
+    const isRich = money >= 8000;
+
+    const yebiQuestCompleted = this.yebiQuestSystem?.getRecycleQuestState?.() === "completed";
+    const jjookQuestCompleted = this.jjookQuestState === "completed";
+    const sunisuniQuestCompleted = this.sunisuniQuestState === "quest_complete";
+
+    if (npcName === "yebi") {
+      if (yebiQuestCompleted) {
+        return Phaser.Utils.Array.GetRandom([
+          "해냄이 덕분에 삼각지 분리수거장이 엄청 깨끗해졌어! 최고야!",
+          "분리수거의 달인 해냄이! 정말 대단해!",
+          "지난번에도 도와줘서 너무 고마웠어. 든든하다!"
+        ]);
+      }
+      return Phaser.Utils.Array.GetRandom([
+        "캔은 캔대로, 플라스틱은 플라스틱대로 모으는 게 정답이야!",
+        "깨끗한 삼각지를 위해 파이팅!",
+        "오늘 날씨 정말 맑다. 청소하기 딱 기분 좋은 날이네!"
+      ]);
+    }
+
+    if (npcName === "jjook") {
+      if (isRich) {
+        return "우와! 벌써 돈을 거의 다 모았네! 서울 롯데월드 갈 날이 정말 머지않았어!";
+      }
+      if (jjookQuestCompleted) {
+        return Phaser.Utils.Array.GetRandom([
+          "내 소중한 지갑을 찾아줘서 정말 고마워! 이제 서울 기차표 살 수 있어!",
+          "서울 여행이 정말 기대된다. 롯데월드는 아주 크겠지?",
+          "해냄이 너 요즘 진짜 씩씩하게 청소 잘하고 있어. 최고야!"
+        ]);
+      }
+      return Phaser.Utils.Array.GetRandom([
+        "서울은 진짜 크고 높은 건물이 많겠지? 기대된다!",
+        "쭉쭉쭉~ 깨끗하게 쓸어 모아 볼까!",
+        "해냄이랑 같이 동네 청소를 하니까 신나고 즐거워!"
+      ]);
+    }
+
+    if (npcName === "sunisuni") {
+      if (sunisuniQuestCompleted) {
+        return Phaser.Utils.Array.GetRandom([
+          "해냄이가 약국에서 약을 받아다 준 덕분에 배 아픈 게 다 나았어! 고마워!",
+          "짐싸기 도와줘서 진짜 든든했어! 덕분에 수월하게 갈 수 있겠다.",
+          "해냄이 덕분에 동네가 한층 더 화사하고 따뜻해진 것 같구나!"
+        ]);
+      }
+      return Phaser.Utils.Array.GetRandom([
+        "아휴, 우리 삼각지 골목길이 참 정겹고 아늑해.",
+        "오늘도 멋지고 씩씩하게 일하는구나, 우리 청소 대장 해냄이!",
+        "몸도 마음도 건강하게! 언제나 응원한단다!"
+      ]);
+    }
+
+    return "오늘 하루도 씩씩하고 즐겁게 일해봐요!";
   }
 }

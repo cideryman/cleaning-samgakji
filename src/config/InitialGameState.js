@@ -8,6 +8,7 @@ import {
 export function createInitialGameState() {
   return {
     totalCleanedCount: 0,
+    totalRecycledCount: 0,
     waveCleanedCount: 0,
     currentWave: 0,
     hasBroomUpgrade: false,

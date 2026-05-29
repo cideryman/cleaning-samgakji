@@ -2706,4 +2706,308 @@ body.ui-large-text .edu-guide-ok-btn {
   }
 }
 
+/* --- 1️⃣ 쓰레기 반응 Floating Pop Text 스타일 --- */
+.floating-pop-text {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 99;
+  pointer-events: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffffff;
+  background: rgba(33, 53, 44, 0.88);
+  border: 2px solid #ffffff;
+  border-radius: 20px;
+  padding: 4px 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+  animation: float-up-fade 850ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* 특수 쓰레기용 더 알록달록한 골드 팝업 */
+.floating-pop-text.special-waste-pop {
+  background: #ffd75a;
+  color: #21352c;
+  border: 2px solid #21352c;
+  box-shadow: 0 4px 12px rgba(255, 215, 90, 0.5);
+  font-size: 18px;
+  animation: float-up-fade-special 1150ms cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes float-up-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -30px) scale(1.1);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -45px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60px) scale(0.85);
+  }
+}
+
+@keyframes float-up-fade-special {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 15px) scale(0.65);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -35px) scale(1.2);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -50px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70px) scale(0.8);
+  }
+}
+
+/* --- 5️⃣ 화면 우상단 휴식하기 버튼 스타일 --- */
+.rest-btn {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  top: max(12px, env(safe-area-inset-top));
+  z-index: 85;
+  width: 52px;
+  height: 52px;
+  border: 3px solid #21352c;
+  border-radius: 50%;
+  background: #fffdf6;
+  box-shadow: 0 4px 0 #b9d8c2;
+  font-size: 24px;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: none;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.rest-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #b9d8c2;
+}
+
+/* --- 5️⃣ 휴식 & 성취 모달 스타일 --- */
+.rest-stats-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 190;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(18, 28, 24, 0.45);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.rest-stats-modal.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rest-stats-panel {
+  width: min(540px, 92vw);
+  max-height: min(560px, 90vh);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  padding: 22px;
+  border: 4px solid #21352c;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(33, 53, 44, 0.3);
+  font-family: inherit;
+  animation: panel-zoom 250ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes panel-zoom {
+  0% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.rest-stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid #e0eae4;
+  padding-bottom: 10px;
+  color: #21352c;
+}
+
+.rest-stats-header strong {
+  font-size: 24px;
+}
+
+.rest-stats-header span {
+  font-size: 20px;
+}
+
+.rest-stats-body {
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 4px 2px;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #f4faf6;
+  border: 2px solid #d0e4d7;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.stats-row-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border: 2px solid #21352c;
+  border-radius: 50%;
+}
+
+.stats-row-info {
+  display: grid;
+  gap: 2px;
+  flex-grow: 1;
+}
+
+.stats-row-info label {
+  font-size: 14px;
+  color: #597e5f;
+  font-weight: 800;
+}
+
+.stats-row-info span {
+  font-size: 20px;
+  font-weight: 900;
+  color: #21352c;
+}
+
+.stats-gauge-container {
+  width: 100%;
+  height: 20px;
+  background: #edf6f0;
+  border: 3px solid #21352c;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 4px;
+}
+
+.stats-gauge-fill {
+  height: 100%;
+  background: #ffd75a;
+  width: 0%;
+  transition: width 300ms ease;
+}
+
+.stats-quests-card {
+  background: #f9fbf9;
+  border: 2px dashed #b9d8c2;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.stats-quests-card label {
+  font-size: 14px;
+  color: #597e5f;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.stats-quest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #21352c;
+}
+
+.stats-quest-checkbox {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #21352c;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  font-weight: 900;
+  font-size: 14px;
+  color: #2f8f5b;
+}
+
+.stats-quest-item.is-done .stats-quest-checkbox {
+  background: #fff3a3;
+}
+
+.rest-stats-footer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  border-top: 3px solid #e0eae4;
+  padding-top: 14px;
+}
+
+.rest-close-btn {
+  min-height: 48px;
+  border: 3px solid #21352c;
+  border-radius: 10px;
+  background: #ffd75a;
+  box-shadow: 0 4px 0 #c89d27;
+  color: #21352c;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  touch-action: manipulation;
+}
+
+.rest-close-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #c89d27;
+}
+
+/* --- 큰 글자 범용 모드 (Universal Design) 대응 --- */
+body.large-text .rest-stats-header strong { font-size: 30px; }
+body.large-text .rest-stats-header span { font-size: 24px; }
+body.large-text .stats-row-info label { font-size: 17px; }
+body.large-text .stats-row-info span { font-size: 24px; }
+body.large-text .stats-quests-card label { font-size: 17px; }
+body.large-text .stats-quest-item { font-size: 20px; }
+body.large-text .stats-quest-checkbox { width: 26px; height: 26px; font-size: 18px; }
+body.large-text .rest-close-btn { font-size: 22px; min-height: 56px; }
+
+
 

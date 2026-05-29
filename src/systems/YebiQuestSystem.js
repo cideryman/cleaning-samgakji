@@ -512,6 +512,7 @@ export default class YebiQuestSystem {
       if (!didDepositForQuest) return;
 
       scene.recyclingInventory[type] -= 1;
+      scene.totalRecycledCount = (scene.totalRecycledCount || 0) + 1; // 퀘스트 분리배출 가산
       this.showDepositEffect(binSprite || scene.player, type);
       scene.playItemPickupSound();
       scene.updateHud();
@@ -521,6 +522,7 @@ export default class YebiQuestSystem {
     const depositCount = inventoryCount;
     const reward = depositCount * GAME_CONFIG.recycleDepositReward;
     scene.recyclingInventory[type] = 0;
+    scene.totalRecycledCount = (scene.totalRecycledCount || 0) + depositCount; // 무한 분리배출 가산
     this.showDepositEffect(binSprite || scene.player, type, depositCount);
     scene.moneySystem?.addMoney(reward);
     scene.playItemPickupSound();

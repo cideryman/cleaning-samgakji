@@ -112,15 +112,23 @@ export default class CleaningSystem {
     slime.body.enable = false;
     scene.totalCleanedCount += 1;
     scene.waveCleanedCount += 1;
+    
     const trashType = slime.getData("trashType") || "normal";
-    const isCanTrash = trashType === "can";
+    const specialType = slime.getData("specialType") || null;
+    const isSpecial = !!specialType;
+    const isCanTrash = trashType === "can" || specialType === "golden_can";
+
     if (isCanTrash) {
       scene.cleanedCanCount += 1;
       scene.yebiQuestSystem?.updateQuestProgress(1);
     }
-    this.addTrashToRecycleInventory(trashType);
+    this.addTrashToRecycleInventory(trashType, specialType);
 
-    const reward = this.getTrashCleanReward();
+    // 보상 지급
+    let reward = this.getTrashCleanReward();
+    if (isSpecial) {
+      reward = 150; // 특수 쓰레기는 +150원
+    }
     scene.moneySystem.addMoney(reward);
 
     if (isCanTrash) {
@@ -128,8 +136,30 @@ export default class CleaningSystem {
     } else {
       scene.playCleanSound();
     }
+
+    // 1️⃣ 쓰레기 반응 Floating Pop Text 연출 트리거
+    let popText = "깔끔해!";
+    if (isSpecial) {
+      const labels = {
+        golden_can: "황금 압축 캔! (+150원)",
+        clean_bottle: "깨끗이 헹군 병! (+150원)",
+        label_pet: "라벨 뗀 투명 페트! (+150원)",
+        bundled_paper: "차곡차곡 묶음 신문지! (+150원)",
+      };
+      popText = labels[specialType] || "특수 자원 발견! (+150원)";
+    } else {
+      const normalLabels = {
+        normal: "깔끔해!",
+        can: "재활용 완료!",
+        plastic: "좋아!",
+      };
+      popText = normalLabels[trashType] || "깔끔해!";
+    }
+
+    scene.uiManager?.showFloatingPopText(slime, popText, isSpecial);
+
     this.showSlimePop(slime);
-    this.showCleanFeedback(slimeX, slimeY, isCanTrash);
+    this.showCleanFeedback(slimeX, slimeY, isCanTrash || isSpecial);
     scene.updateHud();
 
     scene.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
@@ -139,18 +169,40 @@ export default class CleaningSystem {
     });
   }
 
-  addTrashToRecycleInventory(type) {
+  addTrashToRecycleInventory(type, specialType = null) {
     const scene = this.scene;
-    const normalizedType = type === "slime" ? "normal" : type;
+    let normalizedType = type === "slime" ? "normal" : type;
+    if (specialType) {
+      // 특수 자원의 인벤토리 가산 규칙
+      if (specialType === "golden_can") normalizedType = "can";
+      else if (specialType === "label_pet") normalizedType = "plastic";
+      else normalizedType = "normal"; // 깨끗이 헹군 병, 묶음 신문지
+    }
+
     if (!(normalizedType in scene.recyclingInventory)) return;
 
     scene.recyclingInventory[normalizedType] += 1;
-    const labelByType = {
-      normal: "일반 쓰레기",
-      can: "캔",
-      plastic: "플라스틱",
-    };
-    scene.queueInventoryCaption(`${labelByType[normalizedType]} +1`);
+    
+    // 특수 자원의 인벤토리 캡션 설명
+    let captionText = "";
+    if (specialType) {
+      const specialCaptions = {
+        golden_can: "황금 압축 캔 +1",
+        clean_bottle: "깨끗이 헹군 병 +1",
+        label_pet: "라벨 뗀 투명 페트 +1",
+        bundled_paper: "차곡차곡 묶음 신문지 +1",
+      };
+      captionText = specialCaptions[specialType] || "특수 자원 +1";
+    } else {
+      const labelByType = {
+        normal: "일반 쓰레기",
+        can: "캔",
+        plastic: "플라스틱",
+      };
+      captionText = `${labelByType[normalizedType]} +1`;
+    }
+    
+    scene.queueInventoryCaption(captionText);
   }
 
   getTrashCleanReward() {
@@ -213,14 +265,53 @@ export default class CleaningSystem {
     if (trash.body) trash.body.enable = false;
     scene.totalCleanedCount += 1;
     scene.waveCleanedCount += 1;
+    
     const trashType = trash.getData("trashType") || "normal";
-    if (trashType === "can") {
+    const specialType = trash.getData("specialType") || null;
+    const isSpecial = !!specialType;
+    const isCanTrash = trashType === "can" || specialType === "golden_can";
+
+    if (isCanTrash) {
       scene.cleanedCanCount += 1;
       scene.yebiQuestSystem?.updateQuestProgress(1);
     }
-    this.addTrashToRecycleInventory(trashType);
-    scene.moneySystem.addMoney(this.getTrashCleanReward());
-    this.showCleanFeedback(trash.x, trash.y);
+    this.addTrashToRecycleInventory(trashType, specialType);
+
+    // 보상 지급
+    let reward = this.getTrashCleanReward();
+    if (isSpecial) {
+      reward = 150;
+    }
+    scene.moneySystem.addMoney(reward);
+
+    if (isCanTrash) {
+      scene.playCanCleanSound();
+    } else {
+      scene.playCleanSound();
+    }
+
+    // 1️⃣ 쓰레기 반응 Floating Pop Text 트리거
+    let popText = "깔끔해!";
+    if (isSpecial) {
+      const labels = {
+        golden_can: "황금 압축 캔! (+150원)",
+        clean_bottle: "깨끗이 헹군 병! (+150원)",
+        label_pet: "라벨 뗀 투명 페트! (+150원)",
+        bundled_paper: "차곡차곡 묶음 신문지! (+150원)",
+      };
+      popText = labels[specialType] || "특수 자원 발견! (+150원)";
+    } else {
+      const normalLabels = {
+        normal: "깔끔해!",
+        can: "재활용 완료!",
+        plastic: "좋아!",
+      };
+      popText = normalLabels[trashType] || "깔끔해!";
+    }
+
+    scene.uiManager?.showFloatingPopText(trash, popText, isSpecial);
+
+    this.showCleanFeedback(trash.x, trash.y, isCanTrash || isSpecial);
     this.showSlimePop(trash);
     scene.updateHud();
 

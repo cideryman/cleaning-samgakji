@@ -12,10 +12,32 @@ export default class UIManager {
     this.questToastQueue = [];
     this.isShowingQuestToast = false;
     this.nextQuestHintEl = document.querySelector("#nextQuestHint");
+    
+    // 휴식하기 버튼 및 통계 모달 생성
+    this.createRestStatsButton();
+    this.createRestStatsModal();
+
     this.nextQuestHintRefreshEvent = this.scene.time.addEvent({
       delay: 500,
       loop: true,
       callback: () => this.updateNextQuestHint(),
+    });
+
+    // 씬 셧다운 시 DOM 청소 등록
+    this.scene.events.once("shutdown", () => {
+      this.destroyRestStatsElements();
+    });
+
+    // ESC 키로 휴식 모달 토글 등록
+    this.escKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this.escKeyRefreshEvent = this.scene.time.addEvent({
+      delay: 150,
+      loop: true,
+      callback: () => {
+        if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
+          this.toggleRestStatsModal();
+        }
+      }
     });
   }
 
@@ -187,5 +209,229 @@ export default class UIManager {
       return `다음: ${label} 가능`;
     }
     return `다음: ${label} ${targetMoney.toLocaleString()}원`;
+  }
+
+  // --- 1️⃣ 캐릭터 머리 위 Floating Pop Text 렌더링 엔진 ---
+  showFloatingPopText(target, text, isSpecial = false) {
+    if (!target || !text) return;
+
+    const cam = this.scene.cameras.main;
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    // Phaser 월드 좌표 구득
+    const wx = target.x;
+    const wy = target.y;
+
+    // 카메라 Scroll 및 Zoom 비율을 대입해 브라우저 픽셀 좌표 수학적 연산
+    const screenX = (wx - cam.scrollX) * cam.zoom + (cam.width * (1 - cam.zoom) / 2);
+    const screenY = (wy - cam.scrollY) * cam.zoom + (cam.height * (1 - cam.zoom) / 2);
+
+    const popText = document.createElement("div");
+    popText.className = "floating-pop-text";
+    if (isSpecial) {
+      popText.classList.add("special-waste-pop");
+    }
+    popText.textContent = text;
+
+    // stage의 boundary 기준 relative offset 배치
+    popText.style.left = `${screenX}px`;
+    popText.style.top = `${screenY - 15}px`; // 머리 위에 뜨도록 상향 보정
+
+    stage.appendChild(popText);
+
+    // 애니메이션 소멸 주기에 맞춰 DOM 자동 청소
+    const duration = isSpecial ? 1150 : 850;
+    window.setTimeout(() => {
+      popText.remove();
+    }, duration - 20);
+  }
+
+  // --- 5️⃣ 휴식하기 ☕ 버튼 생성 ---
+  createRestStatsButton() {
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    // 이미 존재하면 중복 생성 방지
+    if (document.querySelector(".rest-btn")) return;
+
+    const btn = document.createElement("button");
+    btn.className = "rest-btn";
+    btn.innerHTML = "☕";
+    btn.setAttribute("aria-label", "휴식하고 내 성취 보기");
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.toggleRestStatsModal();
+    });
+
+    stage.appendChild(btn);
+    this.restBtnEl = btn;
+  }
+
+  // --- 5️⃣ 휴식 및 성취 요약 모달 생성 ---
+  createRestStatsModal() {
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    // 이미 존재하면 중복 생성 방지
+    if (document.querySelector("#rest-stats-modal")) return;
+
+    const modal = document.createElement("div");
+    modal.id = "rest-stats-modal";
+    modal.className = "rest-stats-modal";
+
+    modal.innerHTML = `
+      <div class="rest-stats-panel">
+        <div class="rest-stats-header">
+          <strong>☕ 쉬는 시간</strong>
+          <span id="rest-stats-time">08:00</span>
+        </div>
+        <div class="rest-stats-body">
+          <!-- 여비 저축 현황 -->
+          <div class="stats-row">
+            <div class="stats-row-icon">💰</div>
+            <div class="stats-row-info">
+              <label>서울 여행 여비 모으기</label>
+              <span id="stats-money-text">0원 / 10,000원</span>
+              <div class="stats-gauge-container">
+                <div id="stats-money-gauge" class="stats-gauge-fill"></div>
+              </div>
+            </div>
+          </div>
+          <!-- 치운 쓰레기 개수 -->
+          <div class="stats-row">
+            <div class="stats-row-icon">🧹</div>
+            <div class="stats-row-info">
+              <label>치운 일반 쓰레기</label>
+              <span id="stats-cleaned-text">0개</span>
+            </div>
+          </div>
+          <!-- 분리배출 개수 -->
+          <div class="stats-row">
+            <div class="stats-row-icon">♻️</div>
+            <div class="stats-row-info">
+              <label>분리배출한 재활용품</label>
+              <span id="stats-recycled-text">0개</span>
+            </div>
+          </div>
+          <!-- 완료한 퀘스트 체크리스트 -->
+          <div class="stats-quests-card">
+            <label>이웃 돕기 퀘스트 현황</label>
+            <div class="stats-quest-item" id="quest-item-yebi">
+              <div class="stats-quest-checkbox"></div> 예비(Yebi)의 분리수거장 돕기
+            </div>
+            <div class="stats-quest-item" id="quest-item-jjook">
+              <div class="stats-quest-checkbox"></div> 쭉쭉이(Jjook)의 지갑 찾아주기
+            </div>
+            <div class="stats-quest-item" id="quest-item-sunisuni">
+              <div class="stats-quest-checkbox"></div> 수니수니(Sunisuni) 짐싸기 돕기
+            </div>
+          </div>
+        </div>
+        <div class="rest-stats-footer">
+          <button class="rest-close-btn">다시 청소하러 가기 🧹</button>
+        </div>
+      </div>
+    `;
+
+    modal.querySelector(".rest-close-btn").addEventListener("click", () => {
+      this.toggleRestStatsModal(false);
+    });
+
+    stage.appendChild(modal);
+    this.restModalEl = modal;
+  }
+
+  // --- 5️⃣ 휴식 모달 토글 제어 ---
+  toggleRestStatsModal(forceShow) {
+    if (!this.restModalEl) return;
+
+    const isVisible = this.restModalEl.classList.contains("is-visible");
+    const show = (forceShow !== undefined) ? forceShow : !isVisible;
+
+    if (show) {
+      // 시간 업데이트 및 데이터 연동
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const timeStr = `${hours}:${minutes}`;
+      const timeEl = this.restModalEl.querySelector("#rest-stats-time");
+      if (timeEl) timeEl.textContent = timeStr;
+
+      this.updateRestStatsData();
+      this.restModalEl.classList.add("is-visible");
+      
+      // 물리 엔진 및 플레이어 조작 차단
+      this.scene.physics?.world?.pause();
+      this.scene.blockWorldInput?.(true);
+    } else {
+      this.restModalEl.classList.remove("is-visible");
+      
+      // 물리 엔진 복구 및 조작 재개
+      this.scene.physics?.world?.resume();
+      this.scene.blockWorldInput?.(false);
+    }
+  }
+
+  // --- 5️⃣ 통계 데이터 실시간 바인딩 ---
+  updateRestStatsData() {
+    if (!this.restModalEl) return;
+
+    const scene = this.scene;
+    const currentMoney = scene.moneySystem?.money ?? 0;
+    const targetMoney = 10000;
+    const moneyPercent = Math.min(100, (currentMoney / targetMoney) * 100);
+
+    // 💰 여비 저축 게이지 렌더링
+    const moneyTextEl = this.restModalEl.querySelector("#stats-money-text");
+    const moneyGaugeEl = this.restModalEl.querySelector("#stats-money-gauge");
+    if (moneyTextEl) moneyTextEl.textContent = `${currentMoney.toLocaleString()}원 / ${targetMoney.toLocaleString()}원`;
+    if (moneyGaugeEl) moneyGaugeEl.style.width = `${moneyPercent}%`;
+
+    // 🧹 치운 쓰레기 개수 연동
+    const cleanedTextEl = this.restModalEl.querySelector("#stats-cleaned-text");
+    if (cleanedTextEl) cleanedTextEl.textContent = `${scene.totalCleanedCount}개`;
+
+    // ♻️ 분리배출 개수 연동
+    const recycledTextEl = this.restModalEl.querySelector("#stats-recycled-text");
+    if (recycledTextEl) recycledTextEl.textContent = `${scene.totalRecycledCount}개`;
+
+    // 📜 퀘스트 완료 목록 체크 (QuestStates에 바인딩된 상수와 대조)
+    const yebiState = scene.yebiQuestSystem?.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
+    const jjookState = scene.jjookQuestState ?? JjookQuestState.LOCKED;
+    const sunisuniState = scene.sunisuniQuestState ?? SunisuniQuestState.LOCKED;
+
+    const yebiQuestEl = this.restModalEl.querySelector("#quest-item-yebi");
+    const jjookQuestEl = this.restModalEl.querySelector("#quest-item-jjook");
+    const sunisuniQuestEl = this.restModalEl.querySelector("#quest-item-sunisuni");
+
+    this.renderQuestCheckbox(yebiQuestEl, yebiState === RecycleQuestState.COMPLETED);
+    this.renderQuestCheckbox(jjookQuestEl, jjookState === JjookQuestState.COMPLETED);
+    this.renderQuestCheckbox(sunisuniQuestEl, sunisuniState === SunisuniQuestState.QUEST_COMPLETE);
+  }
+
+  // 퀘스트 체크마크 보조 렌더러
+  renderQuestCheckbox(el, isDone) {
+    if (!el) return;
+    el.classList.toggle("is-done", isDone);
+    const checkbox = el.querySelector(".stats-quest-checkbox");
+    if (checkbox) {
+      checkbox.textContent = isDone ? "✓" : "";
+    }
+  }
+
+  // --- 씬 셧다운 시 메모리 누수 방지용 DOM 파괴자 ---
+  destroyRestStatsElements() {
+    if (this.restBtnEl) {
+      this.restBtnEl.remove();
+      this.restBtnEl = null;
+    }
+    if (this.restModalEl) {
+      this.restModalEl.remove();
+      this.restModalEl = null;
+    }
+    if (this.escKeyRefreshEvent) {
+      this.escKeyRefreshEvent.destroy();
+    }
   }
 }
