@@ -1,4 +1,5 @@
 import { DRINK_OPTIONS, GAME_CONFIG } from "../config/GameConstants.js";
+import { JjookQuestState } from "../config/QuestStates.js";
 
 export default class VendingMachineSystem {
   constructor(scene) {
@@ -15,7 +16,7 @@ export default class VendingMachineSystem {
 
     scene.jjookStateBeforeVending = scene.jjookQuestState;
     scene.shouldCompleteJjookAfterDrink = completeQuestOnSelect;
-    scene.jjookQuestState = "choosing_drink";
+    scene.jjookQuestState = JjookQuestState.CHOOSING_DRINK;
 
     this.selectedIndex = 0;
     this.options = [];
@@ -122,8 +123,8 @@ export default class VendingMachineSystem {
     scene.selectedVendingIndex = 0;
     scene.vendingMenuInputLockedUntil = 0;
 
-    if (scene.jjookQuestState === "choosing_drink") {
-      scene.jjookQuestState = scene.jjookStateBeforeVending || "completed";
+    if (scene.jjookQuestState === JjookQuestState.CHOOSING_DRINK) {
+      scene.jjookQuestState = scene.jjookStateBeforeVending || JjookQuestState.COMPLETED;
     }
   }
 
@@ -169,7 +170,7 @@ export default class VendingMachineSystem {
 
   selectDrink(drink) {
     const scene = this.scene;
-    if (!drink || scene.jjookQuestState !== "choosing_drink") return;
+    if (!drink || scene.jjookQuestState !== JjookQuestState.CHOOSING_DRINK) return;
 
     if (drink.isCancel) {
       const shouldFinishQuest = scene.shouldCompleteJjookAfterDrink;
@@ -258,7 +259,7 @@ export default class VendingMachineSystem {
 
   finishPurchasedDrink(drink) {
     const scene = this.scene;
-    scene.jjookQuestState = scene.jjookStateBeforeVending || "completed";
+    scene.jjookQuestState = scene.jjookStateBeforeVending || JjookQuestState.COMPLETED;
     scene.drinkInventory.push(drink.key);
     const speedTarget = scene.isJjookFollowActive ? "해냄이와 쭉쭉이" : "해냄이";
     scene.showQuestToast(`${drink.label}를 마셨어. ${speedTarget} 이동 속도 UP`);

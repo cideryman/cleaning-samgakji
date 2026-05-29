@@ -1,4 +1,4 @@
-﻿import PlayerController from "../controllers/PlayerController.js";
+import PlayerController from "../controllers/PlayerController.js";
 import {
   GAME_CONFIG,
   NPC_TEXTURES,
@@ -31,8 +31,15 @@ import SunisuniQuestSystem from "../systems/SunisuniQuestSystem.js";
 import JjookQuestSystem from "../systems/JjookQuestSystem.js";
 import TravelEndingSystem from "../systems/TravelEndingSystem.js";
 import YebiQuestSystem from "../systems/YebiQuestSystem.js";
+import HtmlUiBindingSystem from "../systems/HtmlUiBindingSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
+import {
+  JjookQuestState,
+  SunisuniQuestState,
+  ClothesQuestState,
+  PackingQuestState,
+} from "../config/QuestStates.js";
 
 const NPC_ROAM_CONFIG = {
   yebi: {
@@ -78,6 +85,7 @@ export default class PlayScene extends Phaser.Scene {
     this.jjookQuestSystem = null;
     this.travelEndingSystem = null;
     this.yebiQuestSystem = null;
+    this.htmlUiBindingSystem = null;
     this.audioManager = null;
     this.sceneControlSystem = null;
     this.interiorSceneSystem = null;
@@ -96,93 +104,13 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   create(data = {}) {
+    this.htmlUiBindingSystem = new HtmlUiBindingSystem(this);
     this.resetRunState();
     document.body.classList.remove("start-screen");
 
-    this.cleanProgressEls = Array.from(document.querySelectorAll("#cleanProgress span"));
-    this.canProgressEls = Array.from(document.querySelectorAll("#canProgress span"));
-    this.missionCountEl = document.querySelector("#missionCount");
-    this.sweepButton = document.querySelector("#sweepButton");
-    this.specialButton = document.querySelector("#specialButton");
-    this.bacchusButton = document.querySelector("#bacchusButton");
-    this.bacchusTimerEl = document.querySelector("#bacchusTimer");
-    this.movePad = document.querySelector("#movePad");
-    this.moveKnob = document.querySelector("#moveKnob");
-    this.fullscreenButton = document.querySelector("#fullscreenButton");
-    this.completeOverlay = document.querySelector("#completeOverlay");
-    this.specialToast = document.querySelector("#specialToast");
-    this.speedBuffHudEl = document.querySelector("#speedBuffHud");
-    this.speedBuffTimerEl = document.querySelector("#speedBuffTimer");
-    this.jjookFollowHudEl = document.querySelector("#jjookFollowHud");
-    this.jjookFollowTimerEl = document.querySelector("#jjookFollowTimer");
-    this.travelPrepHudEl = document.querySelector("#travelPrepHud");
-    this.travelPrepBagIconEl = document.querySelector("#travelPrepBagIcon");
-    this.travelPrepCountEl = document.querySelector("#travelPrepCount");
-    this.travelPrepFanEl = document.querySelector("#travelPrepFan");
-    this.resultTrashCountEl = document.querySelector("#resultTrashCount");
-    this.resultCanCountEl = document.querySelector("#resultCanCount");
-    this.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
-    this.inventoryNormalCountEl = document.querySelector("#inventoryNormalCount");
-    this.inventoryPlasticCountEl = document.querySelector("#inventoryPlasticCount");
-    this.inventoryCanCountEl = document.querySelector("#inventoryCanCount");
-    this.restartButton = document.querySelector("#restartButton");
-    this.restartHandler = () => this.restartGame();
-    this.sweepHandler = (event) => {
-      event?.preventDefault();
-      event?.stopPropagation();
-      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
-      this.handlePrimaryAction();
-    };
-    this.specialHandler = (event) => {
-      event?.preventDefault();
-      event?.stopPropagation();
-      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
-      this.useYebiItem();
-    };
-    this.bacchusHandler = (event) => {
-      event?.preventDefault();
-      event?.stopPropagation();
-      if (this.sceneControlSystem?.isWorldInputBlocked()) return;
-      this.useBacchusItem();
-    };
-    this.travelPrepHandler = (event) => {
-      event?.preventDefault();
-      event?.stopPropagation();
-      this.toggleTravelPrepFan();
-    };
-    this.moveStartHandler = (event) => this.startFloatingJoystick(event);
-    this.moveUpdateHandler = (event) => this.updateJoystick(event);
-    this.moveStopHandler = (event) => this.stopJoystick(event);
-    this.fullscreenHandler = (event) => this.toggleFullscreen(event);
-    this.fullscreenChangeHandler = () => this.handleFullscreenChange();
-    this.resizeHandler = () => this.updateCameraZoom();
-    this.audioUnlockHandler = () => this.unlockAudio();
-    this.devKeyHandler = (event) => this.handleDevKeydown(event);
-    this.pageAudioStopHandler = () => this.stopAudioForPageExit();
-    this.visibilityChangeHandler = () => {
-      if (document.hidden) this.stopAudioForPageExit();
-    };
-    this.restartButton?.addEventListener("click", this.restartHandler);
-    this.sweepButton?.addEventListener("pointerdown", this.sweepHandler);
-    this.specialButton?.addEventListener("pointerdown", this.specialHandler);
-    this.bacchusButton?.addEventListener("pointerdown", this.bacchusHandler);
-    this.travelPrepHudEl?.addEventListener("pointerdown", this.travelPrepHandler);
-    window.addEventListener("pointerdown", this.audioUnlockHandler, { passive: true });
-    window.addEventListener("keydown", this.audioUnlockHandler);
-    window.addEventListener("keydown", this.devKeyHandler, true);
-    window.addEventListener("pointerdown", this.moveStartHandler);
-    window.addEventListener("pointermove", this.moveUpdateHandler);
-    window.addEventListener("pointerup", this.moveStopHandler);
-    window.addEventListener("pointercancel", this.moveStopHandler);
-    this.fullscreenButton?.addEventListener("click", this.fullscreenHandler);
-    document.addEventListener("fullscreenchange", this.fullscreenChangeHandler);
-    document.addEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
-    window.addEventListener("resize", this.resizeHandler);
-    window.addEventListener("orientationchange", this.resizeHandler);
-    this.scale.on(Phaser.Scale.Events.RESIZE, this.resizeHandler);
-    window.addEventListener("pagehide", this.pageAudioStopHandler);
-    window.addEventListener("beforeunload", this.pageAudioStopHandler);
-    document.addEventListener("visibilitychange", this.visibilityChangeHandler);
+    this.htmlUiBindingSystem.lookupElements();
+    this.htmlUiBindingSystem.bind();
+
     this.completeOverlay?.classList.remove("is-visible");
     this.completeOverlay?.setAttribute("aria-hidden", "true");
     this.specialToast?.classList.remove("is-visible");
@@ -227,24 +155,7 @@ export default class PlayScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.clearNpcRoaming();
       this.stopChapterMusic();
-      this.restartButton?.removeEventListener("click", this.restartHandler);
-      this.sweepButton?.removeEventListener("pointerdown", this.sweepHandler);
-      this.specialButton?.removeEventListener("pointerdown", this.specialHandler);
-      this.bacchusButton?.removeEventListener("pointerdown", this.bacchusHandler);
-      this.travelPrepHudEl?.removeEventListener("pointerdown", this.travelPrepHandler);
-      window.removeEventListener("pointerdown", this.audioUnlockHandler);
-      window.removeEventListener("keydown", this.audioUnlockHandler);
-      window.removeEventListener("keydown", this.devKeyHandler, true);
-      window.removeEventListener("pointerdown", this.moveStartHandler);
-      window.removeEventListener("pointermove", this.moveUpdateHandler);
-      window.removeEventListener("pointerup", this.moveStopHandler);
-      window.removeEventListener("pointercancel", this.moveStopHandler);
-      this.fullscreenButton?.removeEventListener("click", this.fullscreenHandler);
-      document.removeEventListener("fullscreenchange", this.fullscreenChangeHandler);
-      document.removeEventListener("webkitfullscreenchange", this.fullscreenChangeHandler);
-      window.removeEventListener("resize", this.resizeHandler);
-      window.removeEventListener("orientationchange", this.resizeHandler);
-      this.scale.off(Phaser.Scale.Events.RESIZE, this.resizeHandler);
+      this.htmlUiBindingSystem?.unbind();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();
@@ -253,9 +164,6 @@ export default class PlayScene extends Phaser.Scene {
       this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
       this.roadTrafficSystem?.cleanup();
       this.routeGuideSystem?.destroy();
-      window.removeEventListener("pagehide", this.pageAudioStopHandler);
-      window.removeEventListener("beforeunload", this.pageAudioStopHandler);
-      document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
     });
 
     this.createMap();
@@ -298,26 +206,14 @@ export default class PlayScene extends Phaser.Scene {
     this.speedBuffCountdownEvent?.remove(false);
     this.bacchusTimer?.remove(false);
     this.bacchusCountdownEvent?.remove(false);
-    this.bacchusButton?.setAttribute("hidden", "");
-    this.bacchusButton?.classList.remove("is-active");
-    if (this.bacchusTimerEl) this.bacchusTimerEl.textContent = "";
     this.closePackingMenu?.();
     this.cleanupTravelBusStopSequence?.();
     this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
     this.clearNpcRoaming?.();
     this.closeClothingShopMenu?.();
-    this.travelPrepHudEl?.classList.remove("is-visible", "is-open");
-    this.travelPrepHudEl?.setAttribute("aria-hidden", "true");
-    if (this.travelPrepFanEl) {
-      this.travelPrepFanEl.innerHTML = "";
-      this.travelPrepFanEl.setAttribute("aria-hidden", "true");
-    }
+    this.htmlUiBindingSystem?.reset();
     this.interiorSceneGroup?.clear(true, true);
     Object.values(this.questMarkers || {}).forEach((marker) => marker.text?.destroy());
-    this.speedBuffHudEl?.classList.remove("is-visible");
-    this.jjookFollowHudEl?.classList.remove("is-visible");
-    if (this.speedBuffTimerEl) this.speedBuffTimerEl.textContent = "";
-    if (this.jjookFollowTimerEl) this.jjookFollowTimerEl.textContent = "";
     Object.assign(this, createInitialGameState());
     this.lastDirection.set(1, 0);
     this.joystickVector.set(0, 0);
@@ -504,7 +400,7 @@ export default class PlayScene extends Phaser.Scene {
     if (this.moneySystem.money < GAME_CONFIG.jjookQuestUnlockMoney) return;
 
     this.hasAnnouncedJjookQuest = true;
-    this.jjookQuestState = "wallet_missing";
+    this.jjookQuestState = JjookQuestState.WALLET_MISSING;
     this.createJjookQuestObjects();
     this.setQuestMarker("jjookQuest", this.jjookNpc, "?");
     this.showQuestToast("쭉쭉이가 자판기 앞에서 기다리고 있어!", 10000);
@@ -514,11 +410,11 @@ export default class PlayScene extends Phaser.Scene {
 
   checkSunisuniQuestUnlock() {
     if (!this.moneySystem || this.hasAnnouncedSunisuniQuest) return;
-    if (this.jjookQuestState !== "completed") return;
+    if (this.jjookQuestState !== JjookQuestState.COMPLETED) return;
     if (this.moneySystem.money < GAME_CONFIG.sunisuniQuestUnlockMoney) return;
 
     this.hasAnnouncedSunisuniQuest = true;
-    this.sunisuniQuestState = "sunisuni_found";
+    this.sunisuniQuestState = SunisuniQuestState.FOUND;
     if (this.sunisuniNpc) {
       this.sunisuniNpc.setVisible(true);
       this.sunisuniNpc.setActive(true);
@@ -533,11 +429,11 @@ export default class PlayScene extends Phaser.Scene {
 
   checkClothesQuestUnlock() {
     if (!this.moneySystem || this.hasAnnouncedClothesQuest) return;
-    if (this.sunisuniQuestState !== "quest_complete") return;
+    if (this.sunisuniQuestState !== SunisuniQuestState.QUEST_COMPLETE) return;
     if (this.moneySystem.money < GAME_CONFIG.clothesQuestUnlockMoney) return;
 
     this.hasAnnouncedClothesQuest = true;
-    this.clothesQuestState = "ready";
+    this.clothesQuestState = ClothesQuestState.READY;
     this.createJjookQuestObjects();
     this.setQuestMarker("clothesQuest", this.jjookNpc, "!");
     this.showQuestToast("쭉쭉이가 서울 여행 준비 이야기를 하고 싶어 해요!", 10000);
@@ -673,12 +569,12 @@ export default class PlayScene extends Phaser.Scene {
     if (this.isInDialogue || this.vendingMenuGroup) return;
     if (!this.isPlayerNearVendingMachine()) return;
 
-    if (this.jjookQuestState === "completed") {
+    if (this.jjookQuestState === JjookQuestState.COMPLETED) {
       this.openVendingMenu({ completeQuestOnSelect: false });
       return;
     }
 
-    if (this.jjookQuestState === "wallet_found") {
+    if (this.jjookQuestState === JjookQuestState.WALLET_FOUND) {
       this.handleJjookInteraction();
       return;
     }
@@ -738,10 +634,10 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   collectWallet() {
-    if (this.hasWallet || this.jjookQuestState !== "wallet_missing") return;
+    if (this.hasWallet || this.jjookQuestState !== JjookQuestState.WALLET_MISSING) return;
 
     this.hasWallet = true;
-    this.jjookQuestState = "wallet_found";
+    this.jjookQuestState = JjookQuestState.WALLET_FOUND;
     this.walletSparkles?.remove(false);
     this.walletItem?.destroy();
     this.walletItem = null;
@@ -753,7 +649,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   checkWalletPickup() {
-    if (!this.walletItem?.active || !this.player || this.jjookQuestState !== "wallet_missing") return;
+    if (!this.walletItem?.active || !this.player || this.jjookQuestState !== JjookQuestState.WALLET_MISSING) return;
 
     const distance = Phaser.Math.Distance.Between(
       this.player.x,
@@ -1034,9 +930,9 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.jjookQuestState !== "completed") {
+    if (this.jjookQuestState !== JjookQuestState.COMPLETED) {
       this.createJjookQuestObjects();
-      this.jjookQuestState = "completed";
+      this.jjookQuestState = JjookQuestState.COMPLETED;
       this.hasWallet = false;
       this.walletItem?.destroy();
       this.walletItem = null;
@@ -1048,7 +944,7 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.sunisuniQuestState === "locked") {
+    if (this.sunisuniQuestState === SunisuniQuestState.LOCKED) {
       this.ensureDevMoney(GAME_CONFIG.sunisuniQuestUnlockMoney);
       this.hasAnnouncedSunisuniQuest = false;
       this.checkSunisuniQuestUnlock();
@@ -1056,13 +952,13 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.sunisuniQuestState !== "quest_complete") {
+    if (this.sunisuniQuestState !== SunisuniQuestState.QUEST_COMPLETE) {
       this.forceCompleteDevSunisuniQuest();
       this.showQuestToast("F4: 옷가게 퀘스트로 이동");
       return;
     }
 
-    if (this.clothesQuestState === "locked") {
+    if (this.clothesQuestState === ClothesQuestState.LOCKED) {
       this.ensureDevMoney(GAME_CONFIG.clothesQuestUnlockMoney);
       this.hasAnnouncedClothesQuest = false;
       this.checkClothesQuestUnlock();
@@ -1070,21 +966,21 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    if (this.clothesQuestState !== "completed") {
+    if (this.clothesQuestState !== ClothesQuestState.COMPLETED) {
       this.forceCompleteDevClothesQuest();
       this.showQuestToast("F4: 짐싸기 퀘스트로 이동");
       return;
     }
 
-    if (this.packingQuestState === "locked") {
-      this.packingQuestState = "offered";
+    if (this.packingQuestState === PackingQuestState.LOCKED) {
+      this.packingQuestState = PackingQuestState.OFFERED;
       this.setQuestMarker("packingQuest", this.jjookNpc, "!");
       this.saveCheckpoint("packing_unlocked");
       this.showQuestToast("F4: 짐싸기 퀘스트 준비");
       return;
     }
 
-    if (this.packingQuestState !== "ending_complete") {
+    if (this.packingQuestState !== PackingQuestState.ENDING_COMPLETE) {
       this.forceCompleteDevPackingQuest();
       this.showQuestToast("F4: 챕터 1 엔딩 완료");
       return;
@@ -1098,7 +994,7 @@ export default class PlayScene extends Phaser.Scene {
     this.closePackingMenu?.();
     this.closeClothingShopMenu?.();
     this.cleanupTravelBusStopSequence?.();
-    this.sunisuniQuestState = "quest_complete";
+    this.sunisuniQuestState = SunisuniQuestState.QUEST_COMPLETE;
     this.hasPrescription = false;
     this.hasMedicine = false;
     this.hasBacchus = true;
@@ -1120,8 +1016,8 @@ export default class PlayScene extends Phaser.Scene {
     this.closeClothingShopMenu?.();
     this.clearInteriorScene?.();
     this.isJjookClothesEscortActive = false;
-    this.clothesQuestState = "completed";
-    this.packingQuestState = "offered";
+    this.clothesQuestState = ClothesQuestState.COMPLETED;
+    this.packingQuestState = PackingQuestState.OFFERED;
     this.clearQuestMarker("clothesShop");
     this.clearQuestMarker("clothesQuest");
     this.setQuestMarker("packingQuest", this.jjookNpc, "!");
@@ -1151,7 +1047,7 @@ export default class PlayScene extends Phaser.Scene {
     this.packingItems = PACKING_ITEMS
       .filter((item) => ["socks", "toothbrush", "phone", "charger", "wallet", "transit_card"].includes(item.key))
       .map((item) => ({ ...item }));
-    this.packingQuestState = "completed";
+    this.packingQuestState = PackingQuestState.COMPLETED;
     this.saveCheckpoint("dev_packing_completed");
     this.finishChapterOneEnding();
   }
@@ -1726,15 +1622,15 @@ export default class PlayScene extends Phaser.Scene {
 
     if (key === "jjook") {
       if (this.jjookReturningHome || this.isJjookFollowActive || this.isJjookClothesEscortActive) return false;
-      if (["wallet_missing", "wallet_found", "choosing_drink"].includes(this.jjookQuestState)) return false;
-      if (["ready", "declined", "shopping"].includes(this.clothesQuestState)) return false;
-      if (["going_bus_stop", "boarding_bus"].includes(this.packingQuestState)) return false;
-      return this.jjookQuestState === "completed";
+      if ([JjookQuestState.WALLET_MISSING, JjookQuestState.WALLET_FOUND, JjookQuestState.CHOOSING_DRINK].includes(this.jjookQuestState)) return false;
+      if ([ClothesQuestState.READY, ClothesQuestState.DECLINED, ClothesQuestState.SHOPPING].includes(this.clothesQuestState)) return false;
+      if ([PackingQuestState.GOING_BUS_STOP, PackingQuestState.BOARDING_BUS].includes(this.packingQuestState)) return false;
+      return this.jjookQuestState === JjookQuestState.COMPLETED;
     }
 
     if (key === "sunisuni") {
       if (this.sunisuniReturningToBench || this.isSunisuniFollowing?.()) return false;
-      return this.sunisuniQuestState === "quest_complete";
+      return this.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE;
     }
 
     return false;

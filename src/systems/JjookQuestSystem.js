@@ -1,4 +1,9 @@
 import { GAME_CONFIG } from "../config/GameConstants.js";
+import {
+  JjookQuestState,
+  ClothesQuestState,
+  PackingQuestState,
+} from "../config/QuestStates.js";
 
 export default class JjookQuestSystem {
   constructor(scene) {
@@ -45,11 +50,11 @@ export default class JjookQuestSystem {
 
   handleInteraction() {
     const scene = this.scene;
-    if (scene.isInDialogue || !scene.dialogueSystem || scene.jjookQuestState === "locked") return;
+    if (scene.isInDialogue || !scene.dialogueSystem || scene.jjookQuestState === JjookQuestState.LOCKED) return;
     if (scene.isJjookClothesEscortActive && scene.interactionSystem?.handlePriorityLocationInteraction()) return;
     if (!scene.isPlayerNearJjookNpc()) return;
 
-    if (scene.jjookQuestState === "wallet_missing") {
+    if (scene.jjookQuestState === JjookQuestState.WALLET_MISSING) {
       scene.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_lost", text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
         { name: "쭉쭉이", portraitKey: "jjook_lost", text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
@@ -59,33 +64,33 @@ export default class JjookQuestSystem {
       return;
     }
 
-    if (scene.jjookQuestState === "wallet_found") {
+    if (scene.jjookQuestState === JjookQuestState.WALLET_FOUND) {
       scene.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_found", text: "지갑을 찾아줘서 정말 고마워. 보답으로 시원한 음료수 하나 사줄게. 뭐 마실래?" },
       ], () => scene.openVendingMenu({ completeQuestOnSelect: true }));
       return;
     }
 
-    if (scene.jjookQuestState !== "completed") return;
+    if (scene.jjookQuestState !== JjookQuestState.COMPLETED) return;
 
-    if (scene.clothesQuestState === "ready" || scene.clothesQuestState === "declined") {
+    if (scene.clothesQuestState === ClothesQuestState.READY || scene.clothesQuestState === ClothesQuestState.DECLINED) {
       this.startClothesQuestDialogue();
       return;
     }
 
-    if (scene.clothesQuestState === "shopping") {
+    if (scene.clothesQuestState === ClothesQuestState.SHOPPING) {
       scene.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "옷가게는 맵 위쪽 상점가에 있어. 같이 가보자!" },
       ]);
       return;
     }
 
-    if (scene.clothesQuestState === "completed" && ["offered", "declined"].includes(scene.packingQuestState)) {
-      this.startPackingOfferDialogue({ repeat: scene.packingQuestState === "declined" });
+    if (scene.clothesQuestState === ClothesQuestState.COMPLETED && [PackingQuestState.OFFERED, PackingQuestState.DECLINED].includes(scene.packingQuestState)) {
+      this.startPackingOfferDialogue({ repeat: scene.packingQuestState === PackingQuestState.DECLINED });
       return;
     }
 
-    if (scene.clothesQuestState === "completed" && scene.packingQuestState === "going_bus_stop") {
+    if (scene.clothesQuestState === ClothesQuestState.COMPLETED && scene.packingQuestState === PackingQuestState.GOING_BUS_STOP) {
       scene.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스정류장에서 만나자. 천천히 걸어와도 괜찮아!" },
       ]);
@@ -137,7 +142,7 @@ export default class JjookQuestSystem {
 
   startClothesShoppingQuest() {
     const scene = this.scene;
-    scene.clothesQuestState = "shopping";
+    scene.clothesQuestState = ClothesQuestState.SHOPPING;
     scene.hasAnnouncedClothesQuest = true;
     scene.isJjookClothesEscortActive = true;
     scene.pauseNpcRoaming("jjook");
@@ -156,7 +161,7 @@ export default class JjookQuestSystem {
 
   declineClothesShoppingQuest() {
     const scene = this.scene;
-    scene.clothesQuestState = "declined";
+    scene.clothesQuestState = ClothesQuestState.DECLINED;
     scene.hasAnnouncedClothesQuest = true;
     scene.setQuestMarker("clothesQuest", scene.jjookNpc, "!");
     scene.saveCheckpoint("clothes_declined");
@@ -164,7 +169,7 @@ export default class JjookQuestSystem {
 
   handleClothingStoreInteraction() {
     const scene = this.scene;
-    if (!["shopping", "completed"].includes(scene.clothesQuestState)) {
+    if (![ClothesQuestState.SHOPPING, ClothesQuestState.COMPLETED].includes(scene.clothesQuestState)) {
       scene.showQuestToast("쭉쭉이와 먼저 이야기해 보자.");
       return;
     }
@@ -183,8 +188,8 @@ export default class JjookQuestSystem {
     const scene = this.scene;
     scene.closeClothingShopMenu();
     scene.clearInteriorScene();
-    scene.clothesQuestState = "completed";
-    scene.packingQuestState = "offered";
+    scene.clothesQuestState = ClothesQuestState.COMPLETED;
+    scene.packingQuestState = PackingQuestState.OFFERED;
     scene.clearQuestMarker("clothesShop");
     scene.clearQuestMarker("clothesQuest");
     scene.saveCheckpoint("clothes_completed");
@@ -238,7 +243,7 @@ export default class JjookQuestSystem {
   declinePackingQuest(isRepeat = false) {
     const scene = this.scene;
     scene.clearInteriorScene();
-    scene.packingQuestState = "declined";
+    scene.packingQuestState = PackingQuestState.DECLINED;
     scene.setQuestMarker("packingQuest", scene.jjookNpc, "!");
     scene.saveCheckpoint("packing_declined");
     scene.dialogueSystem.start([
@@ -256,7 +261,7 @@ export default class JjookQuestSystem {
   acceptPackingQuest() {
     const scene = this.scene;
     scene.clearInteriorScene();
-    scene.packingQuestState = "going_bus_stop";
+    scene.packingQuestState = PackingQuestState.GOING_BUS_STOP;
     scene.clearQuestMarker("packingQuest");
     scene.saveCheckpoint("packing_started");
     scene.pauseNpcRoaming("jjook");
@@ -399,7 +404,7 @@ export default class JjookQuestSystem {
 
   finishQuestWithoutDrink() {
     const scene = this.scene;
-    scene.jjookQuestState = "completed";
+    scene.jjookQuestState = JjookQuestState.COMPLETED;
     scene.hasWallet = false;
     scene.clearQuestMarker("jjookQuest");
     this.activateFollower();
@@ -413,7 +418,7 @@ export default class JjookQuestSystem {
 
   finishQuest() {
     const scene = this.scene;
-    scene.jjookQuestState = "completed";
+    scene.jjookQuestState = JjookQuestState.COMPLETED;
     scene.hasWallet = false;
     scene.clearQuestMarker("jjookQuest");
     if (scene.selectedDrink) {

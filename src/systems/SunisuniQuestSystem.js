@@ -1,4 +1,5 @@
 import { GAME_CONFIG } from "../config/GameConstants.js";
+import { SunisuniQuestState } from "../config/QuestStates.js";
 
 export default class SunisuniQuestSystem {
   constructor(scene) {
@@ -6,7 +7,7 @@ export default class SunisuniQuestSystem {
   }
 
   isFollowing() {
-    return ["going_hospital", "going_pharmacy"].includes(this.scene.sunisuniQuestState);
+    return [SunisuniQuestState.GOING_HOSPITAL, SunisuniQuestState.GOING_PHARMACY].includes(this.scene.sunisuniQuestState);
   }
 
   updateFollower() {
@@ -85,11 +86,11 @@ export default class SunisuniQuestSystem {
 
   handleInteraction() {
     const scene = this.scene;
-    if (scene.isInDialogue || !scene.dialogueSystem || scene.sunisuniQuestState === "locked") return;
+    if (scene.isInDialogue || !scene.dialogueSystem || scene.sunisuniQuestState === SunisuniQuestState.LOCKED) return;
     if (this.isFollowing() && scene.interactionSystem?.handlePriorityLocationInteraction()) return;
     if (!scene.isPlayerNearSunisuniNpc()) return;
 
-    if (scene.sunisuniQuestState === "sunisuni_found") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.FOUND) {
       scene.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "아우... 배야..." },
         { name: "수니수니", portraitKey: "sunisuni-portrait-sick", portraitSingle: true, text: "너무 아파서 일어나기가 힘들어..." },
@@ -106,7 +107,7 @@ export default class SunisuniQuestSystem {
       return;
     }
 
-    if (scene.sunisuniQuestState === "accepted_help" || scene.sunisuniQuestState === "going_hospital") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.ACCEPTED_HELP || scene.sunisuniQuestState === SunisuniQuestState.GOING_HOSPITAL) {
       scene.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "조금만 천천히 가줄래...?" },
         { name: "해냄이", portraitKey: "haenaem_determined", text: "천천히 같이 가야겠다." },
@@ -114,14 +115,14 @@ export default class SunisuniQuestSystem {
       return;
     }
 
-    if (scene.sunisuniQuestState === "got_prescription" || scene.sunisuniQuestState === "going_pharmacy") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.GOT_PRESCRIPTION || scene.sunisuniQuestState === SunisuniQuestState.GOING_PHARMACY) {
       scene.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "처방전을 가지고 약국으로 가요." },
       ]);
       return;
     }
 
-    if (scene.sunisuniQuestState === "quest_complete") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
       scene.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 많이 괜찮아졌어." },
         { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "약은 꼭 설명대로 먹어야 해." },
@@ -161,7 +162,7 @@ export default class SunisuniQuestSystem {
       { name: "해냄이", portraitKey: "haenaem_determined", text: "같이 가요. 천천히 병원까지 같이 걸어갈게요." },
     ], () => {
       scene.pauseNpcRoaming("sunisuni");
-      scene.sunisuniQuestState = "going_hospital";
+      scene.sunisuniQuestState = SunisuniQuestState.GOING_HOSPITAL;
       scene.clearQuestMarker("sunisuniQuest");
       scene.setQuestMarker("sunisuniHospital", scene.sunisuniNpc, "!");
       scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", "down", false);
@@ -173,13 +174,13 @@ export default class SunisuniQuestSystem {
 
   handleHospitalInteraction() {
     const scene = this.scene;
-    if (scene.sunisuniQuestState === "quest_complete") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
       this.startHospitalRevisitDialogue();
       return;
     }
 
-    if (scene.sunisuniQuestState !== "going_hospital") return;
-    scene.sunisuniQuestState = "hospital_reception";
+    if (scene.sunisuniQuestState !== SunisuniQuestState.GOING_HOSPITAL) return;
+    scene.sunisuniQuestState = SunisuniQuestState.HOSPITAL_RECEPTION;
     scene.playSceneMusic("ambient_hospital_bgm", 0.24);
     scene.showInteriorScene("hospital_interior", "hospital");
     scene.dialogueSystem.start([
@@ -205,7 +206,7 @@ export default class SunisuniQuestSystem {
       { name: "접수 직원", portraitKey: "hospital_staff", text: "괜찮아요. 천천히 다시 말해볼까요?" },
       { name: "접수 직원", portraitKey: "hospital_staff", text: "병원에서는 아픈 곳을 말하면 접수하기 쉬워요." },
     ], () => {
-      scene.sunisuniQuestState = "going_hospital";
+      scene.sunisuniQuestState = SunisuniQuestState.GOING_HOSPITAL;
       this.handleHospitalInteraction();
     });
   }
@@ -242,7 +243,7 @@ export default class SunisuniQuestSystem {
   completeDoctorQuiz() {
     const scene = this.scene;
     scene.hasPrescription = true;
-    scene.sunisuniQuestState = "going_pharmacy";
+    scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
     scene.clearQuestMarker("sunisuniHospital");
     scene.saveCheckpoint("sunisuni_prescription");
     scene.dialogueSystem.start([
@@ -320,13 +321,13 @@ export default class SunisuniQuestSystem {
 
   handlePharmacyInteraction() {
     const scene = this.scene;
-    if (scene.sunisuniQuestState === "quest_complete") {
+    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
       this.startPharmacyRevisitDialogue();
       return;
     }
 
-    if (scene.sunisuniQuestState !== "going_pharmacy" || !scene.hasPrescription) return;
-    scene.sunisuniQuestState = "medicine_paid";
+    if (scene.sunisuniQuestState !== SunisuniQuestState.GOING_PHARMACY || !scene.hasPrescription) return;
+    scene.sunisuniQuestState = SunisuniQuestState.MEDICINE_PAID;
     scene.playSceneMusic("ambient_pharmacy_bgm", 0.24);
     scene.showInteriorScene("pharmacy_interior", "pharmacy");
     scene.dialogueSystem.start([
@@ -341,7 +342,7 @@ export default class SunisuniQuestSystem {
   payForMedicine() {
     const scene = this.scene;
     if (!scene.moneySystem?.deductMoney(5000)) {
-      scene.sunisuniQuestState = "going_pharmacy";
+      scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
       scene.clearInteriorScene();
       scene.showQuestToast("약값 5,000원이 필요해요.");
       return;
@@ -473,7 +474,7 @@ export default class SunisuniQuestSystem {
 
   completeQuest() {
     const scene = this.scene;
-    scene.sunisuniQuestState = "quest_complete";
+    scene.sunisuniQuestState = SunisuniQuestState.QUEST_COMPLETE;
     scene.clearInteriorScene();
     scene.clearQuestMarker("sunisuniHospital");
     scene.clearQuestMarker("sunisuniQuest");

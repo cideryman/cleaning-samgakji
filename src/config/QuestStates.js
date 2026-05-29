@@ -10,6 +10,7 @@ export const JjookQuestState = {
   LOCKED: QuestState.LOCKED,
   WALLET_MISSING: "wallet_missing",
   WALLET_FOUND: "wallet_found",
+  CHOOSING_DRINK: "choosing_drink",
   COMPLETED: QuestState.COMPLETED,
 };
 
@@ -22,8 +23,12 @@ export const CanQuestState = {
 export const SunisuniQuestState = {
   LOCKED: QuestState.LOCKED,
   FOUND: "sunisuni_found",
+  ACCEPTED_HELP: "accepted_help",
   GOING_HOSPITAL: "going_hospital",
+  HOSPITAL_RECEPTION: "hospital_reception",
+  GOT_PRESCRIPTION: "got_prescription",
   GOING_PHARMACY: "going_pharmacy",
+  MEDICINE_PAID: "medicine_paid",
   QUEST_COMPLETE: "quest_complete",
 };
 

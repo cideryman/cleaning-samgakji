@@ -637,3 +637,49 @@ Standing rule for future features:
   - Do not put lazy-loading logic directly into `PlayScene.js`.
   - Prefer an `AssetLoadSystem` or extend `Preload.js`/scene-specific loader helpers.
   - Keep the first optimization patch small: lazy-load one heavy category, such as ending/interior backgrounds, then verify mobile.
+
+## Latest Quest State Constants Migration (Step 1)
+
+- Centralized intermediate quest states in `src/config/QuestStates.js` to ensure the entire quest lifecycle has robust type/constant representation.
+- Added states:
+  - `JjookQuestState.CHOOSING_DRINK = "choosing_drink"` (used during vending machine selection in `VendingMachineSystem` and `PlayScene`)
+  - `SunisuniQuestState.ACCEPTED_HELP = "accepted_help"` (used in hospital escort flow in `SunisuniQuestSystem`)
+  - `SunisuniQuestState.HOSPITAL_RECEPTION = "hospital_reception"` (used in hospital quiz reception in `SunisuniQuestSystem`)
+  - `SunisuniQuestState.GOT_PRESCRIPTION = "got_prescription"` (used in prescription pharmacy check in `SunisuniQuestSystem`)
+  - `SunisuniQuestState.MEDICINE_PAID = "medicine_paid"` (used in medicine payment animation in `SunisuniQuestSystem`)
+- Did not change any existing string values. Left actual game files (`PlayScene.js`, `JjookQuestSystem.js`, `SunisuniQuestSystem.js`, `VendingMachineSystem.js`) untouched.
+- Node syntax check passed: `node -c src/config/QuestStates.js`
+
+## Latest Quest State Constants Migration (Step 2 - Integration Complete)
+
+- Successfully refactored and adopted the centralized constants from `src/config/QuestStates.js` in all dependent files:
+  - `src/systems/JjookQuestSystem.js`
+  - `src/systems/SunisuniQuestSystem.js`
+  - `src/systems/VendingMachineSystem.js`
+  - `src/scenes/PlayScene.js` (bridge checks)
+- Replaced all raw hardcoded string comparisons and assignments of quest states with type-safe, imported constants (e.g., `JjookQuestState.WALLET_MISSING`, `SunisuniQuestState.GOING_HOSPITAL`, etc.).
+- There are no functional or behavioral alterations in the gameplay. All dialogue, interaction triggers, and quest status checks operate exactly as before, now backed by centralized constants.
+- Verified all syntax checks on the refactored files:
+  ```powershell
+  node -c src/scenes/PlayScene.js
+  node -c src/systems/JjookQuestSystem.js
+  node -c src/systems/SunisuniQuestSystem.js
+  node -c src/systems/VendingMachineSystem.js
+  ```
+- Executed `npm.cmd run build` successfully, certifying Vite/Phaser bundles successfully without any compilation errors.
+- Cleaned up the temporarily generated `dist/` directory.
+
+## Latest DOM/UI Binding Extraction (Step 3 - HtmlUiBindingSystem Integration)
+
+- Added `src/systems/HtmlUiBindingSystem.js` to manage all DOM element lookups, event listener attachments/detachments, and HUD state UI resets.
+- Extracted extensive UI/DOM binding logic from `src/scenes/PlayScene.js` (`create()`, `resetRunState()`, `SHUTDOWN` callback) into `HtmlUiBindingSystem` to streamline the scene composer class.
+- Fixed a legacy memory leak bug in the shutdown flow of `PlayScene.js` where the unbind phase detached `bacchusHandler` instead of `specialHandler` for `specialButton` click listener.
+- Ensured behavior preservation: no gameplay mechanics, UI functionality, or logic handlers were changed. The integration serves strictly as a refactoring layer.
+- Verified syntax checks on the updated files:
+  ```powershell
+  node -c src/scenes/PlayScene.js
+  node -c src/systems/HtmlUiBindingSystem.js
+  ```
+- Executed `npm.cmd run build` successfully, verifying proper bundle builds and code integrity.
+- Cleaned up the temporarily generated `dist/` directory.
+
