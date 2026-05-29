@@ -58,7 +58,7 @@ export default class JjookQuestSystem {
     if (scene.jjookQuestState === JjookQuestState.WALLET_MISSING) {
       scene.dialogueSystem.start([
         { name: "쭉쭉이", portraitKey: "jjook_lost", text: "아... 이동하다가 지갑을 잃어버렸어. 목도 너무 마른데 어떡하지?" },
-        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "혹시 근처 화단이나 벤치 밑을 같이 봐줄래? 갈색 지갑이야." },
+        { name: "쭉쭉이", portraitKey: "jjook_lost", text: "혹시 도로 아래쪽 길 어딘가에 떨어졌을지도 몰라... 갈색 지갑인데, 반짝반짝 빛나고 있을 거야! 같이 찾아줄래?" },
       ], () => {
         if (!scene.walletItem?.active && !scene.hasWallet) scene.spawnWalletItem();
       });

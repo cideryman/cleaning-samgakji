@@ -11,46 +11,16 @@ export default class InteractionSystem {
     if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!scene.stateManager?.canInteract()) return;
 
-    if (scene.hasTrashInSweepRange()) {
-      scene.trySweep();
-      return;
-    }
-
-    if (scene.tryDepositNearestRecycleBin()) return;
-
     if (this.handlePriorityLocationInteraction()) return;
 
-    if (this.shouldPrioritizeSunisuniDialogue()) {
-      scene.handleSunisuniInteraction();
-      return;
-    }
-
-    if (this.shouldPrioritizeJjookDialogue()) {
-      scene.handleJjookInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearVendingMachine() && !scene.isInDialogue) {
-      scene.handleVendingMachineInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearJjookNpc() && !scene.isInDialogue) {
-      scene.handleJjookInteraction();
-      return;
-    }
-
-    if (this.isPlayerNearYebiNpc() && !scene.isInDialogue) {
-      scene.showYebiQuestDialogue();
-      return;
-    }
+    if (scene.tryDepositNearestRecycleBin()) return;
 
     scene.trySweep();
   }
 
   handlePriorityLocationInteraction() {
     const scene = this.scene;
-    if (scene.isInDialogue) return false;
+    if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return false;
 
     if (this.isPlayerNearHospitalDoor()) {
       scene.handleHospitalInteraction();

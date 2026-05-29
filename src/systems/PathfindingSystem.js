@@ -56,11 +56,14 @@ export default class PathfindingSystem {
       });
     }
 
-    // Evaluate each grid cell center
+    // Evaluate each grid cell
+    const cellRect = new Phaser.Geom.Rectangle(0, 0, this.gridSize, this.gridSize);
+
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const x = c * this.gridSize + this.gridSize / 2;
         const y = r * this.gridSize + this.gridSize / 2;
+        cellRect.setTo(c * this.gridSize, r * this.gridSize, this.gridSize, this.gridSize);
 
         // A. Check Tilemap Collision layer if scene.walls is a TilemapLayer
         if (scene.walls && typeof scene.walls.getTileAtWorldXY === "function") {
@@ -75,7 +78,7 @@ export default class PathfindingSystem {
         let isBlockedByObject = false;
         for (let i = 0; i < staticColliders.length; i++) {
           const rect = staticColliders[i];
-          if (Phaser.Geom.Rectangle.Contains(rect, x, y)) {
+          if (Phaser.Geom.Rectangle.Overlaps(rect, cellRect)) {
             isBlockedByObject = true;
             break;
           }

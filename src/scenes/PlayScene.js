@@ -177,7 +177,6 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
-    this.pathfindingSystem?.create();
     this.travelEndingSystem?.createPermanentBusStopObjects?.();
     this.createSunisuniAnimations();
     this.createRecyclingCenter();
@@ -191,6 +190,7 @@ export default class PlayScene extends Phaser.Scene {
     this.updateHud();
     this.updateTravelPrepHud();
     this.updateCameraZoom();
+    this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
     this.updateNpcRoaming(true);
 
@@ -490,7 +490,11 @@ export default class PlayScene extends Phaser.Scene {
       this.jjookNpc = this.add.sprite(x, y, NPC_TEXTURES.jjook.down, 1);
       this.setNpcDirectionTexture(this.jjookNpc, "jjook", "down", false);
       this.jjookNpc.setDepth(4.2);
-      this.jjookNpc.setInteractive({ useHandCursor: true });
+      this.jjookNpc.setInteractive(
+        new Phaser.Geom.Rectangle(-16, -16, this.jjookNpc.width + 32, this.jjookNpc.height + 32),
+        Phaser.Geom.Rectangle.Contains
+      );
+      this.jjookNpc.input.useHandCursor = true;
       this.jjookNpc.on("pointerdown", (pointer) => {
         pointer.event?.preventDefault();
         pointer.event?.stopPropagation();
@@ -556,7 +560,11 @@ export default class PlayScene extends Phaser.Scene {
     this.sunisuniNpc.setDepth(4.15);
     this.sunisuniNpc.setVisible(false);
     this.sunisuniNpc.setActive(false);
-    this.sunisuniNpc.setInteractive({ useHandCursor: true });
+    this.sunisuniNpc.setInteractive(
+      new Phaser.Geom.Rectangle(-16, -16, this.sunisuniNpc.width + 32, this.sunisuniNpc.height + 32),
+      Phaser.Geom.Rectangle.Contains
+    );
+    this.sunisuniNpc.input.useHandCursor = true;
     this.sunisuniNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
@@ -598,7 +606,20 @@ export default class PlayScene extends Phaser.Scene {
   spawnWalletItem() {
     if (this.walletItem?.active) return;
 
-    const { x, y } = GAME_CONFIG.walletSpawn;
+    // Filter slime spawn points below the road (y > 320) and not blocked
+    const possiblePoints = (this.slimeSpawnPoints || []).filter(([x, y]) => {
+      return y > 320 && !this.isBlockedSpawnPoint(x, y);
+    });
+
+    let spawnPoint;
+    if (possiblePoints.length > 0) {
+      const [x, y] = Phaser.Utils.Array.GetRandom(possiblePoints);
+      spawnPoint = { x, y };
+    } else {
+      spawnPoint = GAME_CONFIG.walletSpawn; // Fallback to { x: 250, y: 735 }
+    }
+
+    const { x, y } = spawnPoint;
     this.walletItem = this.physics.add.image(x, y, "wallet_item");
     this.walletItem.setDisplaySize(42, 34);
     this.walletItem.setDepth(4.1);
@@ -615,7 +636,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.walletSparkles = this.time.addEvent({
-      delay: 360,
+      delay: 150, // Faster sparkles (150ms instead of 360ms)
       loop: true,
       callback: () => this.showWalletSparkle(),
     });
@@ -626,22 +647,26 @@ export default class PlayScene extends Phaser.Scene {
   showWalletSparkle() {
     if (!this.walletItem?.active) return;
 
-    const sparkle = this.add.circle(
-      this.walletItem.x + Phaser.Math.Between(-26, 26),
-      this.walletItem.y + Phaser.Math.Between(-22, 20),
-      Phaser.Math.Between(3, 5),
-      0x79c6ff,
-      0.95,
-    );
-    sparkle.setDepth(7);
-    this.tweens.add({
-      targets: sparkle,
-      y: sparkle.y - 22,
-      alpha: 0,
-      duration: 520,
-      ease: "Cubic.easeOut",
-      onComplete: () => sparkle.destroy(),
-    });
+    const count = Phaser.Math.Between(1, 2);
+    for (let i = 0; i < count; i++) {
+      const sparkle = this.add.circle(
+        this.walletItem.x + Phaser.Math.Between(-26, 26),
+        this.walletItem.y + Phaser.Math.Between(-22, 20),
+        Phaser.Math.Between(3, 6),
+        0xffeb3b, // Golden yellow color
+        0.95,
+      );
+      sparkle.setDepth(7);
+      this.tweens.add({
+        targets: sparkle,
+        y: sparkle.y - Phaser.Math.Between(15, 30),
+        alpha: 0,
+        scale: 0.1,
+        duration: Phaser.Math.Between(400, 700),
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
   }
 
   collectWallet() {
@@ -690,7 +715,11 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiNpc = this.add.sprite(x, y, NPC_TEXTURES.yeobi.down, 1);
     this.setNpcDirectionTexture(this.yebiNpc, "yeobi", "down", false);
     this.yebiNpc.setDepth(3.5);
-    this.yebiNpc.setInteractive({ useHandCursor: true });
+    this.yebiNpc.setInteractive(
+      new Phaser.Geom.Rectangle(-16, -16, this.yebiNpc.width + 32, this.yebiNpc.height + 32),
+      Phaser.Geom.Rectangle.Contains
+    );
+    this.yebiNpc.input.useHandCursor = true;
     this.yebiNpc.on("pointerdown", (pointer) => {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
@@ -2267,6 +2296,11 @@ export default class PlayScene extends Phaser.Scene {
 
   clearInteriorScene() {
     this.interiorSceneSystem?.clear();
+    if (this.player) {
+      this.player.setVelocity(0, 0);
+      this.playerController?.stopWalkAnimation?.();
+      this.playerController?.cancelMoveTarget?.();
+    }
   }
 
   handleDialogueLineChange(line) {
