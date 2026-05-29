@@ -99,6 +99,7 @@ export function createInitialGameState() {
     mapObjects: {},
     objectWalls: null,
     objectCollisionRects: [],
+    tutorialState: "intro",
     currentChapter: 1,
     isChapterComplete: false,
   };

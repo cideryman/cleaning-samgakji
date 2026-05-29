@@ -33,6 +33,7 @@ import TravelEndingSystem from "../systems/TravelEndingSystem.js";
 import YebiQuestSystem from "../systems/YebiQuestSystem.js";
 import HtmlUiBindingSystem from "../systems/HtmlUiBindingSystem.js";
 import EducationalGuideSystem from "../systems/EducationalGuideSystem.js";
+import TutorialSystem from "../systems/TutorialSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
 import { EXTERNAL_ASSETS } from "../config/AssetsData.js";
@@ -89,6 +90,7 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiQuestSystem = null;
     this.htmlUiBindingSystem = null;
     this.pathfindingSystem = null;
+    this.tutorialSystem = null;
     this.audioManager = null;
     this.sceneControlSystem = null;
     this.interiorSceneSystem = null;
@@ -155,6 +157,8 @@ export default class PlayScene extends Phaser.Scene {
     this.uiManager = new UIManager(this);
     this.educationalGuideSystem = new EducationalGuideSystem(this);
     this.educationalGuideSystem.create();
+    this.tutorialSystem = new TutorialSystem(this);
+    this.tutorialSystem.create();
     this.isInDialogue = false;
     this.isContractActive = false;   // 챕터 2에서 사용
     this.currentChapter = 1;
@@ -165,6 +169,7 @@ export default class PlayScene extends Phaser.Scene {
       this.stopChapterMusic();
       this.htmlUiBindingSystem?.unbind();
       this.educationalGuideSystem?.destroy();
+      this.tutorialSystem?.destroy?.();
       this.pathfindingSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
@@ -251,6 +256,7 @@ export default class PlayScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   update(time, delta) {
+    this.tutorialSystem?.update?.(time, delta);
     this.handleVendingMenuKeyboard();
     this.handleClothingShopKeyboard();
     this.handlePackingMenuKeyboard();
@@ -788,6 +794,12 @@ export default class PlayScene extends Phaser.Scene {
   spawnTrashWave() {
     this.waveCleanedCount = 0;
     this.currentWave += 1;
+    this.trashSlimes = this.trashSlimes || this.physics.add.staticGroup();
+
+    // Do not spawn slimes if in the introductory tutorial
+    if (this.tutorialState === "intro" || this.tutorialState === "move" || this.tutorialState === "sweep" || this.tutorialState === "deposit" || this.tutorialState === "npc") {
+      return;
+    }
     const positions = this.createRandomSlimePositions();
     const canIndexes = new Set(Phaser.Utils.Array.Shuffle(
       Array.from({ length: positions.length }, (_, index) => index),
@@ -1425,6 +1437,9 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   showYebiQuestDialogue() {
+    if (this.tutorialState === "npc") {
+      this.tutorialSystem?.complete();
+    }
     this.yebiQuestSystem?.showQuestDialogue();
   }
 
@@ -1441,7 +1456,12 @@ export default class PlayScene extends Phaser.Scene {
       { name: "엄마", portraitKey: "mother_calm", text: "쓰레기를 빗자루로 치우고 스스로 보상을 모아보자." },
       { name: "해냄이", portraitKey: "haenaem_determined", text: "알겠어. 내가 직접 깨끗하게 치워볼게!" },
     ];
-    this.dialogueSystem.start(dialogue, () => this.yebiQuestSystem?.markCanQuestAvailable());
+    this.dialogueSystem.start(dialogue, () => {
+      this.yebiQuestSystem?.markCanQuestAvailable();
+      if (this.tutorialState && this.tutorialState !== "completed") {
+        this.tutorialSystem?.start?.();
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------

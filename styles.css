@@ -2636,4 +2636,74 @@ body.ui-large-text .edu-guide-ok-btn {
   }
 }
 
+/* --- 튜토리얼 안내 카드 디자인 --- */
+.tutorial-card {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 75;
+  width: min(540px, 90vw);
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 4px solid #21352c;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(33, 53, 44, 0.22);
+  text-align: center;
+  pointer-events: auto;
+  font-family: inherit;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.tutorial-card strong {
+  display: block;
+  font-size: 18px;
+  color: #2f8f5b;
+  margin-bottom: 4px;
+}
+
+.tutorial-card p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #21352c;
+  font-weight: 700;
+  white-space: pre-line;
+}
+
+/* --- 상시 구출 힌트 가이드 박스 디자인 --- */
+.rescue-guide-box {
+  position: absolute;
+  left: 50%;
+  top: 76px;
+  transform: translateX(-50%);
+  z-index: 76;
+  width: min(480px, 86vw);
+  padding: 10px 18px;
+  background: #fff3a3;
+  border: 3px solid #21352c;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(33, 53, 44, 0.16);
+  text-align: center;
+  pointer-events: none;
+  animation: rescue-pulse 1400ms ease-in-out infinite;
+}
+
+.rescue-guide-box span {
+  font-size: 14px;
+  font-weight: 800;
+  color: #21352c;
+}
+
+@keyframes rescue-pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.03);
+    opacity: 1;
+  }
+}
+
 
