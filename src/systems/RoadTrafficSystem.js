@@ -72,6 +72,10 @@ export default class RoadTrafficSystem {
     this.updatePedestrianSignalFrames(isPedestrianGreen);
     const shouldCarsStop = isPedestrianGreen;
 
+    if (!isPedestrianGreen && scene.player && !scene.isInDialogue && !scene.isMissionComplete) {
+      this.checkPlayerRedLightCrossing();
+    }
+
     this.vehicles.forEach((vehicle) => {
       if (!vehicle?.active) return;
       const config = vehicle.getData("trafficConfig");
@@ -209,5 +213,56 @@ export default class RoadTrafficSystem {
   getVehicleDepth(vehicle, config) {
     const sortY = vehicle.y + (vehicle.displayHeight || 0) * 0.42;
     return this.scene.getWorldDepth(sortY, config.offset ?? 0);
+  }
+
+  checkPlayerRedLightCrossing() {
+    const scene = this.scene;
+    const player = scene.player;
+    if (!player || !player.active) return;
+
+    const crosswalkXs = this.getCrosswalkXs();
+    const halfWidth = 48; // 96px total width
+
+    const leftLanePoint = scene.getMapPoint("traffic_left_lane", null)
+      || scene.getMapPoint("road_left_lane", null)
+      || scene.getMapPoint("vehicle_left_lane", null);
+    const rightLanePoint = scene.getMapPoint("traffic_right_lane", null)
+      || scene.getMapPoint("road_right_lane", null)
+      || scene.getMapPoint("vehicle_right_lane", null);
+    const leftLaneY = Number(leftLanePoint?.y ?? 207);
+    const rightLaneY = Number(rightLanePoint?.y ?? 255);
+
+    const northThreshold = leftLaneY - 15;
+    const southThreshold = rightLaneY + 15;
+
+    const inCrosswalk = crosswalkXs.some((cx) => {
+      return player.x >= cx - halfWidth && player.x <= cx + halfWidth;
+    });
+
+    if (inCrosswalk) {
+      let blocked = false;
+
+      if (player.y >= northThreshold && player.y < northThreshold + 8) {
+        player.y = northThreshold - 1;
+        blocked = true;
+      }
+      else if (player.y <= southThreshold && player.y > southThreshold - 8) {
+        player.y = southThreshold + 1;
+        blocked = true;
+      }
+
+      if (blocked) {
+        player.body?.setVelocityY(0);
+        if (scene.mouseMoveTarget) {
+          scene.mouseMoveTarget = null;
+          scene.isMouseMoveHeld = false;
+        }
+
+        if (!this.nextRedLightWarningAt || scene.time.now > this.nextRedLightWarningAt) {
+          scene.showQuestToast("신호등이 빨간불입니다. 초록불이 될 때까지 기다려요!", 2000);
+          this.nextRedLightWarningAt = scene.time.now + 2500;
+        }
+      }
+    }
   }
 }

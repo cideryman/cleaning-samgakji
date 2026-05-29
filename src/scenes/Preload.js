@@ -1,4 +1,4 @@
-import { EXTERNAL_ASSETS, SPRITESHEET_ASSETS, TILED_MAP, AUDIO_ASSETS } from "../config/AssetsData.js";
+import { EXTERNAL_ASSETS, SPRITESHEET_ASSETS, TILED_MAP, AUDIO_ASSETS, LAZY_IMAGE_KEYS, LAZY_AUDIO_KEYS } from "../config/AssetsData.js";
 
 const TILED_TILESET_TEXT_KEY_PREFIX = "tiled_tileset_source:";
 
@@ -9,7 +9,9 @@ export default class Preload extends Phaser.Scene {
 
   preload() {
     EXTERNAL_ASSETS.forEach((asset) => {
-      this.load.image(asset.key, asset.path);
+      if (!LAZY_IMAGE_KEYS.includes(asset.key)) {
+        this.load.image(asset.key, asset.path);
+      }
     });
     SPRITESHEET_ASSETS.forEach((asset) => {
       this.load.spritesheet(asset.key, asset.path, {
@@ -18,7 +20,9 @@ export default class Preload extends Phaser.Scene {
       });
     });
     AUDIO_ASSETS.forEach((asset) => {
-      this.load.audio(asset.key, asset.path);
+      if (!LAZY_AUDIO_KEYS.includes(asset.key)) {
+        this.load.audio(asset.key, asset.path);
+      }
     });
     this.load.json("dialogues", "src/data/dialogues.json");
     this.load.json(TILED_MAP.jsonKey, TILED_MAP.path);

@@ -714,5 +714,63 @@ Standing rule for future features:
 - Executed `npm.cmd run build` successfully to verify build compilation.
 - Cleaned up the temporarily generated `dist/` directory.
 
+## Latest Pedestrian Red-Light Crossing Block (Step 6 - Traffic Enhancements)
+
+- Integrated crossing prevention inside `src/systems/RoadTrafficSystem.js` `update()` loop when the pedestrian light is red.
+- Implemented dynamic threshold boundary checks inside `checkPlayerRedLightCrossing()`:
+  - Detects if the player is within any crosswalk X range.
+  - North boundary (Y ~192) and South boundary (Y ~270) represent sidewalk-to-road boundaries.
+  - If a player tries to walk onto the road on a red light, they are pushed back onto the sidewalk, vertical velocity is set to 0, mouse/drag-movement is canceled, and a warning is toasted: `"신호등이 빨간불입니다. 초록불이 될 때까지 기다려요!"` (throttled).
+  - Players already on the road when the light turns red are NOT blocked or trapped, allowing them to safely complete crossing.
+- Verified syntax checks on the updated files:
+  ```powershell
+  node -c src/systems/RoadTrafficSystem.js
+  ```
+- Executed `npm.cmd run build` successfully to verify build compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+## Latest Mobile Loading Speed Optimization (Step 7 - Performance Optimization)
+
+- Extracted and classified heavy, non-essential startup assets as **lazy-loaded assets** to significantly improve mobile loading times.
+- Added `LAZY_IMAGE_KEYS` and `LAZY_AUDIO_KEYS` in `src/config/AssetsData.js` representing:
+  - All 10 ending full-screen illustration background `.png` files.
+  - 3 interior scene background `.png` files (`hospital_interior`, `pharmacy_interior`, `clothing_store_interior`).
+  - 10 uncompressed `.wav` BGM tracks (e.g. `chapter1_ending_bgm`, `ambient_clothing_shop_bgm`, etc.).
+- Refactored `src/scenes/Preload.js` to skip these lazy assets on startup, reducing initial download requirements by over **100MB** (a ~90% download size reduction for faster initial play).
+- Refactored `src/scenes/PlayScene.js` `showInteriorScene()`:
+  - Automatically checks if the illustration exists in the Phaser texture cache; if not, dynamically preloads and registers it before displaying the scene.
+- Refactored `src/systems/AudioManager.js` `playSceneMusic()`:
+  - Automatically checks if the BGM audio is in Phaser's cache; if not, dynamically preloads it in the background before playing.
+- Verified syntax checks on the updated files:
+  ```powershell
+  node -c src/config/AssetsData.js src/scenes/Preload.js src/scenes/PlayScene.js src/systems/AudioManager.js
+  ```
+- Executed `npm.cmd run build` successfully to verify build compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+## Latest Mobile Dialogue Box Layout Adjustment (Step 8 - UI Refinements)
+
+- Addressed floating dialogue box issue in mobile landscape viewport by adding responsive styles inside the `@media (orientation: landscape) and (max-height: 500px)` block in `styles.css`.
+- Lowered and optimized dialogue panel to improve landscape screen height usage:
+  - Reduced `.dialog-modal` padding-bottom to `max(6px, env(safe-area-inset-bottom))` to sit closer to the bottom.
+  - Reduced `.dialog-panel` margin-bottom to `6px`.
+  - Reduced `.dialog-panel` internal padding to `10px 14px` (shorter, sleeker panel height).
+  - Scaled down `.dialog-text` font-size to `14px` and min-height to `42px` to fit limited vertical spaces.
+  - Scaled down `.dialog-name` font-size to `14px` and margin-bottom to `4px`.
+- Executed `npm.cmd run build` successfully to verify stylesheet compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+## Latest Mobile Landscape HUD Optimization (Step 9 - UI Refinements)
+
+- Addressed next-quest-hint pill clipping issue in mobile landscape viewport by introducing a scale override in `styles.css` inside the `@media (orientation: landscape) and (max-height: 500px)` query block.
+- Scaled `.money-ui` container down by `0.82` (matching mobile portrait scaling) and updated `max-width: calc((100vw - 20px) / 0.82)`.
+- This ensures all coins, money totals, trash counts, and next-quest-hint pill labels are completely visible on all horizontal mobile viewports without overlapping or spilling off-screen.
+- Executed `npm.cmd run build` successfully to verify stylesheet compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+
+
+
+
 
 

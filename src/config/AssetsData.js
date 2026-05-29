@@ -175,3 +175,32 @@ export const AUDIO_ASSETS = [
   { key: "ambient_gyeongbokgung_bgm", path: "assets/audio/ambient-gyeongbokgung.wav" },
   { key: "ambient_amusement_park_bgm", path: "assets/audio/ambient-amusement-park.wav" },
 ];
+
+export const LAZY_IMAGE_KEYS = [
+  "ending_bus_home",
+  "ending_packing_room",
+  "ending_packed_room",
+  "ending_morning_room",
+  "ending_yeongju_station",
+  "ending_train_arrival",
+  "ending_seoul_station",
+  "ending_gyeongbokgung",
+  "ending_amusement_park",
+  "ending_chapter1_final",
+  "hospital_interior",
+  "pharmacy_interior",
+  "clothing_store_interior",
+];
+
+export const LAZY_AUDIO_KEYS = [
+  "chapter1_ending_bgm",
+  "ambient_clothing_shop_bgm",
+  "ambient_hospital_bgm",
+  "ambient_pharmacy_bgm",
+  "ambient_bus_bgm",
+  "ambient_room_bgm",
+  "ambient_train_bgm",
+  "ambient_seoul_station_bgm",
+  "ambient_gyeongbokgung_bgm",
+  "ambient_amusement_park_bgm",
+];

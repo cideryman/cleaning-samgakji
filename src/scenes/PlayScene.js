@@ -34,6 +34,7 @@ import YebiQuestSystem from "../systems/YebiQuestSystem.js";
 import HtmlUiBindingSystem from "../systems/HtmlUiBindingSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
+import { EXTERNAL_ASSETS } from "../config/AssetsData.js";
 import {
   JjookQuestState,
   SunisuniQuestState,
@@ -2306,6 +2307,17 @@ export default class PlayScene extends Phaser.Scene {
 
 
   showInteriorScene(textureKey, type = "hospital") {
+    if (!this.textures.exists(textureKey)) {
+      const asset = EXTERNAL_ASSETS.find((a) => a.key === textureKey);
+      if (asset) {
+        this.load.image(textureKey, asset.path);
+        this.load.once(Phaser.Loader.Events.COMPLETE, () => {
+          this.interiorSceneSystem?.show(textureKey, type);
+        });
+        this.load.start();
+        return;
+      }
+    }
     this.interiorSceneSystem?.show(textureKey, type);
   }
 

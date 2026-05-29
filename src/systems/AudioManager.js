@@ -1,4 +1,5 @@
 import { TILED_MAP_CONFIG } from "../config/GameConstants.js";
+import { AUDIO_ASSETS } from "../config/AssetsData.js";
 
 export default class AudioManager {
   constructor(scene) {
@@ -239,7 +240,19 @@ export default class AudioManager {
 
   playSceneMusic(key, volume = 0.26) {
     const scene = this.scene;
-    if (!this.isSoundEnabled() || !scene.cache.audio.exists(key)) return;
+    if (!this.isSoundEnabled()) return;
+
+    if (!scene.cache.audio.exists(key)) {
+      const asset = AUDIO_ASSETS.find((a) => a.key === key);
+      if (asset) {
+        scene.load.audio(key, asset.path);
+        scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+          this.playSceneMusic(key, volume);
+        });
+        scene.load.start();
+      }
+      return;
+    }
 
     this.stopChapterMusic();
     this.stopSceneMusic({ resumeChapter: false });
