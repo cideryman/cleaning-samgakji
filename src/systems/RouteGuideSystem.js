@@ -72,7 +72,7 @@ export default class RouteGuideSystem {
       };
     }
 
-    const recycleQuestState = scene.questManager?.getRecycleQuestState?.();
+    const recycleQuestState = scene.yebiQuestSystem?.getRecycleQuestState?.();
     if ([RecycleQuestState.UNLOCKED, RecycleQuestState.ACTIVE].includes(recycleQuestState)) {
       return {
         key: "recycling_center",

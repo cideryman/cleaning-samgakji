@@ -17,7 +17,6 @@ import InteractionSystem from "../systems/InteractionSystem.js";
 import ConsumableSystem from "../systems/ConsumableSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
 import PortraitManager from "../systems/PortraitManager.js";
-import QuestManager from "../systems/QuestManager.js";
 import RoadTrafficSystem from "../systems/RoadTrafficSystem.js";
 import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
@@ -138,7 +137,6 @@ export default class PlayScene extends Phaser.Scene {
     });
     this.portraitManager = new PortraitManager(this);
     this.moneySystem = new MoneySystem(this);
-    this.questManager = new QuestManager(this);
     this.roadTrafficSystem = new RoadTrafficSystem(this);
     this.routeGuideSystem = new RouteGuideSystem(this);
     this.tiledMapSystem = new TiledMapSystem(this);
@@ -408,8 +406,8 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   checkJjookQuestUnlock() {
-    if (!this.moneySystem || !this.questManager || this.hasAnnouncedJjookQuest) return;
-    if (this.questManager.getRecycleQuestState() !== "completed") return;
+    if (!this.moneySystem || !this.yebiQuestSystem || this.hasAnnouncedJjookQuest) return;
+    if (this.yebiQuestSystem.getRecycleQuestState() !== "completed") return;
     if (this.moneySystem.money < GAME_CONFIG.jjookQuestUnlockMoney) return;
 
     this.hasAnnouncedJjookQuest = true;
@@ -909,15 +907,15 @@ export default class PlayScene extends Phaser.Scene {
       return;
     }
 
-    const canQuest = this.questManager?.canQuest;
-    const recycleQuest = this.questManager?.recycleQuest;
+    const canQuest = this.yebiQuestSystem?.canQuest;
+    const recycleQuest = this.yebiQuestSystem?.recycleQuest;
 
     if (canQuest && !canQuest.isCompleted) {
       canQuest.isActive = false;
       canQuest.isCompleted = true;
       canQuest.current = canQuest.target;
-      this.questManager.updateUI();
-      this.questManager.hideQuestGaugeWithPoof();
+      this.yebiQuestSystem.updateUI();
+      this.yebiQuestSystem.hideQuestGaugeWithPoof();
       this.clearQuestMarker("canQuest");
       this.ensureDevMoney(GAME_CONFIG.recycleQuestUnlockMoney);
       this.hasAnnouncedRecycleQuest = false;
@@ -933,8 +931,8 @@ export default class PlayScene extends Phaser.Scene {
       recycleQuest.current.normal = recycleQuest.target.normal;
       recycleQuest.current.can = recycleQuest.target.can;
       recycleQuest.current.plastic = recycleQuest.target.plastic;
-      this.questManager.updateUI();
-      this.questManager.hideQuestGaugeWithPoof();
+      this.yebiQuestSystem.updateUI();
+      this.yebiQuestSystem.hideQuestGaugeWithPoof();
       this.clearQuestMarker("recycleQuest");
       this.ensureDevMoney(GAME_CONFIG.jjookQuestUnlockMoney);
       this.hasAnnouncedJjookQuest = false;
@@ -1628,8 +1626,8 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     if (key === "yebi") {
-      const canState = this.questManager?.getQuestState?.() || "inactive";
-      const recycleState = this.questManager?.getRecycleQuestState?.() || "locked";
+      const canState = this.yebiQuestSystem?.getQuestState?.() || "inactive";
+      const recycleState = this.yebiQuestSystem?.getRecycleQuestState?.() || "locked";
       return canState !== "active" && recycleState !== "unlocked" && recycleState !== "active";
     }
 
@@ -1788,8 +1786,8 @@ export default class PlayScene extends Phaser.Scene {
     ]);
 
     if (key === "yebi") {
-      const canState = this.questManager?.getQuestState?.() || "inactive";
-      const recycleState = this.questManager?.getRecycleQuestState?.() || "locked";
+      const canState = this.yebiQuestSystem?.getQuestState?.() || "inactive";
+      const recycleState = this.yebiQuestSystem?.getRecycleQuestState?.() || "locked";
       if (canState === "completed" || recycleState === "completed") {
         const anchor = this.getYebiRecyclePosition();
         return horizontalPatrol(anchor.x, 112);

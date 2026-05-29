@@ -65,8 +65,8 @@ export default class CheckpointStorage {
   static saveSceneCheckpoint(scene, checkpointId) {
     if (!scene) return null;
 
-    const canQuest = scene.questManager?.canQuest;
-    const recycleQuest = scene.questManager?.recycleQuest;
+    const canQuest = scene.yebiQuestSystem?.canQuest;
+    const recycleQuest = scene.yebiQuestSystem?.recycleQuest;
     const data = {
       version: SAVE_VERSION,
       checkpointId,
@@ -164,20 +164,20 @@ export default class CheckpointStorage {
     scene.updateBacchusButton?.();
     scene.updateTravelPrepHud?.();
     scene.updateHud?.();
-    scene.questManager?.updateUI();
+    scene.yebiQuestSystem?.updateUI();
     this.hideCompletedQuestHud(scene);
     return true;
   }
 
   static applyQuestData(scene, quests) {
-    const canQuest = scene.questManager?.canQuest;
+    const canQuest = scene.yebiQuestSystem?.canQuest;
     if (canQuest && quests.canQuest) {
       canQuest.isActive = Boolean(quests.canQuest.isActive);
       canQuest.isCompleted = Boolean(quests.canQuest.isCompleted);
       canQuest.current = Math.min(canQuest.target, quests.canQuest.current ?? 0);
     }
 
-    const recycleQuest = scene.questManager?.recycleQuest;
+    const recycleQuest = scene.yebiQuestSystem?.recycleQuest;
     if (recycleQuest && quests.recycleQuest) {
       recycleQuest.isUnlocked = Boolean(quests.recycleQuest.isUnlocked);
       recycleQuest.isActive = Boolean(quests.recycleQuest.isActive);
@@ -266,11 +266,11 @@ export default class CheckpointStorage {
   }
 
   static hideCompletedQuestHud(scene) {
-    const root = scene.questManager?.uiElements?.root;
+    const root = scene.yebiQuestSystem?.uiElements?.root;
     if (!root) return;
-    const canDone = scene.questManager?.canQuest?.isCompleted;
-    const recycleDone = scene.questManager?.recycleQuest?.isCompleted;
-    if (recycleDone || (canDone && !scene.questManager?.recycleQuest?.isActive)) {
+    const canDone = scene.yebiQuestSystem?.canQuest?.isCompleted;
+    const recycleDone = scene.yebiQuestSystem?.recycleQuest?.isCompleted;
+    if (recycleDone || (canDone && !scene.yebiQuestSystem?.recycleQuest?.isActive)) {
       root.classList.add("is-hidden");
       root.setAttribute("aria-hidden", "true");
     }

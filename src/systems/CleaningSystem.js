@@ -116,7 +116,7 @@ export default class CleaningSystem {
     const isCanTrash = trashType === "can";
     if (isCanTrash) {
       scene.cleanedCanCount += 1;
-      scene.questManager?.updateQuestProgress(1);
+      scene.yebiQuestSystem?.updateQuestProgress(1);
     }
     this.addTrashToRecycleInventory(trashType);
 
@@ -216,7 +216,7 @@ export default class CleaningSystem {
     const trashType = trash.getData("trashType") || "normal";
     if (trashType === "can") {
       scene.cleanedCanCount += 1;
-      scene.questManager?.updateQuestProgress(1);
+      scene.yebiQuestSystem?.updateQuestProgress(1);
     }
     this.addTrashToRecycleInventory(trashType);
     scene.moneySystem.addMoney(this.getTrashCleanReward());

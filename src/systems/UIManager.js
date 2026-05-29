@@ -1,4 +1,4 @@
-﻿import { GAME_CONFIG } from "../config/GameConstants.js";
+import { GAME_CONFIG } from "../config/GameConstants.js";
 import {
   ClothesQuestState,
   JjookQuestState,
@@ -158,10 +158,10 @@ export default class UIManager {
   getNextQuestHint() {
     const scene = this.scene;
     const money = scene.moneySystem?.money ?? 0;
-    const questManager = scene.questManager;
-    if (!questManager) return "";
+    const yebiQuestSystem = scene.yebiQuestSystem;
+    if (!yebiQuestSystem) return "";
 
-    const recycleState = questManager.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
+    const recycleState = yebiQuestSystem.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
     if (recycleState === RecycleQuestState.LOCKED && !scene.hasAnnouncedRecycleQuest) {
       return this.formatQuestHint("분리수거", GAME_CONFIG.recycleQuestUnlockMoney, money);
     }
