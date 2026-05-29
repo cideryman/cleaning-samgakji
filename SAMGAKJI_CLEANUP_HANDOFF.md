@@ -683,3 +683,36 @@ Standing rule for future features:
 - Executed `npm.cmd run build` successfully, verifying proper bundle builds and code integrity.
 - Cleaned up the temporarily generated `dist/` directory.
 
+## Latest Preload Asset List Extraction (Step 4 - Centralized Asset Config)
+
+- Added `src/config/AssetsData.js` to hold static asset arrays for:
+  - `EXTERNAL_ASSETS`
+  - `SPRITESHEET_ASSETS`
+  - `TILED_MAP`
+  - `AUDIO_ASSETS`
+- Refactored `src/scenes/Preload.js` to import these arrays from `src/config/AssetsData.js`, shrinking `Preload.js` from over 650 lines to ~470 lines.
+- Kept `Preload.js` solely responsible for actual Phaser loading mechanics, Tiled TSX parsing, and canvas assets generation.
+- Verified syntax checks on the updated files:
+  ```powershell
+  node -c src/config/AssetsData.js src/scenes/Preload.js
+  ```
+- Executed `npm.cmd run build` successfully, verifying proper bundle compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+## Latest PC Mouse Hold-to-Move Controls (Step 5 - Input Enhancements)
+
+- Added `isMouseMoveHeld` and `mouseMoveStartTime` states in `src/config/InitialGameState.js` to support holding down the left mouse button.
+- Modified `src/controllers/PlayerController.js` to register `pointermove`, `pointerup`, and `pointerupoutside` event listeners.
+- Implemented drag-walk logic inside `PlayerController.js`:
+  - Tap/Click (<200ms duration): player walks all the way to the target (RPG-style).
+  - Hold/Drag (>200ms duration): player continuously follows the cursor and stops immediately upon releasing the left mouse button (action-style).
+  - Cancel conditions: Keyboard movement, dialogue, modals, and menus automatically clear the hold state and target.
+- Verified syntax checks on the updated files:
+  ```powershell
+  node -c src/config/InitialGameState.js src/controllers/PlayerController.js
+  ```
+- Executed `npm.cmd run build` successfully to verify build compilation.
+- Cleaned up the temporarily generated `dist/` directory.
+
+
+

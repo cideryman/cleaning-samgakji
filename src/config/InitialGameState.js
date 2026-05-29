@@ -83,6 +83,8 @@ export function createInitialGameState() {
     activeJoystickPointerId: null,
     joystickBase: { x: 0, y: 0 },
     mouseMoveTarget: null,
+    isMouseMoveHeld: false,
+    mouseMoveStartTime: 0,
     canSweep: true,
     thanksAudioBuffer: null,
     collectCansAudioBuffer: null,

@@ -34,6 +34,9 @@ export default class PlayerController {
       scene.useYebiItem();
     });
     scene.input.on("pointerdown", (pointer, currentlyOver = []) => this.handleMouseMovePointerDown(pointer, currentlyOver));
+    scene.input.on("pointermove", (pointer) => this.handleMouseMovePointerMove(pointer));
+    scene.input.on("pointerup", (pointer) => this.handleMouseMovePointerUp(pointer));
+    scene.input.on("pointerupoutside", (pointer) => this.handleMouseMovePointerUp(pointer));
   }
 
   update() {
@@ -51,6 +54,7 @@ export default class PlayerController {
     ) {
       scene.player.setVelocity(0, 0);
       scene.mouseMoveTarget = null;
+      scene.isMouseMoveHeld = false;
       return;
     }
 
@@ -73,6 +77,7 @@ export default class PlayerController {
     const velocity = new Phaser.Math.Vector2(horizontal, vertical);
     if (velocity.lengthSq() > 0) {
       scene.mouseMoveTarget = null;
+      scene.isMouseMoveHeld = false;
     } else if (scene.mouseMoveTarget && !isKeyboardMoving) {
       const dx = scene.mouseMoveTarget.x - scene.player.x;
       const dy = scene.mouseMoveTarget.y - scene.player.y;
@@ -107,6 +112,40 @@ export default class PlayerController {
 
     const worldPoint = pointer.positionToCamera(scene.cameras.main);
     scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
+    scene.isMouseMoveHeld = true;
+    scene.mouseMoveStartTime = scene.time.now;
+  }
+
+  handleMouseMovePointerMove(pointer) {
+    const scene = this.scene;
+    if (!scene.isMouseMoveHeld) return;
+    if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) {
+      scene.isMouseMoveHeld = false;
+      scene.mouseMoveTarget = null;
+      return;
+    }
+    if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) {
+      scene.isMouseMoveHeld = false;
+      scene.mouseMoveTarget = null;
+      return;
+    }
+
+    const worldPoint = pointer.positionToCamera(scene.cameras.main);
+    scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
+  }
+
+  handleMouseMovePointerUp(pointer) {
+    const scene = this.scene;
+    const button = pointer.event?.button ?? pointer.button;
+    const pointerType = pointer.event?.pointerType || pointer.pointerType || "mouse";
+    if (pointerType !== "mouse" || button !== 0) return;
+    if (!scene.isMouseMoveHeld) return;
+
+    scene.isMouseMoveHeld = false;
+    const duration = scene.time.now - scene.mouseMoveStartTime;
+    if (duration > 200) {
+      scene.mouseMoveTarget = null;
+    }
   }
 
   getPlayerSpeed() {
