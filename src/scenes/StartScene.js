@@ -27,6 +27,12 @@ export default class StartScene extends Phaser.Scene {
     this.resizeForStartScreen();
     this.registry.set("soundEnabled", this.registry.get("soundEnabled") !== false);
 
+    let savedTextSizeLarge = false;
+    try {
+      savedTextSizeLarge = window.localStorage?.getItem("samgakji_text_size_large") === "true";
+    } catch (e) {}
+    this.registry.set("textSizeLarge", savedTextSizeLarge);
+
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
@@ -35,17 +41,19 @@ export default class StartScene extends Phaser.Scene {
 
     const hasCheckpoint = CheckpointStorage.hasSave();
     const buttonLayout = hasCheckpoint
-      ? { startY: centerY + 6, gap: 62, width: 236, height: 48 }
-      : { startY: centerY + 70, gap: 64, width: 236, height: 50 };
+      ? { startY: centerY - 10, gap: 58, width: 236, height: 44 }
+      : { startY: centerY + 22, gap: 60, width: 236, height: 46 };
     this.options = [];
 
     if (hasCheckpoint) {
       this.options.push(this.createOption(centerX, buttonLayout.startY, "이어하기", () => this.continueGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, "처음부터", () => this.startNewGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 3, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
     } else {
       this.options.push(this.createOption(centerX, buttonLayout.startY, "게임 시작", () => this.startNewGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
     }
 
     this.input.keyboard.on("keydown-UP", () => this.moveSelection(-1));
@@ -149,6 +157,29 @@ export default class StartScene extends Phaser.Scene {
     this.registry.set("soundEnabled", nextValue);
     const soundOption = this.options.find((option) => option.kind === "sound");
     soundOption?.text.setText(this.getSoundLabel());
+    this.updateSelection();
+  }
+
+  getTextSizeLabel() {
+    return this.registry.get("textSizeLarge") === true ? "글자 크기: 크게" : "글자 크기: 보통";
+  }
+
+  toggleTextSize() {
+    const nextValue = this.registry.get("textSizeLarge") !== true;
+    this.registry.set("textSizeLarge", nextValue);
+
+    try {
+      window.localStorage?.setItem("samgakji_text_size_large", nextValue ? "true" : "false");
+    } catch (e) {}
+
+    if (nextValue) {
+      document.body.classList.add("ui-large-text");
+    } else {
+      document.body.classList.remove("ui-large-text");
+    }
+
+    const textOption = this.options.find((option) => option.kind === "textsize");
+    textOption?.text.setText(this.getTextSizeLabel());
     this.updateSelection();
   }
 

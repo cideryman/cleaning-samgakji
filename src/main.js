@@ -73,6 +73,13 @@ const config = {
 };
 
 function startGame() {
+  try {
+    const isLargeText = window.localStorage?.getItem("samgakji_text_size_large") === "true";
+    if (isLargeText) {
+      document.body.classList.add("ui-large-text");
+    }
+  } catch (e) {}
+
   document.addEventListener("contextmenu", (event) => event.preventDefault());
   document.addEventListener(
     "touchmove",

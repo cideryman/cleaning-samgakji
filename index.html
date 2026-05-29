@@ -130,6 +130,37 @@
       </div>
     </main>
 
+    <!-- Rotation Request Overlay -->
+    <div id="rotation-overlay" class="rotation-overlay" aria-hidden="true">
+      <div class="rotation-content">
+        <div class="phone-icon-wrapper">
+          <svg class="phone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+            <line x1="12" y1="18" x2="12" y2="18.01" stroke-width="4" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="rotation-title">&#54868;&#47732;&#51012; &#44032;&#47196;&#47196; &#46028;&#47140;&#51452;&#49464;&#50836;!</div>
+        <div class="rotation-text">&#51060; &#44172;&#51076;&#51008; &#44032;&#47196; &#54868;&#47732;&#50640; &#52572;&#51201;&#54868;&#46104;&#50612; &#51080;&#49845;&#45768;&#45796;.<br>&#44592;&#44592;&#47484; &#44032;&#47196; &#48169;&#54693;&#51004;&#47196; &#54924;&#51204;&#54616;&#50668; &#54540;&#47112;&#51060;&#54644;&#51452;&#49464;&#50836;.</div>
+      </div>
+    </div>
+
+    <!-- Educational Facility Guide Modal -->
+    <div id="edu-guide-modal" class="edu-guide-modal" style="display: none;" aria-hidden="true">
+      <div class="edu-guide-panel">
+        <button id="edu-guide-close" class="edu-guide-close" type="button" aria-label="close">&times;</button>
+        <div class="edu-guide-header">
+          <span class="edu-guide-badge">&#128161; 자립생활 배움터</span>
+          <h2 id="edu-guide-title" class="edu-guide-title">&#48337;&#50896;</h2>
+        </div>
+        <div class="edu-guide-body">
+          <div id="edu-guide-text" class="edu-guide-text"></div>
+        </div>
+        <div class="edu-guide-footer">
+          <button id="edu-guide-ok" class="edu-guide-ok-btn" type="button">&#51060;&#54644;&#54664;&#50612;&#50836;!</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./src/main.js?v=37"></script>
     <script src="./src/pwa.js?v=3"></script>
   </body>

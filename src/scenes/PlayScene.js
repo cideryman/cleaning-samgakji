@@ -32,6 +32,7 @@ import JjookQuestSystem from "../systems/JjookQuestSystem.js";
 import TravelEndingSystem from "../systems/TravelEndingSystem.js";
 import YebiQuestSystem from "../systems/YebiQuestSystem.js";
 import HtmlUiBindingSystem from "../systems/HtmlUiBindingSystem.js";
+import EducationalGuideSystem from "../systems/EducationalGuideSystem.js";
 import { PACKING_ITEMS } from "../config/PackingData.js";
 import { CLOTHING_SHOP_ITEMS } from "../config/ClothingShopData.js";
 import { EXTERNAL_ASSETS } from "../config/AssetsData.js";
@@ -109,6 +110,9 @@ export default class PlayScene extends Phaser.Scene {
     this.resetRunState();
     document.body.classList.remove("start-screen");
 
+    const isLargeText = this.registry.get("textSizeLarge") === true || window.localStorage?.getItem("samgakji_text_size_large") === "true";
+    document.body.classList.toggle("ui-large-text", isLargeText);
+
     this.htmlUiBindingSystem.lookupElements();
     this.htmlUiBindingSystem.bind();
 
@@ -148,6 +152,8 @@ export default class PlayScene extends Phaser.Scene {
     this.slimeSystem = new SlimeSystem(this);
     this.cleaningSystem = new CleaningSystem(this);
     this.uiManager = new UIManager(this);
+    this.educationalGuideSystem = new EducationalGuideSystem(this);
+    this.educationalGuideSystem.create();
     this.isInDialogue = false;
     this.isContractActive = false;   // 챕터 2에서 사용
     this.currentChapter = 1;
@@ -157,6 +163,7 @@ export default class PlayScene extends Phaser.Scene {
       this.clearNpcRoaming();
       this.stopChapterMusic();
       this.htmlUiBindingSystem?.unbind();
+      this.educationalGuideSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();

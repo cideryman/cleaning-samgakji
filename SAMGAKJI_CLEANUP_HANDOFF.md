@@ -38,15 +38,22 @@
 - `src/systems/ClothingShopSystem.js`
 - `src/systems/SunisuniQuestSystem.js`
 - `src/systems/JjookQuestSystem.js`
+- `src/systems/TravelEndingSystem.js`
+- `src/systems/TiledMapSystem.js`
+- `src/systems/HtmlUiBindingSystem.js`
+- `src/systems/EducationalGuideSystem.js`
 
 최근 분리:
 
 - 짐싸기 데이터: `src/config/PackingData.js`
 - 옷가게 데이터: `src/config/ClothingShopData.js`
+- 교육용 시설 데이터: `src/config/EducationalGuideData.js`
 - 짐싸기 UI/선택 처리: `PackingSystem`
 - 옷가게 UI/선택/계산/쇼핑백 HUD: `ClothingShopSystem`
 - 수니수니 병원/약국 대화 흐름, 따라오기 AI, 이펙트, 벤치 복귀: `SunisuniQuestSystem`
 - 쭉쭉이 지갑 대화 진입, 자판기 보상 연결, 플로깅 요청, 옷가게 제안/수락/거절/입장/완료 후 짐싸기 제안, 짐싸기 제안 수락/거절, 동행 따라오기, 자동 청소, 동행 종료: `JjookQuestSystem`
+- 기기 조작법 바인딩 및 HTML UI 연결: `HtmlUiBindingSystem`
+- 교육용 시설 팝업 모달 및 물음표 안내판: `EducationalGuideSystem`
 
 아직 `PlayScene.js`에 남겨도 되는 것:
 
@@ -768,9 +775,51 @@ Standing rule for future features:
 - Executed `npm.cmd run build` successfully to verify stylesheet compilation.
 - Cleaned up the temporarily generated `dist/` directory.
 
+## Latest Rotation Overlay & Accessibility Text Settings (Step 10 - UI & UX Accessibility)
 
+- **Added CSS Rotation Request Overlay (Task A)**:
+  - Appended a modern, semantically clear `#rotation-overlay` inside `index.html`.
+  - Added pure CSS-based portrait blocking rules under the `@media (orientation: portrait) and (max-width: 820px)` media query inside `styles.css`.
+  - Included a stylized dark green-gradient backdrop (`linear-gradient(135deg, #2b3a30 0%, #17221b 100%)`), bold warm title, and a rotating phone SVG animation using keyframe `@keyframes rotate-phone`.
+  - The overlay locks vertical portrait viewports completely on mobile devices while allowing normal gameplay horizontal rotations.
 
+- **Universal Design Text Size Options (Task B)**:
+  - Enabled support for standard (1.0x) and large (1.35x - 1.4x) text sizes to accommodate visual accessibility.
+  - Implemented automatic local storage lookup (`samgakji_text_size_large`) on application startup in `src/main.js` to immediately apply `.ui-large-text` on `document.body` if enabled, removing post-load layout flicker.
+  - Refactored `StartScene.js` constructor and `create()` menu list to dynamically center options vertically (supporting 4 options at `gap: 58` if checkpoints exist, and 3 options at `gap: 60` if no checkpoints exist).
+  - Added `글자 크기` toggle button in the Start Menu, updating `localStorage` and `this.registry` state dynamically.
+  - Bound body synchronization check inside `PlayScene.js` `create()` to apply/maintain text classes on active scenes.
+  - Defined CSS styling rules under `body.ui-large-text` targeting dialogue panels (`.dialog-text`, `.dialog-name`, `.dialog-choice`), quest toast alerts (`.quest-toast`), and clothing shop/packing list panels/grids.
+  - Excluded the tight top HUD bar (`.money-ui`) to guarantee layout integrity and eliminate overlapping.
 
+- **Verification & Build Validation**:
+  - Validated syntax on all modified JavaScript modules (`src/main.js`, `src/scenes/StartScene.js`, `src/scenes/PlayScene.js`) with `node -c`.
+  - Verified bundle creation via production build compiler `npm.cmd run build` which built successfully under 600ms.
+  - Cleared intermediate `dist/` directory in compliance with sandbox workspace rules.
+
+## Educational Facility Detail Overlays (Phase 1 Implemented - Step 11)
+
+- **Core Game Mandate**:
+  - This game is an **independent-living support training game for developmentally disabled individuals**.
+  - **Philosophy**: Fun is 1st priority; real-world training/adaptation is 2nd. Fun keeps the player engaged, allowing them to naturally build independent living skills as a side effect (like building up calluses).
+
+- **Implementation Details (Phase 1 Complete & Polished)**:
+  - **Data Configuration & Polish**: Created [EducationalGuideData.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/config/EducationalGuideData.js) containing standardized data for 7 vital facilities: **Hospital, Pharmacy, Clothing Shop, Pedestrian Lights, Vending Machine, Recycling Center, and Bus Stop**.
+    - **Typos Corrected**: Fixed typo in the HTML header badge from `자립 쉽활 배움터` to `자립생활 배움터` in `index.html`.
+    - **Position Adjustments**: Raised hospital, pharmacy, and clothing shop `?` buttons (`y: 45` or `50`) to float clearly **above building roofs** rather than overlapping doors/interiors. Lowered the recycling bins `?` button (`y: 565`) to sit directly above the red/green/blue bins.
+    - **New Facility Added**: Added a floating `?` icon and self-reliance descriptions for the **Bus Stop (버스정류장)** (`x: 760, y: 205`) detailing boarding queues, safety, and card tagging.
+  - **HTML Structure**: Added `#edu-guide-modal` overlay structure in `index.html` with clean responsive CSS.
+  - **Visual Indicators & Animation**: Created [EducationalGuideSystem.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/systems/EducationalGuideSystem.js) which spawns high-contrast yellow question mark (`?`) circular container buttons inside Phaser above each facility coordinate.
+    - Buttons feature a **hover scale-up micro-animation** (`scale: 1.15` on pointerover) and a **floating dynamic idle animation** (Sine-wave translation) to feel alive.
+    - Added click sound feedback using Phaser tones.
+  - **Modals & Control Blocks**: Click/touching the `?` button triggers a beautiful full-screen modal with a soft warm paper panel background (`#fffbf2`), dark brown border (`4px solid #6b4c3b`), bold orange facility headers, and clean scrollable educational texts.
+    - Opening a modal blocks scene world controls via `blockWorldInput(true)` to prevent the player walking under the modal, and automatically cancels any mouse-walk target.
+    - Modal can be dismissed by clicking the close button (`&times;`), clicking the "이해했어요!" action button, or pressing the `ESC` key on the keyboard.
+  - **Universal Design Integration**: All educational texts, buttons, and headers scale up proportionally by **1.32x** under `.ui-large-text` when the large text mode is enabled, ensuring absolute legibility.
+  - **Encapsulated Lifecycle Integration**: Cleanly integrated in [PlayScene.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/scenes/PlayScene.js) constructor, `create()`, and SHUTDOWN hooks to prevent any memory leaks.
+
+- **Upcoming Phase 2 Roadmap**:
+  - **Phase 2 (Visual-Rich)**: Enhance the modal layout inside `index.html` by adding support for custom graphic illustrations or icons representing the activities of each facility (e.g. medical kits for hospitals, pills for pharmacies) to facilitate high-recognition visual associations for users.
 
 
 
