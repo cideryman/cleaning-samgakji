@@ -3,6 +3,8 @@ import { GAME_CONFIG, PLAYER_TEXTURES, PLAYER_WALK_ANIMS } from "../config/GameC
 export default class PlayerController {
   constructor(scene) {
     this.scene = scene;
+    this.movePath = [];
+    this.currentPathIndex = 0;
   }
 
   createInput() {
@@ -78,13 +80,33 @@ export default class PlayerController {
     if (velocity.lengthSq() > 0) {
       scene.mouseMoveTarget = null;
       scene.isMouseMoveHeld = false;
+      this.movePath = [];
     } else if (scene.mouseMoveTarget && !isKeyboardMoving) {
+      this.movePath = []; // Clear A* path when actively dragging
       const dx = scene.mouseMoveTarget.x - scene.player.x;
       const dy = scene.mouseMoveTarget.y - scene.player.y;
       if (Math.hypot(dx, dy) <= 10) {
         scene.mouseMoveTarget = null;
       } else {
         velocity.set(dx, dy);
+      }
+    } else if (this.movePath && this.movePath.length > 0 && !isKeyboardMoving) {
+      // Follow the A* path waypoints
+      const targetPoint = this.movePath[this.currentPathIndex];
+      if (targetPoint) {
+        const dx = targetPoint.x - scene.player.x;
+        const dy = targetPoint.y - scene.player.y;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance <= 12) {
+          this.currentPathIndex++;
+          if (this.currentPathIndex >= this.movePath.length) {
+            this.movePath = [];
+            scene.player.setVelocity(0, 0);
+          }
+        } else {
+          velocity.set(dx, dy);
+        }
       }
     }
 
@@ -144,7 +166,28 @@ export default class PlayerController {
     scene.isMouseMoveHeld = false;
     const duration = scene.time.now - scene.mouseMoveStartTime;
     if (duration > 200) {
+      // Drag mode released, stop moving immediately
       scene.mouseMoveTarget = null;
+      this.movePath = [];
+    } else {
+      // Tap/Click mode, calculate A* Path
+      if (scene.pathfindingSystem) {
+        const worldPoint = pointer.positionToCamera(scene.cameras.main);
+        const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, worldPoint.x, worldPoint.y);
+        if (path && path.length > 0) {
+          this.movePath = path;
+          this.currentPathIndex = 0;
+          scene.mouseMoveTarget = null; // Unset drag target
+        } else {
+          this.movePath = [];
+          scene.mouseMoveTarget = null;
+        }
+      } else {
+        // Fallback to direct straight line if pathfinding isn't ready
+        const worldPoint = pointer.positionToCamera(scene.cameras.main);
+        scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
+        this.movePath = [];
+      }
     }
   }
 
@@ -279,5 +322,13 @@ export default class PlayerController {
     if (scene.moveKnob) {
       scene.moveKnob.style.transform = "translate(-50%, -50%)";
     }
+  }
+
+  cancelMoveTarget() {
+    const scene = this.scene;
+    scene.mouseMoveTarget = null;
+    scene.isMouseMoveHeld = false;
+    this.movePath = [];
+    this.currentPathIndex = 0;
   }
 }

@@ -1,825 +1,188 @@
-# Codex Handoff Notes For Cleaning Samgakji
-
-이 문서는 사용자가 읽기 위한 기획서가 아니라, 다음 작업을 맡은 Codex가 바로 이어서 작업하기 위한 개발 인수인계 문서다.  
-작업을 시작하기 전에 이 파일을 먼저 읽고, 특히 `PlayScene.js`를 더 키우지 않는 규칙을 지킨다.
-
-## Project Snapshot
-
-- 프로젝트: Phaser.js 기반 2D 웹 게임 `삼각지 대청소`
-- 실행: `npm.cmd run dev`
-- 검증: `npm.cmd run build`
-- 메인 씬: `src/scenes/PlayScene.js`
-- 시작 씬: `src/scenes/StartScene.js`
-- 프롤로그 씬: `src/scenes/PrologueScene.js`
-- 주요 CSS: `styles.css`
-- 맵: Tiled JSON 기반. 코드 좌표가 남아 있더라도 새 좌표/오브젝트는 되도록 Tiled object로 옮긴다.
-
-## Current Refactoring State
-
-`PlayScene.js`는 아직 크지만, 일부 기능은 시스템으로 분리되어 있다.
-
-분리 완료:
-
-- `src/controllers/PlayerController.js`
-- `src/systems/CleaningSystem.js`
-- `src/systems/SlimeSystem.js`
-- `src/systems/InteractionSystem.js`
-- `src/systems/UIManager.js`
-- `src/systems/MoneySystem.js`
-- `src/systems/QuestManager.js`
-- `src/systems/DialogueSystem.js`
-- `src/systems/DialogueManager.js`
-- `src/systems/PortraitManager.js`
-- `src/systems/CheckpointStorage.js`
-- `src/systems/RoadTrafficSystem.js`
-- `src/systems/RouteGuideSystem.js`
-- `src/systems/VendingMachineSystem.js`
-- `src/systems/PackingSystem.js`
-- `src/systems/ClothingShopSystem.js`
-- `src/systems/SunisuniQuestSystem.js`
-- `src/systems/JjookQuestSystem.js`
-- `src/systems/TravelEndingSystem.js`
-- `src/systems/TiledMapSystem.js`
-- `src/systems/HtmlUiBindingSystem.js`
-- `src/systems/EducationalGuideSystem.js`
-
-최근 분리:
-
-- 짐싸기 데이터: `src/config/PackingData.js`
-- 옷가게 데이터: `src/config/ClothingShopData.js`
-- 교육용 시설 데이터: `src/config/EducationalGuideData.js`
-- 짐싸기 UI/선택 처리: `PackingSystem`
-- 옷가게 UI/선택/계산/쇼핑백 HUD: `ClothingShopSystem`
-- 수니수니 병원/약국 대화 흐름, 따라오기 AI, 이펙트, 벤치 복귀: `SunisuniQuestSystem`
-- 쭉쭉이 지갑 대화 진입, 자판기 보상 연결, 플로깅 요청, 옷가게 제안/수락/거절/입장/완료 후 짐싸기 제안, 짐싸기 제안 수락/거절, 동행 따라오기, 자동 청소, 동행 종료: `JjookQuestSystem`
-- 기기 조작법 바인딩 및 HTML UI 연결: `HtmlUiBindingSystem`
-- 교육용 시설 팝업 모달 및 물음표 안내판: `EducationalGuideSystem`
-
-아직 `PlayScene.js`에 남겨도 되는 것:
-
-- 씬 초기화
-- 맵 생성과 Tiled object 연결
-- 시스템 인스턴스 생성
-- 퀘스트 흐름 연결
-- 여러 시스템을 이어주는 얇은 래퍼
-
-앞으로 분리 후보:
-
-- `JjookQuestSystem`: 옷가게/짐싸기/버스정류장으로 이어지는 쭉쭉이 후반 흐름
-- `YebiQuestSystem`: 캔 모으기/분리수거 안내 흐름
-- `TravelEndingSystem`: 버스, 짐싸기 이후 방/기차/서울/엔딩 컷신
-- `MapObjectFactory`: 병원, 약국, 옷가게, 자판기, 분리수거통, NPC 생성
-- `AudioManager`: BGM, 효과음, 장면별 음악 전환
-- `ToastQueue`: 겹치지 않는 안내 메시지 큐
-
-## Hard Rule: Do Not Grow PlayScene
-
-새 기능을 추가할 때 `PlayScene.js`에 큰 함수를 추가하지 않는다.
-
-허용되는 `PlayScene.js` 코드:
-
-- 시스템 생성: `this.someSystem = new SomeSystem(this)`
-- 이벤트 연결: `this.someSystem?.start(...)`
-- 상태 전달용 얇은 래퍼
-- 기존 레거시 코드와 새 시스템 사이의 짧은 브리지
-
-금지:
-
-- 새 모달 DOM 전체를 `PlayScene.js`에 직접 작성
-- 새 퀘스트 전체 흐름을 `PlayScene.js`에 100줄 이상 추가
-- 새 데이터 배열을 `PlayScene.js` 상단에 추가
-- 새 에셋 경로를 여러 함수에 하드코딩
-- 같은 키 입력/터치 이벤트를 여러 곳에서 중복 등록
-
-목표:
-
-- 단기: `PlayScene.js` 5000줄 이하
-- 중기: `PlayScene.js` 2500줄 이하
-- 장기: `PlayScene.js` 600~800줄
-
-## Refactoring Method
-
-한 번에 크게 바꾸지 않는다. 아래 순서를 따른다.
-
-1. 기능 하나를 정한다.
-2. 데이터가 있으면 `src/config/*Data.js`로 먼저 분리한다.
-3. 새 시스템 파일을 만든다.
-4. 기존 동작을 그대로 복사하되 `scene` 참조 방식만 정리한다.
-5. `PlayScene.js`에는 기존 함수명 래퍼를 남긴다.
-6. `npm.cmd run build`로 확인한다.
-7. 빌드 성공 후에만 다음 함수 묶음을 옮긴다.
-8. `dist/`가 생기면 커밋 전에 삭제한다.
-
-권장 패턴:
-
-```js
-// PlayScene.js
-openSomething() {
-  this.somethingSystem?.open();
-}
-```
-
-```js
-// src/systems/SomethingSystem.js
-export default class SomethingSystem {
-  constructor(scene) {
-    this.scene = scene;
-  }
-}
-```
-
-## State And Input Rules
-
-대화, 쇼핑, 컷신, 청소가 동시에 실행되지 않게 한다.
-
-확인할 상태:
-
-- `this.isInDialogue`
-- `this.clothingShopModal`
-- `this.packingModal`
-- `this.vendingMenuGroup`
-- `this.interiorSceneGroup`
-- `this.stateManager`
-
-입력 우선순위:
-
-1. 모달/메뉴가 열려 있으면 메뉴 입력만 처리
-2. 대화 중이면 대화 넘기기/선택지만 처리
-3. 청소 범위 안에 쓰레기가 있으면 청소 우선
-4. 쓰레기가 없을 때 NPC/오브젝트 상호작용
-
-## Tiled Object Migration Rules
-
-가능하면 새 위치는 코드 좌표가 아니라 Tiled object로 관리한다.
-
-Tiled object로 두는 것이 좋은 것:
-
-- NPC 시작 위치
-- 병원문, 약국문, 옷가게문
-- 자판기 사용 위치
-- 분리수거통 위치와 상호작용 영역
-- 버스정류장 위치
-- 차량 정지선
-- 퀘스트 목적지
-- 충돌 박스
-
-코드 fallback은 유지한다. Tiled object가 없어도 현재처럼 플레이 가능해야 한다.
-
-## Verification Checklist
-
-수정 후 최소 확인:
-
-```powershell
-npm.cmd run build
-if (Test-Path dist) { Remove-Item -LiteralPath dist -Recurse -Force }
-git status -sb
-```
-
-한글 깨짐 의심 시:
-
-```powershell
-rg -n "\?\?\?|�|留|怨|癒|꾩|덉|リ" src
-```
-
-단, PowerShell 콘솔 출력은 한글이 깨져 보일 수 있다. 파일 자체가 UTF-8인지 확인하려면 Node로 읽어서 확인한다.
-
-## Gameplay Design Guardrails
-
-대상 이용자를 고려해 다음 원칙을 지킨다.
-
-- 조작은 단순하게 유지한다.
-- 실패/벌칙보다 성공 피드백을 우선한다.
-- 상호작용 범위는 넉넉하게 둔다.
-- 설명보다 시각적 변화와 짧은 대사를 우선한다.
-- 새 기능은 청소, 돈, 퀘스트, 이동, 생활 경험과 연결한다.
-- 긴 이동거리, 과한 자유도, 복잡한 컨트롤은 피한다.
-
-## Current Risk Areas
-
-주의해서 만질 것:
-
-- `PlayScene.js`의 퀘스트 상태값들은 서로 얽혀 있다.
-- 자판기/옷가게/짐싸기/수니수니/엔딩 흐름은 대화 콜백에 의존한다.
-- PWA와 모바일 Safari는 캐시 때문에 GitHub Pages 반영이 늦게 보일 수 있다.
-- DOM 기반 모달과 Phaser 입력이 동시에 켜질 때 입력 충돌이 생기기 쉽다.
-- Tiled 충돌과 코드 충돌이 동시에 있으면 길이 막힐 수 있다.
-
-## Next Recommended Refactor
-
-다음에 이어서 한다면 아래 순서를 추천한다.
-
-1. 버스정류장 안내, 버스 탑승, 집/짐싸기 이후 엔딩 흐름을 별도 `TravelEndingSystem`으로 분리
-2. `YebiQuestSystem` 분리
-3. `TravelEndingSystem` 분리
-4. `AudioManager` 분리
-5. `MapObjectFactory` 분리
-
-`SunisuniQuestSystem`은 현재 수니수니 병원/약국 대화 흐름, 따라오기 AI, 하트/별 이펙트, 벤치 복귀를 담당한다. `PlayScene.js`에는 기존 호출을 보존하는 래퍼만 남아 있다.
-`JjookQuestSystem`은 현재 지갑 대화 진입, 자판기 보상 연결, 플로깅 요청, 옷가게 제안/수락/거절/입장/완료 후 짐싸기 제안, 짐싸기 제안 수락/거절, 쭉쭉이 동행, 자동 청소, 동행 종료와 콜라 보답을 담당한다. 지갑 아이템 생성/수거, 버스정류장 이동, 버스 탑승, 집/기차/서울/엔딩 흐름은 아직 `PlayScene.js`에 남아 있다.
-
-## Recent Refactor Notes
-
-- Added `src/systems/TravelEndingSystem.js`.
-- `TravelEndingSystem` now owns the bus stop route phase: bus stop object creation, bus stop arrival check, bus arrival tween, boarding transition, and bus stop cleanup.
-- `PlayScene.js` keeps wrapper methods with the old names for compatibility:
-  - `getTravelBusStopPoint`
-  - `createTravelBusStopObjects`
-  - `startBusStopBoardingSequence`
-  - `getTravelBusArrivalPoint`
-  - `updateQuestRouteGuide`
-  - `updateTravelBusRouteGuide`
-  - `checkTravelBusStopArrival`
-  - `startBusArrivalSequence`
-  - `boardTravelBus`
-  - `cleanupTravelBusStopSequence`
-- `startTravelHomeSequence` and later home/packing/train/ending cutscene flow still live in `PlayScene.js`.
-- Next safe step: move `startTravelHomeSequence` through the room packing entry point into `TravelEndingSystem`, while keeping the existing `PlayScene` wrapper names.
-
-## Start Screen Mobile Note
-
-- `src/scenes/StartScene.js` was adjusted so the start screen uses the actual mobile viewport size on touch devices.
-- When the player chooses new game or continue, `StartScene` resizes Phaser back to the main game base size `768x480`.
-- This is intentional: it removes the start illustration side margins on mobile without changing the main gameplay camera/layout.
-- If the start screen is edited again, keep this split:
-  - Start screen: viewport-sized on touch devices.
-  - Prologue/Play scenes: existing base game size.
-
-## Recent Gameplay And Refactor Notes
-
-- Mobile landscape camera zoom is back to `1` via `GAME_CONFIG.wideCameraZoom`.
-- Recycling bin interaction was widened without overlapping neighboring bins:
-  - `recycleBinHitboxWidth: 128`
-  - `recycleBinHitboxHeight: 184`
-  - `recycleBinHitboxYOffset: 22`
-- The hitbox is intentionally taller rather than wider, so the player can recycle from front/back while the three bin zones remain separate.
-- Recycling center creation moved from `PlayScene.createRecyclingCenter()` into `YebiQuestSystem.createRecyclingCenter()`.
-- `PlayScene.createRecyclingCenter()` is now only a compatibility wrapper.
-- Build check after this change passed with `npm.cmd run build`; generated `dist/` was removed.
-
-## Tiled Tileset Workflow Notes
-
-- Active map file is `assets/maps/chapter1-samgakji-map.json`.
-- The old extra map file `assets/maps/samgakji-map.json` was removed earlier because it was not used by the game.
-- Tiled maps now support multiple tilesets.
-- `Preload.js` loads the map JSON first, reads the `tilesets` list, and queues each tileset image found in the exported map.
-- `PlayScene.createTiledMap()` now builds map layers with all loaded Tiled tilesets instead of assuming a single hard-coded tileset.
-- Current extra tileset added for editing:
-  - `assets/tilesets/park_tiles.png`
-  - `assets/tilesets/park_tiles.tsx`
-  - Tiled tileset name: `park_tiles`
-  - Tile size: `32x32`
-  - Image size: `512x512`
-  - Columns: `16`
-  - Tile count: `256`
-- User-facing Tiled instructions live in `assets/maps/TILED_GUIDE.md`.
-- Recommended Tiled workflow:
-  - Add new PNG/TSX tilesets under `assets/tilesets/`.
-  - Add the `.tsx` tileset inside Tiled.
-  - Paint directly in Tiled.
-  - Export over `assets/maps/chapter1-samgakji-map.json`.
-- Prefer external `.tsx` tilesets while the map is still growing.
-- Embedded tilesets are supported too, but external `.tsx` is the recommended default because it keeps tileset metadata separate from the map JSON and is easier for ongoing Tiled editing.
-- Do not rename a tileset after it is already used by the map unless the map JSON is updated too.
-- Do not move existing tiles around inside `samgakji-tiles.png`; append new tiles or add a new tileset instead.
-
-### Known Issue: `park_tiles`
-
-- The user added `park_tiles` as an extra Tiled tileset.
-- Cause found: the map JSON stores `park_tiles` as an external TSX reference:
-  - `"source":"../tilesets/park_tiles.tsx"`
-  - The previous loader only supported embedded tilesets with direct `image` fields.
-- Fix applied in `src/scenes/Preload.js`:
-  - Load external `.tsx` tileset files referenced by the Tiled JSON.
-  - Parse the TSX `<tileset>` and `<image>` metadata.
-  - Normalize the cached map JSON and tilemap JSON into embedded tileset-shaped objects before `PlayScene` creates the map.
-  - Then queue each tileset PNG image by its Tiled tileset name.
-- This means future extra tilesets can be added in Tiled as external TSX files, as long as the `.tsx` and PNG remain under `assets/tilesets/` and paths stay valid.
-- Current check: `chapter1-samgakji-map.json` references `park_tiles`, but no placed tile currently uses gid `65+`; only `samgakji_tiles` is used on the tile layers right now.
-- Build passed after this change with `npm.cmd run build`; generated `dist/` was removed.
-
-## Next Map Refactor Candidate
-
-- Added `src/systems/TiledMapSystem.js`.
-- `TiledMapSystem` now owns Tiled map setup and code-side map object collider helpers.
-- `PlayScene.js` keeps only the compatibility wrapper methods still used by existing callers:
-  - `createMap`
-  - `getMapPoint`
-  - `addObjectCollider`
-- This keeps existing systems working while reducing direct map-loading responsibility in `PlayScene.js`.
-- Build check after this change passed with `npm.cmd run build`; generated `dist/` was removed.
-- Follow-up step also moved fallback map construction into `TiledMapSystem`:
-  - `createFallbackMap`
-  - `addWall`
-  - `addTiledRect`
-- The temporary `PlayScene.js` wrappers for these fallback helpers were later removed after search confirmed no external callers.
-- Build check after this follow-up also passed with `npm.cmd run build`; generated `dist/` was removed.
-- Unused Tiled compatibility wrappers were removed from `PlayScene.js` after search confirmed no external callers.
-- Current line counts after this step:
-  - `src/scenes/PlayScene.js`: about 2420 lines
-  - `src/systems/TiledMapSystem.js`: about 269 lines
-- Next safe map cleanup:
-  - `findTiledTileset` was confirmed unused and removed from both `PlayScene.js` and `TiledMapSystem.js`.
-  - Keep `getMapPoint()` and `addObjectCollider()` wrappers longer because many systems still call them through `scene`.
-
-## Latest Wrapper Cleanup
-
-- Removed unused `PlayScene.js` compatibility wrappers for logic that already lives in dedicated systems:
-  - Clothing shop internals now stay in `ClothingShopSystem`.
-  - Packing modal internals now stay in `PackingSystem`.
-  - Vending menu internals now stay in `VendingMachineSystem`.
-  - Travel ending internals now stay in `TravelEndingSystem`.
-- Kept thin wrappers where current systems still call through `scene`, especially keyboard/control entry points and checkpoint restore hooks:
-  - `openClothingShopMenu`
-  - `closeClothingShopMenu`
-  - `completeClothesShoppingQuest`
-  - `selectFocusedClothingShopOption`
-  - `handleClothingShopKeyboard`
-  - `openPackingMenu`
-  - `closePackingMenu`
-  - `selectFocusedPackingOption`
-  - `handlePackingMenuKeyboard`
-  - `openVendingMenu`
-  - `handleVendingMenuKeyboard`
-  - `selectHighlightedVendingOption`
-  - `playVendingPaymentAnimationLike`
-  - bus stop checkpoint helpers such as `createTravelBusStopObjects` and `updateTravelBusRouteGuide`
-- Build check passed after this cleanup with `npm.cmd run build`; generated `dist/` was removed.
-
-## Latest Yebi Route Flow Note
-
-- Recycling quest route guidance intentionally still targets the recycling center, not Yebi.
-- When recycle quest state is `unlocked`, `YebiQuestSystem.update()` now watches for the player arriving near the recycling center.
-- On arrival, Yebi briefly approaches the player, world input is paused with `SceneState.CUTSCENE`, then the existing recycle quest dialogue starts through `YebiQuestSystem.showQuestDialogue()`.
-- `PlayScene.update()` only calls `this.yebiQuestSystem?.update(time, delta);`; the arrival detection and approach flow live in `YebiQuestSystem`.
-- Recycling bin hitbox values were not changed in this step. Keep the current non-overlapping bin range unless the user explicitly asks again.
-- Verification after this change:
-  - Node syntax check passed for `src/systems/YebiQuestSystem.js`.
-  - Node syntax check passed for `src/scenes/PlayScene.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` could not complete because local `vite` was not installed/available.
-
-## Next Refactor Step
-
-- Continue shrinking `PlayScene.js` by moving one owner area at a time.
-- Recommended next target: route/quest marker wrapper cleanup, because `RouteGuideSystem` already owns most route drawing.
-- Avoid moving dialogue content and quest state transitions in the same patch. They are riskier and should be extracted only after the wrappers and pure UI helpers are settled.
-
-## External Refactor Review And Direction
-
-The user shared an external review of the current architecture. Overall assessment: the review matches the current direction. `PlayScene.js` has been reduced a lot and the `systems/` split is working, but the project is still in a transitional structure where `PlayScene` acts as scene, composer, state container, and compatibility bridge.
-
-Important interpretation for future Codex work:
-
-- Do not aim for `PlayScene.js` to become zero lines.
-- The right target is for `PlayScene` to be a scene composer and bridge only.
-- Short-term target: keep reducing toward roughly 2000 lines.
-- Mid-term target: 1200-1500 lines.
-- Long-term target: 800-1000 lines, only if it can be done safely.
-- Never shrink `PlayScene` by scattering unclear dependencies across systems. Move one owner area at a time.
-
-Recommended refactor order from here:
-
-1. State initialization extraction.
-   - Add something like `src/config/InitialGameState.js` or `src/state/createInitialGameState.js`.
-   - Move default run flags, quest states, inventories, timers, and unlock flags into one factory.
-   - First step should only centralize defaults. Do not redesign checkpoint format in the same patch.
-   - Goal: make `constructor()` and `resetRunState()` shorter and easier to compare.
-
-2. Quest state constants.
-   - Add `src/config/QuestStates.js`.
-   - Replace direct strings gradually, starting with one system at a time.
-   - Good first targets: `SunisuniQuestSystem`, `JjookQuestSystem`, `RouteGuideSystem`, then `PlayScene` bridge checks.
-   - Avoid changing state names and behavior in the same patch. This is a safety refactor.
-
-3. Preload asset list extraction.
-   - `Preload.js` is large and will keep growing.
-   - Add `src/config/assets/` modules such as `coreAssets.js`, `questAssets.js`, `shopAssets.js`, `endingAssets.js`, `audioAssets.js`.
-   - Keep `Preload.js` responsible for loading mechanics, Tiled TSX parsing, and Phaser calls.
-   - Move only static asset arrays first.
-
-4. DOM/UI binding extraction.
-   - Current `PlayScene.create()` still owns many DOM lookups and event listener registrations.
-   - Consider `src/systems/DomInputSystem.js` or `src/systems/HtmlUiBindingSystem.js`.
-   - This should own DOM element lookup, listener attach/detach, and mobile button bindings.
-   - Keep actual game logic in existing systems.
-
-5. Dialogue JSON migration, starting small.
-   - Do not move every dialogue at once.
-   - Recommended first target: hospital/pharmacy dialogue because educational text changes often.
-   - Then move Sunisuni, Jjook, ending, and finally Yebi.
-   - Keep `DialogueSystem` display-only and use `DialogueManager` for JSON lookup/action dispatch.
-
-6. Save/checkpoint structure cleanup before Chapter 2.
-   - `CheckpointStorage` currently works but depends heavily on scene fields.
-   - Do not redesign this during ordinary feature work.
-   - Before Chapter 2, consider a versioned state shape:
-     `{ version, chapter, money, player, quests, inventory, flags, unlocked }`.
-   - This should be planned as its own migration step.
-
-Git and build hygiene notes from the review:
-
-- Keep `dist/`, `node_modules/`, `photothumb.db`, `Thumbs.db`, `.DS_Store`, and unused original asset folders out of GitHub.
-- Recommended `.gitignore` entries:
-  - `node_modules/`
-  - `dist/`
-  - `.DS_Store`
-  - `Thumbs.db`
-  - `photothumb.db`
-  - `*.db`
-- Current Phaser vendor script warnings from Vite are not urgent. Keep the vendor Phaser approach for now unless the user explicitly asks to move Phaser into npm imports.
-
-What not to do yet:
-
-- Do not convert to TypeScript now.
-- Do not migrate Phaser from `vendor/phaser.min.js` to npm now.
-- Do not rewrite the entire checkpoint system during Chapter 1 stabilization.
-- Do not move all dialogue to JSON at once.
-
-Standing rule for future features:
-
-- New quest logic goes into a system file.
-- New static data goes into `config` or `data`.
-- New dialogue should prefer `data/dialogues` when practical.
-- `PlayScene` may instantiate systems, call update hooks, expose compatibility wrappers, and pass state, but should not become the home for new feature logic.
-
-## Latest Initial State Refactor
-
-- Added `src/config/InitialGameState.js`.
-- `createInitialGameState()` now owns the default values for run/game state such as:
-  - cleaning counters
-  - recycle inventory and flags
-  - Jjook/Sunisuni/clothes/packing quest flags
-  - travel bus transient state
-  - modal selection defaults
-  - route/marker/interior transient containers
-  - map point/object fallback containers
-- `PlayScene.constructor()` now applies `Object.assign(this, createInitialGameState())` instead of manually listing those defaults.
-- `PlayScene.resetRunState()` now performs cleanup side effects first, then reapplies `createInitialGameState()`.
-- This was intentionally only a defaults centralization step:
-  - Checkpoint format was not changed.
-  - Quest state string values were not changed.
-  - Timer cleanup, DOM cleanup, and system cleanup still happen in `PlayScene.resetRunState()` before defaults are reapplied.
-  - Phaser vectors such as `lastDirection` and `joystickVector` still live in `PlayScene`, because they need existing Phaser vector instances reset rather than plain object replacement.
-- Verification after this change:
-  - Node syntax check passed for `src/config/InitialGameState.js`.
-  - Node syntax check passed for `src/scenes/PlayScene.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
-- Suggested next safe step:
-  - Add `src/config/QuestStates.js`.
-  - Convert one owner area at a time, starting with the most self-contained state checks.
-  - Do not rename state values while converting; import constants that preserve the existing string values.
-
-## Latest Quest State Constants Refactor
-
-- Added `src/config/QuestStates.js`.
-- This file centralizes existing quest state string values without renaming them.
-- Added state groups:
-  - `QuestState`
-  - `CanQuestState`
-  - `RecycleQuestState`
-  - `JjookQuestState`
-  - `SunisuniQuestState`
-  - `ClothesQuestState`
-  - `PackingQuestState`
-- First adoption pass was intentionally small:
-  - `src/config/InitialGameState.js` now uses quest state constants for default quest states.
-  - `src/systems/QuestManager.js` now returns `CanQuestState` and `RecycleQuestState` constants from its state getter methods.
-  - `src/systems/RouteGuideSystem.js` now uses constants for route-trigger state checks.
-- Behavior should remain unchanged because all constants preserve the previous raw string values.
-- This is not a full migration yet. Many raw state strings still exist in `PlayScene.js`, `YebiQuestSystem`, `JjookQuestSystem`, `SunisuniQuestSystem`, `CheckpointStorage`, `TravelEndingSystem`, and UI hint logic.
-- Suggested next safe conversion order:
-  1. `YebiQuestSystem`, because it mostly depends on `CanQuestState` and `RecycleQuestState`.
-  2. `UIManager` quest hint checks.
-  3. `CheckpointStorage` restore marker checks, carefully and in a separate patch.
-  4. `JjookQuestSystem` and `SunisuniQuestSystem`, one file at a time.
-  5. Remaining `PlayScene.js` bridge checks last.
-- Verification after this change:
-  - Node syntax check passed for `src/config/QuestStates.js`.
-  - Node syntax check passed for `src/config/InitialGameState.js`.
-  - Node syntax check passed for `src/systems/QuestManager.js`.
-  - Node syntax check passed for `src/systems/RouteGuideSystem.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
-
-## Latest PC Mouse Movement Note
-
-- Added optional PC mouse movement while keeping keyboard movement and Space interaction.
-- `PlayerController` now handles Phaser canvas `pointerdown` events:
-  - Only left mouse clicks set a movement target.
-  - Touch input is ignored here and continues to use the existing joystick flow.
-  - Clicks on interactive game objects are ignored as movement targets, so NPC/object clicks do not accidentally move the player.
-  - Keyboard/WASD/arrow movement cancels the current mouse movement target immediately.
-  - Menus, dialogue, interior/cutscene states, and blocked world input clear or prevent mouse movement.
-- `InitialGameState` now includes `mouseMoveTarget: null`.
-- Yebi NPC click now calls `showYebiQuestDialogue()` directly instead of routing through general primary action, matching the user request for NPC left-click dialogue.
-- Existing Space behavior is unchanged: it still runs the normal interaction priority through `handlePrimaryAction()`.
-- Verification after this change:
-  - Node syntax check passed for `src/controllers/PlayerController.js`.
-  - Node syntax check passed for `src/config/InitialGameState.js`.
-  - Node syntax check passed for `src/scenes/PlayScene.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
-- Future improvement if needed:
-  - Add click-to-NPC auto-walk and talk on arrival. Current implementation only makes direct NPC clicks trigger the existing dialogue handler; it does not pathfind to distant NPCs.
-
-### PC Mouse Movement Follow-Up
-
-- A follow-up fix changed mouse movement target coordinates to use `pointer.positionToCamera(scene.cameras.main)` instead of raw `pointer.worldX/worldY`.
-  - Reason: the game uses Phaser scaling/camera zoom, so explicit camera conversion is more reliable for canvas click positions.
-- Another follow-up loosened mouse pointer type detection:
-  - It now reads `pointer.event?.pointerType || pointer.pointerType || "mouse"`.
-  - Reason: some Phaser/browser combinations may leave `pointer.pointerType` empty even for mouse input, which can cause floor-click movement to be ignored.
-- If PC floor-click movement still does not work, next suspected blocker:
-  - `currentlyOver.length > 0` may be true because a map/object hit area is under the cursor.
-  - Possible fix: ignore only interactive NPCs/shops/buttons as movement blockers, while allowing ordinary world object overlap clicks to set a movement target.
-
-### Mouse Movement Feature Ideas And Difficulty
-
-1. Long-distance left-click with obstacle avoidance/pathfinding.
-   - Difficulty: medium to high.
-   - Current click movement is straight-line movement toward a target point.
-   - To avoid obstacles, the game needs pathfinding over map collision data.
-   - Recommended approach:
-     - Use Tiled collision layer or generated collision rectangles as the source of blocked cells.
-     - Build a simple grid over the world, likely 24px or 32px cells.
-     - Use A* pathfinding from player cell to clicked cell.
-     - Move through waypoints one by one.
-   - Risks:
-     - Needs careful tuning around narrow passages, NPCs, bins, trees, benches, and map object colliders.
-     - Road/crosswalk rules could later conflict with free pathfinding unless route rules are included.
-     - Should not be mixed into `PlayScene`; put it in `PlayerController` plus possibly a new `PathfindingSystem`.
-   - Recommendation:
-     - Do not add immediately during light refactoring.
-     - Add later as a focused feature after click movement is stable.
-
-2. Hold left mouse button and continuously move toward the cursor without repeated clicks.
-   - Difficulty: low to medium.
-   - This is much easier than pathfinding.
-   - Current movement target is set only on `pointerdown`.
-   - Add mouse hold tracking so `pointermove` updates `mouseMoveTarget` while the left button is held.
-   - Suggested implementation:
-     - Add `isMouseMoveHeld` to `InitialGameState`.
-     - In `PlayerController`, listen to scene `pointerdown`, `pointermove`, `pointerup`, and maybe `pointerupoutside`.
-     - On left mouse down over walkable floor, set hold true and update target.
-     - On pointer move while held, update target continuously.
-     - On pointer up, keep moving to the last target or stop, depending desired feel. RPG-style usually keeps moving to last point; action-style stops on release.
-   - Risks:
-     - Must not interfere with dragging/mobile joystick.
-     - Must not update target while the cursor is over UI, dialogue, modal, or interactive NPC/shop objects.
-   - Recommendation:
-     - Reasonable next improvement once basic PC click movement is confirmed working.
-     - Keep it inside `PlayerController`; `PlayScene` should not gain new movement logic.
-
-## Latest Quest State Constants Adoption
-
-- Continued the `QuestStates.js` migration in a narrow, behavior-preserving pass.
-- Updated `src/systems/YebiQuestSystem.js` to use:
-  - `CanQuestState.INACTIVE`
-  - `CanQuestState.ACTIVE`
-  - `RecycleQuestState.LOCKED`
-  - `RecycleQuestState.UNLOCKED`
-  - `RecycleQuestState.ACTIVE`
-  - `RecycleQuestState.COMPLETED`
-- Updated `src/systems/UIManager.js` next-quest hint checks to use:
-  - `RecycleQuestState`
-  - `JjookQuestState`
-  - `SunisuniQuestState`
-  - `ClothesQuestState`
-- No quest state string values were renamed. This is still a safety refactor only.
-- Verification after this change:
-  - Node syntax check passed for `src/systems/YebiQuestSystem.js`.
-  - Node syntax check passed for `src/systems/UIManager.js`.
-  - Node syntax check passed for `src/config/QuestStates.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` was attempted, but local `vite` was not installed/available.
-- Suggested next safe conversion:
-  - `CheckpointStorage` marker/restore state checks, because it reads several quest states but must be changed carefully.
-  - Keep that patch limited to imports and comparisons only. Do not change save format yet.
-
-## Latest Checkpoint Quest State Refactor
-
-- Continued the `QuestStates.js` migration in the next safe owner file.
-- Added missing constants that preserve existing raw string values:
-  - `ClothesQuestState.DECLINED`
-  - `PackingQuestState.OFFERED`
-  - `PackingQuestState.DECLINED`
-  - `PackingQuestState.ENDING_COMPLETE`
-- Updated `src/systems/CheckpointStorage.js` to import quest state constants and use them for:
-  - prologue save defaults
-  - scene checkpoint fallback values
-  - restored scene defaults
-  - restore-time marker checks
-  - restore-time bus stop route checks
-- Save format was not changed. Stored values are still the same strings as before.
-- Verification after this change:
-  - Node syntax check passed for `src/systems/CheckpointStorage.js`.
-  - Node syntax check passed for `src/config/QuestStates.js`.
-  - `git diff --check` passed with only Windows line-ending warnings.
-  - `npm.cmd run build` passed when rerun outside the sandbox after the sandbox blocked access while loading `vite.config.js`.
-  - Generated `dist/` was removed.
-- Suggested next safe conversion:
-  - `JjookQuestSystem.js`, because it owns many clothes/packing state transitions.
-  - Keep that patch to imports, comparisons, and assignments only.
-  - Do not change dialogue content or quest flow at the same time.
-
-## Mobile Loading Speed Plan
-
-- Current symptom: mobile loading feels slow as assets have grown.
-- Likely causes to measure first:
-  - Many large PNG backgrounds/interior scenes are preloaded even before the player reaches those scenes.
-  - Multiple high-resolution sprite/portrait/BGM assets are loaded up front.
-  - PWA/service-worker cache can preserve old bundles, so testing may mix old and new load behavior.
-- First measurement step:
-  - Add a lightweight preload timing log in development only, or inspect the Network panel on a phone/desktop mobile emulator.
-  - Record largest assets by transfer size and decode time.
-- Recommended implementation order:
-  1. Keep StartScene assets minimal: title background, logo, start buttons, only the first BGM if needed.
-  2. Split PlayScene preload into groups: core map/player/trash first, then lazy-load interiors/endings only when their scene starts.
-  3. Lazy-load heavy BGM and ambient tracks by situation: shop, hospital, pharmacy, bus, train, ending.
-  4. Compress oversized PNGs. Keep pixel sprites lossless, but consider WebP for large illustration backgrounds if Safari/PWA behavior is verified.
-  5. Add explicit asset manifests by chapter so Chapter 1 can load only what it needs.
-  6. Update PWA cache version whenever asset loading changes, so mobile home-screen installs do not reuse stale caches.
-- Refactor boundary:
-  - Do not put lazy-loading logic directly into `PlayScene.js`.
-  - Prefer an `AssetLoadSystem` or extend `Preload.js`/scene-specific loader helpers.
-  - Keep the first optimization patch small: lazy-load one heavy category, such as ending/interior backgrounds, then verify mobile.
-
-## Latest Quest State Constants Migration (Step 1)
-
-- Centralized intermediate quest states in `src/config/QuestStates.js` to ensure the entire quest lifecycle has robust type/constant representation.
-- Added states:
-  - `JjookQuestState.CHOOSING_DRINK = "choosing_drink"` (used during vending machine selection in `VendingMachineSystem` and `PlayScene`)
-  - `SunisuniQuestState.ACCEPTED_HELP = "accepted_help"` (used in hospital escort flow in `SunisuniQuestSystem`)
-  - `SunisuniQuestState.HOSPITAL_RECEPTION = "hospital_reception"` (used in hospital quiz reception in `SunisuniQuestSystem`)
-  - `SunisuniQuestState.GOT_PRESCRIPTION = "got_prescription"` (used in prescription pharmacy check in `SunisuniQuestSystem`)
-  - `SunisuniQuestState.MEDICINE_PAID = "medicine_paid"` (used in medicine payment animation in `SunisuniQuestSystem`)
-- Did not change any existing string values. Left actual game files (`PlayScene.js`, `JjookQuestSystem.js`, `SunisuniQuestSystem.js`, `VendingMachineSystem.js`) untouched.
-- Node syntax check passed: `node -c src/config/QuestStates.js`
-
-## Latest Quest State Constants Migration (Step 2 - Integration Complete)
-
-- Successfully refactored and adopted the centralized constants from `src/config/QuestStates.js` in all dependent files:
-  - `src/systems/JjookQuestSystem.js`
-  - `src/systems/SunisuniQuestSystem.js`
-  - `src/systems/VendingMachineSystem.js`
-  - `src/scenes/PlayScene.js` (bridge checks)
-- Replaced all raw hardcoded string comparisons and assignments of quest states with type-safe, imported constants (e.g., `JjookQuestState.WALLET_MISSING`, `SunisuniQuestState.GOING_HOSPITAL`, etc.).
-- There are no functional or behavioral alterations in the gameplay. All dialogue, interaction triggers, and quest status checks operate exactly as before, now backed by centralized constants.
-- Verified all syntax checks on the refactored files:
-  ```powershell
-  node -c src/scenes/PlayScene.js
-  node -c src/systems/JjookQuestSystem.js
-  node -c src/systems/SunisuniQuestSystem.js
-  node -c src/systems/VendingMachineSystem.js
-  ```
-- Executed `npm.cmd run build` successfully, certifying Vite/Phaser bundles successfully without any compilation errors.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest DOM/UI Binding Extraction (Step 3 - HtmlUiBindingSystem Integration)
-
-- Added `src/systems/HtmlUiBindingSystem.js` to manage all DOM element lookups, event listener attachments/detachments, and HUD state UI resets.
-- Extracted extensive UI/DOM binding logic from `src/scenes/PlayScene.js` (`create()`, `resetRunState()`, `SHUTDOWN` callback) into `HtmlUiBindingSystem` to streamline the scene composer class.
-- Fixed a legacy memory leak bug in the shutdown flow of `PlayScene.js` where the unbind phase detached `bacchusHandler` instead of `specialHandler` for `specialButton` click listener.
-- Ensured behavior preservation: no gameplay mechanics, UI functionality, or logic handlers were changed. The integration serves strictly as a refactoring layer.
-- Verified syntax checks on the updated files:
-  ```powershell
-  node -c src/scenes/PlayScene.js
-  node -c src/systems/HtmlUiBindingSystem.js
-  ```
-- Executed `npm.cmd run build` successfully, verifying proper bundle builds and code integrity.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Preload Asset List Extraction (Step 4 - Centralized Asset Config)
-
-- Added `src/config/AssetsData.js` to hold static asset arrays for:
-  - `EXTERNAL_ASSETS`
-  - `SPRITESHEET_ASSETS`
-  - `TILED_MAP`
-  - `AUDIO_ASSETS`
-- Refactored `src/scenes/Preload.js` to import these arrays from `src/config/AssetsData.js`, shrinking `Preload.js` from over 650 lines to ~470 lines.
-- Kept `Preload.js` solely responsible for actual Phaser loading mechanics, Tiled TSX parsing, and canvas assets generation.
-- Verified syntax checks on the updated files:
-  ```powershell
-  node -c src/config/AssetsData.js src/scenes/Preload.js
-  ```
-- Executed `npm.cmd run build` successfully, verifying proper bundle compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest PC Mouse Hold-to-Move Controls (Step 5 - Input Enhancements)
-
-- Added `isMouseMoveHeld` and `mouseMoveStartTime` states in `src/config/InitialGameState.js` to support holding down the left mouse button.
-- Modified `src/controllers/PlayerController.js` to register `pointermove`, `pointerup`, and `pointerupoutside` event listeners.
-- Implemented drag-walk logic inside `PlayerController.js`:
-  - Tap/Click (<200ms duration): player walks all the way to the target (RPG-style).
-  - Hold/Drag (>200ms duration): player continuously follows the cursor and stops immediately upon releasing the left mouse button (action-style).
-  - Cancel conditions: Keyboard movement, dialogue, modals, and menus automatically clear the hold state and target.
-- Verified syntax checks on the updated files:
-  ```powershell
-  node -c src/config/InitialGameState.js src/controllers/PlayerController.js
-  ```
-- Executed `npm.cmd run build` successfully to verify build compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Pedestrian Red-Light Crossing Block (Step 6 - Traffic Enhancements)
-
-- Integrated crossing prevention inside `src/systems/RoadTrafficSystem.js` `update()` loop when the pedestrian light is red.
-- Implemented dynamic threshold boundary checks inside `checkPlayerRedLightCrossing()`:
-  - Detects if the player is within any crosswalk X range.
-  - North boundary (Y ~192) and South boundary (Y ~270) represent sidewalk-to-road boundaries.
-  - If a player tries to walk onto the road on a red light, they are pushed back onto the sidewalk, vertical velocity is set to 0, mouse/drag-movement is canceled, and a warning is toasted: `"신호등이 빨간불입니다. 초록불이 될 때까지 기다려요!"` (throttled).
-  - Players already on the road when the light turns red are NOT blocked or trapped, allowing them to safely complete crossing.
-- Verified syntax checks on the updated files:
-  ```powershell
-  node -c src/systems/RoadTrafficSystem.js
-  ```
-- Executed `npm.cmd run build` successfully to verify build compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Mobile Loading Speed Optimization (Step 7 - Performance Optimization)
-
-- Extracted and classified heavy, non-essential startup assets as **lazy-loaded assets** to significantly improve mobile loading times.
-- Added `LAZY_IMAGE_KEYS` and `LAZY_AUDIO_KEYS` in `src/config/AssetsData.js` representing:
-  - All 10 ending full-screen illustration background `.png` files.
-  - 3 interior scene background `.png` files (`hospital_interior`, `pharmacy_interior`, `clothing_store_interior`).
-  - 10 uncompressed `.wav` BGM tracks (e.g. `chapter1_ending_bgm`, `ambient_clothing_shop_bgm`, etc.).
-- Refactored `src/scenes/Preload.js` to skip these lazy assets on startup, reducing initial download requirements by over **100MB** (a ~90% download size reduction for faster initial play).
-- Refactored `src/scenes/PlayScene.js` `showInteriorScene()`:
-  - Automatically checks if the illustration exists in the Phaser texture cache; if not, dynamically preloads and registers it before displaying the scene.
-- Refactored `src/systems/AudioManager.js` `playSceneMusic()`:
-  - Automatically checks if the BGM audio is in Phaser's cache; if not, dynamically preloads it in the background before playing.
-- Verified syntax checks on the updated files:
-  ```powershell
-  node -c src/config/AssetsData.js src/scenes/Preload.js src/scenes/PlayScene.js src/systems/AudioManager.js
-  ```
-- Executed `npm.cmd run build` successfully to verify build compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Mobile Dialogue Box Layout Adjustment (Step 8 - UI Refinements)
-
-- Addressed floating dialogue box issue in mobile landscape viewport by adding responsive styles inside the `@media (orientation: landscape) and (max-height: 500px)` block in `styles.css`.
-- Lowered and optimized dialogue panel to improve landscape screen height usage:
-  - Reduced `.dialog-modal` padding-bottom to `max(6px, env(safe-area-inset-bottom))` to sit closer to the bottom.
-  - Reduced `.dialog-panel` margin-bottom to `6px`.
-  - Reduced `.dialog-panel` internal padding to `10px 14px` (shorter, sleeker panel height).
-  - Scaled down `.dialog-text` font-size to `14px` and min-height to `42px` to fit limited vertical spaces.
-  - Scaled down `.dialog-name` font-size to `14px` and margin-bottom to `4px`.
-- Executed `npm.cmd run build` successfully to verify stylesheet compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Mobile Landscape HUD Optimization (Step 9 - UI Refinements)
-
-- Addressed next-quest-hint pill clipping issue in mobile landscape viewport by introducing a scale override in `styles.css` inside the `@media (orientation: landscape) and (max-height: 500px)` query block.
-- Scaled `.money-ui` container down by `0.82` (matching mobile portrait scaling) and updated `max-width: calc((100vw - 20px) / 0.82)`.
-- This ensures all coins, money totals, trash counts, and next-quest-hint pill labels are completely visible on all horizontal mobile viewports without overlapping or spilling off-screen.
-- Executed `npm.cmd run build` successfully to verify stylesheet compilation.
-- Cleaned up the temporarily generated `dist/` directory.
-
-## Latest Rotation Overlay & Accessibility Text Settings (Step 10 - UI & UX Accessibility)
-
-- **Added CSS Rotation Request Overlay (Task A)**:
-  - Appended a modern, semantically clear `#rotation-overlay` inside `index.html`.
-  - Added pure CSS-based portrait blocking rules under the `@media (orientation: portrait) and (max-width: 820px)` media query inside `styles.css`.
-  - Included a stylized dark green-gradient backdrop (`linear-gradient(135deg, #2b3a30 0%, #17221b 100%)`), bold warm title, and a rotating phone SVG animation using keyframe `@keyframes rotate-phone`.
-  - The overlay locks vertical portrait viewports completely on mobile devices while allowing normal gameplay horizontal rotations.
-
-- **Universal Design Text Size Options (Task B)**:
-  - Enabled support for standard (1.0x) and large (1.35x - 1.4x) text sizes to accommodate visual accessibility.
-  - Implemented automatic local storage lookup (`samgakji_text_size_large`) on application startup in `src/main.js` to immediately apply `.ui-large-text` on `document.body` if enabled, removing post-load layout flicker.
-  - Refactored `StartScene.js` constructor and `create()` menu list to dynamically center options vertically (supporting 4 options at `gap: 58` if checkpoints exist, and 3 options at `gap: 60` if no checkpoints exist).
-  - Added `글자 크기` toggle button in the Start Menu, updating `localStorage` and `this.registry` state dynamically.
-  - Bound body synchronization check inside `PlayScene.js` `create()` to apply/maintain text classes on active scenes.
-  - Defined CSS styling rules under `body.ui-large-text` targeting dialogue panels (`.dialog-text`, `.dialog-name`, `.dialog-choice`), quest toast alerts (`.quest-toast`), and clothing shop/packing list panels/grids.
-  - Excluded the tight top HUD bar (`.money-ui`) to guarantee layout integrity and eliminate overlapping.
-
-- **Verification & Build Validation**:
-  - Validated syntax on all modified JavaScript modules (`src/main.js`, `src/scenes/StartScene.js`, `src/scenes/PlayScene.js`) with `node -c`.
-  - Verified bundle creation via production build compiler `npm.cmd run build` which built successfully under 600ms.
-  - Cleared intermediate `dist/` directory in compliance with sandbox workspace rules.
-
-## Educational Facility Detail Overlays (Phase 1 Implemented - Step 11)
-
-- **Core Game Mandate**:
-  - This game is an **independent-living support training game for developmentally disabled individuals**.
-  - **Philosophy**: Fun is 1st priority; real-world training/adaptation is 2nd. Fun keeps the player engaged, allowing them to naturally build independent living skills as a side effect (like building up calluses).
-
-- **Implementation Details (Phase 1 Complete & Polished)**:
-  - **Data Configuration & Polish**: Created [EducationalGuideData.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/config/EducationalGuideData.js) containing standardized data for 7 vital facilities: **Hospital, Pharmacy, Clothing Shop, Pedestrian Lights, Vending Machine, Recycling Center, and Bus Stop**.
-    - **Typos Corrected**: Fixed typo in the HTML header badge from `자립 쉽활 배움터` to `자립생활 배움터` in `index.html`.
-    - **Position Adjustments**: Raised hospital, pharmacy, and clothing shop `?` buttons (`y: 45` or `50`) to float clearly **above building roofs** rather than overlapping doors/interiors. Lowered the recycling bins `?` button (`y: 565`) to sit directly above the red/green/blue bins.
-    - **New Facility Added**: Added a floating `?` icon and self-reliance descriptions for the **Bus Stop (버스정류장)** (`x: 760, y: 205`) detailing boarding queues, safety, and card tagging.
-  - **HTML Structure**: Added `#edu-guide-modal` overlay structure in `index.html` with clean responsive CSS.
-  - **Visual Indicators & Animation**: Created [EducationalGuideSystem.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/systems/EducationalGuideSystem.js) which spawns high-contrast yellow question mark (`?`) circular container buttons inside Phaser above each facility coordinate.
-    - Buttons feature a **hover scale-up micro-animation** (`scale: 1.15` on pointerover) and a **floating dynamic idle animation** (Sine-wave translation) to feel alive.
-    - Added click sound feedback using Phaser tones.
-  - **Modals & Control Blocks**: Click/touching the `?` button triggers a beautiful full-screen modal with a soft warm paper panel background (`#fffbf2`), dark brown border (`4px solid #6b4c3b`), bold orange facility headers, and clean scrollable educational texts.
-    - Opening a modal blocks scene world controls via `blockWorldInput(true)` to prevent the player walking under the modal, and automatically cancels any mouse-walk target.
-    - Modal can be dismissed by clicking the close button (`&times;`), clicking the "이해했어요!" action button, or pressing the `ESC` key on the keyboard.
-  - **Universal Design Integration**: All educational texts, buttons, and headers scale up proportionally by **1.32x** under `.ui-large-text` when the large text mode is enabled, ensuring absolute legibility.
-  - **Encapsulated Lifecycle Integration**: Cleanly integrated in [PlayScene.js](file:///c:/Users/user/Desktop/cleaning-samgakji/src/scenes/PlayScene.js) constructor, `create()`, and SHUTDOWN hooks to prevent any memory leaks.
-
-- **Upcoming Phase 2 Roadmap**:
-  - **Phase 2 (Visual-Rich)**: Enhance the modal layout inside `index.html` by adding support for custom graphic illustrations or icons representing the activities of each facility (e.g. medical kits for hospitals, pills for pharmacies) to facilitate high-recognition visual associations for users.
-
-
-
+# 삼각지 대청소 개발 핸드오프 문서 (SAMGAKJI CLEANUP HANDOFF)
+
+이 문서는 다음 작업을 맡을 개발자(또는 Codex)가 프로젝트의 구조를 신속하게 파악하고 개발 흐름을 이어갈 수 있도록 정리한 핵심 인수인계 문서입니다. 본 프로젝트는 발달장애인의 자립생활 지원 훈련을 돕기 위해 개발된 Phaser.js 기반 2D 웹 게임입니다.
+
+---
+
+## 0. 현재 최종 상태 요약
+
+### 프로젝트 개요
+- **게임명**: 삼각지 대청소 (`cleaning-samgakji`)
+- **기술 스택**: Phaser.js (2D Game 엔진), Vanilla HTML5/CSS3 (UI 모달 및 오버레이), JavaScript (ES6+), Vite (빌드 도구)
+- **개발 철학**: **재미(Fun)가 1순위, 실제 자립생활 적응 훈련(Training)이 2순위**입니다. 재미있게 플레이하는 과정에서 자립생활 능력이 자연스럽게 체득되도록 유도합니다.
+
+### 현재 구조 및 마일스톤 상태
+- 메인 무대인 `src/scenes/PlayScene.js`는 대규모 리팩토링을 거쳐 2,400라인 수준으로 경량화되었습니다.
+- 상태 데이터 초기화(`InitialGameState.js`), 정적 에셋 경로(`AssetsData.js`), 퀘스트 상태 상수(`QuestStates.js`) 등 주요 데이터 계층이 분리 완료되었습니다.
+- **모바일 웹 실행 성능 극대화**: 무거운 배경 이미지 및 BGM 음원(약 100MB+)의 Lazy Loading 시스템이 적용되어 모바일 기기에서의 초기 구동 시간이 비약적으로 개선되었습니다.
+- **웹/모바일 접근성 및 편의성 강화**: 저시력자를 위한 **1.35배 큰 글자 모드(Universal Design)**, 스마트폰 화면 방향 전환을 유도하는 **세로 화면 차단 오버레이**, 7대 시설에 대한 **자립 교육 안내판 모달 및 픽토그램**이 연동 완료되었습니다.
+- **8방향 A\* 알고리즘 기반 장애물 회피 시스템**: 맵 충돌 정보 및 물리 바운딩 박스를 32px 격자로 캐싱하여 마우스 클릭 한 번으로 모든 지형지물을 똑똑하게 돌아서 걸어가는 스마트 무브먼트 시스템이 구현되었습니다.
+- **직각 꺾기 보행 및 스마트 동행 청소 AI**: NPC가 대각선으로 미끄러져 날아오지 않고 동서남북 4방향 텍스처를 자연스럽게 뽐내도록 **X/Y 직각(Orthogonal) 걷기 알고리즘**이 구현되었으며, 동행 쭉쭉이가 플레이어 등 뒤만 쫓지 않고 화면 내 다른 쓰레기들을 분산해서 주우러 다니는 **스마트 독립 plogging AI**가 이식되었습니다.
+
+---
+
+## 1. 리팩토링
+
+### 📌 원칙
+1. **`PlayScene.js` 비대화 방지**: 새로운 게임 로직이나 대규모 기능 추가 시 `PlayScene.js`에 직접 작성하지 않고, 독자적인 `System` 클래스로 모듈화하여 이관합니다. `PlayScene`은 오직 시스템들의 중계 및 조율 역할(Thin Bridge)만 수행합니다.
+2. **점진적 전환**: `데이터 분리 (config) ➡️ 신규 시스템 생성 ➡️ 기존 로직 이관 ➡️ PlayScene 내 기존 함수명 래퍼 유지 ➡️ 빌드 확인` 단계를 거쳐 안전하게 리팩토링을 진행합니다.
+3. **규모 제어 목표**: 현재 약 2,420줄인 `PlayScene.js`를 단기적으로는 2,000줄 이하, 안전성이 완벽히 검증되는 시점에 최종 800~1,000줄 내외로 조절합니다.
+
+### ✅ 완료된 것 (분리된 컴포넌트 및 파일)
+- **핵심 컨트롤 및 조작**: `PlayerController.js` (키보드, 모바일 조이패드 및 마우스 드래그/A* 회피 이동 제어)
+- **인게임 시스템**: `CleaningSystem.js` (청소 기능), `SlimeSystem.js` (먼지 슬라임 관리), `InteractionSystem.js` (오브젝트 상호작용)
+- **HUD 및 가이드**: `UIManager.js` (UI 및 퀘스트 힌트 캡슐화), `RouteGuideSystem.js` (바닥 경로 안내 및 네비게이션)
+- **경제 및 진행**: `MoneySystem.js` (골드 및 재화 관리), `QuestManager.js` (전체 퀘스트 상태 트리거)
+- **대화 및 연출**: `DialogueSystem.js` / `DialogueManager.js` / `PortraitManager.js` (스토리 대화, 초상화, 연출 담당)
+- **맵 및 환경**: `TiledMapSystem.js` (Tiled JSON 맵 파싱, 외부 TSX 파일 로드, 물리 충돌 바인딩 통합), `RoadTrafficSystem.js` (신호등 및 차량 AI), `PathfindingSystem.js` (A* 알고리즘 격자 맵핑 및 실시간 길찾기 전담)
+- **미니 게임 및 상점**: `VendingMachineSystem.js` (자판기), `PackingSystem.js` (짐싸기), `ClothingShopSystem.js` (옷가게)
+- **스토리 퀘스트**: `SunisuniQuestSystem.js` (수니수니 퀘스트), `JjookQuestSystem.js` (쭉쭉이 스마트 독립 보행 AI 적용 완료), `TravelEndingSystem.js` (정류장 및 엔딩 시퀀스 이관 중), `YebiQuestSystem.js` (예비 직각 접근 알고리즘 적용 완료)
+- **데이터 & 설정 중앙화**:
+  - `InitialGameState.js`: 게임 초기 상태 및 변수 중앙 관리
+  - `QuestStates.js`: 복잡한 퀘스트의 문자열 상태값을 안전한 상수로 대체
+  - `AssetsData.js`: 대규모 에셋(이미지, 사운드 등) 경로 정적 맵 구성
+  - `HtmlUiBindingSystem.js`: DOM 요소 연동 및 리스너 등록 분리 (메모리 누수 원천 방쇄)
+
+### 📋 남은 것
+- **스토리 마무리 시퀀스 이관**: `PlayScene.js`에 여전히 남아 있는 버스 탑승 이후의 방 정리(`startTravelHomeSequence`), 기차 탑승, 서울 도착 및 최종 엔딩 컷신 로직을 `TravelEndingSystem`으로 완전 이관합니다.
+- **예비 분리수거 퀘스트 분리**: 캔 모으기 및 분리수거 로직을 `YebiQuestSystem`으로 독자 구현하여 독립시킵니다.
+- **맵 객체 팩토리 구축**: 맵 로드 시 동적으로 NPC 및 상호작용 트리거(병원, 약국, 자판기 등)를 생성하는 로직을 `MapObjectFactory.js`로 추출합니다.
+- **사운드 관리 모듈화**: 에셋 로딩 및 씬/상황별 음악 재생 제어를 총괄할 `AudioManager.js`를 별도 설계합니다.
+- **대화 텍스트 외부 마이그레이션**: 시스템 코드 내에 하드코딩된 한국어 대화 스크립트 데이터를 점진적으로 JSON 파일 또는 `config/dialogues/` 데이터셋으로 내보내 관리의 편리함을 도모합니다.
+
+### 🚀 다음 추천 순서
+1. **`YebiQuestSystem` 분리**: 캔 수거 및 분리수거 퀘스트 분할.
+2. **`TravelEndingSystem` 최종 고도화**: 엔딩 컷신 및 방 안에서의 짐싸기 완료 흐름 등 남겨진 씬 전환 로직을 완전 통합.
+3. **`MapObjectFactory` 도입**: `PlayScene.js`의 객체 배치 및 레이어 결합 단순화.
+4. **`dialogue` 외부화**: 기획/교정이 잦은 교육용 및 퀘스트 대사부터 외부 리소스 데이터로 추출.
+
+---
+
+## 2. 기능 추가
+
+### 📌 원칙
+- **쉬운 조작성과 시각적 단서**: 복잡한 다중 키 입력 대신 화면 터치, 마우스 클릭, 직관적인 방향키를 제공합니다.
+- ** Universal Design(유니버설 디자인)**: 저시력자나 인지적 보조가 필요한 사용자를 배려하여 폰트 크기, 대비, UI 배치를 반응형 및 확대 형태로 설계합니다.
+- **안전한 피드백**: 잘못된 조작 시 벌칙을 주어 위축감을 주기보다, 부드러운 경고 토스트와 확실한 가이드를 통해 다음 올바른 행동을 유도합니다.
+
+### ✅ 완료한 것
+- **PC 마우스 A\* 장애물 회피 시스템 (Hold-to-Move 하이브리드)**:
+  - **단발 클릭 (Tap, 200ms 이하)**: 클릭한 목표 지점까지 32px 그리드 기반의 A* 알고리즘 경로를 계산하여 최적 8방향(상하좌우 및 대각선) 웨이포인트를 차례대로 밟으며 장애물을 피해 자동 주행합니다.
+  - **드래그 이동 (Hold, 200ms 이상)**: 스마트폰 가상 조이패드처럼 실시간 반응성이 극대화되어야 하므로 마우스 홀드 시에는 방향 직선 추종(Phaser 물리 충돌 슬라이딩 포함)으로 작동하며 마우스를 떼면 즉시 멈추도록 최적의 결합 처리를 완비했습니다.
+  - **예외 탈출 처리**: 클릭한 목적지가 완전히 막힌 장애물 한가운데인 경우, BFS(너비 우선 탐색)로 타겟 주변 6셀 반경 내에서 가장 가까운 이동 가능한 Walkable 셀을 탐색하여 우회 종착지로 자동 치환하는 방어적 탈출 처리를 구현했습니다.
+  - **코너 충돌 방지 (Corner Cutting Prevention)**: 모서리 깎임 현상으로 벽 구퉁이에 플레이어가 끼이지 않도록 대각선 이웃 이동 시 인접한 두 수평/수직 셀이 모두 walkable할 때만 대각선 이동을 허가하는 기하학적 예외 코드를 적용했습니다.
+- **예비(Yebi) NPC 직각(4방향) 접근 걷기 보정**:
+  - 플레이어가 분리수거장에 도착했을 때, 대각선으로 미끄러져 날아오듯이 걷던 연출(기존 문제)을 완벽하게 교정했습니다.
+  - X축 이동 ➡️ Y축 이동(혹은 그 반대)의 **2단계 직각(Orthogonal) Tween 체인**을 구현하여, 좌/우 걷기 모션을 보이며 먼저 이동하고 연이어 위/아래 걷기 모션으로 꺾어 걸어오게 만듦으로써 4방향 스프라이트 텍스처를 자연스럽게 노출시킵니다.
+- **동행 쭉쭉이(Jjook)의 화면 내 분산형 독립 청소 AI**:
+  - 플레이어 등 뒤만 쫄졸 쫓아다니던 비효율을 완벽히 청산했습니다.
+  - **화면 뷰포트 내 분산 스캔**: 플레이어의 화면 영역(뷰포트) 내의 쓰레기들을 실시간 스캔하되, 플레이어의 청소 타겟 지점과 겹치지 않는(100px 이상 먼) 외곽 쓰레기를 포착해 스스로 직각 보행으로 찾아가 청소합니다.
+  - **화면이탈 방지선 (Safety Tether)**: 쓰레기를 주우며 너무 멀어져 화면 밖으로 이탈하지 않도록 최대 반경 `300px` 한계선을 유지하고, 이 영역을 벗어나거나 쓰레기가 없으면 씩씩하게 플레이어 주변 64px 안전선 이내로 4방향 직각 보행으로 복귀합니다.
+- **무단 횡단 방지 시스템**:
+  - 신호등이 빨간불일 때 보행자가 횡단보도로 진입하는 것을 물리적으로 제어.
+  - 경계선 밖으로 튕겨 내어 안전 영역(인도)에 유지시키고, 경고 토스트 알림(`"신호등이 빨간불입니다. 초록불이 될 때까지 기다려요!"`) 노출.
+  - 단, 횡단 도중 신호가 빨간불으로 바뀐 경우에는 갇히지 않고 무사히 건너갈 수 있는 안전 탈출 예외 로직 탑재.
+- **대용량 에셋 지연 로딩 (Lazy Loading)**:
+  - 10종의 엔딩 풀스크린 배경 일러스트, 3종의 전용 건물 내부 배경, 10곡의 대용량 BGM 오디오 에셋을 초기 로딩 리스트에서 제외.
+  - 해당 미니게임이나 실내 씬에 들어갈 때 백그라운드에서 동적으로 리소스를 로드함으로써 초기 패키지 다운로드 크기를 약 **100MB 이상(90% 가량)** 절약하여 네트워크가 불안정한 모바일 웹 구동 시간을 혁신적으로 가속화.
+- **모바일 Landscape(가로 모드) 최적화**:
+  - 가로 높이가 좁은 모바일 화면 대응을 위해 대화창 패널의 폰트 크기(14px), 패널 패딩, 줄 간격을 최적화하여 뷰포트 가독성 증대.
+  - HUD 요소(코인 개수, 쓰레기 카운터, 퀘스트 안내 말풍선 등)가 화면 경계를 벗어나지 않도록 스케일을 자동으로 0.82배 조정.
+- **세로 모드 진입 방지 오버레이**:
+  - 모바일 세로 모드(Portrait) 진입 시 게임 캔버스를 잠시 가리고 가로 모드 회전을 유도하는 `#rotation-overlay` 레이어 탑재.
+- **글자 크기 조절 옵션 (Universal Design)**:
+  - 시작 화면(StartScene) 및 인게임 메뉴에 '글자 크기' 변경 기능 삽입.
+  - 활성화 시 텍스트 및 UI 요소가 **1.35x ~ 1.4x배** 커지며 가독성을 향상. LocalStorage를 활용해 첫 인트로 로드 단계부터 레이아웃 깜빡임 없이 매끄럽게 렌더링.
+- **7대 주요 시설 자립 배움 모달 및 시각 픽토그램 (Educational Guide)**:
+  - 병원, 약국, 옷가게, 자판기, 횡단보도, 분리수거장, 버스정류장에 눈에 띄는 노란색 물음표(`?`) 플로팅 버튼 배치.
+  - **인게임 물음표 투명도 적용**: 물음표 버튼 배경 원형(`circle`)에 **0.82 투명도(Alpha)**를 적용하여 맵 지형과 조화롭게 녹아들도록 개선.
+  - **건물 물음표 위치 하향화**: 지붕 위에 과도하게 높게 떠 있던 **병원(Y: 85), 약국(Y: 85), 옷가게(Y: 90)**의 물음표 위치를 적정선으로 낮춰 상호작용 직관성 향상.
+  - **쉬운말 모달 및 고대비 픽토그램**: 물음표를 누르면 등장하는 풀스크린 자립 교육 팝업 내부에 **각 시설에 매칭되는 정교한 SVG 고대비 픽토그램(Hospital, Pharmacy, Clothing 등 7종)**과 동그란 화이트 플레이트를 더해 시각 인지 연상을 극대화. 좁은 모바일 화면에서는 세로 정렬로 유연하게 반응형 전환되도록 스타일 완비.
+
+### 📋 남은 것
+- **쓸기 및 줍기 액션 애니메이션 추가**:
+  - 플레이어가 청소(Sweep)를 하거나 아이템/지갑을 습득(Pick up)할 때 캐릭터에 생동감을 불어넣기 위한 전용 모션 연출.
+  - **쓸기(Sweep)**: 빗자루질 연출. 4방향별 프레임(`64x96` 픽셀 규격, 방향당 3~4프레임 구성) 시트 필요.
+  - **줍기(Pick up)**: 허리 굽혀 줍는 연출. 4방향별 프레임(`64x96` 픽셀 규격, 방향당 2~3프레임 구성) 시트 필요.
+- **일반쓰레기 바람 흩날림 애니메이션 (Idle)**:
+  - 바닥의 일반 쓰레기(먼지 슬라임)가 가만히 멈춰있지 않고 바람에 흔들리거나 출렁거리는 Idle 루프 효과를 추가하여 화면 생동감 극대화.
+  - **스펙 규격**: `32x32` 픽셀 정사각형 규격, 4~6프레임 루프형 가로형 시트 PNG 필요. (사용자 자체 수급 예정)
+- **다중 챕터 확장성 고려**: 챕터 2 개발 진입 전에 세이브 데이터 버전 관리와 맵 단위 로드 구조 고안.
+
+### 🚀 다음 추천 순서
+1. **일반쓰레기 흩날림 및 캐릭터 쓸기/줍기 애니메이션 에셋 수급 및 연동** (시각적 피드백 최우선)
+2. **세이브 구조 고도화**: 멀티 챕터를 타겟팅한 세이브 포맷 마이그레이션 전략 설계.
+
+---
+
+## 3. 검증 방법
+
+개발 변경 건이 있을 때는 배포 전 반드시 다음 흐름으로 안전성을 입증합니다.
+
+1. **로컬 빌드 검증**:
+   ```powershell
+   npm.cmd run build
+   ```
+   - Vite 컴파일 및 Phaser 번들 빌드가 완전무결하게 통과하는지 필수 체크합니다.
+
+2. **빌드 잔여물 수동 정돈**:
+   - 빌드 테스트로 로컬에 임시 생성된 `dist/` 폴더는 깃 트래커에 꼬이지 않도록 반드시 삭제합니다.
+   ```powershell
+   if (Test-Path dist) { Remove-Item -LiteralPath dist -Recurse -Force }
+   ```
+
+3. **Git 청결도 체크**:
+   ```powershell
+   git status -sb
+   ```
+   - 개발에 쓰인 필수 코드 이외의 미사용 DB 캐시(`*.db`), 임시 디렉토리 등이 스테이징에 포함되어 있지 않은지 최종 단속합니다.
+
+---
+
+## 4. 위험 구역 (Risk Areas)
+
+수정 및 작업 시 각별히 집중하고 건드려야 할 핵심 주의 구역입니다.
+
+- ⚠️ **상태 동기화 부작용**:
+  `PlayScene.js` 내부의 퀘스트 진행도 지표들(`this.questState`, `this.jjookQuestState` 등)은 비동기적 대화와 상점, 짐싸기 미니게임 등 다각도로 바인딩되어 있습니다. 이를 통째로 변경할 때는 저장 장치(`CheckpointStorage`) 및 부활 마커 검사부와의 호환성 테스트가 무조건 동반되어야 합니다.
+- ⚠️ **HTML DOM UI와 Phaser의 입력 주도권 충돌**:
+  글자 크기 모달, 교육용 안내판, 상점 팝업 등은 Phaser Canvas 바깥에 존재하지만 화면을 덮는 브라우저 DOM 객체입니다. 이 모달들이 활성화되었을 때 백그라운드의 캐릭터가 걷거나 키 입력을 받지 못하도록 `blockWorldInput(true)`이 명확히 트리거되는지 확인하십시오.
+- ⚠️ **동적 에셋(Lazy Loading) 미해결 대기**:
+  이벤트 발생 즉시 동적 로드가 진행되므로, 에셋을 요청하고 완전히 Phaser 캐시에 밀어넣기 전까지 일시적으로 연출이나 소리가 밀릴 수 있습니다. 비동기 로딩 대기 루프가 콜백을 완벽히 기다렸다가 다음 씬 전송을 제어하도록 구성해야 먹통 버그를 피할 수 있습니다.
+- ⚠️ **모바일 Safari & PWA 캐시 동기화 지연**:
+  실제 스마트폰 테스트 시 PWA의 특성상 캐시 갱신이 밀려 배포된 결과가 즉시 안 보일 수 있으므로 서비스 워커(`sw.js`) 캐시 제어 버전과 모바일 브라우저 시크릿 모드 테스트를 활용해야 합니다.
+
+---
+
+## 5. 최근 작업 로그 (최근 구현 내역)
+
+- **[Step 1 & 2] 퀘스트 상태 상수화 (`src/config/QuestStates.js`)**:
+  - 하드코딩되어 있던 전체 퀘스트 문자열 값들을 안전한 상수로 설계하고 `JjookQuestSystem`, `SunisuniQuestSystem`, `VendingMachineSystem` 등 주요 시스템 전체에 바인딩함으로써 휴먼 에러 가능성 원천 방쇄.
+- **[Step 3] UI 바인딩 전용 시스템 분리 (`HtmlUiBindingSystem.js`)**:
+  - `PlayScene.js` 안에 흩어져 있던 다양한 버튼 바인딩 및 해제 콜백을 중앙 전담 시스템으로 이전. `specialButton` 이벤트 리스너 제거 누락으로 발생하던 오랜 브라우저 메모리 누수 버그 완벽 치유.
+- **[Step 4] 정적 에셋 메타데이터 모듈화 (`AssetsData.js`)**:
+  - 대용량 게임 에셋 맵들을 한눈에 보는 데이터 모듈로 이전하여, `Preload.js` 소스 라인수를 650줄에서 470줄로 축소.
+- **[Step 5] 스마트 PC 마우스 이동 제어 (`PlayerController.js`)**:
+  - RPG식 클릭 오토런 및 액션식 드래그-홀드 이동 로직을 통합. 키보드 개입 시 유연한 정지 처리를 지원하도록 튜닝.
+- **[Step 6] 횡단보도 신호 위반 경고 차단 (`RoadTrafficSystem.js`)**:
+  - 빨간불 시 진입을 거부하는 물리 역추진 체크 루틴과 학습용 피드백 토스트 문구 탑재 완료.
+- **[Step 7] 에셋 지연 로딩 설계 (`Preload.js` & `PlayScene.js`)**:
+  - 100MB를 초과하던 일러스트 배경과 무압축 사운드 파일들의 구동 시 로딩을 배제하고 필요 시점 런타임 비동기 캐싱 구조 적용 완료.
+- **[Step 8 & 9] 좁은 모바일 가로 뷰포트 레이아웃 최적화**:
+  - CSS 미디어 쿼리를 전면 가다듬어 모바일 landscape 상태에서 가독성을 떨어뜨리던 UI 크기 및 스케일을 고르게 다운사이징.
+- **[Step 10] universal design 글자 확대 토글 및 세로 제어 오버레이**:
+  - 세로 방향 물리 제한 장치 적용 및 1.35x 큰 글씨 뷰포트가 깜빡임 없이 로컬 저장소 스코프에서 즉시 반영되도록 개편.
+- **[Step 11] 7대 요충지 자립 훈련 안내판 물음표 플로팅 및 쉬운말 모달 완비**:
+  - Phaser의 Sine-wave 위치 공식을 활용하여 7개 핵심 타겟물 근처에 예쁜 `?` 애니메이션 노드를 배치하고 친절한 쉬운말 정보 모달 팝업 바인딩 완료.
+- **[Step 12] 자립 교육 모달 내 시각 픽토그램 도입 및 물음표 아이콘 고도화**:
+  - 병원, 약국, 옷가게 등 각 요충지에 매칭되는 7종의 독자적 고대비 SVG 픽토그램 디자인 설계 및 모달 팝업 주입 완료.
+  - 병원/약국/옷가게의 공중 부양 물음표 좌표를 시야를 방해하지 않도록 정교하게 하향 조절.
+  - 인게임 물음표 버튼에 `circle.setAlpha(0.82)` 투명도 처리를 적용하여 뒤의 맵 레이어와 매우 세련되게 오버레이 매칭되도록 연출 최적화.
+- **[Step 13] 8방향 A\* 알고리즘 기반 마우스 장애물 회피 길찾기 시스템 구현**:
+  - 32x32px 격자로 월드 맵을 분할하고 충돌 타일맵 레이어와 staticGroup에 등록된 충돌체들의 바운딩 박스를 읽어 그리드 정보를 기동 시 1회 완벽 캐싱하도록 연동.
+  - 마우스 탭 클릭 시 캐릭터 현재 위치에서 목적지 좌표까지 최적 8방향 A* 경로 탐색 수행. 장애물 한가운데 클릭 시 BFS(너비 우선 탐색)를 연계해 목적지 주변의 가장 가까운 Walkable 셀로 우회 종착점을 대체하는 예외 복구 로직 탑재.
+  - 대각선 통과 시 꺾임 모서리에 걸려 멈추지 않도록 두 수평/수직 인접 격자가 모두 열려있을 때만 대각선 가동을 허용하는 코너 방지 로직 적용.
+  - 키보드 및 모바일 조이패드/조이스틱 입력 시 A* 경로 이동을 즉각 중단하고 우선 통제권을 가져오도록 하이재킹 제어 구현.
+- **[Step 14] NPC 4방향 직각 접근 걷기 교정 및 동행 쭉쭉이 스마트 분산 청소 AI 구축**:
+  - 예비(Yebi) NPC가 분리수거장에서 대각선으로 미끄러져 날아오던 모션을 완벽히 개편. X/Y축 2단계 직각(Orthogonal) Tween 체인을 설계해 좌/우 ➡️ 상/하 꺾기 방향으로 걸어가도록 연출하여 4방향 스프라이트 텍스처를 자연스럽게 렌더링.
+  - 동행 쭉쭉이(Jjook)의 AI를 화면 분산 스캔 모드로 전면 고도화. 플레이어 등 뒤만 쫓던 방식에서 벗어나 뷰포트 내 플레이어와 겹치지 않는(100px 이상) 쓰레기를 스캔하여 스스로 직각 보행으로 다가가 빗자루질을 수행하도록 이식. 플레이어와 `300px` 한계선 이상 벌어질 경우 안전하게 동행 대열로 즉각 회귀하는 안전 Tether 처리 완비.

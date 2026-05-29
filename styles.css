@@ -2594,3 +2594,46 @@ body.ui-large-text .edu-guide-ok-btn {
   }
 }
 
+.edu-guide-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.edu-guide-pictogram {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 3px solid #6b4c3b;
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  box-shadow: 0 4px 10px rgba(107, 76, 59, 0.15);
+  box-sizing: border-box;
+}
+
+.pictogram-svg {
+  width: 76px;
+  height: 76px;
+}
+
+/* 모바일 landscape 및 좁은 화면 대응 */
+@media (max-width: 520px) {
+  .edu-guide-content-wrapper {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .edu-guide-pictogram {
+    width: 80px;
+    height: 80px;
+  }
+  .pictogram-svg {
+    width: 66px;
+    height: 66px;
+  }
+}
+
+

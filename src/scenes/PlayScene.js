@@ -23,6 +23,7 @@ import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import TiledMapSystem from "../systems/TiledMapSystem.js";
+import PathfindingSystem from "../systems/PathfindingSystem.js";
 import UIManager from "../systems/UIManager.js";
 import VendingMachineSystem from "../systems/VendingMachineSystem.js";
 import PackingSystem from "../systems/PackingSystem.js";
@@ -88,6 +89,7 @@ export default class PlayScene extends Phaser.Scene {
     this.travelEndingSystem = null;
     this.yebiQuestSystem = null;
     this.htmlUiBindingSystem = null;
+    this.pathfindingSystem = null;
     this.audioManager = null;
     this.sceneControlSystem = null;
     this.interiorSceneSystem = null;
@@ -140,6 +142,7 @@ export default class PlayScene extends Phaser.Scene {
     this.roadTrafficSystem = new RoadTrafficSystem(this);
     this.routeGuideSystem = new RouteGuideSystem(this);
     this.tiledMapSystem = new TiledMapSystem(this);
+    this.pathfindingSystem = new PathfindingSystem(this);
     this.vendingMachineSystem = new VendingMachineSystem(this);
     this.packingSystem = new PackingSystem(this);
     this.clothingShopSystem = new ClothingShopSystem(this);
@@ -164,6 +167,7 @@ export default class PlayScene extends Phaser.Scene {
       this.stopChapterMusic();
       this.htmlUiBindingSystem?.unbind();
       this.educationalGuideSystem?.destroy();
+      this.pathfindingSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();
@@ -175,6 +179,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.pathfindingSystem?.create();
     this.travelEndingSystem?.createPermanentBusStopObjects?.();
     this.createSunisuniAnimations();
     this.createRecyclingCenter();

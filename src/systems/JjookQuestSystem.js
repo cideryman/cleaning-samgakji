@@ -8,6 +8,7 @@ import {
 export default class JjookQuestSystem {
   constructor(scene) {
     this.scene = scene;
+    this.ploggingTarget = null;
   }
 
   requestPloggingHelp() {
@@ -278,34 +279,116 @@ export default class JjookQuestSystem {
     this.stopIdleTween();
 
     const distance = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, scene.player.x, scene.player.y);
+
+    if (scene.isJjookFollowActive) {
+      // If Jjook has a valid plogging target and player is on screen (< 300px), let plogging AI steer Jjook
+      if (this.ploggingTarget && this.ploggingTarget.active && !this.ploggingTarget.getData("cleaned") && distance <= 300) {
+        return;
+      }
+
+      // Return to player if Jjook goes too far or has no current plogging target
+      const returnDistance = 64;
+      if (distance <= returnDistance) {
+        scene.stopNpcWalk(scene.jjookNpc, "jjook");
+        return;
+      }
+
+      this.walkOrthogonallyToward(scene.player.x, scene.player.y, distance, returnDistance);
+      return;
+    }
+
     const followDistance = scene.isJjookBusEscortActive ? 76 : 88;
     if (distance <= followDistance) {
       scene.stopNpcWalk(scene.jjookNpc, "jjook");
       return;
     }
 
-    const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
-    const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
-    const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
-    const step = (scene.game.loop.delta / 1000) * followSpeed;
-    const angle = Phaser.Math.Angle.Between(scene.jjookNpc.x, scene.jjookNpc.y, scene.player.x, scene.player.y);
-    const moveX = Math.cos(angle) * Math.min(step, distance - followDistance);
-    const moveY = Math.sin(angle) * Math.min(step, distance - followDistance);
-    scene.jjookNpc.x += moveX;
-    scene.jjookNpc.y += moveY;
-    const directionKey = scene.getDirectionKeyFromVector(moveX, moveY, scene.jjookNpc.getData("directionKey") || "down");
-    scene.setNpcDirectionTexture(scene.jjookNpc, "jjook", directionKey, true);
+    this.walkOrthogonallyToward(scene.player.x, scene.player.y, distance, followDistance);
   }
 
   updateAutoPlogging() {
     const scene = this.scene;
     if (!scene.isJjookFollowActive || !scene.jjookNpc?.active || !scene.trashSlimes) return;
-    if (scene.isInDialogue || scene.interiorSceneGroup || scene.time.now < scene.nextJjookAutoCleanAt) return;
+    if (scene.isInDialogue || scene.interiorSceneGroup) return;
 
-    const target = this.findNearestTrashTo(scene.jjookNpc, GAME_CONFIG.jjookAutoCleanRadius);
-    if (!target) return;
+    const playerDist = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, scene.player.x, scene.player.y);
 
-    scene.nextJjookAutoCleanAt = scene.time.now + GAME_CONFIG.jjookAutoCleanCooldownMs;
+    // 1. Tether safety check: If too far from player (> 300px), drop plogging target and return
+    if (playerDist > 300) {
+      this.ploggingTarget = null;
+      return;
+    }
+
+    // 2. Target validation: If current target is cleaned or inactive, clear it
+    if (this.ploggingTarget && (!this.ploggingTarget.active || this.ploggingTarget.getData("cleaned"))) {
+      this.ploggingTarget = null;
+    }
+
+    // 3. Scan for a new target in viewport/screen bounds
+    if (!this.ploggingTarget) {
+      // Find a walkable, screen-distributed trash that doesn't overlap player's active cleaning zone
+      this.ploggingTarget = this.findSmartPloggingTarget(300);
+    }
+
+    // 4. If we have a valid target, walk orthogonally toward it
+    if (this.ploggingTarget) {
+      const distToTrash = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, this.ploggingTarget.x, this.ploggingTarget.y);
+
+      // Stop and sweep when extremely close to the trash
+      if (distToTrash <= 24) {
+        scene.stopNpcWalk(scene.jjookNpc, "jjook");
+
+        if (scene.time.now >= (scene.nextJjookAutoCleanAt || 0)) {
+          scene.nextJjookAutoCleanAt = scene.time.now + GAME_CONFIG.jjookAutoCleanCooldownMs;
+          this.sweepAndCleanTarget(this.ploggingTarget);
+        }
+      } else {
+        // Walk orthogonally toward the trash
+        this.walkOrthogonallyToward(this.ploggingTarget.x, this.ploggingTarget.y, distToTrash, 12);
+      }
+    }
+  }
+
+  walkOrthogonallyToward(targetX, targetY, distance, stopDistance) {
+    const scene = this.scene;
+    const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
+    const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
+    const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
+    const step = (scene.game.loop.delta / 1000) * followSpeed;
+
+    const dx = targetX - scene.jjookNpc.x;
+    const dy = targetY - scene.jjookNpc.y;
+
+    let moveX = 0;
+    let moveY = 0;
+    let directionKey = scene.jjookNpc.getData("directionKey") || "down";
+
+    // Orthogonal movement: X-axis prioritized.
+    if (Math.abs(dx) > 8) {
+      const stepX = Math.min(step, Math.abs(dx) - (Math.abs(dy) <= 8 ? stopDistance : 0));
+      if (stepX > 0) {
+        moveX = Math.sign(dx) * stepX;
+        scene.jjookNpc.x += moveX;
+        directionKey = moveX < 0 ? "left" : "right";
+      }
+    } else if (Math.abs(dy) > 8) {
+      const stepY = Math.min(step, Math.abs(dy) - stopDistance);
+      if (stepY > 0) {
+        moveY = Math.sign(dy) * stepY;
+        scene.jjookNpc.y += moveY;
+        directionKey = moveY < 0 ? "up" : "down";
+      }
+    }
+
+    if (moveX !== 0 || moveY !== 0) {
+      scene.setNpcDirectionTexture(scene.jjookNpc, "jjook", directionKey, true);
+    } else {
+      scene.stopNpcWalk(scene.jjookNpc, "jjook");
+    }
+  }
+
+  sweepAndCleanTarget(target) {
+    const scene = this.scene;
     const direction = new Phaser.Math.Vector2(target.x - scene.jjookNpc.x, target.y - scene.jjookNpc.y);
     if (direction.lengthSq() > 0) {
       direction.normalize();
@@ -315,7 +398,8 @@ export default class JjookQuestSystem {
 
     scene.playSweepSound();
     scene.showSweepEffect(target.x, target.y, 78, 60, direction.lengthSq() > 0 ? direction : null);
-    scene.time.delayedCall(90, () => {
+
+    scene.time.delayedCall(120, () => {
       if (!target?.active || target.getData("cleaned")) return;
       const trashType = target.getData("trashType") || "normal";
       if (trashType === "can") {
@@ -324,10 +408,40 @@ export default class JjookQuestSystem {
         scene.playCleanSound();
       }
       scene.autoCleanTrash(target, { shouldRespawn: true });
-      if (Phaser.Math.Between(0, 99) < 20) {
-        scene.showSpeechBubble(scene.jjookNpc, "여기도 치울게!", 1200);
+      this.ploggingTarget = null; // Clear target after cleaning
+
+      if (Phaser.Math.Between(0, 99) < 22) {
+        scene.showSpeechBubble(scene.jjookNpc, "여기도 깨끗하게!", 1200);
       }
     });
+  }
+
+  findSmartPloggingTarget(maxDistFromPlayer) {
+    const scene = this.scene;
+    if (!scene.jjookNpc || !scene.trashSlimes || !scene.player) return null;
+
+    let bestTarget = null;
+    let bestDistance = maxDistFromPlayer;
+
+    scene.trashSlimes.children.iterate((trash) => {
+      if (!trash?.active || trash.getData("cleaned")) return;
+
+      // Ensure the trash is in Jjook's active tether range from the player (stays on the same screen)
+      const distFromPlayer = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, trash.x, trash.y);
+      if (distFromPlayer > maxDistFromPlayer) return;
+
+      // Avoid overlapping with player's active sweep boundary (avoid duplicate work)
+      const distFromPlayerActual = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, trash.x, trash.y);
+      if (distFromPlayerActual < 100) return; // Skip if too close to player's current action spot
+
+      const distFromJjook = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, trash.x, trash.y);
+      if (distFromJjook < bestDistance) {
+        bestTarget = trash;
+        bestDistance = distFromJjook;
+      }
+    });
+
+    return bestTarget;
   }
 
   findNearestTrashTo(source, radius) {
