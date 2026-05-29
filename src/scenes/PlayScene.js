@@ -170,7 +170,7 @@ export default class PlayScene extends Phaser.Scene {
       this.closeClothingShopMenu();
       this.closePackingMenu?.();
       this.vendingMachineSystem?.close();
-      this.cleanupTravelBusStopSequence?.();
+      this.travelEndingSystem?.cleanupBusStopSequence?.();
       this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
       this.roadTrafficSystem?.cleanup();
       this.routeGuideSystem?.destroy();
@@ -218,7 +218,7 @@ export default class PlayScene extends Phaser.Scene {
     this.bacchusTimer?.remove(false);
     this.bacchusCountdownEvent?.remove(false);
     this.closePackingMenu?.();
-    this.cleanupTravelBusStopSequence?.();
+    this.travelEndingSystem?.cleanupBusStopSequence?.();
     this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
     this.clearNpcRoaming?.();
     this.closeClothingShopMenu?.();
@@ -1004,7 +1004,7 @@ export default class PlayScene extends Phaser.Scene {
     this.clearInteriorScene?.();
     this.closePackingMenu?.();
     this.closeClothingShopMenu?.();
-    this.cleanupTravelBusStopSequence?.();
+    this.travelEndingSystem?.cleanupBusStopSequence?.();
     this.sunisuniQuestState = SunisuniQuestState.QUEST_COMPLETE;
     this.hasPrescription = false;
     this.hasMedicine = false;
@@ -1052,7 +1052,7 @@ export default class PlayScene extends Phaser.Scene {
     this.closePackingMenu?.();
     this.closeClothingShopMenu?.();
     this.clearInteriorScene?.();
-    this.cleanupTravelBusStopSequence?.();
+    this.travelEndingSystem?.cleanupBusStopSequence?.();
     this.clearQuestMarker("packingQuest");
     this.isJjookBusEscortActive = false;
     this.packingItems = PACKING_ITEMS
@@ -1194,37 +1194,6 @@ export default class PlayScene extends Phaser.Scene {
     this.jjookQuestSystem?.acceptPackingQuest();
   }
 
-  getTravelBusStopPoint() {
-    return this.travelEndingSystem?.getBusStopPoint() || this.getMapPoint("bus_stop", GAME_CONFIG.busStop);
-  }
-
-  createTravelBusStopObjects() {
-    return this.travelEndingSystem?.createBusStopObjects();
-  }
-
-  startBusStopBoardingSequence() {
-    this.travelEndingSystem?.startBusStopBoardingSequence();
-  }
-
-  getTravelBusArrivalPoint() {
-    return this.travelEndingSystem?.getBusArrivalPoint();
-  }
-
-  updateTravelBusRouteGuide() {
-    this.travelEndingSystem?.updateBusRouteGuide();
-  }
-
-  updateQuestRouteGuide() {
-    this.travelEndingSystem?.updateQuestRouteGuide();
-  }
-
-  checkTravelBusStopArrival() {
-    this.travelEndingSystem?.checkBusStopArrival();
-  }
-
-  cleanupTravelBusStopSequence() {
-    this.travelEndingSystem?.cleanupBusStopSequence();
-  }
 
   // ---------------------------------------------------------------------------
   // Packing Modal
@@ -1246,45 +1215,6 @@ export default class PlayScene extends Phaser.Scene {
     this.packingSystem?.handleKeyboard();
   }
 
-  // ---------------------------------------------------------------------------
-  // Chapter One Ending Sequence
-  // ---------------------------------------------------------------------------
-
-  startPackedRoomSequence() {
-    this.travelEndingSystem?.startPackedRoomSequence();
-  }
-
-  startTravelMorningSequence() {
-    this.travelEndingSystem?.startTravelMorningSequence();
-  }
-
-  startStationSequence() {
-    this.travelEndingSystem?.startStationSequence();
-  }
-
-  startTrainArrivalSequence() {
-    this.travelEndingSystem?.startTrainArrivalSequence();
-  }
-
-  startSeoulArrivalSequence() {
-    this.travelEndingSystem?.startSeoulArrivalSequence();
-  }
-
-  startTravelMemorySequence() {
-    this.travelEndingSystem?.startTravelMemorySequence();
-  }
-
-  finishChapterOneEnding() {
-    this.travelEndingSystem?.finishChapterOneEnding();
-  }
-
-  showChapterOneEndingScene() {
-    this.travelEndingSystem?.showChapterOneEndingScene();
-  }
-
-  returnToStartScreenFromEnding() {
-    this.travelEndingSystem?.returnToStartScreenFromEnding();
-  }
 
   // ---------------------------------------------------------------------------
   // Clothing Shop Focus And Travel Prep HUD

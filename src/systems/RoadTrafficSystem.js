@@ -12,7 +12,7 @@ export default class RoadTrafficSystem {
     this.cleanup();
 
     const scene = this.scene;
-    const stop = scene.getTravelBusStopPoint();
+    const stop = scene.travelEndingSystem?.getBusStopPoint();
     const baseY = stop?.y ?? GAME_CONFIG.busStop.y;
     const leftLanePoint = scene.getMapPoint("traffic_left_lane", null)
       || scene.getMapPoint("road_left_lane", null)

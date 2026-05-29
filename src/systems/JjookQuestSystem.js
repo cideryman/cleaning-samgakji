@@ -270,7 +270,7 @@ export default class JjookQuestSystem {
     scene.dialogueSystem.start([
       { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "좋아! 집 가서 여행 준비 시작하자!" },
       { name: "해냄이", portraitKey: "haenaem_determined", text: "응. 버스 타고 집에 가서 차근차근 챙겨볼게." },
-    ], () => scene.startBusStopBoardingSequence());
+    ], () => scene.travelEndingSystem?.startBusStopBoardingSequence());
   }
 
   updateFollower() {

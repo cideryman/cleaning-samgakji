@@ -387,6 +387,6 @@ export default class PackingSystem {
     scene.playItemPickupSound();
     scene.showFloatingItem("travel_bag", Math.max(384, (scene.scale.width || 768) / 2), Math.max(240, (scene.scale.height || 480) / 2), 116, true, { duration: 520, hold: 1000, floatY: -12 });
     scene.saveCheckpoint("packing_completed");
-    scene.time.delayedCall(900, () => scene.startPackedRoomSequence());
+    scene.time.delayedCall(900, () => scene.travelEndingSystem.startPackedRoomSequence());
   }
 }

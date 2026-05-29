@@ -32,11 +32,15 @@
 - **핵심 컨트롤 및 조작**: `PlayerController.js` (키보드, 모바일 조이패드 및 마우스 드래그/A* 회피 이동 제어)
 - **인게임 시스템**: `CleaningSystem.js` (청소 기능), `SlimeSystem.js` (먼지 슬라임 관리), `InteractionSystem.js` (오브젝트 상호작용)
 - **HUD 및 가이드**: `UIManager.js` (UI 및 퀘스트 힌트 캡슐화), `RouteGuideSystem.js` (바닥 경로 안내 및 네비게이션)
-- **경제 및 진행**: `MoneySystem.js` (골드 및 재화 관리), `QuestManager.js` (전체 퀘스트 상태 트리거)
+- **경제 및 진행**: `MoneySystem.js` (골드 및 재화 관리)
 - **대화 및 연출**: `DialogueSystem.js` / `DialogueManager.js` / `PortraitManager.js` (스토리 대화, 초상화, 연출 담당)
 - **맵 및 환경**: `TiledMapSystem.js` (Tiled JSON 맵 파싱, 외부 TSX 파일 로드, 물리 충돌 바인딩 통합), `RoadTrafficSystem.js` (신호등 및 차량 AI), `PathfindingSystem.js` (A* 알고리즘 격자 맵핑 및 실시간 길찾기 전담)
 - **미니 게임 및 상점**: `VendingMachineSystem.js` (자판기), `PackingSystem.js` (짐싸기), `ClothingShopSystem.js` (옷가게)
-- **스토리 퀘스트**: `SunisuniQuestSystem.js` (수니수니 퀘스트), `JjookQuestSystem.js` (쭉쭉이 스마트 독립 보행 AI 적용 완료), `TravelEndingSystem.js` (정류장 및 엔딩 시퀀스 이관 중), `YebiQuestSystem.js` (예비 직각 접근 알고리즘 적용 완료)
+- **스토리 퀘스트**:
+  - `SunisuniQuestSystem.js` (수니수니 퀘스트)
+  - `JjookQuestSystem.js` (쭉쭉이 스마트 독립 보행 AI 적용 완료)
+  - `YebiQuestSystem.js` (**분리 완료**: 기존 레거시 `QuestManager.js`를 완전히 폐기하고 캔 모으기 및 분리수거 비즈니스 로직과 UI 업데이트를 `YebiQuestSystem` 내부로 무결하게 흡수 및 병합 완료)
+  - `TravelEndingSystem.js` (**최종 고도화 완료**: `PlayScene.js`에 단순 중개용으로 분산되어 있던 엔딩 컷신 및 버스 탑승 관련 Thin Bridge 래퍼 함수 15개를 완전히 걷어내고 서브시스템들간의 직접 연동 구조로 최적화 완료)
 - **데이터 & 설정 중앙화**:
   - `InitialGameState.js`: 게임 초기 상태 및 변수 중앙 관리
   - `QuestStates.js`: 복잡한 퀘스트의 문자열 상태값을 안전한 상수로 대체
@@ -44,17 +48,13 @@
   - `HtmlUiBindingSystem.js`: DOM 요소 연동 및 리스너 등록 분리 (메모리 누수 원천 방쇄)
 
 ### 📋 남은 것
-- **스토리 마무리 시퀀스 이관**: `PlayScene.js`에 여전히 남아 있는 버스 탑승 이후의 방 정리(`startTravelHomeSequence`), 기차 탑승, 서울 도착 및 최종 엔딩 컷신 로직을 `TravelEndingSystem`으로 완전 이관합니다.
-- **예비 분리수거 퀘스트 분리**: 캔 모으기 및 분리수거 로직을 `YebiQuestSystem`으로 독자 구현하여 독립시킵니다.
 - **맵 객체 팩토리 구축**: 맵 로드 시 동적으로 NPC 및 상호작용 트리거(병원, 약국, 자판기 등)를 생성하는 로직을 `MapObjectFactory.js`로 추출합니다.
 - **사운드 관리 모듈화**: 에셋 로딩 및 씬/상황별 음악 재생 제어를 총괄할 `AudioManager.js`를 별도 설계합니다.
 - **대화 텍스트 외부 마이그레이션**: 시스템 코드 내에 하드코딩된 한국어 대화 스크립트 데이터를 점진적으로 JSON 파일 또는 `config/dialogues/` 데이터셋으로 내보내 관리의 편리함을 도모합니다.
 
 ### 🚀 다음 추천 순서
-1. **`YebiQuestSystem` 분리**: 캔 수거 및 분리수거 퀘스트 분할.
-2. **`TravelEndingSystem` 최종 고도화**: 엔딩 컷신 및 방 안에서의 짐싸기 완료 흐름 등 남겨진 씬 전환 로직을 완전 통합.
-3. **`MapObjectFactory` 도입**: `PlayScene.js`의 객체 배치 및 레이어 결합 단순화.
-4. **`dialogue` 외부화**: 기획/교정이 잦은 교육용 및 퀘스트 대사부터 외부 리소스 데이터로 추출.
+1. **`MapObjectFactory` 도입**: `PlayScene.js`의 객체 배치 및 레이어 결합 단순화.
+2. **`dialogue` 외부화**: 기획/교정이 잦은 교육용 및 퀘스트 대사부터 외부 리소스 데이터로 추출.
 
 ---
 

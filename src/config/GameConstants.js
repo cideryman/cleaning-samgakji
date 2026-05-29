@@ -145,9 +145,9 @@ export const TRASH_TEXTURES = {
 };
 
 export const RECYCLE_BIN_CONFIG = [
-  { type: "can", texture: "recycle_bin_can", xOffset: -136, yOffset: 28, label: "\uCE94/\uACE0\uCCA0" },
-  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "\uC885\uC774/\uC77C\uBC18" },
-  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 136, yOffset: 28, label: "\uD50C\uB77C\uC2A4\uD2F1" },
+  { type: "can", texture: "recycle_bin_can", xOffset: -136, yOffset: 28, label: "캔" },
+  { type: "normal", texture: "recycle_bin_normal", xOffset: 0, yOffset: 28, label: "일반" },
+  { type: "plastic", texture: "recycle_bin_plastic", xOffset: 136, yOffset: 28, label: "플라스틱" },
 ];
 
 export const DIALOGUE_OVERLAY_TEXTURES = {

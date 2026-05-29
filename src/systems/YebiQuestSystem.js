@@ -79,14 +79,14 @@ export default class YebiQuestSystem {
       });
       const x = binPoint.x;
       const y = binPoint.y;
-      const zoneWidth = GAME_CONFIG.recycleBinHitboxWidth;
-      const zoneHeight = GAME_CONFIG.recycleBinHitboxHeight;
-      const zoneCenterY = y + GAME_CONFIG.recycleBinHitboxYOffset;
+      const zoneWidth = 148;
+      const zoneHeight = 150;
+      const zoneCenterY = y + 10;
       const spotlight = scene.add.ellipse(
         x,
         zoneCenterY,
-        zoneWidth - 8,
-        Math.min(104, zoneHeight * 0.62),
+        112,
+        78,
         0xfff3a3,
         0.22,
       );
@@ -105,11 +105,11 @@ export default class YebiQuestSystem {
       });
 
       const bin = scene.add.image(x, y, binConfig.texture);
-      bin.setDisplaySize(76, 84);
+      bin.setDisplaySize(58, 66);
       bin.setData("depthSortY", scene.getDepthSortY(bin));
       bin.setDepth(scene.getWorldDepth(bin.getData("depthSortY")));
 
-      const label = scene.add.text(x, y + 64, binConfig.label, {
+      const label = scene.add.text(x, y + 22, binConfig.label, {
         fontFamily: "Arial",
         fontSize: "13px",
         color: "#21352c",
@@ -129,17 +129,17 @@ export default class YebiQuestSystem {
       scene.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
       scene.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
-      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 58, 38);
+      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 42, 28);
     });
   }
 
   checkRecycleQuestUnlock() {
     const scene = this.scene;
-    if (!scene.moneySystem || !scene.questManager || scene.hasAnnouncedRecycleQuest) return;
+    if (!scene.moneySystem || scene.hasAnnouncedRecycleQuest) return;
     if (scene.moneySystem.money < GAME_CONFIG.recycleQuestUnlockMoney) return;
 
     scene.hasAnnouncedRecycleQuest = true;
-    const didUnlock = scene.questManager.unlockRecycleQuest();
+    const didUnlock = this.unlockRecycleQuest();
     if (!didUnlock) return;
 
     this.moveYebiToRecyclingCenter();
@@ -156,9 +156,9 @@ export default class YebiQuestSystem {
   checkRecycleIntroArrival() {
     const scene = this.scene;
     if (this.hasTriggeredRecycleIntro || this.isRecycleIntroApproachActive) return;
-    if (!scene.player?.active || !scene.yebiNpc?.active || !scene.questManager) return;
+    if (!scene.player?.active || !scene.yebiNpc?.active) return;
     if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return;
-    if (scene.questManager.getRecycleQuestState?.() !== RecycleQuestState.UNLOCKED) return;
+    if (this.getRecycleQuestState?.() !== RecycleQuestState.UNLOCKED) return;
 
     const center = scene.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
     const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, center.x, center.y);
@@ -270,9 +270,9 @@ export default class YebiQuestSystem {
 
   markCanQuestAvailable() {
     const scene = this.scene;
-    if (!scene.yebiNpc || !scene.questManager) return;
-    if (scene.questManager.getQuestState?.() !== CanQuestState.INACTIVE) return;
-    if (scene.questManager.getRecycleQuestState?.() !== RecycleQuestState.LOCKED) return;
+    if (!scene.yebiNpc) return;
+    if (this.getQuestState?.() !== CanQuestState.INACTIVE) return;
+    if (this.getRecycleQuestState?.() !== RecycleQuestState.LOCKED) return;
 
     scene.setQuestMarker?.("canQuest", scene.yebiNpc, "?");
   }
@@ -394,9 +394,9 @@ export default class YebiQuestSystem {
 
   showQuestDialogue() {
     const scene = this.scene;
-    if (scene.isInDialogue || !scene.dialogueSystem || !scene.questManager) return;
+    if (scene.isInDialogue || !scene.dialogueSystem) return;
 
-    const recycleState = scene.questManager.getRecycleQuestState();
+    const recycleState = this.getRecycleQuestState();
     if (recycleState === RecycleQuestState.UNLOCKED) {
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "해냄이, 이제 분리수거도 해볼 수 있겠어?" },
@@ -405,14 +405,14 @@ export default class YebiQuestSystem {
           name: "여비",
           portraitKey: "yeobi",
           text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
-          choices: [{ label: "해볼게", onSelect: () => scene.questManager.startRecycleQuest() }],
+          choices: [{ label: "해볼게", onSelect: () => this.startRecycleQuest() }],
         },
       ]);
       return;
     }
 
     if (recycleState === RecycleQuestState.ACTIVE) {
-      const quest = scene.questManager.recycleQuest;
+      const quest = this.recycleQuest;
       scene.dialogueSystem.start([
         { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
       ]);
@@ -426,7 +426,7 @@ export default class YebiQuestSystem {
       return;
     }
 
-    const questState = scene.questManager.getQuestState();
+    const questState = this.getQuestState();
     if (questState === CanQuestState.INACTIVE) {
       scene.dialogueSystem.start([
         {
@@ -440,7 +440,7 @@ export default class YebiQuestSystem {
                 scene.dialogueSystem.start([
                   { name: "해냄이", portraitKey: "haenaem_confused", text: "네. 어떤 걸 도와드리면 될까요?" },
                   { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
-                ], () => scene.questManager.startQuest());
+                ], () => this.startQuest());
               },
             },
             {
@@ -501,14 +501,14 @@ export default class YebiQuestSystem {
       return;
     }
 
-    const recycleState = scene.questManager?.getRecycleQuestState();
+    const recycleState = this.getRecycleQuestState();
     if (recycleState === RecycleQuestState.LOCKED || recycleState === RecycleQuestState.UNLOCKED) {
       scene.showSpeechBubble(scene.player, "여비 아저씨에게 먼저 물어보자!");
       return;
     }
 
     if (recycleState === RecycleQuestState.ACTIVE) {
-      const didDepositForQuest = scene.questManager?.depositRecycleItem(type);
+      const didDepositForQuest = this.progressRecycleQuest(type);
       if (!didDepositForQuest) return;
 
       scene.recyclingInventory[type] -= 1;
@@ -858,7 +858,7 @@ export default class YebiQuestSystem {
     this.scene.saveCheckpoint?.("recycle_started");
   }
 
-  depositRecycleItem(type) {
+  progressRecycleQuest(type) {
     const quest = this.recycleQuest;
     if (!quest.isActive || quest.isCompleted || !(type in quest.target)) return false;
 

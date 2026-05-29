@@ -259,9 +259,9 @@ export default class CheckpointStorage {
       scene.clothesQuestState === ClothesQuestState.COMPLETED
       && scene.packingQuestState === PackingQuestState.GOING_BUS_STOP
     ) {
-      scene.createTravelBusStopObjects?.();
+      scene.travelEndingSystem?.createBusStopObjects?.();
       scene.isJjookBusEscortActive = true;
-      scene.updateTravelBusRouteGuide?.();
+      scene.travelEndingSystem?.updateBusRouteGuide?.();
     }
   }
 

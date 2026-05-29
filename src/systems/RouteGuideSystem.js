@@ -67,7 +67,7 @@ export default class RouteGuideSystem {
     if (scene.packingQuestState === PackingQuestState.GOING_BUS_STOP) {
       return {
         key: "bus_stop",
-        target: scene.getTravelBusArrivalPoint(),
+        target: scene.travelEndingSystem?.getBusArrivalPoint(),
         useCrosswalk: false,
       };
     }
