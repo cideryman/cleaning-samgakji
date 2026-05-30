@@ -206,6 +206,7 @@ export default class CheckpointStorage {
         hasPrescription: Boolean(scene.hasPrescription),
         hasMedicine: Boolean(scene.hasMedicine),
         isChapterComplete: Boolean(scene.isChapterComplete),
+        shownSpecialOverlays: scene.shownSpecialOverlays ?? {},
       },
       drinkInventory: [...(scene.drinkInventory ?? [])],
       quests: {
@@ -266,6 +267,7 @@ export default class CheckpointStorage {
     scene.hasPrescription = Boolean(flags.hasPrescription);
     scene.hasMedicine = Boolean(flags.hasMedicine);
     scene.isChapterComplete = Boolean(flags.isChapterComplete);
+    scene.shownSpecialOverlays = flags.shownSpecialOverlays ?? {};
     scene.drinkInventory = Array.isArray(data.drinkInventory) ? [...data.drinkInventory] : [];
 
     if (scene.moneySystem) {

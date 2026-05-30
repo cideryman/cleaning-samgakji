@@ -66,8 +66,8 @@ export default class SlimeSystem {
     // 필터링된 지점 중 무작위 1개 점 선택
     const [x, y] = Phaser.Utils.Array.GetRandom(positions);
 
-    // 2️⃣ 8% 확률로 친환경 특수 재활용 자원 스폰
-    const isSpecial = Math.random() < 0.08;
+    // 2️⃣ 친환경 특수 재활용 자원 스폰 (설정된 저확률 반영)
+    const isSpecial = Math.random() < (GAME_CONFIG.specialTrashSpawnChance || 0.005);
     if (isSpecial) {
       const specialTypes = ["golden_can", "clean_bottle", "label_pet", "bundled_paper"];
       const specialType = Phaser.Utils.Array.GetRandom(specialTypes);
@@ -135,8 +135,11 @@ export default class SlimeSystem {
     } else if (specialType === "bundled_paper") {
       textureKey = "special_bundled_paper";
       baseType = "normal";
+    } else if (specialType === "clean_bottle") {
+      textureKey = "special_clean_bottle";
+      baseType = "plastic";
     } else {
-      textureKey = "trash_plastic"; // clean_bottle fallback
+      textureKey = "trash_plastic"; // fallback
       baseType = "plastic";
     }
 

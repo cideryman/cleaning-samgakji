@@ -28,6 +28,8 @@ export const GAME_CONFIG = {
   slimeRespawnDelayMs: 12000,
   maxSlimes: 25,
   rewardPerSlime: 100,
+  specialTrashSpawnChance: 0.005, // 0.5% 확률
+  specialTrashReward: 2000, // 2000원 보상
   npcPersonalSpace: 58,
   jjookAutoCleanRadius: 118,
   jjookAutoCleanCooldownMs: 850,

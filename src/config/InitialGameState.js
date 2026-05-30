@@ -9,6 +9,7 @@ export function createInitialGameState() {
   return {
     totalCleanedCount: 0,
     totalRecycledCount: 0,
+    shownSpecialOverlays: {},
     waveCleanedCount: 0,
     currentWave: 0,
     hasBroomUpgrade: false,

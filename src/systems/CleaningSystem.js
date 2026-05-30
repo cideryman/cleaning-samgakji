@@ -127,10 +127,10 @@ export default class CleaningSystem {
     }
     this.addTrashToRecycleInventory(trashType, specialType);
 
-    // 보상 지급 (특수 친환경 쓰레기는 +300원으로 상향 적용)
+    // 보상 지급 (특수 친환경 쓰레기는 대폭 상향된 보상액 적용)
     let reward = this.getTrashCleanReward();
     if (isSpecial) {
-      reward = 300;
+      reward = GAME_CONFIG.specialTrashReward || 2000;
     }
     scene.moneySystem.addMoney(reward);
 
@@ -141,9 +141,16 @@ export default class CleaningSystem {
     }
 
     // 1️⃣ 일반 쓰레기 반응 텍스트는 1번 조치에 따라 전면 배제 (머리 위 혼잡 방지)
-    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시에만 화면 중앙에 오버레이 팝업 노출!
+    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시 각 종류당 최초 1회만 화면 중앙에 설명 오버레이 노출!
     if (isSpecial) {
-      scene.uiManager?.showSpecialWasteOverlay(specialType);
+      if (!scene.shownSpecialOverlays) {
+        scene.shownSpecialOverlays = {};
+      }
+      if (!scene.shownSpecialOverlays[specialType]) {
+        scene.shownSpecialOverlays[specialType] = true;
+        scene.uiManager?.showSpecialWasteOverlay(specialType);
+        scene.saveCheckpoint("special_overlay_" + specialType);
+      }
     }
 
     this.showSlimePop(slime);
@@ -266,10 +273,10 @@ export default class CleaningSystem {
     }
     this.addTrashToRecycleInventory(trashType, specialType);
 
-    // 보상 지급 (특수 친환경 쓰레기는 +300원으로 상향 적용)
+    // 보상 지급 (특수 친환경 쓰레기는 대폭 상향된 보상액 적용)
     let reward = this.getTrashCleanReward();
     if (isSpecial) {
-      reward = 300;
+      reward = GAME_CONFIG.specialTrashReward || 2000;
     }
     scene.moneySystem.addMoney(reward);
 
@@ -280,9 +287,16 @@ export default class CleaningSystem {
     }
 
     // 1️⃣ 일반 쓰레기 반응 텍스트는 전면 배제 (머리 위 혼잡 방지)
-    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시에만 화면 중앙에 오버레이 팝업 노출!
+    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시 각 종류당 최초 1회만 화면 중앙에 설명 오버레이 노출!
     if (isSpecial) {
-      scene.uiManager?.showSpecialWasteOverlay(specialType);
+      if (!scene.shownSpecialOverlays) {
+        scene.shownSpecialOverlays = {};
+      }
+      if (!scene.shownSpecialOverlays[specialType]) {
+        scene.shownSpecialOverlays[specialType] = true;
+        scene.uiManager?.showSpecialWasteOverlay(specialType);
+        scene.saveCheckpoint("special_overlay_" + specialType);
+      }
     }
 
     this.showCleanFeedback(trash.x, trash.y, isCanTrash || isSpecial);

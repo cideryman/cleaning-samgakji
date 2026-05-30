@@ -110,7 +110,7 @@ export default class TravelEndingSystem {
         arrivalPoint.x + 46,
         arrivalPoint.y,
       );
-      if (jjookDistance > 138) {
+      if (jjookDistance > 64) {
         if (scene.time.now > scene.nextBusEscortWaitToastAt) {
           scene.showQuestToast("쭉쭉이를 기다렸다가 같이 버스를 타요.", 2600);
           scene.showSpeechBubble(scene.jjookNpc, "금방 갈게!", 1500);

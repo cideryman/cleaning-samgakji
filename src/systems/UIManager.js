@@ -261,7 +261,7 @@ export default class UIManager {
 
     const btn = document.createElement("button");
     btn.className = "rest-btn";
-    btn.innerHTML = "☕";
+    btn.innerHTML = '<img src="assets/ui/coffee-cup.png" alt="휴식" style="width: 32px; height: 32px; object-fit: contain; pointer-events: none;" />';
     btn.setAttribute("aria-label", "휴식하고 내 성취 보기");
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -441,22 +441,22 @@ export default class UIManager {
     const config = {
       golden_can: {
         title: "✨ 황금 압축 캔 발견! ✨",
-        icon: "🥫",
+        icon: '<img src="assets/sprites/organized-can.png" style="width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255,235,59,0.6));" />',
         desc: "찌그러뜨려서 부피를 줄인 황금 캔이에요!\n캔은 압축해서 버리면 재활용 가치가 훨씬 높아져요!"
       },
       clean_bottle: {
         title: "✨ 깨끗이 헹군 빈 병 발견! ✨",
-        icon: "🍾",
+        icon: '<img src="assets/sprites/washed-bottle.png" style="width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255,235,59,0.6));" />',
         desc: "음료를 다 비우고 깨끗하게 헹군 병이에요!\n안에 이물질이 없어야 100점짜리 재활용이 돼요!"
       },
       label_pet: {
         title: "✨ 라벨 뗀 투명 페트 발견! ✨",
-        icon: "🥤",
+        icon: '<img src="assets/sprites/organized-plastic.png" style="width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255,235,59,0.6));" />',
         desc: "비닐 라벨을 말끔하게 떼어낸 투명 페트병이에요!\n라벨을 분리해야 새 페트병으로 다시 태어날 수 있어요!"
       },
       bundled_paper: {
         title: "✨ 차곡차곡 묶인 신문지 발견! ✨",
-        icon: "📰",
+        icon: '<img src="assets/sprites/organized-newspaper.png" style="width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255,235,59,0.6));" />',
         desc: "바람에 흩날리지 않게 끈으로 꼭 묶은 신문지에요!\n종이류는 잘 모아서 묶어 배출하는 것이 약속이에요!"
       }
     };
@@ -471,7 +471,7 @@ export default class UIManager {
       <div class="special-overlay-title">${info.title}</div>
       <div class="special-overlay-icon">${info.icon}</div>
       <div class="special-overlay-desc">${info.desc}</div>
-      <div class="special-overlay-reward">+300원 보상 획득! 💰</div>
+      <div class="special-overlay-reward">+${(GAME_CONFIG.specialTrashReward || 2000).toLocaleString()}원 보상 획득! 💰</div>
     `;
 
     stage.appendChild(overlay);
