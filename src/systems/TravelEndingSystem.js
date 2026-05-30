@@ -200,14 +200,31 @@ export default class TravelEndingSystem {
     }
   }
 
+  transitionWithFade(nextSequenceCallback) {
+    const scene = this.scene;
+    scene.dialogueSystem.close?.();
+    scene.cameras.main.fadeOut(850, 0, 0, 0);
+    
+    const onFadeOutComplete = () => {
+      scene.cameras.main.off(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, onFadeOutComplete);
+      nextSequenceCallback();
+      scene.time.delayedCall(150, () => {
+        scene.cameras.main.fadeIn(850, 0, 0, 0);
+      });
+    };
+    
+    scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, onFadeOutComplete);
+  }
+
   startTravelHomeSequence() {
     const scene = this.scene;
     scene.playSceneMusic("ambient_bus_bgm", 0.26);
     scene.showInteriorScene("ending_bus_home", "travel");
     scene.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스 타고 가니까 진짜 여행 준비가 시작된 느낌이야." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "오늘 산 옷도 챙기고, 필요한 것도 골라볼래." },
-    ], () => this.startPackingRoomScene());
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "버스 타고 집으로 돌아가니까, 진짜 여행 준비가 시작된 느낌이네!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "응! 약국에서 똑똑하게 계산하고 옷가게에서 멋진 스마트 영수증 받은 거 생각나? 너무 뿌듯해." },
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "너 진짜 계산 천재더라! 오늘 산 새 옷이랑 필요한 짐들을 집에서 야무지게 골라보자." },
+    ], () => this.transitionWithFade(() => this.startPackingRoomScene()));
   }
 
   startPackingRoomScene() {
@@ -215,8 +232,9 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_room_bgm", 0.24);
     scene.showInteriorScene("ending_packing_room", "home");
     scene.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: "가방을 펼쳐두니까 조금 설렌다." },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "정답은 없으니까, 내가 필요하다고 생각하는 짐을 골라보자." },
+      { name: "해냄이", portraitKey: "haenaem_travel_bag", text: "방 안에 가방을 활짝 펼쳐두니까, 가슴이 콩닥콩닥 설레기 시작해." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "정답은 따로 없지만, 가방 안에는 진짜 필요한 짐만 넣고 지갑이나 교통카드는 안주머니에 소중히 보관해야지!" },
+      { name: "해냄이", portraitKey: "haenaem_smile", text: "자, 여행 가방을 내 손으로 직접 차근차근 꾸려볼까?" }
     ], () => scene.openPackingMenu());
   }
 
@@ -225,30 +243,33 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_room_bgm", 0.24);
     scene.showInteriorScene("ending_packed_room", "home");
     const itemMessage = scene.packingItems.length
-      ? `${scene.packingItems.map((item) => item.label).join(", ")}까지 챙겼어.`
-      : "가방은 가볍게 준비했어.";
+      ? `${scene.packingItems.map((item) => item.label).join(", ")}까지 빼놓지 않고 예쁘게 챙겨 넣었어!`
+      : "여행 가방을 아주 가볍고 실용적으로 잘 준비했어.";
+    
     scene.dialogueSystem.start([
       { name: "해냄이", portraitKey: "haenaem_travel_bag", text: itemMessage },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 진짜 서울 가는구나..." },
-    ], () => this.startMotherAllowanceSequence());
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "내 이름이 박힌 멋진 여행가방 이름표도 달았고... 이제 진짜 떠나는구나." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "스스로 준비해서 가는 첫 번째 서울 여행, 씩씩하게 잘 다녀올 수 있을 거야!" }
+    ], () => this.transitionWithFade(() => this.startMotherAllowanceSequence()));
   }
 
   startMotherAllowanceSequence() {
     const scene = this.scene;
     scene.dialogueSystem.start([
-      { name: "엄마", portraitKey: "mother_allowance", text: "우리 해냄이 정말 열심히 준비했네." },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "서울 가서 맛있는 것도 먹고 와." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워. 잘 다녀올게!" },
+      { name: "엄마", portraitKey: "mother_allowance", text: "어머, 우리 해냄이가 스스로 서울 갈 준비를 이렇게나 꼼꼼히 끝냈네!" },
+      { name: "엄마", portraitKey: "mother_allowance_2", text: "삼각지 동네 청소도 앞장서서 하고, 혼자서 장보기도 해내다니 엄마는 참 대견하단다." },
+      { name: "엄마", portraitKey: "mother_allowance_2", text: "이건 해냄이가 흘린 멋진 땀방울을 칭찬하며 엄마가 주는 선물, 특별 보너스 용돈이란다!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "우와, 진짜요? 정말 고마워요, 엄마! 잘 쓰고 안전하게 다녀올게요!" },
     ], () => {
       scene.moneySystem?.addMoney(TRAVEL_ALLOWANCE_REWARD);
       scene.showMoneyRewardAnimation(TRAVEL_ALLOWANCE_REWARD, {
-        label: "용돈",
+        label: "보너스 용돈",
         icon: "./assets/ui/10000won.png",
         framed: false,
       });
       scene.playItemPickupSound();
       scene.saveCheckpoint("travel_allowance");
-      scene.time.delayedCall(900, () => this.startTravelMorningSequence());
+      scene.time.delayedCall(900, () => this.transitionWithFade(() => this.startTravelMorningSequence()));
     });
   }
 
@@ -257,9 +278,9 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_room_bgm", 0.24);
     scene.showInteriorScene("ending_morning_room", "home");
     scene.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "가방도 챙겼고, 용돈도 받았어." },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "이제 역으로 가자." },
-    ], () => this.startStationSequence());
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "가방도 든든하게 챙겼고, 엄마 배웅과 용돈도 다 받았어!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "기차를 타러 나가는 발걸음이 너무나도 가벼워. 자, 역으로 가자!" },
+    ], () => this.transitionWithFade(() => this.startStationSequence()));
   }
 
   startStationSequence() {
@@ -267,9 +288,10 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_train_bgm", 0.26);
     scene.showInteriorScene("ending_yeongju_station", "travel");
     scene.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "우와... 진짜 가는구나." },
-      { name: "해냄이", portraitKey: "haenaem_surprised", text: "조금 떨려... 그래도 준비했으니까 괜찮아." },
-    ], () => this.startTrainArrivalSequence());
+      { name: "쭉쭉이", portraitKey: "jjook_travel_bag", text: "와아... 기차역 플랫폼에 서니까 아침 공기가 시원해서 정말 가슴이 뻥 뚫려!" },
+      { name: "해냄이", portraitKey: "haenaem_surprised", text: "응, 예전에는 기차를 타는 게 무서웠는데, 지금은 직접 티켓도 예매하고 준비해서 그런지 자신감이 솟아나." },
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "맞아, 우리 준비 철저히 했잖아! 기차가 들어오면 천천히 안전선 뒤에서 타자." }
+    ], () => this.transitionWithFade(() => this.startTrainArrivalSequence()));
   }
 
   startTrainArrivalSequence() {
@@ -277,9 +299,9 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_train_bgm", 0.28);
     scene.showInteriorScene("ending_train_arrival", "travel");
     scene.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "기차가 온다! 놓치지 말고 타자." },
-      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋아. 서울로 출발!" },
-    ], () => this.startSeoulArrivalSequence());
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "기차가 덜컹거리며 들어온다! 가방 꽉 잡고 놓치지 말고 천천히 오르자." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "좋았어! 드디어 서울로 힘차게 출발한다!" },
+    ], () => this.transitionWithFade(() => this.startSeoulArrivalSequence()));
   }
 
   startSeoulArrivalSequence() {
@@ -287,9 +309,10 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_seoul_station_bgm", 0.26);
     scene.showInteriorScene("ending_seoul_station", "travel");
     scene.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_surprised", text: "서울역이다... 사람이 정말 많아." },
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "천천히 같이 다니면 괜찮아!" },
-    ], () => this.startTravelMemorySequence());
+      { name: "해냄이", portraitKey: "haenaem_surprised", text: "와아... 드디어 서울역이다! 빌딩들도 엄청나게 높고 사람이 정말 많아." },
+      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "정말 번잡하지만 두려워할 필요 전혀 없어! 우리에겐 길 찾기 훈련 실력이 있잖아." },
+      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "천천히 안내 표지판을 보며 내 손을 잡고 함께 움직여보자!" }
+    ], () => this.transitionWithFade(() => this.startTravelMemorySequence()));
   }
 
   startTravelMemorySequence() {
@@ -297,14 +320,60 @@ export default class TravelEndingSystem {
     scene.playSceneMusic("ambient_gyeongbokgung_bgm", 0.26);
     scene.showInteriorScene("ending_gyeongbokgung", "travel");
     scene.dialogueSystem.start([
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "내가 준비해서 온 여행이라 더 특별해." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "경복궁의 넓은 앞마당을 내 발로 직접 밟고 서니까 감격스러워... 직접 준비해서 왔기에 백 배는 더 소중하고 자랑스러워." },
     ], () => {
-      scene.playSceneMusic("ambient_amusement_park_bgm", 0.26);
-      scene.showInteriorScene("ending_amusement_park", "travel");
-      scene.dialogueSystem.start([
-        { name: "쭉쭉이", portraitKey: "jjook_playful", text: "오늘 하루 오래 기억날 것 같아!" },
-        { name: "해냄이", portraitKey: "haenaem_touched", text: "응. 다음 여행도 내가 준비해보고 싶어." },
-      ], () => this.finishChapterOneEnding());
+      this.transitionWithFade(() => {
+        scene.playSceneMusic("ambient_amusement_park_bgm", 0.26);
+        scene.showInteriorScene("ending_amusement_park", "travel");
+        scene.dialogueSystem.start([
+          { name: "쭉쭉이", portraitKey: "jjook_playful", text: "신나는 놀이공원까지 완벽정복! 오늘 흘린 땀방울과 웃음소리는 평생 기억에 남을 거야." },
+          { name: "해냄이", portraitKey: "haenaem_touched", text: "응. 다 삼각지에서 함께 걷고, 쓸고, 계산하고, 짐 싼 훈련 덕분이야. 다음 여행도 완전 자신 있어!" },
+        ], () => this.transitionWithFade(() => this.startPhoneCallSequence()));
+      });
+    });
+  }
+
+  startPhoneCallSequence() {
+    const scene = this.scene;
+    // Play telephone ringing and vibrate dialogue visual cues
+    scene.audioManager.playPhoneRingSound();
+    
+    // Elongated telephone interact event
+    scene.dialogueSystem.start([
+      { name: "알림", portraitKey: "jjook_travel_bag", text: "📱 따르릉... 따르릉... 주머니에서 진동이 울립니다.\n엄마로부터 전화가 걸려왔습니다." }
+    ], () => {
+      // Prompt option to accept call (highly immersive cognitive decision step)
+      scene.dialogueSystem.startChoices({
+        question: "전화를 받으시겠습니까?",
+        choices: [
+          { text: "📞 전화 수락하기", callback: () => this.handlePhoneCallDialogue() },
+          { text: "🔇 나중에 받기", callback: () => this.handlePhoneCallDialogue() }
+        ]
+      });
+    });
+  }
+
+  handlePhoneCallDialogue() {
+    const scene = this.scene;
+    // Soft tone signifying line connected
+    scene.audioManager.playTone({ frequency: 587.33, duration: 0.18, type: "sine", volume: 0.05 });
+    
+    scene.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_smile", text: "여보세요? 엄마!" },
+      { name: "엄마", portraitKey: "mother_allowance", text: "해냄아! 서울역이랑 경복궁에는 잘 도착했니? 재미있게 놀고 있어?" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "네! 쭉쭉이랑 경복궁도 가고 놀이공원도 왔어요. 사람들이 진짜 많아서 살짝 떨렸지만요." },
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "삼각지에서 연습했던 대로 표지판도 읽고 차근차근 걸었더니 하나도 헤매지 않고 잘 왔어요!" },
+      { name: "엄마", portraitKey: "mother_allowance_2", text: "어휴, 우리 해냄이가 스스로 부딪히며 서울 여행을 멋지게 주도하고 있구나. 엄마는 목소리만 들어도 정말 든든해." },
+      { name: "엄마", portraitKey: "mother_allowance", text: "약국이랑 옷가게에서 잔돈 계산도 또박또박 해내더니, 이제는 완전한 어른이 다 되었네." },
+      { name: "해냄이", portraitKey: "haenaem_smile", text: "엄마가 믿어주고 응원 용돈도 듬뿍 챙겨주신 덕분이에요. 다녀가서 삼각지 이웃분들 선물도 사갈게요!" },
+      { name: "엄마", portraitKey: "mother_allowance_2", text: "선물은 무슨, 우리 해냄이가 안전하고 웃는 얼굴로 영주행 기차 타고 돌아오는 게 가장 큰 선물이란다. 재밌게 즐기고 이따 역에서 만나자." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "응! 사랑해요 엄마, 이따 저녁에 뵈어요!" }
+    ], () => {
+      // Sound representing hanging up
+      scene.audioManager.playTone({ frequency: 440.00, duration: 0.25, type: "sine", volume: 0.03 });
+      scene.time.delayedCall(400, () => {
+        this.transitionWithFade(() => this.finishChapterOneEnding());
+      });
     });
   }
 

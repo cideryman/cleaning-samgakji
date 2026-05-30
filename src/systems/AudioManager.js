@@ -254,14 +254,35 @@ export default class AudioManager {
       return;
     }
 
+    this.stopCozySynthBgm();
     this.stopChapterMusic();
     this.stopSceneMusic({ resumeChapter: false });
-    scene.sceneBgmAudio = scene.sound.add(key, { loop: true, volume });
+
+    // Apply unique shop modifications using Phaser's rate and detune config
+    let rate = 1.0;
+    let detune = 0;
+
+    if (key === "ambient_hospital_bgm") {
+      rate = 0.62;
+      detune = -380;
+    } else if (key === "ambient_pharmacy_bgm") {
+      rate = 1.16;
+      detune = 160;
+    } else if (key === "ambient_clothing_shop_bgm") {
+      rate = 1.32;
+      detune = 80;
+    }
+
+    scene.sceneBgmAudio = scene.sound.add(key, { loop: true, volume, rate, detune });
     scene.sceneBgmAudio.play();
+
+    // Start background chord synthesis generator for buildings
+    this.startShopAmbientSynth(key);
   }
 
   stopSceneMusic({ resumeChapter = false } = {}) {
     const scene = this.scene;
+    this.stopShopAmbientSynth();
     if (scene.sceneBgmAudio) {
       scene.sceneBgmAudio.stop();
       scene.sceneBgmAudio.destroy?.();
@@ -276,11 +297,29 @@ export default class AudioManager {
     const scene = this.scene;
     if (!this.isSoundEnabled()) return;
 
+    this.stopCozySynthBgm();
+
+    // If bgmIndex is 2, play the 0-Byte Cozy Synth Chiptune loop!
+    if (scene.bgmIndex === 2) {
+      this.playCozySynthBgm();
+      // cozy synth lasts for ~135 seconds (2 mins 15s) then loops back to chapter 1 BGM
+      this.cozySynthNextTrackTimer = setTimeout(() => {
+        scene.bgmIndex = 1;
+        this.playNextChapterTrack();
+      }, 135000);
+      return;
+    }
+
+    // Wrap around index limits
+    if (scene.bgmIndex > 2 || scene.bgmIndex < 1) {
+      scene.bgmIndex = 1;
+    }
+
     const cachedKey = `chapter${scene.bgmIndex}_bgm`;
     if (scene.cache.audio.exists(cachedKey)) {
       scene.bgmAudio = scene.sound.add(cachedKey, { volume: 0.32 });
       scene.bgmAudio.once("complete", () => {
-        scene.bgmIndex += 1;
+        scene.bgmIndex = 2; // Move to Cozy Synth BGM
         this.playNextChapterTrack();
       });
       scene.bgmAudio.play();
@@ -294,10 +333,8 @@ export default class AudioManager {
     this.fetchFirstExistingTrack(trackPaths)
       .then((response) => {
         if (!response) {
-          if (scene.bgmIndex !== TILED_MAP_CONFIG.chapter) {
-            scene.bgmIndex = TILED_MAP_CONFIG.chapter;
-            this.playNextChapterTrack();
-          }
+          scene.bgmIndex = 1;
+          this.playNextChapterTrack();
           return null;
         }
         return response.blob();
@@ -312,14 +349,17 @@ export default class AudioManager {
           "ended",
           () => {
             this.cleanupBgmObjectUrl();
-            scene.bgmIndex += 1;
+            scene.bgmIndex = 2; // Transition to Cozy Synth
             this.playNextChapterTrack();
           },
           { once: true },
         );
         scene.bgmAudio.play().catch(() => {});
       })
-      .catch(() => {});
+      .catch(() => {
+        scene.bgmIndex = 2;
+        this.playNextChapterTrack();
+      });
   }
 
   fetchFirstExistingTrack(paths) {
@@ -338,6 +378,7 @@ export default class AudioManager {
 
   stopChapterMusic() {
     const scene = this.scene;
+    this.stopCozySynthBgm();
     if (scene.bgmAudio) {
       if (typeof scene.bgmAudio.stop === "function") {
         scene.bgmAudio.stop();
@@ -363,6 +404,180 @@ export default class AudioManager {
     if (scene.bgmObjectUrl) {
       URL.revokeObjectURL(scene.bgmObjectUrl);
       scene.bgmObjectUrl = null;
+    }
+  }
+
+  // === Dynamic Web Audio Background Synth Generators ===
+
+  startShopAmbientSynth(key) {
+    this.stopShopAmbientSynth();
+
+    const intervalTime = key === "ambient_hospital_bgm" ? 9200
+                       : key === "ambient_pharmacy_bgm" ? 5400
+                       : key === "ambient_clothing_shop_bgm" ? 4200
+                       : null;
+
+    if (!intervalTime) return;
+
+    this.shopAmbientTimer = setInterval(() => {
+      if (!this.isSoundEnabled()) return;
+
+      if (key === "ambient_hospital_bgm") {
+        // Soothing, slow sinusoidal D-Minor 7th chord arpeggio for Hospital
+        const notes = [293.66, 349.23, 440.00, 587.33];
+        notes.forEach((freq, i) => {
+          this.playTone({
+            frequency: freq,
+            duration: 2.0,
+            type: "sine",
+            volume: 0.012,
+            delay: i * 0.45
+          });
+        });
+      } else if (key === "ambient_pharmacy_bgm") {
+        // Cute, bubbly C-Major chord chime for Pharmacy
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          this.playTone({
+            frequency: freq,
+            duration: 0.32,
+            type: "sine",
+            volume: 0.010,
+            delay: i * 0.16
+          });
+        });
+      } else if (key === "ambient_clothing_shop_bgm") {
+        // Rhythmic, trendy A-Minor chord saw-arpeggio for Clothing Shop
+        const notes = [220.00, 330.00, 440.00, 659.25];
+        notes.forEach((freq, i) => {
+          this.playTone({
+            frequency: freq,
+            duration: 0.40,
+            type: "triangle",
+            volume: 0.016,
+            delay: i * 0.14
+          });
+        });
+      }
+    }, intervalTime);
+  }
+
+  stopShopAmbientSynth() {
+    if (this.shopAmbientTimer) {
+      clearInterval(this.shopAmbientTimer);
+      this.shopAmbientTimer = null;
+    }
+  }
+
+  playCozySynthBgm() {
+    this.stopCozySynthBgm();
+    this.stopChapterMusic();
+    this.stopSceneMusic({ resumeChapter: false });
+
+    if (!this.isSoundEnabled()) return;
+
+    const context = this.getAudioContext();
+    if (!context) return;
+
+    this.isCozySynthPlaying = true;
+    this.cozySynthStep = 0;
+
+    // Harmonic progression: C - G - Am - F pentatonics
+    const chords = [
+      { root: 130.81, treble: [261.63, 329.63, 392.00, 523.25] }, // C (C3, C4, E4, G4, C5)
+      { root: 97.99,  treble: [196.00, 246.94, 293.66, 392.00] }, // G (G2, G3, B3, D4, G4)
+      { root: 110.00, treble: [220.00, 277.18, 329.63, 440.00] }, // A (A2, A3, C#4, E4, A4)
+      { root: 87.31,  treble: [174.61, 220.00, 261.63, 349.23] }  // F (F2, F3, A3, C4, F4)
+    ];
+
+    const stepTime = 0.40; // 150 BPM cozy moderate speed (8th notes)
+
+    const tick = () => {
+      if (!this.isCozySynthPlaying || !this.isSoundEnabled()) return;
+
+      const chordIndex = Math.floor(this.cozySynthStep / 8) % chords.length;
+      const stepInChord = this.cozySynthStep % 8;
+      const currentChord = chords[chordIndex];
+
+      // 1. Cozy Triangle Bass (played on the downbeat of every chord change)
+      if (stepInChord === 0) {
+        this.playTone({
+          frequency: currentChord.root,
+          duration: 3.0,
+          type: "triangle",
+          volume: 0.045
+        });
+      }
+
+      // 2. Playful Arpeggios (8th note pattern)
+      let noteFreq = null;
+      if (stepInChord === 0) noteFreq = currentChord.treble[0];
+      else if (stepInChord === 2) noteFreq = currentChord.treble[1];
+      else if (stepInChord === 4) noteFreq = currentChord.treble[2];
+      else if (stepInChord === 6) noteFreq = currentChord.treble[3];
+      else if (stepInChord === 7 && Math.random() > 0.45) {
+        noteFreq = currentChord.treble[Math.floor(Math.random() * currentChord.treble.length)] * 1.5;
+      }
+
+      if (noteFreq) {
+        this.playTone({
+          frequency: noteFreq,
+          duration: 0.50,
+          type: "sine",
+          volume: 0.022
+        });
+      }
+
+      // 3. Ambient Pad chords (on beat 1 and 3)
+      if (stepInChord === 0 || stepInChord === 4) {
+        this.playTone({
+          frequency: currentChord.treble[1],
+          duration: 1.4,
+          type: "sine",
+          volume: 0.010
+        });
+      }
+
+      this.cozySynthStep++;
+      this.cozySynthTimeout = setTimeout(tick, stepTime * 1000);
+    };
+
+    tick();
+  }
+
+  stopCozySynthBgm() {
+    this.isCozySynthPlaying = false;
+    if (this.cozySynthTimeout) {
+      clearTimeout(this.cozySynthTimeout);
+      this.cozySynthTimeout = null;
+    }
+    if (this.cozySynthNextTrackTimer) {
+      clearTimeout(this.cozySynthNextTrackTimer);
+      this.cozySynthNextTrackTimer = null;
+    }
+  }
+
+  playPhoneRingSound() {
+    if (!this.isSoundEnabled()) return;
+    const context = this.getAudioContext();
+    if (!context) return;
+
+    // Synthesized rhythmic telephone ring (dual frequencies 440Hz + 480Hz vibratos)
+    for (let t = 0; t < 1.25; t += 0.16) {
+      this.playTone({
+        frequency: 440,
+        duration: 0.09,
+        type: "sine",
+        volume: 0.075,
+        delay: t
+      });
+      this.playTone({
+        frequency: 480,
+        duration: 0.09,
+        type: "sine",
+        volume: 0.075,
+        delay: t + 0.02
+      });
     }
   }
 }
