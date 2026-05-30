@@ -200,6 +200,10 @@ export default class PlayScene extends Phaser.Scene {
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
     this.updateNpcRoaming(true);
     
+    if (this.tutorialState === "completed") {
+      this.slimeSystem?.startRespawnLoop();
+    }
+    
     // 3️⃣ 45~75초 주기로 마을 주민 랜덤 한 줄 말풍선 대사 연출 (주민 기억 & 서울 기대감)
     this.npcBubbleEvent = this.time.addEvent({
       delay: Phaser.Math.Between(45000, 75000),
@@ -819,6 +823,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.updateHud();
+    this.slimeSystem?.startRespawnLoop();
   }
   
   createRandomSlimePositions() {
@@ -2329,6 +2334,7 @@ export default class PlayScene extends Phaser.Scene {
       this.playerController?.stopWalkAnimation?.();
       this.playerController?.cancelMoveTarget?.();
     }
+    this.stopSceneMusic({ resumeChapter: true });
   }
 
   handleDialogueLineChange(line) {

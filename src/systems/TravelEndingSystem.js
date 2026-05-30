@@ -335,22 +335,24 @@ export default class TravelEndingSystem {
 
   startPhoneCallSequence() {
     const scene = this.scene;
-    // Play telephone ringing and vibrate dialogue visual cues
     scene.audioManager.playPhoneRingSound();
-    
-    // Elongated telephone interact event
+
     scene.dialogueSystem.start([
-      { name: "알림", portraitKey: "jjook_travel_bag", text: "📱 따르릉... 따르릉... 주머니에서 진동이 울립니다.\n엄마로부터 전화가 걸려왔습니다." }
-    ], () => {
-      // Prompt option to accept call (highly immersive cognitive decision step)
-      scene.dialogueSystem.startChoices({
-        question: "전화를 받으시겠습니까?",
+      {
+        name: "알림",
+        portraitKey: "jjook_travel_bag",
+        text: "📱 따르릉... 따르릉... 주머니에서 진동이 울립니다.\n엄마로부터 전화가 걸려왔습니다.",
+      },
+      {
+        name: "알림",
+        portraitKey: "jjook_travel_bag",
+        text: "전화를 받으시겠습니까?",
         choices: [
-          { text: "📞 전화 수락하기", callback: () => this.handlePhoneCallDialogue() },
-          { text: "🔇 나중에 받기", callback: () => this.handlePhoneCallDialogue() }
-        ]
-      });
-    });
+          { label: "📞 전화 수락하기", onSelect: () => this.handlePhoneCallDialogue() },
+          { label: "🔇 나중에 받기", onSelect: () => this.handlePhoneCallDialogue() },
+        ],
+      },
+    ]);
   }
 
   handlePhoneCallDialogue() {

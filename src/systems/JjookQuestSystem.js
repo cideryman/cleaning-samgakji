@@ -349,15 +349,74 @@ export default class JjookQuestSystem {
     }
   }
 
+  adjustTargetForTrafficRules(npcSprite, targetX, targetY) {
+    const scene = this.scene;
+    const roadTop = 192;
+    const roadBottom = 270;
+
+    const npcY = npcSprite.y;
+    const isNpcNorth = npcY < roadTop;
+    const isNpcSouth = npcY > roadBottom;
+    const isNpcOnRoad = npcY >= roadTop && npcY <= roadBottom;
+
+    const isTargetNorth = targetY < roadTop;
+    const isTargetSouth = targetY > roadBottom;
+
+    const isCrossingNeeded = (isNpcNorth && isTargetSouth) || (isNpcSouth && isTargetNorth) || isNpcOnRoad;
+    if (!isCrossingNeeded) {
+      return { x: targetX, y: targetY, waitAtRedLight: false };
+    }
+
+    const crosswalkXs = scene.roadTrafficSystem?.getCrosswalkXs() || [472, 1144];
+    const crosswalkX = crosswalkXs.reduce((best, x) => {
+      return Math.abs(x - npcSprite.x) < Math.abs(best - npcSprite.x) ? x : best;
+    }, crosswalkXs[0]);
+
+    if (Math.abs(npcSprite.x - crosswalkX) > 16) {
+      return { x: crosswalkX, y: npcSprite.y, waitAtRedLight: false };
+    }
+
+    const isPedestrianGreen = scene.roadTrafficSystem?.isPedestrianSignalGreen() !== false;
+
+    if (!isPedestrianGreen) {
+      if (isNpcNorth && npcSprite.y >= roadTop - 12) {
+        return { x: crosswalkX, y: roadTop - 12, waitAtRedLight: true };
+      }
+      if (isNpcSouth && npcSprite.y <= roadBottom + 12) {
+        return { x: crosswalkX, y: roadBottom + 12, waitAtRedLight: true };
+      }
+    }
+
+    if (isNpcNorth) {
+      return { x: crosswalkX, y: roadBottom + 16, waitAtRedLight: false };
+    }
+    if (isNpcSouth) {
+      return { x: crosswalkX, y: roadTop - 16, waitAtRedLight: false };
+    }
+
+    return { x: crosswalkX, y: targetY, waitAtRedLight: false };
+  }
+
   walkOrthogonallyToward(targetX, targetY, distance, stopDistance) {
     const scene = this.scene;
+
+    const adjusted = this.adjustTargetForTrafficRules(scene.jjookNpc, targetX, targetY);
+    if (adjusted.waitAtRedLight) {
+      scene.stopNpcWalk(scene.jjookNpc, "jjook");
+      return;
+    }
+
+    const activeTargetX = adjusted.x;
+    const activeTargetY = adjusted.y;
+    const activeDistance = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, activeTargetX, activeTargetY);
+
     const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
     const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
     const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
     const step = (scene.game.loop.delta / 1000) * followSpeed;
 
-    const dx = targetX - scene.jjookNpc.x;
-    const dy = targetY - scene.jjookNpc.y;
+    const dx = activeTargetX - scene.jjookNpc.x;
+    const dy = activeTargetY - scene.jjookNpc.y;
 
     let moveX = 0;
     let moveY = 0;

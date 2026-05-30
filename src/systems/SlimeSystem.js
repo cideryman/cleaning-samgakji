@@ -3,6 +3,39 @@ import { GAME_CONFIG, TRASH_TEXTURES } from "../config/GameConstants.js";
 export default class SlimeSystem {
   constructor(scene) {
     this.scene = scene;
+    this.respawnTimer = null;
+  }
+
+  startRespawnLoop() {
+    const scene = this.scene;
+    if (this.respawnTimer) {
+      this.respawnTimer.destroy();
+      this.respawnTimer = null;
+    }
+
+    this.respawnTimer = scene.time.addEvent({
+      delay: GAME_CONFIG.slimeRespawnDelayMs || 12000,
+      loop: true,
+      callback: () => {
+        // Do not spawn slimes during introductory tutorial
+        if (
+          scene.tutorialState === "intro" ||
+          scene.tutorialState === "move" ||
+          scene.tutorialState === "sweep" ||
+          scene.tutorialState === "deposit" ||
+          scene.tutorialState === "npc"
+        ) {
+          return;
+        }
+
+        const activeSlimes = scene.trashSlimes
+          .getChildren()
+          .filter((s) => s.active && !s.getData("cleaned")).length;
+        if (activeSlimes < GAME_CONFIG.maxSlimes) {
+          this.respawnSlime();
+        }
+      },
+    });
   }
 
   respawnSlime() {

@@ -10,6 +10,54 @@ export default class SunisuniQuestSystem {
     return [SunisuniQuestState.GOING_HOSPITAL, SunisuniQuestState.GOING_PHARMACY].includes(this.scene.sunisuniQuestState);
   }
 
+  adjustTargetForTrafficRules(npcSprite, targetX, targetY) {
+    const scene = this.scene;
+    const roadTop = 192;
+    const roadBottom = 270;
+
+    const npcY = npcSprite.y;
+    const isNpcNorth = npcY < roadTop;
+    const isNpcSouth = npcY > roadBottom;
+    const isNpcOnRoad = npcY >= roadTop && npcY <= roadBottom;
+
+    const isTargetNorth = targetY < roadTop;
+    const isTargetSouth = targetY > roadBottom;
+
+    const isCrossingNeeded = (isNpcNorth && isTargetSouth) || (isNpcSouth && isTargetNorth) || isNpcOnRoad;
+    if (!isCrossingNeeded) {
+      return { x: targetX, y: targetY, waitAtRedLight: false };
+    }
+
+    const crosswalkXs = scene.roadTrafficSystem?.getCrosswalkXs() || [472, 1144];
+    const crosswalkX = crosswalkXs.reduce((best, x) => {
+      return Math.abs(x - npcSprite.x) < Math.abs(best - npcSprite.x) ? x : best;
+    }, crosswalkXs[0]);
+
+    if (Math.abs(npcSprite.x - crosswalkX) > 16) {
+      return { x: crosswalkX, y: npcSprite.y, waitAtRedLight: false };
+    }
+
+    const isPedestrianGreen = scene.roadTrafficSystem?.isPedestrianSignalGreen() !== false;
+
+    if (!isPedestrianGreen) {
+      if (isNpcNorth && npcSprite.y >= roadTop - 12) {
+        return { x: crosswalkX, y: roadTop - 12, waitAtRedLight: true };
+      }
+      if (isNpcSouth && npcSprite.y <= roadBottom + 12) {
+        return { x: crosswalkX, y: roadBottom + 12, waitAtRedLight: true };
+      }
+    }
+
+    if (isNpcNorth) {
+      return { x: crosswalkX, y: roadBottom + 16, waitAtRedLight: false };
+    }
+    if (isNpcSouth) {
+      return { x: crosswalkX, y: roadTop - 16, waitAtRedLight: false };
+    }
+
+    return { x: crosswalkX, y: targetY, waitAtRedLight: false };
+  }
+
   updateFollower() {
     const scene = this.scene;
     if (!this.isFollowing() || !scene.sunisuniNpc?.active || !scene.player) return;
@@ -23,10 +71,23 @@ export default class SunisuniQuestSystem {
       return;
     }
 
+    const adjusted = this.adjustTargetForTrafficRules(scene.sunisuniNpc, scene.player.x, scene.player.y);
+
+    if (adjusted.waitAtRedLight) {
+      scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
+      return;
+    }
+
+    const adjustedDistance = Phaser.Math.Distance.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, adjusted.x, adjusted.y);
+    if (adjustedDistance <= 4) {
+      scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
+      return;
+    }
+
     const step = (scene.game.loop.delta / 1000) * GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
-    const angle = Phaser.Math.Angle.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, scene.player.x, scene.player.y);
-    const moveX = Math.cos(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
-    const moveY = Math.sin(angle) * Math.min(step, distance - GAME_CONFIG.sunisuniFollowDistance);
+    const angle = Phaser.Math.Angle.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, adjusted.x, adjusted.y);
+    const moveX = Math.cos(angle) * Math.min(step, adjustedDistance);
+    const moveY = Math.sin(angle) * Math.min(step, adjustedDistance);
     scene.sunisuniNpc.x += moveX;
     scene.sunisuniNpc.y += moveY;
     this.updateDirection(moveX, moveY);

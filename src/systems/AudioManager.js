@@ -283,13 +283,42 @@ export default class AudioManager {
   stopSceneMusic({ resumeChapter = false } = {}) {
     const scene = this.scene;
     this.stopShopAmbientSynth();
-    if (scene.sceneBgmAudio) {
-      scene.sceneBgmAudio.stop();
-      scene.sceneBgmAudio.destroy?.();
-      scene.sceneBgmAudio = null;
+
+    const oldBgm = scene.sceneBgmAudio;
+    if (oldBgm) {
+      scene.sceneBgmAudio = null; // Unbind immediately
+      scene.tweens?.add({
+        targets: oldBgm,
+        volume: 0,
+        duration: 850,
+        onComplete: () => {
+          oldBgm.stop();
+          oldBgm.destroy?.();
+        },
+      });
     }
+
     if (resumeChapter) {
       this.startChapterMusic();
+
+      // Smoothly fade in the outdoor BGM if it is active
+      if (scene.bgmAudio) {
+        if (typeof scene.bgmAudio.setVolume === "function") {
+          scene.bgmAudio.setVolume(0);
+          scene.tweens?.add({
+            targets: scene.bgmAudio,
+            volume: 0.32,
+            duration: 850,
+          });
+        } else if (scene.bgmAudio instanceof Audio) {
+          scene.bgmAudio.volume = 0;
+          scene.tweens?.add({
+            targets: scene.bgmAudio,
+            volume: 0.32,
+            duration: 850,
+          });
+        }
+      }
     }
   }
 
