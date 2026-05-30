@@ -5,17 +5,119 @@ import {
   SunisuniQuestState,
 } from "../config/QuestStates.js";
 
-const SAVE_KEY = "samgakji_checkpoint_v1";
-const SAVE_VERSION = 1;
+const PROFILE_KEY = "samgakji_save_profile";
+const PROFILE_VERSION = 2;
+const CHAPTER_KEY_PREFIX = "samgakji_save_chapter_";
+const SAVE_VERSION = 2;
 
 export default class CheckpointStorage {
-  static hasSave() {
-    return Boolean(this.load());
+  // --- 1️⃣ 마스터 프로필 관리 API ---
+  static loadProfile() {
+    try {
+      const raw = window.localStorage?.getItem(PROFILE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
-  static load() {
+  static writeProfile(profile) {
     try {
-      const raw = window.localStorage?.getItem(SAVE_KEY);
+      window.localStorage?.setItem(PROFILE_KEY, JSON.stringify(profile));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static updateProfileOnSave(chapterId) {
+    let profile = this.loadProfile();
+    if (!profile) {
+      profile = {
+        version: PROFILE_VERSION,
+        currentChapter: chapterId,
+        unlockedChapters: ["chapter1"],
+        lastSavedAt: Date.now()
+      };
+    } else {
+      profile.lastSavedAt = Date.now();
+      profile.currentChapter = chapterId;
+      if (!profile.unlockedChapters.includes(chapterId)) {
+        profile.unlockedChapters.push(chapterId);
+      }
+    }
+    this.writeProfile(profile);
+  }
+
+  static unlockChapter(chapterId) {
+    let profile = this.loadProfile();
+    if (!profile) {
+      profile = {
+        version: PROFILE_VERSION,
+        currentChapter: "chapter1",
+        unlockedChapters: ["chapter1", chapterId],
+        lastSavedAt: Date.now()
+      };
+    } else {
+      if (!profile.unlockedChapters.includes(chapterId)) {
+        profile.unlockedChapters.push(chapterId);
+      }
+    }
+    this.writeProfile(profile);
+  }
+
+  // --- 2️⃣ 하위 호환성 마이그레이션 (v1 -> v2) ---
+  static migrateLegacySave() {
+    try {
+      const legacyRaw = window.localStorage?.getItem("samgakji_checkpoint_v1");
+      if (!legacyRaw) return;
+
+      const legacyData = JSON.parse(legacyRaw);
+      if (!legacyData || legacyData.version !== 1) return;
+
+      // 마스터 프로필 생성
+      const profile = {
+        version: PROFILE_VERSION,
+        currentChapter: "chapter1",
+        unlockedChapters: ["chapter1"],
+        lastSavedAt: Date.now()
+      };
+      this.writeProfile(profile);
+
+      // 레거시 데이터를 새로운 챕터 1 격리 형식으로 포팅 및 마이그레이션
+      const migratedChapterData = {
+        ...legacyData,
+        version: SAVE_VERSION,
+        chapterId: "chapter1"
+      };
+      this.write("chapter1", migratedChapterData);
+
+      // 레거시 세이브 삭제 (중복 마이그레이션 방지)
+      window.localStorage?.removeItem("samgakji_checkpoint_v1");
+      console.log("Successfully migrated legacy save data (v1) to multi-chapter save format (v2).");
+    } catch (e) {
+      console.warn("Save migration failed:", e);
+    }
+  }
+
+  // --- 3️⃣ 표준 씬 세이브 / 로드 중개 API (하위 호환 100% 보장) ---
+  static hasSave(chapterId = "chapter1") {
+    // 혹시 모를 레거시 세이브 존재 시 우선 마이그레이션 선행
+    this.migrateLegacySave();
+    
+    const profile = this.loadProfile();
+    if (!profile) return false;
+    return Boolean(window.localStorage?.getItem(`${CHAPTER_KEY_PREFIX}${chapterId}`));
+  }
+
+  static load(chapterId = null) {
+    this.migrateLegacySave();
+    
+    const profile = this.loadProfile();
+    const activeChapter = chapterId || profile?.currentChapter || "chapter1";
+    try {
+      const raw = window.localStorage?.getItem(`${CHAPTER_KEY_PREFIX}${activeChapter}`);
       if (!raw) return null;
       const data = JSON.parse(raw);
       return data?.version === SAVE_VERSION ? data : null;
@@ -26,15 +128,25 @@ export default class CheckpointStorage {
 
   static clear() {
     try {
-      window.localStorage?.removeItem(SAVE_KEY);
+      const profile = this.loadProfile();
+      if (profile?.unlockedChapters) {
+        profile.unlockedChapters.forEach((ch) => {
+          window.localStorage?.removeItem(`${CHAPTER_KEY_PREFIX}${ch}`);
+        });
+      }
+      window.localStorage?.removeItem(`${CHAPTER_KEY_PREFIX}chapter1`);
+      window.localStorage?.removeItem(`${CHAPTER_KEY_PREFIX}chapter2`);
+      window.localStorage?.removeItem(PROFILE_KEY);
+      window.localStorage?.removeItem("samgakji_checkpoint_v1"); // 만약을 위한 레거시 최종 소멸
     } catch {
       // Ignore private mode or storage permission failures.
     }
   }
 
-  static savePrologueCompleted() {
+  static savePrologueCompleted(chapterId = "chapter1") {
     const data = {
       version: SAVE_VERSION,
+      chapterId,
       checkpointId: "prologue_complete",
       savedAt: Date.now(),
       money: 0,
@@ -59,16 +171,18 @@ export default class CheckpointStorage {
         packingItems: [],
       },
     };
-    return this.write(data);
+    this.updateProfileOnSave(chapterId);
+    return this.write(chapterId, data);
   }
 
-  static saveSceneCheckpoint(scene, checkpointId) {
+  static saveSceneCheckpoint(scene, checkpointId, chapterId = "chapter1") {
     if (!scene) return null;
 
     const canQuest = scene.yebiQuestSystem?.canQuest;
     const recycleQuest = scene.yebiQuestSystem?.recycleQuest;
     const data = {
       version: SAVE_VERSION,
+      chapterId,
       checkpointId,
       savedAt: Date.now(),
       money: scene.moneySystem?.money ?? 0,
@@ -114,12 +228,13 @@ export default class CheckpointStorage {
         packingItems: Array.isArray(scene.packingItems) ? [...scene.packingItems] : [],
       },
     };
-    return this.write(data);
+    this.updateProfileOnSave(chapterId);
+    return this.write(chapterId, data);
   }
 
-  static write(data) {
+  static write(chapterId, data) {
     try {
-      window.localStorage?.setItem(SAVE_KEY, JSON.stringify(data));
+      window.localStorage?.setItem(`${CHAPTER_KEY_PREFIX}${chapterId}`, JSON.stringify(data));
       return data;
     } catch {
       return null;

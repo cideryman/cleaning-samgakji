@@ -65,6 +65,11 @@ export default class DialogueSystem {
     this.dialogModal?.classList.toggle("has-scene-overlay", usesSceneOverlay);
     this.scene.handleDialogueLineChange?.(line);
     this.typewrite(line.text, line.choices || null);
+
+    // Play TTS speech output if enabled in settings
+    if (this.scene.registry.get("ttsEnabled") === true) {
+      this.playTTS(line.name, line.text);
+    }
   }
 
   typewrite(fullText, choices = null) {
@@ -183,8 +188,71 @@ export default class DialogueSystem {
     this.scene.isInDialogue = false;
     this.scene.stateManager?.set(SceneState.PLAYING);
 
+    // Cancel any active TTS speech when dialog closes
+    try {
+      window.speechSynthesis?.cancel();
+    } catch (e) {}
+
     const onComplete = this.onComplete;
     this.onComplete = null;
     if (runComplete) onComplete?.();
+  }
+
+  playTTS(name, text) {
+    try {
+      if (!window.speechSynthesis) return;
+
+      // Cancel previous speech instantly
+      window.speechSynthesis.cancel();
+
+      // Clean dialogue choices symbols if any (not present in raw text anyway)
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ko-KR";
+
+      // Gender-specific voice mapping fallback
+      const characterName = name?.trim() || "";
+      const isMale = ["여비", "쭉쭉이", "의사", "약사", "옷가게 주인", "옷가게주인", "의사 선생님"].includes(characterName);
+      const isFemale = ["엄마", "수니수니", "접수 직원", "접수직원"].includes(characterName);
+
+      let pitch = 1.0;
+      if (isFemale) {
+        pitch = 1.25; // Higher pitch for female voice
+      } else if (isMale) {
+        pitch = 0.82; // Lower pitch for male voice
+      }
+      utterance.pitch = pitch;
+      utterance.rate = 1.05; // Slightly faster for natural feel
+
+      // Try to find native Korean male/female voice if available in the browser
+      const voices = window.speechSynthesis.getVoices();
+      const koVoices = voices.filter((v) => v.lang.includes("ko"));
+      if (koVoices.length > 0) {
+        let selectedVoice = koVoices[0];
+        if (isMale) {
+          const maleVoice = koVoices.find(
+            (v) =>
+              v.name.toLowerCase().includes("male") ||
+              v.name.includes("남성") ||
+              v.name.includes("Anji")
+          );
+          if (maleVoice) selectedVoice = maleVoice;
+        } else if (isFemale) {
+          const femaleVoice = koVoices.find(
+            (v) =>
+              v.name.toLowerCase().includes("female") ||
+              v.name.includes("여성") ||
+              v.name.includes("Heami") ||
+              v.name.includes("Hyunyoung") ||
+              v.name.includes("Yuna")
+          );
+          if (femaleVoice) selectedVoice = femaleVoice;
+        }
+        utterance.voice = selectedVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn("TTS speak failed:", e);
+    }
   }
 }

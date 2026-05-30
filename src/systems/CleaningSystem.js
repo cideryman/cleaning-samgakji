@@ -19,6 +19,10 @@ export default class CleaningSystem {
     scene.isSweeping = true;
     scene.time.delayedCall(300, () => {
       scene.isSweeping = false;
+      // 빗자루질이 끝나면 즉시 원래 서 있는 방향의 걷기 텍스처와 크기(64x96)로 자연스럽게 복원합니다.
+      if (scene.player && scene.playerController) {
+        scene.playerController.setPlayerDirectionTexture(dirKey, false);
+      }
     });
 
     // Play sweeping animation matching facing direction
@@ -26,6 +30,10 @@ export default class CleaningSystem {
     const sweepAnimKey = `haenaem_sweep_${dirKey}_anim`;
     if (scene.player && scene.anims.exists(sweepAnimKey)) {
       scene.player.anims.play(sweepAnimKey, true);
+      // 쓸기 스프라이트는 빗자루 범위까지 포함해 90x96 크기로 제작되어 있어, 몸집이 상대적으로 작아 보일 수 있습니다.
+      // 이를 해결하기 위해 쓸기 모션 동안 캐릭터 크기를 1.15배 확대하여 걷기 캐릭터와 시각적 비율을 완벽하게 맞춥니다.
+      const sweepScale = 1.15;
+      scene.player.setDisplaySize(90 * sweepScale, 96 * sweepScale);
     }
 
     const multiplier = this.getSweepMultiplier();

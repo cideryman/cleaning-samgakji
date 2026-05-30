@@ -15,7 +15,13 @@ export default class PackingSystem {
   open() {
     const scene = this.scene;
     this.close();
-    scene.packingSelectedKeys = new Set(scene.packingItems.map((item) => item.key));
+    // 현실 안전 지도: 가방 짐 목록에서 지갑(wallet)과 교통카드(transit_card)는 강제 제외하여
+    // 사용자가 소지품을 따로 보조 가방이나 주머니에 챙기도록 학습을 유도합니다.
+    scene.packingSelectedKeys = new Set(
+      scene.packingItems
+        .map((item) => item.key)
+        .filter((key) => key !== "wallet" && key !== "transit_card")
+    );
     scene.selectedPackingIndex = 0;
     scene.packingStepIndex = 0;
     scene.packingPageIndex = 0;
@@ -277,6 +283,19 @@ export default class PackingSystem {
 
   toggleSelection(itemKey) {
     const scene = this.scene;
+    // 현실 안전 지도: 지갑과 교통카드는 큰 여행 가방(캐리어) 안에 넣지 않도록 배제
+    if (itemKey === "wallet" || itemKey === "transit_card") {
+      const label = itemKey === "wallet" ? "지갑" : "교통카드";
+      scene.showSpeechBubble?.(
+        scene.player,
+        `💡 ${label}은(는) 가방 깊숙이 넣으면 차표를 사거나\n지하철을 탈 때 불편해요! 주머니나 보조 가방에 챙겨요!`,
+        5000
+      );
+      scene.showQuestToast?.(`${label}은(는) 몸에 가깝게 따로 챙겨두는 것이 안전해요!`, 3600);
+      scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
+      return;
+    }
+
     if (scene.packingSelectedKeys.has(itemKey)) {
       scene.packingSelectedKeys.delete(itemKey);
     } else {

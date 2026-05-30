@@ -33,6 +33,12 @@ export default class StartScene extends Phaser.Scene {
     } catch (e) {}
     this.registry.set("textSizeLarge", savedTextSizeLarge);
 
+    let savedTtsEnabled = false;
+    try {
+      savedTtsEnabled = window.localStorage?.getItem("samgakji_tts_enabled") === "true";
+    } catch (e) {}
+    this.registry.set("ttsEnabled", savedTtsEnabled);
+
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
@@ -41,8 +47,8 @@ export default class StartScene extends Phaser.Scene {
 
     const hasCheckpoint = CheckpointStorage.hasSave();
     const buttonLayout = hasCheckpoint
-      ? { startY: centerY - 10, gap: 58, width: 236, height: 44 }
-      : { startY: centerY + 22, gap: 60, width: 236, height: 46 };
+      ? { startY: centerY - 46, gap: 50, width: 236, height: 38 }
+      : { startY: centerY - 10, gap: 50, width: 236, height: 38 };
     this.options = [];
 
     if (hasCheckpoint) {
@@ -50,10 +56,12 @@ export default class StartScene extends Phaser.Scene {
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, "처음부터", () => this.startNewGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 3, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 4, this.getTtsLabel(), () => this.toggleTts(), "tts", buttonLayout));
     } else {
       this.options.push(this.createOption(centerX, buttonLayout.startY, "게임 시작", () => this.startNewGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 3, this.getTtsLabel(), () => this.toggleTts(), "tts", buttonLayout));
     }
 
     this.input.keyboard.on("keydown-UP", () => this.moveSelection(-1));
@@ -180,6 +188,23 @@ export default class StartScene extends Phaser.Scene {
 
     const textOption = this.options.find((option) => option.kind === "textsize");
     textOption?.text.setText(this.getTextSizeLabel());
+    this.updateSelection();
+  }
+
+  getTtsLabel() {
+    return this.registry.get("ttsEnabled") === true ? "음성 안내: 켜기" : "음성 안내: 끄기";
+  }
+
+  toggleTts() {
+    const nextValue = this.registry.get("ttsEnabled") !== true;
+    this.registry.set("ttsEnabled", nextValue);
+
+    try {
+      window.localStorage?.setItem("samgakji_tts_enabled", nextValue ? "true" : "false");
+    } catch (e) {}
+
+    const ttsOption = this.options.find((option) => option.kind === "tts");
+    ttsOption?.text.setText(this.getTtsLabel());
     this.updateSelection();
   }
 

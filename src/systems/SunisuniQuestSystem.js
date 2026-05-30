@@ -264,52 +264,34 @@ export default class SunisuniQuestSystem {
 
     if (scene.hospitalRevisitUsed) {
       scene.dialogueSystem.start([
-        { name: "접수 직원", portraitKey: "hospital_staff", text: "오늘은 이미 진료를 받으셨어요." },
-        { name: "접수 직원", portraitKey: "hospital_staff", text: "정말 아프면 보호자와 함께 다시 와 주세요." },
+        { name: "접수 직원", portraitKey: "hospital_staff", text: "오늘 무료 건강검진을 이미 받으셨어요." },
+        { name: "접수 직원", portraitKey: "hospital_staff", text: "건강 관리를 아주 잘하고 계시네요! 다음에 또 만나요." },
       ], () => scene.clearInteriorScene());
       return;
     }
 
     scene.dialogueSystem.start([
-      {
-        name: "접수 직원",
-        portraitKey: "hospital_staff",
-        text: "어디가 아프세요?",
-        choices: [
-          { label: "목이 아파요.", onSelect: () => this.startPretendHospitalVisit("목이") },
-          { label: "머리가 아파요.", onSelect: () => this.startPretendHospitalVisit("머리가") },
-          { label: "안 아파요.", onSelect: () => this.closeHospitalRevisit("아프지 않다니 다행이에요. 건강할 때도 몸을 잘 살펴보세요.") },
-          { label: "잘못 들어왔어요.", onSelect: () => this.closeHospitalRevisit("괜찮아요. 필요할 때 다시 오세요.") },
-        ],
-      },
-    ]);
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "안녕하세요, 해냄이! 오늘은 동네 주민분들을 위해 '무료 건강검진'을 해드리는 날이에요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "키와 몸무게를 재고 몸 상태를 진찰받아볼까요? 진료실로 들어가 보세요!" },
+      { name: "의사", portraitKey: "hospital_doctor", text: "안녕하세요, 해냄이! 청소를 열심히 하느라 땀을 많이 흘렸군요." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "건강검진을 해보니 몸 상태가 아주 튼튼하고 건강해요!" },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "와! 열심히 동네를 청소하니까 몸이 더 튼튼해진 것 같아요!" },
+      { name: "의사", portraitKey: "hospital_doctor", text: "맞아요. 규칙적인 운동과 청소는 몸에 아주 좋은 약이에요." },
+      { name: "의사", portraitKey: "hospital_doctor", text: "땀을 흘린 뒤에는 꼭 시원한 물을 자주 마시고, 푹 쉬는 좋은 건강 습관도 잊지 마세요!" },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "검진이 무사히 끝났습니다! 오늘 검진은 무료 건강검진이라 비용은 0원이에요." },
+      { name: "접수 직원", portraitKey: "hospital_staff", text: "건강을 지키는 시원한 물을 선물로 드릴 테니 앞으로도 씩씩하게 지내봐요!" }
+    ], () => this.finishFreeHealthCheckup());
   }
 
-  startPretendHospitalVisit(symptomLabel) {
-    const scene = this.scene;
-    scene.dialogueSystem.start([
-      { name: "접수 직원", portraitKey: "hospital_staff", text: `${symptomLabel} 아프다고 접수할게요. 진료실로 들어가세요.` },
-      { name: "의사", portraitKey: "hospital_doctor", text: "안녕하세요. 어디가 얼마나 아픈지 천천히 말해볼까요?" },
-      { name: "해냄이", portraitKey: "haenaem_confused", text: `음... ${symptomLabel}가 아픈 것 같기도 하고 아닌 것 같기도 해요.` },
-      { name: "의사", portraitKey: "hospital_doctor", text: "음... 특별히 아픈 곳은 없어 보이는데요?" },
-      { name: "의사", portraitKey: "hospital_doctor", text: "병원은 정말 아플 때 오는 곳이에요. 궁금해서 들어오는 곳은 아니랍니다." },
-      { name: "의사", portraitKey: "hospital_doctor", text: "몸이 이상하면 보호자에게 먼저 말하고, 필요한 때 진료를 받는 게 좋아요." },
-      { name: "접수 직원", portraitKey: "hospital_staff", text: "진료는 끝났습니다." },
-      { name: "접수 직원", portraitKey: "hospital_staff", text: "특별한 이상은 없으셨지만 진료비는 내셔야 해요. 1만원입니다." },
-    ], () => this.finishPretendHospitalVisit());
-  }
-
-  finishPretendHospitalVisit() {
+  finishFreeHealthCheckup() {
     const scene = this.scene;
     scene.hospitalRevisitUsed = true;
     scene.clearInteriorScene();
 
-    if (scene.moneySystem?.deductMoney(10000)) {
-      scene.showQuestToast("진료비 10,000원을 냈어요.", 2600);
-      return;
-    }
-
-    scene.showQuestToast("진료비 10,000원이 부족해요. 다음에는 꼭 챙겨 오자.", 3200);
+    // 무료 건강검진 보상으로 일시적인 스피드 버프(생수 마시기 효과) 부여
+    scene.activateDrinkSpeedBuff?.();
+    scene.showQuestToast("무료 건강검진 완료! 시원한 물을 마셔 걸음이 가벼워졌어요! (속도 증가)", 4000);
+    scene.saveCheckpoint("free_health_checkup_completed");
   }
 
   closeHospitalRevisit(message) {
