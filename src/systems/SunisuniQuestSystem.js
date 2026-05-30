@@ -323,29 +323,61 @@ export default class SunisuniQuestSystem {
 
   payForMedicine() {
     const scene = this.scene;
-    if (!scene.moneySystem?.deductMoney(5000)) {
+    if (scene.moneySystem && scene.moneySystem.money < 5000) {
       scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
       scene.clearInteriorScene();
       scene.showQuestToast("약값 5,000원이 필요해요.");
       return;
     }
 
-    scene.hasPrescription = false;
-    scene.hasMedicine = true;
-    scene.playVendingPaymentAnimationLike("bill_5000", () => {
-      scene.showFloatingItem("medicine_bag", Math.max(384, (scene.scale.width || 768) / 2), Math.max(240, (scene.scale.height || 480) / 2), { width: 150, height: 150 }, true, {
-        duration: 360,
-        hold: 1900,
-        floatY: -12,
-        onComplete: () => {
-          scene.dialogueSystem.start([
-            { name: "약사", portraitKey: "chemist", text: "결제가 완료되었습니다." },
-            { name: "약사", portraitKey: "chemist", text: "약 봉투를 잘 챙겨 주세요." },
-            { name: "약사", portraitKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
-          ], () => this.completeQuest());
-        },
+    scene.dialogueSystem.start([
+      { name: "약사", portraitKey: "chemist", text: "약값은 5,000원입니다. 10,000원 지폐를 내고 거스름돈을 계산해 볼까요?" },
+      {
+        name: "해냄이",
+        portraitKey: "haenaem_determined",
+        text: "약사 선생님께 10,000원을 드렸습니다. 거스름돈은 얼마를 받아야 할까요?",
+        choices: [
+          { label: "3,000원", onSelect: () => this.handlePharmacyChangeSelection(3000) },
+          { label: "5,000원", onSelect: () => this.handlePharmacyChangeSelection(5000) },
+          { label: "7,000원", onSelect: () => this.handlePharmacyChangeSelection(7000) },
+        ]
+      }
+    ]);
+  }
+
+  handlePharmacyChangeSelection(selectedChange) {
+    const scene = this.scene;
+    if (selectedChange === 5000) {
+      if (!scene.moneySystem?.deductMoney(5000)) {
+        scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
+        scene.clearInteriorScene();
+        scene.showQuestToast("약값 5,000원이 필요해요.");
+        return;
+      }
+
+      scene.hasPrescription = false;
+      scene.hasMedicine = true;
+      scene.playVendingPaymentAnimationLike("bill_10000", () => {
+        scene.showFloatingItem("medicine_bag", Math.max(384, (scene.scale.width || 768) / 2), Math.max(240, (scene.scale.height || 480) / 2), { width: 150, height: 150 }, true, {
+          duration: 360,
+          hold: 1900,
+          floatY: -12,
+          onComplete: () => {
+            scene.dialogueSystem.start([
+              { name: "약사", portraitKey: "chemist", text: "맞아요! 10,000원을 내셨으니, 5,000원을 뺀 5,000원이 거스름돈입니다." },
+              { name: "약사", portraitKey: "chemist", text: "거스름돈 5,000원과 약 봉투를 잘 챙겨 주세요." },
+              { name: "약사", portraitKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
+            ], () => this.completeQuest());
+          },
+        });
       });
-    });
+    } else {
+      scene.playTone?.({ frequency: 180, duration: 0.2, type: "sawtooth", volume: 0.05 });
+      scene.dialogueSystem.start([
+        { name: "약사", portraitKey: "chemist", text: "아니에요. 10,000원을 내고 5,000원짜리 약을 샀어요." },
+        { name: "약사", portraitKey: "chemist", text: "10,000원에서 5,000원을 빼면 얼마가 남을까요? 다시 계산해 봐요." },
+      ], () => this.payForMedicine());
+    }
   }
 
   startPharmacyRevisitDialogue() {

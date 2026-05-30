@@ -90,7 +90,10 @@ export default class ClothingShopSystem {
     progress.innerHTML = this.renderProgress();
     this.bindProgressButtons(progress);
 
-    if (scene.clothingShopMode === "review") {
+    if (scene.clothingShopMode === "receipt") {
+      progress.innerHTML = ""; // 진행 단계 숨기기
+      this.renderReceipt(body, footer);
+    } else if (scene.clothingShopMode === "review") {
       this.renderReview(body, footer);
     } else {
       this.renderCategory(body, footer);
@@ -250,6 +253,19 @@ export default class ClothingShopSystem {
 
     if (action === "close") {
       this.finishVisit();
+      return;
+    }
+
+    if (action.startsWith("choice-")) {
+      const selectedValue = parseInt(action.replace("choice-", ""), 10);
+      this.handleReceiptChangeSelection(selectedValue);
+      return;
+    }
+
+    if (action === "close-receipt") {
+      this.scene.clothingShopMode = "review";
+      this.renderStep();
+      return;
     }
   }
 
@@ -327,33 +343,134 @@ export default class ClothingShopSystem {
     }
 
     const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
-    if (!scene.moneySystem?.deductMoney(totalPrice)) {
+    const balance = scene.moneySystem?.money ?? 0;
+    if (balance < totalPrice) {
       scene.clothingShopMode = "review";
       this.showNotEnoughMoney(totalPrice);
       this.renderStep();
       return;
     }
 
-    items.forEach((item) => {
-      scene.travelPrepItems.push({
-        key: item.key,
-        category: item.category,
-        label: item.label,
-        texture: item.texture,
-        price: item.price,
-      });
-    });
-    scene.playItemPickupSound();
-    const previewItem = items[items.length - 1];
-    scene.showFloatingItem(previewItem.texture, scene.scale.width / 2, scene.scale.height / 2 - 24, 86, true, { duration: 420 });
-    this.updateTravelPrepHud();
-    scene.showQuestToast(`${items.length}개 준비 완료! -${totalPrice.toLocaleString()}원`);
-    if (scene.clothesQuestState === "completed") {
-      scene.saveCheckpoint("clothes_extra_items_bought");
-      this.open();
-      return;
+    // 낸 돈 계산 (10,000원 단위 올림)
+    let paidCash = Math.ceil(totalPrice / 10000) * 10000;
+    if (paidCash === totalPrice) {
+      paidCash += 10000; // 항상 거스름돈이 있도록 보장
     }
-    scene.completeClothesShoppingQuest();
+
+    scene.clothingShopReceiptData = {
+      items: [...items],
+      totalPrice: totalPrice,
+      paidCash: paidCash,
+      correctChange: paidCash - totalPrice
+    };
+
+    scene.clothingShopMode = "receipt";
+    this.renderStep();
+  }
+
+  renderReceipt(body, footer) {
+    const scene = this.scene;
+    const receiptData = scene.clothingShopReceiptData;
+    if (!receiptData) return;
+
+    const { items, totalPrice, paidCash, correctChange } = receiptData;
+
+    body.className = "clothing-shop-body is-receipt-mode";
+    body.innerHTML = `
+      <div class="clothing-shop-category-title">
+        <strong>🧾 스마트 영수증 & 거스름돈 확인</strong>
+        <span>거스름돈을 계산하고 확인하여 결제를 끝마쳐봐요!</span>
+      </div>
+      <div class="receipt-container">
+        <div class="receipt-paper">
+          <div class="receipt-brand">삼각옷방 영수증</div>
+          <div class="receipt-info">
+            <span>일자: ${new Date().toISOString().split('T')[0]}</span>
+            <span>결제: 현금 지불</span>
+          </div>
+          <hr class="receipt-divider" />
+          <div class="receipt-items">
+            ${items.map(item => `
+              <div class="receipt-item-row">
+                <span>${item.label}</span>
+                <strong>${item.price.toLocaleString()}원</strong>
+              </div>
+            `).join('')}
+          </div>
+          <hr class="receipt-divider" />
+          <div class="receipt-totals">
+            <div class="receipt-total-row">
+              <span>총 금액 (Total)</span>
+              <strong>${totalPrice.toLocaleString()}원</strong>
+            </div>
+            <div class="receipt-total-row">
+              <span>받은 돈 (Cash)</span>
+              <strong>${paidCash.toLocaleString()}원</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="receipt-question">
+        <p>받은 돈은 <strong>${paidCash.toLocaleString()}원</strong>이고, 옷의 총금액은 <strong>${totalPrice.toLocaleString()}원</strong>입니다.</p>
+        <p>돌려받아야 할 <strong>거스름돈</strong>은 얼마일까요? 아래에서 올바른 금액을 선택해 보세요.</p>
+      </div>
+    `;
+
+    // 보기 옵션 만들기
+    const wrong1 = correctChange + (correctChange > 5000 ? -5000 : 5000);
+    const wrong2 = correctChange + 10000;
+    const choices = Array.from(new Set([correctChange, wrong1, wrong2])).sort((a, b) => a - b);
+
+    footer.innerHTML = "";
+    choices.forEach((value) => {
+      this.addFooterButton(footer, `${value.toLocaleString()}원`, `choice-${value}`);
+    });
+    this.addFooterButton(footer, "취소하기", "close-receipt", "secondary");
+  }
+
+  handleReceiptChangeSelection(selectedChange) {
+    const scene = this.scene;
+    const receiptData = scene.clothingShopReceiptData;
+    if (!receiptData) return;
+
+    const { items, totalPrice, paidCash, correctChange } = receiptData;
+
+    if (selectedChange === correctChange) {
+      if (!scene.moneySystem?.deductMoney(totalPrice)) {
+        scene.clothingShopMode = "review";
+        this.showNotEnoughMoney(totalPrice);
+        this.renderStep();
+        return;
+      }
+
+      items.forEach((item) => {
+        scene.travelPrepItems.push({
+          key: item.key,
+          category: item.category,
+          label: item.label,
+          texture: item.texture,
+          price: item.price,
+        });
+      });
+      scene.playItemPickupSound();
+      const previewItem = items[items.length - 1];
+      scene.showFloatingItem(previewItem.texture, scene.scale.width / 2, scene.scale.height / 2 - 24, 86, true, { duration: 420 });
+      this.updateTravelPrepHud();
+      scene.showQuestToast(`정답입니다! 거스름돈 ${correctChange.toLocaleString()}원을 받았습니다.`, 4000);
+
+      this.close();
+      scene.clearInteriorScene();
+
+      if (scene.clothesQuestState === "completed") {
+        scene.saveCheckpoint("clothes_extra_items_bought");
+        this.open();
+        return;
+      }
+      scene.completeClothesShoppingQuest();
+    } else {
+      scene.playTone?.({ frequency: 180, duration: 0.2, type: "sawtooth", volume: 0.05 });
+      scene.showQuestToast(`아닙니다! 다시 계산해 볼까요? (${paidCash.toLocaleString()} - ${totalPrice.toLocaleString()} = ?)`, 5000);
+    }
   }
 
   showNotEnoughMoney(totalPrice) {

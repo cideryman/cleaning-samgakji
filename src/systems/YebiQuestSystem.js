@@ -271,6 +271,7 @@ export default class YebiQuestSystem {
   markCanQuestAvailable() {
     const scene = this.scene;
     if (!scene.yebiNpc) return;
+    if (scene.tutorialState && scene.tutorialState !== "completed") return; // 튜토리얼 중에는 캔 퀘스트 물음표 표시 배제
     if (this.getQuestState?.() !== CanQuestState.INACTIVE) return;
     if (this.getRecycleQuestState?.() !== RecycleQuestState.LOCKED) return;
 
@@ -448,7 +449,7 @@ export default class YebiQuestSystem {
               onSelect: () => {
                 scene.dialogueSystem.start([
                   { name: "여비", portraitKey: "yeobi", text: "아... 그래. 다음에 꼭 부탁할게." },
-                ]);
+                ], () => this.markCanQuestAvailable());
               },
             },
           ],

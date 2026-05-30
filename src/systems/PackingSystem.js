@@ -400,6 +400,125 @@ export default class PackingSystem {
 
   completeSelection() {
     const scene = this.scene;
+    const items = this.getSelectedItems();
+    if (!items.length) {
+      scene.showQuestToast("여행 가방에 짐을 최소 하나는 넣어주세요!");
+      return;
+    }
+    this.openNameTagCustomizer();
+  }
+
+  openNameTagCustomizer() {
+    const scene = this.scene;
+    const stage = document.querySelector(".game-stage") || document.body;
+
+    const modal = document.createElement("div");
+    modal.className = "name-tag-modal";
+    modal.innerHTML = `
+      <div class="name-tag-panel">
+        <div class="name-tag-header">
+          <strong>🎒 나만의 여행 가방 이름표 만들기</strong>
+          <span>여행가방에 붙일 이름표를 멋지게 꾸며보세요!</span>
+        </div>
+        
+        <div class="name-tag-body">
+          <div class="name-tag-controls">
+            <div class="control-group">
+              <label for="tag-name-input">소유자 이름</label>
+              <input type="text" id="tag-name-input" value="해냄이" maxlength="8" placeholder="이름을 적어주세요" />
+            </div>
+            
+            <div class="control-group">
+              <label>이름표 색상</label>
+              <div class="color-picker">
+                <button type="button" class="color-btn is-yellow active" data-color="#ffd75a" aria-label="노란색 이름표"></button>
+                <button type="button" class="color-btn is-blue" data-color="#79c6ff" aria-label="파란색 이름표"></button>
+                <button type="button" class="color-btn is-pink" data-color="#ff9eb5" aria-label="분홍색 이름표"></button>
+                <button type="button" class="color-btn is-green" data-color="#7bf09b" aria-label="초록색 이름표"></button>
+              </div>
+            </div>
+            
+            <div class="control-group">
+              <label>여행 노선</label>
+              <div class="route-info">
+                <span>영주</span>
+                <span class="arrow">➡️</span>
+                <span>서울</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="name-tag-preview-container">
+            <label>미리보기</label>
+            <div class="name-tag-preview" style="background-color: #ffd75a;">
+              <div class="tag-header">LUGGAGE TAG</div>
+              <div class="tag-route">
+                <span class="tag-city">YEONGJU</span>
+                <span class="tag-arrow">✈️</span>
+                <span class="tag-city">SEOUL</span>
+              </div>
+              <div class="tag-divider"></div>
+              <div class="tag-owner">
+                <span class="tag-owner-label">PASSENGER</span>
+                <strong class="tag-owner-name">해냄이</strong>
+              </div>
+              <div class="tag-barcode">
+                <span class="barcode-line"></span>
+                <span class="barcode-line"></span>
+                <span class="barcode-line"></span>
+                <span class="barcode-line"></span>
+                <span class="barcode-line"></span>
+                <span class="barcode-line"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="name-tag-footer">
+          <button type="button" class="name-tag-submit-btn">가방에 이름표 달기 완료! ✨</button>
+        </div>
+      </div>
+    `;
+
+    stage.appendChild(modal);
+    
+    // 실시간 프리뷰 업데이트
+    const input = modal.querySelector("#tag-name-input");
+    const previewName = modal.querySelector(".tag-owner-name");
+    const colorBtns = modal.querySelectorAll(".color-btn");
+    const previewCard = modal.querySelector(".name-tag-preview");
+    const submitBtn = modal.querySelector(".name-tag-submit-btn");
+
+    input.addEventListener("input", (e) => {
+      const name = e.target.value.trim() || "해냄이";
+      previewName.textContent = name;
+    });
+
+    let selectedColor = "#ffd75a";
+
+    colorBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        colorBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedColor = btn.dataset.color;
+        previewCard.style.backgroundColor = selectedColor;
+      });
+    });
+
+    submitBtn.addEventListener("click", () => {
+      const finalName = input.value.trim() || "해냄이";
+      scene.customNameTag = {
+        name: finalName,
+        color: selectedColor
+      };
+      
+      modal.remove();
+      this.finishPackingSequence();
+    });
+  }
+
+  finishPackingSequence() {
+    const scene = this.scene;
     scene.packingItems = this.getSelectedItems().map((item) => ({ ...item }));
     this.close();
     scene.packingQuestState = "completed";

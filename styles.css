@@ -3298,3 +3298,417 @@ body.large-text .special-overlay-title { font-size: 24px; }
 body.large-text .special-overlay-icon { width: 104px; height: 104px; font-size: 60px; }
 body.large-text .special-overlay-desc { font-size: 20px; }
 body.large-text .special-overlay-reward { font-size: 26px; }
+
+/* ==========================================================================
+   스마트 영수증 & 거스름돈 훈련 및 가방 이름표 커스터마이저 스타일
+   ========================================================================== */
+
+/* 1. 스마트 영수증 */
+.is-receipt-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.receipt-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.receipt-paper {
+  width: min(340px, 100%);
+  background: #ffffff;
+  border: 1px solid #d4c8b2;
+  border-top: 6px solid #5b4636;
+  padding: 18px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  font-family: monospace;
+  font-size: 14px;
+  color: #333333;
+  position: relative;
+}
+
+/* 영수증 하단 톱니바퀴 효과 */
+.receipt-paper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(-45deg, transparent 4px, #ffffff 4px),
+              linear-gradient(45deg, transparent 4px, #ffffff 4px);
+  background-size: 8px 12px;
+}
+
+.receipt-brand {
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #5b4636;
+  letter-spacing: 1px;
+}
+
+.receipt-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666666;
+  margin-bottom: 4px;
+}
+
+.receipt-divider {
+  border: none;
+  border-top: 1px dashed #d4c8b2;
+  margin: 10px 0;
+}
+
+.receipt-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.receipt-item-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.receipt-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.receipt-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+}
+
+.receipt-total-row strong {
+  color: #b33925;
+}
+
+.receipt-question {
+  text-align: center;
+  background: #fff3a3;
+  border: 2px solid #21352c;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #21352c;
+  font-weight: bold;
+  max-width: 500px;
+}
+
+.receipt-question strong {
+  color: #b33925;
+}
+
+/* 2. 나만의 여행 가방 이름표 모달 */
+.name-tag-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(18, 28, 24, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.name-tag-panel {
+  width: min(540px, 94vw);
+  background: #fffdf6;
+  border: 4px solid #5b4636;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: panel-zoom 250ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.name-tag-header {
+  border-bottom: 2px dashed #d6b98f;
+  padding-bottom: 10px;
+  color: #3d3229;
+}
+
+.name-tag-header strong {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.name-tag-header span {
+  font-size: 14px;
+  color: #6f5b46;
+}
+
+.name-tag-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 520px) {
+  .name-tag-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.name-tag-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #6f5b46;
+}
+
+.control-group input[type="text"] {
+  padding: 8px 12px;
+  border: 3px solid #21352c;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #21352c;
+  background: #ffffff;
+  outline: none;
+}
+
+.control-group input[type="text"]:focus {
+  border-color: #c8892c;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #21352c;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 100ms ease;
+  padding: 0;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px #ffffff, 0 0 0 6px #21352c;
+}
+
+.color-btn.is-yellow { background-color: #ffd75a; }
+.color-btn.is-blue { background-color: #79c6ff; }
+.color-btn.is-pink { background-color: #ff9eb5; }
+.color-btn.is-green { background-color: #7bf09b; }
+
+.route-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #3d3229;
+  background: #fdf2d9;
+  border: 2px solid #d6b98f;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.route-info .arrow {
+  color: #c8892c;
+}
+
+/* 태그 미리보기 디자인 */
+.name-tag-preview-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.name-tag-preview-container label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #6f5b46;
+}
+
+.name-tag-preview {
+  height: 180px;
+  border: 4px solid #21352c;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+  transition: background-color 200ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 이름표 고리 구멍 효과 */
+.name-tag-preview::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 12px;
+  height: 12px;
+  border: 3px solid #21352c;
+  background-color: #fffdf6;
+  border-radius: 50%;
+}
+
+.tag-header {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #21352c;
+  opacity: 0.8;
+}
+
+.tag-route {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -8px;
+}
+
+.tag-city {
+  font-size: 16px;
+  font-weight: 900;
+  color: #21352c;
+}
+
+.tag-arrow {
+  font-size: 14px;
+  color: #21352c;
+}
+
+.tag-divider {
+  border-top: 2px dashed #21352c;
+  margin: 6px 0;
+  opacity: 0.5;
+}
+
+.tag-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.tag-owner-label {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #21352c;
+  opacity: 0.6;
+}
+
+.tag-owner-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: #21352c;
+  letter-spacing: 0.5px;
+}
+
+.tag-barcode {
+  display: flex;
+  gap: 2px;
+  height: 24px;
+  align-items: flex-end;
+  opacity: 0.7;
+}
+
+.barcode-line {
+  background-color: #21352c;
+  height: 100%;
+}
+
+.barcode-line:nth-child(1) { width: 4px; }
+.barcode-line:nth-child(2) { width: 2px; }
+.barcode-line:nth-child(3) { width: 6px; }
+.barcode-line:nth-child(4) { width: 3px; }
+.barcode-line:nth-child(5) { width: 1px; }
+.barcode-line:nth-child(6) { width: 5px; }
+
+.name-tag-footer {
+  border-top: 2px dashed #d6b98f;
+  padding-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.name-tag-submit-btn {
+  width: 100%;
+  min-height: 48px;
+  border: 3px solid #21352c;
+  border-radius: 10px;
+  background: #ffd75a;
+  box-shadow: 0 4px 0 #c89d27;
+  color: #21352c;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.name-tag-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #c89d27;
+}
+
+.name-tag-submit-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #c89d27;
+}
+
+/* --- 큰 글자 모드 범용 접근성 대응 --- */
+body.ui-large-text .receipt-paper { font-size: 17px !important; }
+body.ui-large-text .receipt-brand { font-size: 21px !important; }
+body.ui-large-text .receipt-info { font-size: 15px !important; }
+body.ui-large-text .receipt-total-row { font-size: 18px !important; }
+body.ui-large-text .receipt-question { font-size: 19px !important; }
+body.ui-large-text .name-tag-header strong { font-size: 26px !important; }
+body.ui-large-text .name-tag-header span { font-size: 17px !important; }
+body.ui-large-text .control-group label { font-size: 16px !important; }
+body.ui-large-text .control-group input[type="text"] { font-size: 18px !important; }
+body.ui-large-text .route-info { font-size: 19px !important; }
+body.ui-large-text .name-tag-preview-container label { font-size: 16px !important; }
+body.ui-large-text .tag-owner-name { font-size: 24px !important; }
+body.ui-large-text .name-tag-submit-btn { font-size: 20px !important; }
+

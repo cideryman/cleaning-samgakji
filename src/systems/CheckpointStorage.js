@@ -343,6 +343,8 @@ export default class CheckpointStorage {
       scene.setQuestMarker?.("recycleQuest", scene.yebiNpc, "!");
     } else if (quests.canQuest?.isActive) {
       scene.setQuestMarker?.("canQuest", scene.yebiNpc, "!");
+    } else if (scene.tutorialState === "completed" && !quests.canQuest?.isCompleted) {
+      scene.yebiQuestSystem?.markCanQuestAvailable();
     }
 
     if (scene.sunisuniQuestState === SunisuniQuestState.FOUND) {
