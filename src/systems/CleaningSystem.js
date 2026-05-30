@@ -15,6 +15,19 @@ export default class CleaningSystem {
       scene.canSweep = true;
     });
 
+    // Set animation lock flag during sweeping (300ms)
+    scene.isSweeping = true;
+    scene.time.delayedCall(300, () => {
+      scene.isSweeping = false;
+    });
+
+    // Play sweeping animation matching facing direction
+    const dirKey = scene.playerDirectionKey || "down";
+    const sweepAnimKey = `haenaem_sweep_${dirKey}_anim`;
+    if (scene.player && scene.anims.exists(sweepAnimKey)) {
+      scene.player.anims.play(sweepAnimKey, true);
+    }
+
     const multiplier = this.getSweepMultiplier();
     const width = GAME_CONFIG.baseSweepWidth * multiplier;
     const height = GAME_CONFIG.baseSweepHeight * multiplier;
@@ -54,13 +67,6 @@ export default class CleaningSystem {
     sweepFlash.setStrokeStyle(5, 0xf2c94c, 0.9);
     sweepFlash.setDepth(6);
 
-    const broomGhost = scene.add.image(x, y, "broom_item");
-    broomGhost.setDisplaySize(48, 48);
-    broomGhost.setAlpha(0.75);
-    broomGhost.setDepth(7);
-    broomGhost.setRotation((direction || scene.lastDirection).angle() + 0.8);
-    const broomGhostScale = broomGhost.scaleX;
-
     scene.tweens.add({
       targets: sweepFlash,
       alpha: 0,
@@ -69,17 +75,6 @@ export default class CleaningSystem {
       duration: 180,
       ease: "Cubic.easeOut",
       onComplete: () => sweepFlash.destroy(),
-    });
-
-    scene.tweens.add({
-      targets: broomGhost,
-      alpha: 0,
-      angle: broomGhost.angle + 38,
-      scaleX: broomGhostScale * 1.18,
-      scaleY: broomGhostScale * 1.18,
-      duration: 180,
-      ease: "Cubic.easeOut",
-      onComplete: () => broomGhost.destroy(),
     });
 
     for (let i = 0; i < 7; i += 1) {

@@ -247,7 +247,7 @@ export default class TutorialSystem {
 
     this.updateGuideText(
       "NPC와 대화하기",
-      "참 잘하셨어요! 보상으로 100원을 얻었습니다.\n이제 물음표가 떠 있는 예비(Yebi) NPC를 마우스로 클릭하여 대화해 보세요!"
+      "참 잘하셨어요! 보상으로 100원을 얻었습니다.\n이제 물음표가 떠 있는 여비(Yeobi) NPC를 마우스로 클릭하여 대화해 보세요!"
     );
 
     // Add gold marker over Yebi NPC
@@ -317,7 +317,7 @@ export default class TutorialSystem {
           hint = "오른쪽 끝 분리수거함 앞으로 다가가서 스페이스바(Space)를 눌러 쓰레기를 넣어보세요!";
           break;
         case TUTORIAL_STATE.NPC:
-          hint = "물음표가 떠 있는 예비 NPC를 마우스로 직접 클릭하여 대화를 걸어 보세요!";
+          hint = "물음표가 떠 있는 여비 NPC를 마우스로 직접 클릭하여 대화를 걸어 보세요!";
           break;
       }
     } else {

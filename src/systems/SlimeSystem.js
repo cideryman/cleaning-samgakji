@@ -50,6 +50,10 @@ export default class SlimeSystem {
     const normalizedType = trashType === "slime" ? "normal" : trashType;
     const textureKey = this.getRandomTrashTexture(normalizedType);
     const slime = scene.trashSlimes.create(x, y, textureKey);
+
+    // Set a random static frame to avoid awkward morphing animation
+    this.setRandomTrashFrame(slime, textureKey);
+
     const displaySize = this.getTrashDisplaySize(textureKey, normalizedType);
     slime.setDisplaySize(displaySize.width, displaySize.height);
     slime.refreshBody();
@@ -67,10 +71,13 @@ export default class SlimeSystem {
       duration: 220,
       ease: "Back.easeOut",
       onComplete: () => {
+        // Slow organic wind sway tween (gentle X/Y drift + subtle rotation)
         scene.tweens.add({
           targets: slime,
-          y: y - 5,
-          duration: 900,
+          x: x + Phaser.Math.Between(-8, 8),
+          y: y + Phaser.Math.Between(-6, 6),
+          rotation: Phaser.Math.FloatBetween(-0.12, 0.12),
+          duration: Phaser.Math.Between(1800, 2600),
           yoyo: true,
           repeat: -1,
           ease: "Sine.easeInOut",
@@ -83,12 +90,32 @@ export default class SlimeSystem {
   // 2️⃣ 친환경 특수 쓰레기용 스프라이트 생성기 (황금빛 틴트 + 150ms 분출 파티클)
   createSpecialTrashSprite(x, y, specialType) {
     const scene = this.scene;
+    let textureKey = "";
     let baseType = "normal";
-    if (specialType === "golden_can") baseType = "can";
-    else if (specialType === "label_pet") baseType = "plastic";
 
-    const textureKey = this.getRandomTrashTexture(baseType);
+    if (specialType === "golden_can") {
+      textureKey = "special_golden_can";
+      baseType = "can";
+    } else if (specialType === "label_pet") {
+      textureKey = "special_label_pet";
+      baseType = "plastic";
+    } else if (specialType === "bundled_paper") {
+      textureKey = "special_bundled_paper";
+      baseType = "normal";
+    } else {
+      textureKey = "trash_plastic"; // clean_bottle fallback
+      baseType = "plastic";
+    }
+
+    if (!scene.textures.exists(textureKey)) {
+      textureKey = this.getRandomTrashTexture(baseType);
+    }
+
     const slime = scene.trashSlimes.create(x, y, textureKey);
+
+    // Set a random static frame if it's a spritesheet texture
+    this.setRandomTrashFrame(slime, textureKey);
+
     const displaySize = this.getTrashDisplaySize(textureKey, baseType);
     
     // 특수 자원의 시각 인지 향상을 위해 1.15배 소폭 스케일 확대
@@ -98,9 +125,6 @@ export default class SlimeSystem {
     slime.setData("cleaned", false);
     slime.setData("trashType", baseType);
     slime.setData("specialType", specialType);
-
-    // 선명한 황금빛 틴트(색조) 강제 적용
-    slime.setTint(0xffeb3b);
 
     slime.setAlpha(0);
     slime.setScale(0.35);
@@ -113,11 +137,13 @@ export default class SlimeSystem {
       duration: 220,
       ease: "Back.easeOut",
       onComplete: () => {
-        // 부유 모션
+        // Slow organic wind sway tween (gentle X/Y drift + subtle rotation)
         scene.tweens.add({
           targets: slime,
-          y: y - 7,
-          duration: 750,
+          x: x + Phaser.Math.Between(-8, 8),
+          y: y + Phaser.Math.Between(-6, 6),
+          rotation: Phaser.Math.FloatBetween(-0.12, 0.12),
+          duration: Phaser.Math.Between(1800, 2600),
           yoyo: true,
           repeat: -1,
           ease: "Sine.easeInOut",
@@ -170,8 +196,12 @@ export default class SlimeSystem {
   }
 
   getTrashDisplaySize(textureKey, trashType) {
+    if (textureKey === "special_golden_can" || textureKey === "special_label_pet" || textureKey === "special_bundled_paper") {
+      return { width: 50, height: 50 }; // Increased from 42 to 50
+    }
+
     if (trashType === "plastic") {
-      return { width: 30, height: 34 };
+      return { width: 36, height: 41 }; // Increased from 30x34 to 36x41
     }
 
     if (trashType !== "can") {
@@ -182,9 +212,25 @@ export default class SlimeSystem {
     }
 
     if (textureKey === "trash_can_2") {
-      return { width: 24, height: 32 };
+      return { width: 29, height: 38 }; // Increased from 24x32 to 29x38
     }
 
-    return { width: 34, height: 23 };
+    return { width: 41, height: 28 }; // Increased from 34x23 to 41x28
+  }
+
+  setRandomTrashFrame(slime, textureKey) {
+    const frameCounts = {
+      trash_slime: 4,
+      trash_slime_2: 3,
+      trash_can: 3,
+      trash_can_2: 3,
+      trash_can_3: 4,
+      trash_plastic: 3
+    };
+    const maxFrames = frameCounts[textureKey] || 1;
+    if (maxFrames > 1) {
+      const randomFrame = Phaser.Math.Between(0, maxFrames - 1);
+      slime.setFrame(randomFrame);
+    }
   }
 }

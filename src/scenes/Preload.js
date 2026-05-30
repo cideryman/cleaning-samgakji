@@ -58,6 +58,7 @@ export default class Preload extends Phaser.Scene {
   finishCreate() {
     this.createMissingExternalTextures();
     this.createPlayerAnimations();
+    this.createTrashAnimations();
     this.createVehicleAnimations();
     this.createTrafficLightAnimations();
     this.createBlockTexture("clean_tile", 32, 32, "#f6fff3", "#6fcf97");
@@ -221,6 +222,51 @@ export default class Preload extends Phaser.Scene {
       });
     });
 
+    const sweepAnimations = [
+      ["haenaem_sweep_down_anim", "haenaem_sweep_down", 3, 8],
+      ["haenaem_sweep_up_anim", "haenaem_sweep_up", 3, 8],
+      ["haenaem_sweep_left_anim", "haenaem_sweep_left", 3, 8],
+      ["haenaem_sweep_right_anim", "haenaem_sweep_right", 3, 8],
+    ];
+
+    sweepAnimations.forEach(([animKey, textureKey, frameCount, frameRate]) => {
+      if (!this.textures.exists(textureKey) || this.anims.exists(animKey)) return;
+      const frames = [];
+      for (let i = 0; i < frameCount; i++) {
+        frames.push(i);
+      }
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(textureKey, { frames }),
+        frameRate,
+        repeat: 0,
+      });
+    });
+  }
+
+  createTrashAnimations() {
+    const trashAnimations = [
+      ["trash_slime_anim", "trash_slime", 4, 5],
+      ["trash_slime_2_anim", "trash_slime_2", 3, 4],
+      ["trash_can_anim", "trash_can", 3, 4],
+      ["trash_can_2_anim", "trash_can_2", 3, 4],
+      ["trash_can_3_anim", "trash_can_3", 4, 5],
+      ["trash_plastic_anim", "trash_plastic", 3, 4],
+    ];
+
+    trashAnimations.forEach(([animKey, textureKey, frameCount, frameRate]) => {
+      if (!this.textures.exists(textureKey) || this.anims.exists(animKey)) return;
+      const frames = [];
+      for (let i = 0; i < frameCount; i++) {
+        frames.push(i);
+      }
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(textureKey, { frames }),
+        frameRate,
+        repeat: -1,
+      });
+    });
   }
 
   createTrafficLightAnimations() {

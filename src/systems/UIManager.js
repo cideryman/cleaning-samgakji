@@ -296,7 +296,7 @@ export default class UIManager {
             <div class="stats-row-icon">💰</div>
             <div class="stats-row-info">
               <label>서울 여행 여비 모으기</label>
-              <span id="stats-money-text">0원 / 10,000원</span>
+              <span id="stats-money-text">0원 / 100,000원</span>
               <div class="stats-gauge-container">
                 <div id="stats-money-gauge" class="stats-gauge-fill"></div>
               </div>
@@ -322,7 +322,7 @@ export default class UIManager {
           <div class="stats-quests-card">
             <label>이웃 돕기 퀘스트 현황</label>
             <div class="stats-quest-item" id="quest-item-yebi">
-              <div class="stats-quest-checkbox"></div> 예비(Yebi)의 분리수거장 돕기
+              <div class="stats-quest-checkbox"></div> 여비(Yeobi)의 분리수거장 돕기
             </div>
             <div class="stats-quest-item" id="quest-item-jjook">
               <div class="stats-quest-checkbox"></div> 쭉쭉이(Jjook)의 지갑 찾아주기
@@ -383,7 +383,7 @@ export default class UIManager {
 
     const scene = this.scene;
     const currentMoney = scene.moneySystem?.money ?? 0;
-    const targetMoney = 10000;
+    const targetMoney = 100000;
     const moneyPercent = Math.min(100, (currentMoney / targetMoney) * 100);
 
     // 💰 여비 저축 게이지 렌더링

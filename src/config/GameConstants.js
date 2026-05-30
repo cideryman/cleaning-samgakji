@@ -13,7 +13,7 @@ export const GAME_CONFIG = {
   playerBodyHeight: 36,
   playerBodyOffsetX: 18,
   playerBodyOffsetY: 56,
-  slimeDisplaySize: 42,
+  slimeDisplaySize: 50,
   broomItemDisplaySize: 44,
   yebiNpcDisplaySize: 72,
   baseSweepWidth: 112,

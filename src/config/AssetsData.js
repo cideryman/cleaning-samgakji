@@ -1,10 +1,7 @@
 export const EXTERNAL_ASSETS = [
-  { key: "trash_slime", path: "assets/sprites/trash-slime.png", fallback: "createTrashSlimeTexture" },
-  { key: "trash_slime_2", path: "assets/sprites/trash-slime2.png" },
-  { key: "trash_can", path: "assets/sprites/trash-can.png", fallback: "createTrashCanTexture" },
-  { key: "trash_can_2", path: "assets/sprites/trash-can2.png" },
-  { key: "trash_can_3", path: "assets/sprites/trash-can3.png" },
-  { key: "trash_plastic", path: "assets/sprites/plastic.png" },
+  { key: "special_golden_can", path: "assets/sprites/organized-can.png" },
+  { key: "special_label_pet", path: "assets/sprites/organized-plastic.png" },
+  { key: "special_bundled_paper", path: "assets/sprites/organized-newspaper.png" },
   { key: "broom_item", path: "assets/sprites/broom.png", fallback: "createBroomTexture" },
   { key: "flower", path: "assets/sprites/flower.png", fallback: "createFlowerTexture" },
   { key: "recycle_bin_normal", path: "assets/recycling/normal.png" },
@@ -121,6 +118,16 @@ export const EXTERNAL_ASSETS = [
 ];
 
 export const SPRITESHEET_ASSETS = [
+  { key: "trash_slime", path: "assets/sprites/trash-slime.png", frameWidth: 128, frameHeight: 128 },
+  { key: "trash_slime_2", path: "assets/sprites/trash-slime2.png", frameWidth: 128, frameHeight: 128 },
+  { key: "trash_can", path: "assets/sprites/trash-can.png", frameWidth: 128, frameHeight: 128 },
+  { key: "trash_can_2", path: "assets/sprites/trash-can2.png", frameWidth: 128, frameHeight: 128 },
+  { key: "trash_can_3", path: "assets/sprites/trash-can3.png", frameWidth: 128, frameHeight: 128 },
+  { key: "trash_plastic", path: "assets/sprites/plastic.png", frameWidth: 128, frameHeight: 128 },
+  { key: "haenaem_sweep_down", path: "assets/sprites/haenaem-sweep-down.png", frameWidth: 90, frameHeight: 96 },
+  { key: "haenaem_sweep_up", path: "assets/sprites/haenaem-sweep-up.png", frameWidth: 90, frameHeight: 96 },
+  { key: "haenaem_sweep_left", path: "assets/sprites/haenaem-sweep-left.png", frameWidth: 90, frameHeight: 96 },
+  { key: "haenaem_sweep_right", path: "assets/sprites/haenaem-sweep-right.png", frameWidth: 90, frameHeight: 96 },
   { key: "haenaem_walk_down", path: "assets/sprites/haenaem-walk-down-new.png", frameWidth: 64, frameHeight: 96 },
   { key: "haenaem_walk_up", path: "assets/sprites/haenaem-walk-up-new.png", frameWidth: 64, frameHeight: 96 },
   { key: "haenaem_walk_left", path: "assets/sprites/haenaem-walk-left-new.png", frameWidth: 64, frameHeight: 96 },

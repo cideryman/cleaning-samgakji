@@ -113,9 +113,13 @@ export default class PlayerController {
     if (velocity.lengthSq() > 0) {
       velocity.normalize();
       scene.lastDirection.copy(velocity);
-      this.updatePlayerDirection(velocity, true);
+      if (!scene.isSweeping) {
+        this.updatePlayerDirection(velocity, true);
+      }
     } else {
-      this.stopWalkAnimation();
+      if (!scene.isSweeping) {
+        this.stopWalkAnimation();
+      }
     }
 
     const speed = this.getPlayerSpeed();
