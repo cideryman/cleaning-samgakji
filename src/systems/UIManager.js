@@ -101,8 +101,12 @@ export default class UIManager {
 
     this.scene.isShowingInventoryCaption = true;
     const message = this.scene.inventoryCaptionQueue.shift();
-    this.showSpeechBubble(this.scene.player, message, 760);
-    this.scene.time.delayedCall(780, () => {
+    
+    // 기존의 밋밋한 SpeechBubble(Phaser 3 text) 대신 premium HTML floating text로 개선!
+    this.showFloatingPopText(this.scene.player, message, false);
+
+    // 플로팅 애니메이션 지속시간(850ms)에 맞게 딜레이를 820ms로 최적 이격
+    this.scene.time.delayedCall(820, () => {
       this.scene.isShowingInventoryCaption = false;
       this.showNextInventoryCaption();
     });
@@ -324,7 +328,7 @@ export default class UIManager {
               <div class="stats-quest-checkbox"></div> 쭉쭉이(Jjook)의 지갑 찾아주기
             </div>
             <div class="stats-quest-item" id="quest-item-sunisuni">
-              <div class="stats-quest-checkbox"></div> 수니수니(Sunisuni) 짐싸기 돕기
+              <div class="stats-quest-checkbox"></div> 아픈 수니수니(Sunisuni) 돕기
             </div>
           </div>
         </div>
@@ -420,6 +424,64 @@ export default class UIManager {
     }
   }
 
+  // --- 2️⃣ 친환경 특수 쓰레기 습득 시 화면 중앙 오버레이 팝업 연출 ---
+  showSpecialWasteOverlay(specialType) {
+    if (!specialType) return;
+
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    // 이미 오버레이가 있다면 중복 제거
+    const existing = document.querySelector(".special-overlay-pop");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.className = "special-overlay-pop";
+
+    const config = {
+      golden_can: {
+        title: "✨ 황금 압축 캔 발견! ✨",
+        icon: "🥫",
+        desc: "찌그러뜨려서 부피를 줄인 황금 캔이에요!\n캔은 압축해서 버리면 재활용 가치가 훨씬 높아져요!"
+      },
+      clean_bottle: {
+        title: "✨ 깨끗이 헹군 빈 병 발견! ✨",
+        icon: "🍾",
+        desc: "음료를 다 비우고 깨끗하게 헹군 병이에요!\n안에 이물질이 없어야 100점짜리 재활용이 돼요!"
+      },
+      label_pet: {
+        title: "✨ 라벨 뗀 투명 페트 발견! ✨",
+        icon: "🥤",
+        desc: "비닐 라벨을 말끔하게 떼어낸 투명 페트병이에요!\n라벨을 분리해야 새 페트병으로 다시 태어날 수 있어요!"
+      },
+      bundled_paper: {
+        title: "✨ 차곡차곡 묶인 신문지 발견! ✨",
+        icon: "📰",
+        desc: "바람에 흩날리지 않게 끈으로 꼭 묶은 신문지에요!\n종이류는 잘 모아서 묶어 배출하는 것이 약속이에요!"
+      }
+    };
+
+    const info = config[specialType] || {
+      title: "✨ 특수 재활용 자원 발견! ✨",
+      icon: "♻️",
+      desc: "지구를 지키는 훌륭한 재활용품을 발견했습니다!"
+    };
+
+    overlay.innerHTML = `
+      <div class="special-overlay-title">${info.title}</div>
+      <div class="special-overlay-icon">${info.icon}</div>
+      <div class="special-overlay-desc">${info.desc}</div>
+      <div class="special-overlay-reward">+300원 보상 획득! 💰</div>
+    `;
+
+    stage.appendChild(overlay);
+
+    // 3.0초 뒤 자동으로 엘리먼트 제거 (가독성 향상)
+    window.setTimeout(() => {
+      overlay.remove();
+    }, 3000);
+  }
+
   // --- 씬 셧다운 시 메모리 누수 방지용 DOM 파괴자 ---
   destroyRestStatsElements() {
     if (this.restBtnEl) {
@@ -430,6 +492,7 @@ export default class UIManager {
       this.restModalEl.remove();
       this.restModalEl = null;
     }
+    document.querySelectorAll(".special-overlay-pop")?.forEach((el) => el.remove());
     if (this.escKeyRefreshEvent) {
       this.escKeyRefreshEvent.destroy();
     }

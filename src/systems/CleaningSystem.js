@@ -124,10 +124,10 @@ export default class CleaningSystem {
     }
     this.addTrashToRecycleInventory(trashType, specialType);
 
-    // 보상 지급
+    // 보상 지급 (특수 친환경 쓰레기는 +300원으로 상향 적용)
     let reward = this.getTrashCleanReward();
     if (isSpecial) {
-      reward = 150; // 특수 쓰레기는 +150원
+      reward = 300;
     }
     scene.moneySystem.addMoney(reward);
 
@@ -137,26 +137,11 @@ export default class CleaningSystem {
       scene.playCleanSound();
     }
 
-    // 1️⃣ 쓰레기 반응 Floating Pop Text 연출 트리거
-    let popText = "깔끔해!";
+    // 1️⃣ 일반 쓰레기 반응 텍스트는 1번 조치에 따라 전면 배제 (머리 위 혼잡 방지)
+    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시에만 화면 중앙에 오버레이 팝업 노출!
     if (isSpecial) {
-      const labels = {
-        golden_can: "황금 압축 캔! (+150원)",
-        clean_bottle: "깨끗이 헹군 병! (+150원)",
-        label_pet: "라벨 뗀 투명 페트! (+150원)",
-        bundled_paper: "차곡차곡 묶음 신문지! (+150원)",
-      };
-      popText = labels[specialType] || "특수 자원 발견! (+150원)";
-    } else {
-      const normalLabels = {
-        normal: "깔끔해!",
-        can: "재활용 완료!",
-        plastic: "좋아!",
-      };
-      popText = normalLabels[trashType] || "깔끔해!";
+      scene.uiManager?.showSpecialWasteOverlay(specialType);
     }
-
-    scene.uiManager?.showFloatingPopText(slime, popText, isSpecial);
 
     this.showSlimePop(slime);
     this.showCleanFeedback(slimeX, slimeY, isCanTrash || isSpecial);
@@ -202,6 +187,7 @@ export default class CleaningSystem {
       captionText = `${labelByType[normalizedType]} +1`;
     }
     
+    // 토스트 캡션이 UIManager의 순차적인 HTML Floating Pop Text 엔진으로 안전 배출됩니다.
     scene.queueInventoryCaption(captionText);
   }
 
@@ -277,10 +263,10 @@ export default class CleaningSystem {
     }
     this.addTrashToRecycleInventory(trashType, specialType);
 
-    // 보상 지급
+    // 보상 지급 (특수 친환경 쓰레기는 +300원으로 상향 적용)
     let reward = this.getTrashCleanReward();
     if (isSpecial) {
-      reward = 150;
+      reward = 300;
     }
     scene.moneySystem.addMoney(reward);
 
@@ -290,26 +276,11 @@ export default class CleaningSystem {
       scene.playCleanSound();
     }
 
-    // 1️⃣ 쓰레기 반응 Floating Pop Text 트리거
-    let popText = "깔끔해!";
+    // 1️⃣ 일반 쓰레기 반응 텍스트는 전면 배제 (머리 위 혼잡 방지)
+    // 2️⃣ 단, 친환경 특수 쓰레기 습득 시에만 화면 중앙에 오버레이 팝업 노출!
     if (isSpecial) {
-      const labels = {
-        golden_can: "황금 압축 캔! (+150원)",
-        clean_bottle: "깨끗이 헹군 병! (+150원)",
-        label_pet: "라벨 뗀 투명 페트! (+150원)",
-        bundled_paper: "차곡차곡 묶음 신문지! (+150원)",
-      };
-      popText = labels[specialType] || "특수 자원 발견! (+150원)";
-    } else {
-      const normalLabels = {
-        normal: "깔끔해!",
-        can: "재활용 완료!",
-        plastic: "좋아!",
-      };
-      popText = normalLabels[trashType] || "깔끔해!";
+      scene.uiManager?.showSpecialWasteOverlay(specialType);
     }
-
-    scene.uiManager?.showFloatingPopText(trash, popText, isSpecial);
 
     this.showCleanFeedback(trash.x, trash.y, isCanTrash || isSpecial);
     this.showSlimePop(trash);
