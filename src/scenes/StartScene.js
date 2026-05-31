@@ -25,7 +25,14 @@ export default class StartScene extends Phaser.Scene {
   create() {
     document.body.classList.add("start-screen");
     this.resizeForStartScreen();
-    this.registry.set("soundEnabled", this.registry.get("soundEnabled") !== false);
+    let savedSoundEnabled = true;
+    try {
+      const stored = window.localStorage?.getItem("samgakji_sound_enabled");
+      if (stored !== null) {
+        savedSoundEnabled = stored === "true";
+      }
+    } catch (e) {}
+    this.registry.set("soundEnabled", savedSoundEnabled);
 
     let savedTextSizeLarge = false;
     try {
@@ -289,6 +296,9 @@ export default class StartScene extends Phaser.Scene {
   toggleSound() {
     const nextValue = this.registry.get("soundEnabled") === false;
     this.registry.set("soundEnabled", nextValue);
+    try {
+      window.localStorage?.setItem("samgakji_sound_enabled", nextValue ? "true" : "false");
+    } catch (e) {}
     const soundOption = this.options.find((option) => option.kind === "sound");
     soundOption?.text.setText(this.getSoundLabel());
     this.updateSelection();

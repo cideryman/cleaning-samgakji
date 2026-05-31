@@ -116,6 +116,10 @@ export default class PlayScene extends Phaser.Scene {
     const isLargeText = this.registry.get("textSizeLarge") === true || window.localStorage?.getItem("samgakji_text_size_large") === "true";
     document.body.classList.toggle("ui-large-text", isLargeText);
 
+    const isSound = this.registry.get("soundEnabled") !== false && window.localStorage?.getItem("samgakji_sound_enabled") !== "false";
+    this.registry.set("soundEnabled", isSound);
+    this.sound.mute = !isSound;
+
     this.htmlUiBindingSystem.lookupElements();
     this.htmlUiBindingSystem.bind();
 
@@ -290,6 +294,7 @@ export default class PlayScene extends Phaser.Scene {
     this.separateNpcSprites();
     this.updateQuestMarkers();
     this.updateWorldDepths();
+    this.updateBehindObjectsOpacity();
   }
 
   // ---------------------------------------------------------------------------
@@ -326,6 +331,64 @@ export default class PlayScene extends Phaser.Scene {
     this.trashSlimes?.children?.iterate((trash) => {
       if (trash?.active && !trash.getData("cleaned")) {
         this.setDepthFromY(trash, -0.05);
+      }
+    });
+  }
+
+  updateBehindObjectsOpacity() {
+    if (!this.player || !this.player.active) return;
+    const playerBounds = this.player.getBounds();
+    const transparencyCandidates = [];
+
+    if (this.mapObjects) {
+      Object.values(this.mapObjects).forEach((obj) => {
+        if (obj && obj.active && obj.visible && typeof obj.getBounds === "function") {
+          transparencyCandidates.push(obj);
+        }
+      });
+    }
+
+    if (this.vendingMachine && this.vendingMachine.active && this.vendingMachine.visible && typeof this.vendingMachine.getBounds === "function") {
+      transparencyCandidates.push(this.vendingMachine);
+    }
+
+    transparencyCandidates.forEach((obj) => {
+      const objBounds = obj.getBounds();
+      const behindZone = new Phaser.Geom.Rectangle(
+        objBounds.x,
+        objBounds.y,
+        objBounds.width,
+        objBounds.height * 0.75
+      );
+
+      if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, behindZone)) {
+        if (obj.alpha !== 0.5 && !obj.getData("isTransitioningToSemiTransparent")) {
+          obj.setData("isTransitioningToSemiTransparent", true);
+          obj.setData("isTransitioningToOpaque", false);
+          this.tweens.add({
+            targets: obj,
+            alpha: 0.5,
+            duration: 150,
+            overwrite: true,
+            onComplete: () => {
+              obj.setData("isTransitioningToSemiTransparent", false);
+            }
+          });
+        }
+      } else {
+        if (obj.alpha !== 1.0 && !obj.getData("isTransitioningToOpaque")) {
+          obj.setData("isTransitioningToOpaque", true);
+          obj.setData("isTransitioningToSemiTransparent", false);
+          this.tweens.add({
+            targets: obj,
+            alpha: 1.0,
+            duration: 150,
+            overwrite: true,
+            onComplete: () => {
+              obj.setData("isTransitioningToOpaque", false);
+            }
+          });
+        }
       }
     });
   }

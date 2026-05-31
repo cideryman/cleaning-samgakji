@@ -23,6 +23,7 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleTts = document.querySelector("#setting-toggle-tts");
     scene.settingToggleJoystick = document.querySelector("#setting-toggle-joystick");
     scene.settingToggleFullscreen = document.querySelector("#setting-toggle-fullscreen");
+    scene.settingToggleSound = document.querySelector("#setting-toggle-sound");
 
     scene.completeOverlay = document.querySelector("#completeOverlay");
     scene.specialToast = document.querySelector("#specialToast");
@@ -112,6 +113,27 @@ export default class HtmlUiBindingSystem {
       window.localStorage?.setItem("samgakji_tts_enabled", tts ? "true" : "false");
       this.updateLabels();
     };
+    scene.settingToggleSoundHandler = () => {
+      const soundEnabled = scene.registry.get("soundEnabled") !== false;
+      const nextSound = !soundEnabled;
+      scene.registry.set("soundEnabled", nextSound);
+      window.localStorage?.setItem("samgakji_sound_enabled", nextSound ? "true" : "false");
+      
+      if (!nextSound) {
+        scene.sound.mute = true;
+        scene.audioManager?.stopChapterMusic();
+        scene.audioManager?.stopSceneMusic({ resumeChapter: false });
+      } else {
+        scene.sound.mute = false;
+        if (scene.audioContext?.state === "suspended") {
+          scene.audioContext.resume();
+        }
+        if (scene.scene.key === "PlayScene") {
+          scene.audioManager?.startChapterMusic();
+        }
+      }
+      this.updateLabels();
+    };
     scene.settingToggleJoystickHandler = () => {
       const joy = scene.registry.get("joystickEnabled") !== false;
       scene.registry.set("joystickEnabled", !joy);
@@ -146,6 +168,7 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleTts?.addEventListener("click", scene.settingToggleTtsHandler);
     scene.settingToggleJoystick?.addEventListener("click", scene.settingToggleJoystickHandler);
     scene.settingToggleFullscreen?.addEventListener("click", scene.settingToggleFullscreenHandler);
+    scene.settingToggleSound?.addEventListener("click", scene.settingToggleSoundHandler);
 
     document.addEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.addEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
@@ -179,6 +202,7 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleTts?.removeEventListener("click", scene.settingToggleTtsHandler);
     scene.settingToggleJoystick?.removeEventListener("click", scene.settingToggleJoystickHandler);
     scene.settingToggleFullscreen?.removeEventListener("click", scene.settingToggleFullscreenHandler);
+    scene.settingToggleSound?.removeEventListener("click", scene.settingToggleSoundHandler);
 
     document.removeEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.removeEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
@@ -263,6 +287,11 @@ export default class HtmlUiBindingSystem {
       const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
       scene.settingToggleFullscreen.textContent = isFull ? "전체화면: 켜기" : "전체화면: 끄기";
       scene.settingToggleFullscreen.classList.toggle("is-off", !isFull);
+    }
+    if (scene.settingToggleSound) {
+      const isSound = scene.registry.get("soundEnabled") !== false;
+      scene.settingToggleSound.textContent = isSound ? "소리: 켜기" : "소리: 끄기";
+      scene.settingToggleSound.classList.toggle("is-off", !isSound);
     }
   }
 }
