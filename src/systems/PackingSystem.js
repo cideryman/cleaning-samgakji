@@ -237,12 +237,8 @@ export default class PackingSystem {
     const pageItems = items.slice(pageStart, pageStart + pageSize);
     const grid = document.createElement("div");
     grid.className = "clothing-shop-grid packing-grid";
-    body.innerHTML = `
-      <div class="clothing-shop-category-title">
-        <strong>${category.label}</strong>
-        <span>선택 ${selectedCount}개 · ${scene.packingPageIndex + 1}/${pageCount}</span>
-      </div>
-    `;
+    body.innerHTML = "";
+    grid.setAttribute("aria-label", `${category.label} 선택 ${selectedCount}개, ${scene.packingPageIndex + 1}/${pageCount}`);
     body.appendChild(grid);
 
     pageItems.forEach((item) => {
@@ -270,7 +266,6 @@ export default class PackingSystem {
     const nextLabel = (isLastCategory && isLastPage) ? "가방 확인하기" : "다음";
     
     this.addFooterButton(footer, nextLabel, "next-step");
-    this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
 
@@ -311,7 +306,6 @@ export default class PackingSystem {
 
     this.addFooterButton(footer, "이전", "prev-step", "secondary");
     this.addFooterButton(footer, "짐싸기 완료", "complete");
-    this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
 

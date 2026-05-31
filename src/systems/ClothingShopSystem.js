@@ -507,13 +507,16 @@ export default class ClothingShopSystem {
       scene.showQuestToast(`정답입니다! 거스름돈 ${correctChange.toLocaleString()}원을 받았습니다.`, 4000);
 
       this.close();
-      scene.clearInteriorScene();
 
       if (scene.clothesQuestState === "completed") {
+        scene.clearInteriorScene();
         scene.saveCheckpoint("clothes_extra_items_bought");
         return;
       }
-      scene.completeClothesShoppingQuest();
+
+      // Let the DOM receipt modal fully close before the quest dialogue/camera flow starts.
+      // This avoids a same-frame clash between the shop overlay, interior scene, and Jjook dialogue.
+      scene.time.delayedCall(120, () => scene.completeClothesShoppingQuest());
     } else {
       scene.playTone?.({ frequency: 180, duration: 0.2, type: "sawtooth", volume: 0.05 });
       scene.showQuestToast(`아닙니다! 다시 계산해 볼까요? (${paidCash.toLocaleString()} - ${totalPrice.toLocaleString()} = ?)`, 5000);

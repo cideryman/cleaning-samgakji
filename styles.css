@@ -4156,3 +4156,43 @@ body.large-text .settings-ok-btn { font-size: 22px; min-height: 56px; }
 .edu-guide-modal {
   overflow-y: hidden !important;
 }
+
+/* --------------------------------------------------------------------------
+   Mobile overlay and right-side HUD safety overrides
+   -------------------------------------------------------------------------- */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Keep the paper-bag HUD away from the top-right settings button on short phones. */
+  .travel-prep-hud {
+    right: calc(max(8px, env(safe-area-inset-right)) + 86px) !important;
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 82px) !important;
+  }
+}
+
+@media (pointer: coarse), (max-height: 500px) {
+  .name-tag-modal,
+  .clothing-shop-modal,
+  .packing-modal,
+  .rest-stats-modal,
+  .edu-guide-modal {
+    align-items: flex-start !important;
+    justify-items: center !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    touch-action: pan-y;
+  }
+
+  .name-tag-panel,
+  .clothing-shop-panel,
+  .packing-panel,
+  .rest-stats-panel,
+  .edu-guide-panel {
+    max-height: calc(100svh - 28px) !important;
+    max-height: calc(100dvh - 28px) !important;
+    min-height: 0;
+    touch-action: pan-y;
+  }
+}
