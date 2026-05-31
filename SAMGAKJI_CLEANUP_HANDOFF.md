@@ -449,3 +449,27 @@
 ### 다음 안전 리팩토링 후보
 오디오 구조는 정리되었으므로, 다음 단계는 `PlayScene.js`의 맵 오브젝트 배치/레이어 관련 코드를 `MapObjectFactory` 또는 기존 `TiledMapSystem` 보조 함수로 조금씩 옮기는 것이 좋습니다. 새 기능 추가보다 먼저 이 작업을 하면 Tiled 편집성과 `PlayScene.js` 경량화를 동시에 얻을 수 있습니다.
 
+---
+
+## 2026-06-01 안전 리팩토링 Step 1: 오브젝트 투명화 시스템 분리
+
+`PlayScene.js`에 남아 있던 큰 오브젝트 뒤 가림 방지(X-ray) 로직을 별도 시스템으로 이동했습니다.
+
+### 변경 내용
+- `src/systems/ObjectVisibilitySystem.js` 추가.
+- 기존 `PlayScene.updateBehindObjectsOpacity()` 본문을 `ObjectVisibilitySystem.updateBehindObjectsOpacity()`로 이동.
+- `PlayScene.js`는 `ObjectVisibilitySystem` 인스턴스 생성과 update 루프 호출만 담당하도록 축소.
+
+### 결과
+- `PlayScene.js`: 약 2301줄에서 약 2251줄로 감소.
+- 동작 의도는 기존과 동일합니다. 플레이어가 나무, 건물, 자판기 같은 큰 오브젝트 뒤쪽 영역과 겹치면 해당 오브젝트가 150ms 동안 `alpha: 0.5`로 부드럽게 투명해지고, 벗어나면 다시 `alpha: 1`로 복구됩니다.
+
+### 검증
+- `node --check src/scenes/PlayScene.js` 통과.
+- `node --check src/systems/ObjectVisibilitySystem.js` 통과.
+- 다음 단계에서 전체 `npm run build` 검증을 함께 수행합니다.
+
+### 다음 후보
+- `PlayScene.js`의 NPC 랜덤 말풍선/기억 대사(`triggerRandomNpcBubble`, `getNpcRememberSpeech`)를 `NpcAmbientSystem`으로 분리하면 추가로 70줄 안팎을 안전하게 줄일 수 있습니다.
+- 그 다음 `NPC_ROAM_CONFIG`와 로밍 함수 묶음을 `NpcRoamingSystem`으로 옮기면 효과가 큽니다. 단, 이 구간은 NPC 퀘스트 상태와 연결되어 있어 한 번에 옮기지 말고 함수 단위로 진행해야 합니다.
+

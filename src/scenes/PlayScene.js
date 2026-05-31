@@ -21,6 +21,7 @@ import RoadTrafficSystem from "../systems/RoadTrafficSystem.js";
 import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
+import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
 import TiledMapSystem from "../systems/TiledMapSystem.js";
 import PathfindingSystem from "../systems/PathfindingSystem.js";
 import UIManager from "../systems/UIManager.js";
@@ -95,6 +96,7 @@ export default class PlayScene extends Phaser.Scene {
     this.sceneControlSystem = null;
     this.interiorSceneSystem = null;
     this.consumableSystem = null;
+    this.objectVisibilitySystem = null;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
     this.audioContext = null;
@@ -137,6 +139,7 @@ export default class PlayScene extends Phaser.Scene {
     this.interiorSceneSystem = new InteriorSceneSystem(this);
     this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
+    this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
       DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
@@ -294,7 +297,7 @@ export default class PlayScene extends Phaser.Scene {
     this.separateNpcSprites();
     this.updateQuestMarkers();
     this.updateWorldDepths();
-    this.updateBehindObjectsOpacity();
+    this.objectVisibilitySystem?.updateBehindObjectsOpacity();
   }
 
   // ---------------------------------------------------------------------------
@@ -331,64 +334,6 @@ export default class PlayScene extends Phaser.Scene {
     this.trashSlimes?.children?.iterate((trash) => {
       if (trash?.active && !trash.getData("cleaned")) {
         this.setDepthFromY(trash, -0.05);
-      }
-    });
-  }
-
-  updateBehindObjectsOpacity() {
-    if (!this.player || !this.player.active) return;
-    const playerBounds = this.player.getBounds();
-    const transparencyCandidates = [];
-
-    if (this.mapObjects) {
-      Object.values(this.mapObjects).forEach((obj) => {
-        if (obj && obj.active && obj.visible && typeof obj.getBounds === "function") {
-          transparencyCandidates.push(obj);
-        }
-      });
-    }
-
-    if (this.vendingMachine && this.vendingMachine.active && this.vendingMachine.visible && typeof this.vendingMachine.getBounds === "function") {
-      transparencyCandidates.push(this.vendingMachine);
-    }
-
-    transparencyCandidates.forEach((obj) => {
-      const objBounds = obj.getBounds();
-      const behindZone = new Phaser.Geom.Rectangle(
-        objBounds.x,
-        objBounds.y,
-        objBounds.width,
-        objBounds.height * 0.75
-      );
-
-      if (Phaser.Geom.Intersects.RectangleToRectangle(playerBounds, behindZone)) {
-        if (obj.alpha !== 0.5 && !obj.getData("isTransitioningToSemiTransparent")) {
-          obj.setData("isTransitioningToSemiTransparent", true);
-          obj.setData("isTransitioningToOpaque", false);
-          this.tweens.add({
-            targets: obj,
-            alpha: 0.5,
-            duration: 150,
-            overwrite: true,
-            onComplete: () => {
-              obj.setData("isTransitioningToSemiTransparent", false);
-            }
-          });
-        }
-      } else {
-        if (obj.alpha !== 1.0 && !obj.getData("isTransitioningToOpaque")) {
-          obj.setData("isTransitioningToOpaque", true);
-          obj.setData("isTransitioningToSemiTransparent", false);
-          this.tweens.add({
-            targets: obj,
-            alpha: 1.0,
-            duration: 150,
-            overwrite: true,
-            onComplete: () => {
-              obj.setData("isTransitioningToOpaque", false);
-            }
-          });
-        }
       }
     });
   }
