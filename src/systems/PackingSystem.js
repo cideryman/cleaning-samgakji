@@ -241,7 +241,12 @@ export default class PackingSystem {
     button.className = `clothing-shop-footer-button packing-option is-${tone}`;
     button.dataset.action = action;
     button.textContent = label;
-    button.addEventListener("click", () => this.handleAction(action));
+    // iOS Safari standalone 300ms 터치 씹힘 및 딜레이 방지를 위한 pointerdown 이벤트 적용
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.handleAction(action);
+    });
     footer.appendChild(button);
     return button;
   }
@@ -441,6 +446,13 @@ export default class PackingSystem {
       scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
       return;
     }
+
+    // 모달 상하 겹침 비주얼 버그를 완전히 차단하기 위해 이름표 팝업 전에 기존 가방 팝업 DOM 제거
+    if (scene.packingModal) {
+      scene.packingModal.remove();
+      scene.packingModal = null;
+    }
+
     this.openNameTagCustomizer();
   }
 

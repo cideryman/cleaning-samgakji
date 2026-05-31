@@ -712,6 +712,7 @@ body.prologue-scene-active #game {
   background: #fff7e6;
   box-shadow: 0 8px 0 rgba(91, 70, 54, 0.3);
   font-family: inherit;
+  overflow-y: auto;
 }
 
 .clothing-shop-header {
@@ -3835,6 +3836,24 @@ body.ui-large-text .name-tag-submit-btn { font-size: 20px !important; }
     font-size: 13px !important;
     margin: 3px 0 !important;
   }
+
+  /* 모바일 랜드스케이프 높이 잘림 완벽 방어용 강제 스크롤 및 패딩 수축 */
+  .clothing-shop-panel {
+    max-height: 88vh !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    overflow-y: auto !important;
+  }
+
+  /* 이름표 모달 뷰포트 높이 세부 튜닝 */
+  .name-tag-modal {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    padding-right: 6px;
+  }
+  .name-tag-panel {
+    max-height: none !important;
+  }
 }
 
 /* 쇼핑 및 짐싸기 인라인 경고창 스타일 */
@@ -3864,6 +3883,19 @@ body.ui-large-text .name-tag-submit-btn { font-size: 20px !important; }
 
 body.ui-large-text .shop-alert-box {
   font-size: 16px !important;
+}
+
+/* iOS 돔 버튼 터치 최적화 및 씹힘 방지 스타일 */
+button, 
+.clothing-shop-footer-button, 
+.clothing-shop-item, 
+.clothing-shop-review-item, 
+.travel-prep-fan-item, 
+.name-tag-submit-btn,
+.color-btn {
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+  cursor: pointer !important;
 }
 
 

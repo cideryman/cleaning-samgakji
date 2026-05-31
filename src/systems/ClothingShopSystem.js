@@ -254,7 +254,12 @@ export default class ClothingShopSystem {
     button.className = `clothing-shop-footer-button clothing-shop-option is-${tone}`;
     button.dataset.action = action;
     button.textContent = label;
-    button.addEventListener("click", () => this.handleAction(action));
+    // iOS Safari 300ms 탭 딜레이 및 인풋 충돌 방지를 위해 pointerdown 바인딩 처리
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.handleAction(action);
+    });
     footer.appendChild(button);
     return button;
   }
@@ -382,10 +387,16 @@ export default class ClothingShopSystem {
       return;
     }
 
-    // 낸 돈 계산 (10,000원 단위 올림)
-    let paidCash = Math.ceil(totalPrice / 10000) * 10000;
+    // 낸 돈 계산 (소지금 balance 한도 내에서 totalPrice보다 큰 5,000원 단위 현실적인 지불금 결정)
+    let paidCash = Math.ceil(totalPrice / 5000) * 5000;
     if (paidCash === totalPrice) {
-      paidCash += 10000; // 항상 거스름돈이 있도록 보장
+      paidCash += 5000; // 항상 거스름돈이 있도록 보장
+    }
+    // 소지금을 초과하는 경우 1,000원 단위로 낮추어 안전성 확보
+    if (paidCash > balance) {
+      paidCash = Math.ceil(totalPrice / 1000) * 1000;
+      if (paidCash === totalPrice) paidCash += 1000;
+      if (paidCash > balance) paidCash = balance; // 완전히 털어서 딱 지불하는 한도 설정
     }
 
     scene.clothingShopReceiptData = {
@@ -447,9 +458,12 @@ export default class ClothingShopSystem {
       </div>
     `;
 
-    // 보기 옵션 만들기
-    const wrong1 = correctChange + (correctChange > 5000 ? -5000 : 5000);
-    const wrong2 = correctChange + 10000;
+    // 보기 옵션 만들기 (정답에 천원 단위를 가감하여 출제)
+    let wrong1 = correctChange + 2000;
+    if (correctChange - 2000 > 0) {
+      wrong1 = correctChange - 2000;
+    }
+    const wrong2 = correctChange + 3000;
     const choices = Array.from(new Set([correctChange, wrong1, wrong2])).sort((a, b) => a - b);
 
     footer.innerHTML = "";
