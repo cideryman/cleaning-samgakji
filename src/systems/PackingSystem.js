@@ -60,6 +60,9 @@ export default class PackingSystem {
     scene.packingStepIndex = 0;
     scene.packingPageIndex = 0;
     scene.packingMode = "category";
+
+    // Restore focus to Phaser game canvas
+    scene.game.canvas?.focus?.();
   }
 
   showAlert(message) {

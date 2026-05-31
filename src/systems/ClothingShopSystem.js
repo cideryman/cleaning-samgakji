@@ -49,6 +49,9 @@ export default class ClothingShopSystem {
     scene.selectedClothingShopIndex = 0;
     scene.clothingShopStepIndex = 0;
     scene.clothingShopMode = "category";
+
+    // Restore focus to Phaser game canvas
+    scene.game.canvas?.focus?.();
   }
 
   showAlert(message) {

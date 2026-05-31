@@ -196,6 +196,9 @@ export default class DialogueSystem {
     const onComplete = this.onComplete;
     this.onComplete = null;
     if (runComplete) onComplete?.();
+
+    // Restore focus to Phaser game canvas
+    this.scene.game.canvas?.focus?.();
   }
 
   playTTS(name, text) {

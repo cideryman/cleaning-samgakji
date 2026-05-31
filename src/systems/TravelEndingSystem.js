@@ -1,5 +1,6 @@
 import { GAME_CONFIG } from "../config/GameConstants.js";
 import { SceneState } from "../config/SceneState.js";
+import { EXTERNAL_ASSETS } from "../config/AssetsData.js";
 
 const TRAVEL_ALLOWANCE_REWARD = 20000;
 
@@ -374,6 +375,18 @@ export default class TravelEndingSystem {
       // Sound representing hanging up
       scene.audioManager.playTone({ frequency: 440.00, duration: 0.25, type: "sine", volume: 0.03 });
       scene.time.delayedCall(400, () => {
+        // Preload ending background texture if it doesn't exist to prevent black screen race condition
+        if (!scene.textures.exists("ending_chapter1_final")) {
+          const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
+          if (asset) {
+            scene.load.image("ending_chapter1_final", asset.path);
+            scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+              this.transitionWithFade(() => this.finishChapterOneEnding());
+            });
+            scene.load.start();
+            return;
+          }
+        }
         this.transitionWithFade(() => this.finishChapterOneEnding());
       });
     });
