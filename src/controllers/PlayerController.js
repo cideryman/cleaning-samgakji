@@ -6,6 +6,7 @@ export default class PlayerController {
     this.movePath = [];
     this.currentPathIndex = 0;
     this.cleanTarget = null;
+    this.interactionTarget = null;
   }
 
   createInput() {
@@ -83,6 +84,7 @@ export default class PlayerController {
       scene.isMouseMoveHeld = false;
       this.movePath = [];
       this.cleanTarget = null; // keyboard input overrides auto clean target!
+      this.interactionTarget = null;
     } else {
       // 실시간 거리 체크로 청소 사정거리 내 진입 시 자동 정지 및 쓸기 트리거
       if (this.cleanTarget && this.cleanTarget.active && !this.cleanTarget.getData("cleaned")) {
@@ -119,6 +121,9 @@ export default class PlayerController {
               // A* 주행이 완전히 끝난 시점에 거리 미진입 등으로 남아있던 타겟 자동 청소 최종 확인 트리거!
               if (this.cleanTarget && this.cleanTarget.active && !this.cleanTarget.getData("cleaned")) {
                 this.autoSweepCleanTarget();
+              }
+              if (this.interactionTarget) {
+                this.autoTriggerInteractionTarget();
               }
             }
           } else {
@@ -274,6 +279,7 @@ export default class PlayerController {
 
   startFloatingJoystick(event) {
     const scene = this.scene;
+    if (scene.registry.get("joystickEnabled") === false) return;
     if (scene.isMissionComplete || scene.activeJoystickPointerId !== null) return;
     if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!this.isJoystickStartEvent(event)) return;
@@ -397,5 +403,28 @@ export default class PlayerController {
     this.movePath = [];
     this.currentPathIndex = 0;
     this.cleanTarget = null;
+    this.interactionTarget = null;
+  }
+
+  autoTriggerInteractionTarget() {
+    const scene = this.scene;
+    const target = this.interactionTarget;
+    this.interactionTarget = null;
+
+    if (!target) return;
+
+    if (target === "hospital" && scene.interactionSystem?.isPlayerNearHospitalDoor()) {
+      scene.handleHospitalInteraction();
+    } else if (target === "pharmacy" && scene.interactionSystem?.isPlayerNearPharmacyDoor()) {
+      scene.handlePharmacyInteraction();
+    } else if (target === "clothing_store" && scene.interactionSystem?.isPlayerNearClothingStoreDoor()) {
+      scene.handleClothingStoreInteraction();
+    } else if (target === "vending" && scene.interactionSystem?.isPlayerNearVendingMachine()) {
+      scene.handleVendingMachineInteraction();
+    } else if (target.startsWith("bin_")) {
+      const type = target.replace("bin_", "");
+      const binData = scene.recycleBins?.find(b => b.type === type);
+      scene.yebiQuestSystem?.depositRecycleItem(type, binData?.bin);
+    }
   }
 }

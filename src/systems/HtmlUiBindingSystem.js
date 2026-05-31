@@ -14,7 +14,16 @@ export default class HtmlUiBindingSystem {
     scene.bacchusTimerEl = document.querySelector("#bacchusTimer");
     scene.movePad = document.querySelector("#movePad");
     scene.moveKnob = document.querySelector("#moveKnob");
-    scene.fullscreenButton = document.querySelector("#fullscreenButton");
+    
+    scene.settingsButton = document.querySelector("#settingsButton");
+    scene.settingsModal = document.querySelector("#settingsModal");
+    scene.settingsClose = document.querySelector("#settings-close");
+    scene.settingsOk = document.querySelector("#settings-ok");
+    scene.settingToggleText = document.querySelector("#setting-toggle-text");
+    scene.settingToggleTts = document.querySelector("#setting-toggle-tts");
+    scene.settingToggleJoystick = document.querySelector("#setting-toggle-joystick");
+    scene.settingToggleFullscreen = document.querySelector("#setting-toggle-fullscreen");
+
     scene.completeOverlay = document.querySelector("#completeOverlay");
     scene.specialToast = document.querySelector("#specialToast");
     scene.speedBuffHudEl = document.querySelector("#speedBuffHud");
@@ -32,6 +41,11 @@ export default class HtmlUiBindingSystem {
     scene.inventoryPlasticCountEl = document.querySelector("#inventoryPlasticCount");
     scene.inventoryCanCountEl = document.querySelector("#inventoryCanCount");
     scene.restartButton = document.querySelector("#restartButton");
+
+    // Thin Bridge wraps
+    scene.toggleSettingsModal = () => this.toggleSettings();
+    scene.hideSettingsModal = () => this.hideSettings();
+    scene.updateSettingsLabels = () => this.updateLabels();
 
     // 핸들러 바인딩 및 씬 등록
     scene.restartHandler = () => scene.restartGame();
@@ -61,14 +75,52 @@ export default class HtmlUiBindingSystem {
     scene.moveStartHandler = (event) => scene.startFloatingJoystick(event);
     scene.moveUpdateHandler = (event) => scene.updateJoystick(event);
     scene.moveStopHandler = (event) => scene.stopJoystick(event);
-    scene.fullscreenHandler = (event) => scene.toggleFullscreen(event);
-    scene.fullscreenChangeHandler = () => scene.handleFullscreenChange();
+    scene.fullscreenChangeHandler = () => {
+      scene.handleFullscreenChange();
+      this.updateLabels();
+    };
     scene.resizeHandler = () => scene.updateCameraZoom();
     scene.audioUnlockHandler = () => scene.unlockAudio();
     scene.devKeyHandler = (event) => scene.handleDevKeydown(event);
     scene.pageAudioStopHandler = () => scene.stopAudioForPageExit();
     scene.visibilityChangeHandler = () => {
       if (document.hidden) scene.stopAudioForPageExit();
+    };
+
+    scene.settingsHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.toggleSettings();
+    };
+    scene.settingsCloseHandler = () => {
+      this.hideSettings();
+    };
+    scene.settingToggleTextHandler = () => {
+      const large = scene.registry.get("textSizeLarge") !== true;
+      scene.registry.set("textSizeLarge", large);
+      window.localStorage?.setItem("samgakji_text_size_large", large ? "true" : "false");
+      if (large) {
+        document.body.classList.add("ui-large-text");
+      } else {
+        document.body.classList.remove("ui-large-text");
+      }
+      this.updateLabels();
+    };
+    scene.settingToggleTtsHandler = () => {
+      const tts = scene.registry.get("ttsEnabled") !== true;
+      scene.registry.set("ttsEnabled", tts);
+      window.localStorage?.setItem("samgakji_tts_enabled", tts ? "true" : "false");
+      this.updateLabels();
+    };
+    scene.settingToggleJoystickHandler = () => {
+      const joy = scene.registry.get("joystickEnabled") !== false;
+      scene.registry.set("joystickEnabled", !joy);
+      window.localStorage?.setItem("samgakji_joystick_enabled", !joy ? "true" : "false");
+      this.updateLabels();
+    };
+    scene.settingToggleFullscreenHandler = (event) => {
+      scene.toggleFullscreen(event);
+      setTimeout(() => this.updateLabels(), 150);
     };
   }
 
@@ -86,7 +138,15 @@ export default class HtmlUiBindingSystem {
     window.addEventListener("pointermove", scene.moveUpdateHandler);
     window.addEventListener("pointerup", scene.moveStopHandler);
     window.addEventListener("pointercancel", scene.moveStopHandler);
-    scene.fullscreenButton?.addEventListener("click", scene.fullscreenHandler);
+    
+    scene.settingsButton?.addEventListener("click", scene.settingsHandler);
+    scene.settingsClose?.addEventListener("click", scene.settingsCloseHandler);
+    scene.settingsOk?.addEventListener("click", scene.settingsCloseHandler);
+    scene.settingToggleText?.addEventListener("click", scene.settingToggleTextHandler);
+    scene.settingToggleTts?.addEventListener("click", scene.settingToggleTtsHandler);
+    scene.settingToggleJoystick?.addEventListener("click", scene.settingToggleJoystickHandler);
+    scene.settingToggleFullscreen?.addEventListener("click", scene.settingToggleFullscreenHandler);
+
     document.addEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.addEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
     window.addEventListener("resize", scene.resizeHandler);
@@ -111,7 +171,15 @@ export default class HtmlUiBindingSystem {
     window.removeEventListener("pointermove", scene.moveUpdateHandler);
     window.removeEventListener("pointerup", scene.moveStopHandler);
     window.removeEventListener("pointercancel", scene.moveStopHandler);
-    scene.fullscreenButton?.removeEventListener("click", scene.fullscreenHandler);
+    
+    scene.settingsButton?.removeEventListener("click", scene.settingsHandler);
+    scene.settingsClose?.removeEventListener("click", scene.settingsCloseHandler);
+    scene.settingsOk?.removeEventListener("click", scene.settingsCloseHandler);
+    scene.settingToggleText?.removeEventListener("click", scene.settingToggleTextHandler);
+    scene.settingToggleTts?.removeEventListener("click", scene.settingToggleTtsHandler);
+    scene.settingToggleJoystick?.removeEventListener("click", scene.settingToggleJoystickHandler);
+    scene.settingToggleFullscreen?.removeEventListener("click", scene.settingToggleFullscreenHandler);
+
     document.removeEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.removeEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
     window.removeEventListener("resize", scene.resizeHandler);
@@ -137,5 +205,64 @@ export default class HtmlUiBindingSystem {
     scene.jjookFollowHudEl?.classList.remove("is-visible");
     if (scene.speedBuffTimerEl) scene.speedBuffTimerEl.textContent = "";
     if (scene.jjookFollowTimerEl) scene.jjookFollowTimerEl.textContent = "";
+    this.hideSettings();
+  }
+
+  toggleSettings() {
+    const scene = this.scene;
+    const modal = scene.settingsModal;
+    if (!modal) return;
+
+    if (modal.style.display === "none") {
+      this.showSettings();
+    } else {
+      this.hideSettings();
+    }
+  }
+
+  showSettings() {
+    const scene = this.scene;
+    const modal = scene.settingsModal;
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    scene.sceneControlSystem?.blockWorldInput?.(true);
+
+    this.updateLabels();
+  }
+
+  hideSettings() {
+    const scene = this.scene;
+    const modal = scene.settingsModal;
+    if (!modal) return;
+
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    scene.sceneControlSystem?.blockWorldInput?.(false);
+  }
+
+  updateLabels() {
+    const scene = this.scene;
+    if (scene.settingToggleText) {
+      const isLarge = scene.registry.get("textSizeLarge") === true;
+      scene.settingToggleText.textContent = isLarge ? "글자 크기: 크게" : "글자 크기: 보통";
+      scene.settingToggleText.classList.toggle("is-off", !isLarge);
+    }
+    if (scene.settingToggleTts) {
+      const isTts = scene.registry.get("ttsEnabled") === true;
+      scene.settingToggleTts.textContent = isTts ? "음성 안내: 켜기" : "음성 안내: 끄기";
+      scene.settingToggleTts.classList.toggle("is-off", !isTts);
+    }
+    if (scene.settingToggleJoystick) {
+      const isJoy = scene.registry.get("joystickEnabled") !== false;
+      scene.settingToggleJoystick.textContent = isJoy ? "조이스틱: 켜기" : "조이스틱: 끄기";
+      scene.settingToggleJoystick.classList.toggle("is-off", !isJoy);
+    }
+    if (scene.settingToggleFullscreen) {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      scene.settingToggleFullscreen.textContent = isFull ? "전체화면: 켜기" : "전체화면: 끄기";
+      scene.settingToggleFullscreen.classList.toggle("is-off", !isFull);
+    }
   }
 }

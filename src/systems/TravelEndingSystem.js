@@ -257,8 +257,8 @@ export default class TravelEndingSystem {
   startMotherAllowanceSequence() {
     const scene = this.scene;
     scene.dialogueSystem.start([
-      { name: "엄마", portraitKey: "mother_allowance", text: "어머, 우리 해냄이가 스스로 서울 갈 준비를 이렇게나 꼼꼼히 끝냈네!" },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "삼각지 동네 청소도 앞장서서 하고, 혼자서 장보기도 해내다니 엄마는 참 대견하단다." },
+      { name: "엄마", portraitKey: "mother_smile", text: "어머, 우리 해냄이가 스스로 서울 갈 준비를 이렇게나 꼼꼼히 끝냈네!" },
+      { name: "엄마", portraitKey: "mother_calm", text: "삼각지 동네 청소도 앞장서서 하고, 혼자서 장보기도 해내다니 엄마는 참 대견하단다." },
       { name: "엄마", portraitKey: "mother_allowance_2", text: "이건 해냄이가 흘린 멋진 땀방울을 칭찬하며 엄마가 주는 선물, 특별 보너스 용돈이란다!" },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "우와, 진짜요? 정말 고마워요, 엄마! 잘 쓰고 안전하게 다녀올게요!" },
     ], () => {

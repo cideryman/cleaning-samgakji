@@ -48,7 +48,7 @@ export default class ConsumableSystem {
       scene.bacchusCountdownEvent?.remove(false);
       scene.bacchusCountdownEvent = null;
       this.updateBacchusButton();
-      scene.showQuestToast("박카스 효과가 끝났어요.");
+      scene.showQuestToast("활력수 효과가 끝났어요.");
     });
   }
 }

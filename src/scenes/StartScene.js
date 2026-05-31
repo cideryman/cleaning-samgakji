@@ -39,6 +39,15 @@ export default class StartScene extends Phaser.Scene {
     } catch (e) {}
     this.registry.set("ttsEnabled", savedTtsEnabled);
 
+    let savedJoystickEnabled = true;
+    try {
+      const stored = window.localStorage?.getItem("samgakji_joystick_enabled");
+      if (stored !== null) {
+        savedJoystickEnabled = stored === "true";
+      }
+    } catch (e) {}
+    this.registry.set("joystickEnabled", savedJoystickEnabled);
+
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
@@ -57,11 +66,13 @@ export default class StartScene extends Phaser.Scene {
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 3, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 4, this.getTtsLabel(), () => this.toggleTts(), "tts", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 5, this.getJoystickLabel(), () => this.toggleJoystick(), "joystick", buttonLayout));
     } else {
       this.options.push(this.createOption(centerX, buttonLayout.startY, "게임 시작", () => this.startNewGame(), "action", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap, this.getSoundLabel(), () => this.toggleSound(), "sound", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 2, this.getTextSizeLabel(), () => this.toggleTextSize(), "textsize", buttonLayout));
       this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 3, this.getTtsLabel(), () => this.toggleTts(), "tts", buttonLayout));
+      this.options.push(this.createOption(centerX, buttonLayout.startY + buttonLayout.gap * 4, this.getJoystickLabel(), () => this.toggleJoystick(), "joystick", buttonLayout));
     }
 
     this.input.keyboard.on("keydown-UP", () => this.moveSelection(-1));
@@ -166,9 +177,9 @@ export default class StartScene extends Phaser.Scene {
     const hasCheckpoint = CheckpointStorage.hasSave();
     let startY = centerY - 10;
     if (hasCheckpoint) {
-      startY = isCompact ? centerY - 58 : centerY - 46;
+      startY = isCompact ? centerY - 88 : centerY - 76;
     } else {
-      startY = isCompact ? centerY - 25 : centerY - 10;
+      startY = isCompact ? centerY - 62 : centerY - 50;
     }
 
     // 1. 배경 재조정
@@ -320,6 +331,23 @@ export default class StartScene extends Phaser.Scene {
 
     const ttsOption = this.options.find((option) => option.kind === "tts");
     ttsOption?.text.setText(this.getTtsLabel());
+    this.updateSelection();
+  }
+
+  getJoystickLabel() {
+    return this.registry.get("joystickEnabled") !== false ? "조이스틱: 켜기" : "조이스틱: 끄기";
+  }
+
+  toggleJoystick() {
+    const nextValue = this.registry.get("joystickEnabled") === false;
+    this.registry.set("joystickEnabled", nextValue);
+
+    try {
+      window.localStorage?.setItem("samgakji_joystick_enabled", nextValue ? "true" : "false");
+    } catch (e) {}
+
+    const joystickOption = this.options.find((option) => option.kind === "joystick");
+    joystickOption?.text.setText(this.getJoystickLabel());
     this.updateSelection();
   }
 

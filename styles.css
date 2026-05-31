@@ -454,21 +454,8 @@ body.prologue-scene-active #game {
 
 .bacchus-button {
   display: none;
-  right: calc(max(18px, env(safe-area-inset-right)) + 98px);
-  bottom: max(18px, env(safe-area-inset-bottom));
-  width: 74px;
-  height: 74px;
-  background: #ffffff;
-  box-shadow: 0 5px 0 #b9d8c2;
-  opacity: 0;
-  transform: translateY(8px) scale(0.9);
-  transition: opacity 180ms ease, transform 180ms ease;
-}
-
-.effect-button {
-  display: none;
   right: max(18px, env(safe-area-inset-right));
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 100px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 94px);
   width: 74px;
   height: 74px;
   background: #ffffff;
@@ -479,12 +466,19 @@ body.prologue-scene-active #game {
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
+.effect-button {
+  right: max(18px, env(safe-area-inset-right));
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 176px);
+  width: 74px;
+  height: 74px;
+}
+
 .jjook-follow-hud {
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 182px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 258px);
 }
 
 .travel-prep-hud {
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 264px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 340px);
   z-index: 16;
   overflow: visible;
   background: #fffdf3;
@@ -1298,24 +1292,25 @@ body.app-fit-mode #game canvas {
   }
 
   .bacchus-button {
-    right: calc(max(18px, env(safe-area-inset-right)) + 94px);
-    width: 68px;
-    height: 68px;
-  }
-
-  .effect-button {
     right: max(18px, env(safe-area-inset-right));
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 94px);
     width: 68px;
     height: 68px;
   }
 
-  .jjook-follow-hud {
+  .effect-button {
+    right: max(18px, env(safe-area-inset-right));
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 170px);
+    width: 68px;
+    height: 68px;
+  }
+
+  .jjook-follow-hud {
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 246px);
   }
 
   .travel-prep-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 246px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 322px);
   }
 
   .clothing-shop-panel {
@@ -1464,24 +1459,25 @@ body.app-fit-mode #game canvas {
   }
 
   .bacchus-button {
-    right: calc(max(18px, env(safe-area-inset-right)) + 86px);
-    width: 60px;
-    height: 60px;
-  }
-
-  .effect-button {
     right: max(18px, env(safe-area-inset-right));
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 82px);
     width: 60px;
     height: 60px;
   }
 
-  .jjook-follow-hud {
+  .effect-button {
+    right: max(18px, env(safe-area-inset-right));
     bottom: calc(max(18px, env(safe-area-inset-bottom)) + 150px);
+    width: 60px;
+    height: 60px;
+  }
+
+  .jjook-follow-hud {
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 218px);
   }
 
   .travel-prep-hud {
-    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 218px);
+    bottom: calc(max(18px, env(safe-area-inset-bottom)) + 286px);
   }
 
   .clothing-shop-panel {
@@ -1823,8 +1819,8 @@ body.app-fit-mode #game canvas {
 
 .can-quest-hud {
   position: absolute;
-  top: 62px;
-  left: 12px;
+  top: max(62px, calc(env(safe-area-inset-top) + 4px));
+  left: max(12px, calc(env(safe-area-inset-left) + 4px));
   z-index: 20;
   width: 280px;
   padding: 8px 10px;
@@ -2169,8 +2165,8 @@ body.app-fit-mode #game canvas {
   }
 
   .can-quest-hud {
-    top: 60px;
-    left: max(8px, calc(env(safe-area-inset-left) + 12px));
+    top: max(68px, calc(env(safe-area-inset-top) + 8px));
+    left: max(16px, calc(env(safe-area-inset-left) + 18px));
     width: 238px;
     padding: 7px 8px;
   }
@@ -3900,3 +3896,234 @@ button,
 
 
 
+
+
+/* ==========================================================================
+   Settings Button & Modal (Universal Design, UI & Accessibility)
+   ========================================================================== */
+
+.settings-button {
+  left: auto;
+  right: max(14px, env(safe-area-inset-right));
+  top: max(14px, env(safe-area-inset-top));
+  width: 58px;
+  height: 58px;
+  background: #ffffff;
+  border: 3px solid #21352c;
+  border-radius: 50%;
+  box-shadow: 0 5px 0 #b9d8c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #21352c;
+  cursor: pointer;
+  z-index: 100;
+  pointer-events: auto;
+  touch-action: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.settings-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #b9d8c2;
+}
+
+.settings-modal {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(18, 30, 24, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.settings-panel {
+  width: 92%;
+  max-width: 460px;
+  background: #fffbf2;
+  border: 4px solid #21352c;
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform-origin: center;
+  animation: panel-zoom 220ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-sizing: border-box;
+}
+
+.settings-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  background: #f5ebd5;
+  border: 3px solid #21352c;
+  border-radius: 50%;
+  color: #21352c;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 100ms ease, background-color 100ms ease;
+  box-sizing: border-box;
+  padding: 0;
+  line-height: 1;
+}
+
+.settings-close:hover {
+  transform: scale(1.1);
+  background-color: #ffd75a;
+}
+
+.settings-close:active {
+  transform: scale(0.95);
+}
+
+.settings-header {
+  border-bottom: 3px solid #e0eae4;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.settings-header h2 {
+  font-size: 24px;
+  color: #21352c;
+  margin: 0;
+  font-weight: 800;
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f4faf6;
+  border: 2px solid #d0e4d7;
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+.setting-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: #21352c;
+}
+
+.setting-btn {
+  min-width: 148px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 3px solid #21352c;
+  border-radius: 8px;
+  background: #ffd75a;
+  box-shadow: 0 4px 0 #c89d27;
+  color: #21352c;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+
+.setting-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #c89d27;
+}
+
+/* OFF state or secondary color styling for toggle settings */
+.setting-btn.is-off {
+  background: #e0eae4;
+  box-shadow: 0 4px 0 #a9bcb0;
+}
+
+.setting-btn.is-off:active {
+  box-shadow: 0 1px 0 #a9bcb0;
+}
+
+.settings-footer {
+  border-top: 3px solid #e0eae4;
+  padding-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settings-ok-btn {
+  width: 100%;
+  min-height: 48px;
+  border: 3px solid #21352c;
+  border-radius: 10px;
+  background: #ffd75a;
+  box-shadow: 0 4px 0 #c89d27;
+  color: #21352c;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.settings-ok-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #c89d27;
+}
+
+/* --- Settings Universal Design (Large Text Mode) --- */
+body.large-text .settings-header h2 { font-size: 30px; }
+body.large-text .setting-label { font-size: 20px; }
+body.large-text .setting-btn { font-size: 18px; min-width: 180px; min-height: 48px; }
+body.large-text .settings-ok-btn { font-size: 22px; min-height: 56px; }
+
+/* Mobile Landscape setting adjustments */
+@media screen and (max-height: 500px) {
+  .settings-panel {
+    padding: 12px 18px !important;
+    gap: 8px !important;
+    max-height: 96vh !important;
+  }
+  .settings-header h2 {
+    font-size: 18px !important;
+  }
+  .settings-body {
+    gap: 6px !important;
+  }
+  .setting-item {
+    padding: 6px 12px !important;
+  }
+  .setting-label {
+    font-size: 13px !important;
+  }
+  .setting-btn {
+    min-height: 32px !important;
+    min-width: 120px !important;
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  .settings-ok-btn {
+    min-height: 36px !important;
+    font-size: 14px !important;
+  }
+}

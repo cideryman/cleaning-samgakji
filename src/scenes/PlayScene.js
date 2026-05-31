@@ -425,6 +425,7 @@ export default class PlayScene extends Phaser.Scene {
 
   checkJjookQuestUnlock() {
     if (!this.moneySystem || !this.yebiQuestSystem || this.hasAnnouncedJjookQuest) return;
+    if (this.jjookQuestState !== JjookQuestState.LOCKED) return;
     if (this.yebiQuestSystem.getRecycleQuestState() !== "completed") return;
     if (this.moneySystem.money < GAME_CONFIG.jjookQuestUnlockMoney) return;
 
@@ -439,6 +440,7 @@ export default class PlayScene extends Phaser.Scene {
 
   checkSunisuniQuestUnlock() {
     if (!this.moneySystem || this.hasAnnouncedSunisuniQuest) return;
+    if (this.sunisuniQuestState !== SunisuniQuestState.LOCKED) return;
     if (this.jjookQuestState !== JjookQuestState.COMPLETED) return;
     if (this.moneySystem.money < GAME_CONFIG.sunisuniQuestUnlockMoney) return;
 
@@ -458,6 +460,7 @@ export default class PlayScene extends Phaser.Scene {
 
   checkClothesQuestUnlock() {
     if (!this.moneySystem || this.hasAnnouncedClothesQuest) return;
+    if (this.clothesQuestState !== ClothesQuestState.LOCKED) return;
     if (this.sunisuniQuestState !== SunisuniQuestState.QUEST_COMPLETE) return;
     if (this.moneySystem.money < GAME_CONFIG.clothesQuestUnlockMoney) return;
 

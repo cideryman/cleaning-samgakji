@@ -119,8 +119,8 @@
           <button id="sweepButton" type="button" aria-label="sweep">
             <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
           </button>
-          <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="fullscreen">
-            <span aria-hidden="true"></span>
+          <button id="settingsButton" class="settings-button" type="button" aria-label="settings">
+            <span aria-hidden="true">&#9881;</span>
           </button>
         </div>
       </div>
@@ -160,6 +160,37 @@
         </div>
         <div class="edu-guide-footer">
           <button id="edu-guide-ok" class="edu-guide-ok-btn" type="button">&#51060;&#54644;&#54664;&#50612;&#50836;!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal" style="display: none;" aria-hidden="true">
+      <div class="settings-panel">
+        <button id="settings-close" class="settings-close" type="button" aria-label="close">&times;</button>
+        <div class="settings-header">
+          <h2>⚙️ 설정</h2>
+        </div>
+        <div class="settings-body">
+          <div class="setting-item">
+            <span class="setting-label">글자 크기</span>
+            <button id="setting-toggle-text" class="setting-btn" type="button">글자 크기: 보통</button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">음성 안내 (TTS)</span>
+            <button id="setting-toggle-tts" class="setting-btn" type="button">음성 안내: 끄기</button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">가상 조이스틱</span>
+            <button id="setting-toggle-joystick" class="setting-btn" type="button">조이스틱: 켜기</button>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">전체화면</span>
+            <button id="setting-toggle-fullscreen" class="setting-btn" type="button">전체화면: 끄기</button>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button id="settings-ok" class="settings-ok-btn" type="button">확인</button>
         </div>
       </div>
     </div>

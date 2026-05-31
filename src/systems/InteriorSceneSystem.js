@@ -6,6 +6,12 @@ export default class InteriorSceneSystem {
   show(textureKey, type = "hospital") {
     const scene = this.scene;
     this.clear();
+
+    // Clear any active HTML quest toasts, overlays, or money popups to prevent overlap during interior scenes
+    document.querySelectorAll(".quest-toast").forEach((el) => el.remove());
+    document.querySelectorAll(".money-reward-pop").forEach((el) => el.remove());
+    document.querySelectorAll(".special-overlay-pop").forEach((el) => el.remove());
+
     document.body.classList.add("interior-scene-active");
     document.body.dataset.interiorScene = type;
     scene.interiorSceneGroup = scene.add.group();

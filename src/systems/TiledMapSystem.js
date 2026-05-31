@@ -218,7 +218,12 @@ export default class TiledMapSystem {
       image.setDepth(scene.getWorldDepth(sortY, Number(props.depthOffset ?? 0)));
       if (props.name) image.setName(props.name);
       const objectKey = props.name || object.name;
-      if (objectKey) scene.mapObjects[objectKey] = image;
+      if (objectKey) {
+        scene.mapObjects[objectKey] = image;
+        if (["hospital", "pharmacy", "clothing_store"].includes(objectKey)) {
+          this.setupBuildingInteractive(image, objectKey);
+        }
+      }
       if (props.animation && image.anims) {
         image.anims.play(props.animation);
       }
@@ -311,5 +316,61 @@ export default class TiledMapSystem {
       height,
     ));
     return zone;
+  }
+
+  setupBuildingInteractive(image, key) {
+    const scene = this.scene;
+    image.setInteractive({ useHandCursor: true });
+    image.on("pointerover", () => {
+      image.setTint(0xffeb3b);
+    });
+    image.on("pointerout", () => {
+      image.clearTint();
+    });
+    image.on("pointerdown", (pointer) => {
+      const button = pointer.event?.button ?? pointer.button;
+      if (button !== 0) return;
+      if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
+      if (!scene.stateManager?.canMove()) return;
+      if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+
+      pointer.event?.preventDefault();
+      pointer.event?.stopPropagation();
+
+      // 1. 이미 근처에 있다면 즉시 상호작용 실행!
+      if (key === "hospital" && scene.interactionSystem?.isPlayerNearHospitalDoor()) {
+        scene.handleHospitalInteraction();
+        return;
+      }
+      if (key === "pharmacy" && scene.interactionSystem?.isPlayerNearPharmacyDoor()) {
+        scene.handlePharmacyInteraction();
+        return;
+      }
+      if (key === "clothing_store" && scene.interactionSystem?.isPlayerNearClothingStoreDoor()) {
+        scene.handleClothingStoreInteraction();
+        return;
+      }
+
+      // 2. 멀리 있다면 A* 자율주행 시동!
+      let doorPoint = null;
+      if (key === "hospital") {
+        doorPoint = scene.getMapPoint("hospital_door", GAME_CONFIG.hospitalDoor);
+      } else if (key === "pharmacy") {
+        doorPoint = scene.getMapPoint("pharmacy_door", GAME_CONFIG.pharmacyDoor);
+      } else if (key === "clothing_store") {
+        doorPoint = scene.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor);
+      }
+
+      if (doorPoint && scene.pathfindingSystem) {
+        const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, doorPoint.x, doorPoint.y);
+        if (path && path.length > 0) {
+          scene.playerController.movePath = path;
+          scene.playerController.currentPathIndex = 0;
+          scene.playerController.cleanTarget = null;
+          scene.playerController.interactionTarget = key;
+          scene.mouseMoveTarget = null;
+        }
+      }
+    });
   }
 }

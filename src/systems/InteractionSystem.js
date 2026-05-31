@@ -13,6 +13,11 @@ export default class InteractionSystem {
 
     if (this.handlePriorityLocationInteraction()) return;
 
+    if (this.isAnyTrashNearPlayer(88)) {
+      scene.trySweep();
+      return;
+    }
+
     if (scene.tryDepositNearestRecycleBin()) return;
 
     scene.trySweep();
@@ -112,5 +117,21 @@ export default class InteractionSystem {
   isPlayerNearYebiNpc() {
     const scene = this.scene;
     return isNear(scene.player, scene.yebiNpc, 120);
+  }
+
+  isAnyTrashNearPlayer(maxDistance = 88) {
+    const scene = this.scene;
+    if (!scene.player || !scene.trashSlimes) return false;
+
+    let near = false;
+    scene.trashSlimes.getChildren().forEach((slime) => {
+      if (slime.active && !slime.getData("cleaned")) {
+        const dist = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, slime.x, slime.y);
+        if (dist <= maxDistance) {
+          near = true;
+        }
+      }
+    });
+    return near;
   }
 }

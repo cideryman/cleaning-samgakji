@@ -57,11 +57,44 @@ export default class YebiQuestSystem {
     vendingMachine.setData("depthSortY", scene.getDepthSortY(vendingMachine));
     vendingMachine.setDepth(scene.getWorldDepth(vendingMachine.getData("depthSortY")));
     vendingMachine.setInteractive({ useHandCursor: true });
+    vendingMachine.on("pointerover", () => {
+      vendingMachine.setTint(0xffeb3b);
+    });
+    vendingMachine.on("pointerout", () => {
+      vendingMachine.clearTint();
+    });
     vendingMachine.on("pointerdown", (pointer) => {
+      const button = pointer.event?.button ?? pointer.button;
+      if (button !== 0) return;
+      if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
+      if (!scene.player?.active || !scene.stateManager?.canMove()) return;
+      if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
-      if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
-      scene.handleVendingMachineInteraction();
+
+      // 1. 이미 근처라면 즉시 상호작용 실행!
+      if (scene.interactionSystem?.isPlayerNearVendingMachine()) {
+        scene.handleVendingMachineInteraction();
+        return;
+      }
+
+      // 2. 멀리 있다면 A* 자동 주행 시동!
+      const usePoint = scene.getMapPoint("vending_use", {
+        x: vendingMachine.x,
+        y: vendingMachine.y + 6,
+      });
+
+      if (scene.pathfindingSystem) {
+        const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, usePoint.x, usePoint.y);
+        if (path && path.length > 0) {
+          scene.playerController.movePath = path;
+          scene.playerController.currentPathIndex = 0;
+          scene.playerController.cleanTarget = null;
+          scene.playerController.interactionTarget = "vending";
+          scene.mouseMoveTarget = null;
+        }
+      }
     });
     scene.vendingMachine = vendingMachine;
     scene.addObjectCollider(
@@ -108,6 +141,50 @@ export default class YebiQuestSystem {
       bin.setDisplaySize(58, 66);
       bin.setData("depthSortY", scene.getDepthSortY(bin));
       bin.setDepth(scene.getWorldDepth(bin.getData("depthSortY")));
+      
+      bin.setInteractive({ useHandCursor: true });
+      bin.on("pointerover", () => {
+        bin.setTint(0xffeb3b);
+      });
+      bin.on("pointerout", () => {
+        bin.clearTint();
+      });
+      bin.on("pointerdown", (pointer) => {
+        const button = pointer.event?.button ?? pointer.button;
+        if (button !== 0) return;
+        if (scene.sceneControlSystem?.isWorldInputBlocked()) return;
+        if (!scene.player?.active || !scene.stateManager?.canMove()) return;
+        if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+
+        pointer.event?.preventDefault();
+        pointer.event?.stopPropagation();
+
+        // 1. 이미 분리수거 구역 내에 있다면 즉시 투입!
+        const playerPoints = [
+          { x: scene.player.x, y: scene.player.y },
+          { x: scene.player.x, y: scene.player.y + GAME_CONFIG.playerDisplayHeight * 0.22 },
+          { x: scene.player.x, y: scene.player.y - GAME_CONFIG.playerDisplayHeight * 0.16 },
+        ];
+        const bounds = zone.getBounds();
+        const isPlayerInside = playerPoints.some((point) => Phaser.Geom.Rectangle.Contains(bounds, point.x, point.y));
+
+        if (isPlayerInside) {
+          this.depositRecycleItem(binConfig.type, bin);
+          return;
+        }
+
+        // 2. 멀리 있다면 A* 자동 주행 시동!
+        if (scene.pathfindingSystem) {
+          const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, x, y + 22);
+          if (path && path.length > 0) {
+            scene.playerController.movePath = path;
+            scene.playerController.currentPathIndex = 0;
+            scene.playerController.cleanTarget = null;
+            scene.playerController.interactionTarget = `bin_${binConfig.type}`;
+            scene.mouseMoveTarget = null;
+          }
+        }
+      });
 
       const label = scene.add.text(x, y + 22, binConfig.label, {
         fontFamily: "Arial",
@@ -504,7 +581,6 @@ export default class YebiQuestSystem {
 
     const recycleState = this.getRecycleQuestState();
     if (recycleState === RecycleQuestState.LOCKED || recycleState === RecycleQuestState.UNLOCKED) {
-      scene.showSpeechBubble(scene.player, "여비 아저씨에게 먼저 물어보자!");
       return;
     }
 
@@ -747,9 +823,9 @@ export default class YebiQuestSystem {
     if (!this.uiElements.bar) return;
 
     const typeConfig = [
-      { type: "normal", icon: "assets/sprites/trash-slime2.png", label: "일반" },
-      { type: "can", icon: "assets/sprites/trash-can2.png", label: "캔" },
-      { type: "plastic", icon: "assets/sprites/plastic.png", label: "플라스틱" },
+      { type: "normal", icon: "assets/ui/trash.png", label: "일반" },
+      { type: "can", icon: "assets/ui/trash-can.png", label: "캔" },
+      { type: "plastic", icon: "assets/ui/plastic.png", label: "플라스틱" },
     ];
     this.uiElements.bar.innerHTML = "";
     this.uiElements.bar.classList.add("is-recycle");
