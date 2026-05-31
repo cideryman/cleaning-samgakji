@@ -34,8 +34,10 @@ Recommended choice:
 
 Chapter audio:
 
-- Put chapter music in `assets/audio/chapter1.mp3`, `assets/audio/chapter2.mp3`, and so on.
+- Put chapter music in `assets/audio/bgm/chapter1.mp3`, `assets/audio/bgm/chapter2.mp3`, and so on.
 - The game starts with the current chapter music and will naturally try the next numbered file when one exists.
+- Put recorded voice lines in `assets/audio/voice/`.
+- Put file-based sound effects in `assets/audio/sfx/`. Current sweep, clean, reward, and pickup sounds are generated in code by `AudioManager.js`.
 
 Tile list in `samgakji_tiles`:
 

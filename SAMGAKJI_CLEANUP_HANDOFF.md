@@ -428,3 +428,24 @@
 - 옷가게는 `ClothingShopSystem.js`, 짐싸기는 `PackingSystem.js`, 엔딩/버스/여행 장면은 `TravelEndingSystem.js`, 설정/DOM 바인딩은 `HtmlUiBindingSystem.js`와 CSS에서 처리합니다.
 - 버그 수정도 가능하면 기존 시스템 파일 안에서 해결하고, `PlayScene.js`에는 연결용 래퍼만 남기는 방향을 유지합니다.
 
+---
+
+## 2026-06-01 오디오 에셋 구조 정리
+
+리팩토링 전 선행 정리로, 흩어져 있지는 않았지만 한 폴더에 섞여 있던 오디오 파일을 용도별 폴더로 분리했습니다.
+
+### 변경한 구조
+- `assets/audio/bgm/`: 챕터 BGM, 프롤로그 BGM, 실내/에필로그 앰비언스.
+- `assets/audio/voice/`: 녹음 대사 및 짧은 음성 안내.
+- `assets/audio/sfx/`: 향후 파일 기반 효과음용 폴더. 현재 쓸기, 청소, 보상 효과음은 `AudioManager.js`에서 Web Audio로 합성하므로 파일이 없습니다.
+- `assets/audio/README.md`: 새 오디오 파일을 어디에 넣고 어떤 파일을 갱신해야 하는지 기록했습니다.
+
+### 코드 반영
+- `src/config/AssetsData.js`: `AUDIO_ASSETS` 경로를 새 폴더 구조에 맞게 갱신했습니다.
+- `src/systems/AudioManager.js`: 음성 파일 경로를 `VOICE_PATHS`로 묶고, 챕터 BGM 탐색 경로를 `assets/audio/bgm/chapterN.mp3` 기준으로 정리했습니다.
+- `sw.js`: PWA precache 경로를 새 오디오 폴더 구조로 갱신하고 캐시 이름을 올렸습니다.
+- `assets/maps/TILED_GUIDE.md`: 이후 챕터 음악은 `assets/audio/bgm/chapter2.mp3`처럼 추가하도록 안내를 고쳤습니다.
+
+### 다음 안전 리팩토링 후보
+오디오 구조는 정리되었으므로, 다음 단계는 `PlayScene.js`의 맵 오브젝트 배치/레이어 관련 코드를 `MapObjectFactory` 또는 기존 `TiledMapSystem` 보조 함수로 조금씩 옮기는 것이 좋습니다. 새 기능 추가보다 먼저 이 작업을 하면 Tiled 편집성과 `PlayScene.js` 경량화를 동시에 얻을 수 있습니다.
+

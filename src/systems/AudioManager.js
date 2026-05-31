@@ -1,6 +1,13 @@
 import { TILED_MAP_CONFIG } from "../config/GameConstants.js";
 import { AUDIO_ASSETS } from "../config/AssetsData.js";
 
+const VOICE_PATHS = {
+  thanks: "assets/audio/voice/thanks.mp3",
+  collectCans: "assets/audio/voice/collect-cans.mp3",
+  help: "assets/audio/voice/i-will-help.mp3",
+  clearSlime: "assets/audio/voice/clear-slime.mp3",
+};
+
 export default class AudioManager {
   constructor(scene) {
     this.scene = scene;
@@ -50,7 +57,7 @@ export default class AudioManager {
     if (!context) return;
 
     scene.hasStartedAudioLoad = true;
-    fetch(new URL("assets/audio/thanks.mp3", window.location.href))
+    fetch(new URL(VOICE_PATHS.thanks, window.location.href))
       .then((response) => response.arrayBuffer())
       .then((buffer) => context.decodeAudioData(buffer))
       .then((decodedBuffer) => {
@@ -169,7 +176,7 @@ export default class AudioManager {
       return;
     }
 
-    this.loadAudioBuffer("assets/audio/thanks.mp3", "thanksAudioBuffer")
+    this.loadAudioBuffer(VOICE_PATHS.thanks, "thanksAudioBuffer")
       .then(() => this.playThanksVoice())
       .catch(() => {
         this.playTone({ frequency: 659, duration: 0.16, type: "triangle", volume: 0.07 });
@@ -186,7 +193,7 @@ export default class AudioManager {
       return;
     }
 
-    this.loadAudioBuffer("assets/audio/collect-cans.mp3", "collectCansAudioBuffer")
+    this.loadAudioBuffer(VOICE_PATHS.collectCans, "collectCansAudioBuffer")
       .then(() => this.playCollectCansVoice())
       .catch(() => {
         this.playTone({ frequency: 392, duration: 0.14, type: "triangle", volume: 0.06 });
@@ -203,7 +210,7 @@ export default class AudioManager {
       return;
     }
 
-    this.loadAudioBuffer("assets/audio/i-will-help.mp3", "helpAudioBuffer")
+    this.loadAudioBuffer(VOICE_PATHS.help, "helpAudioBuffer")
       .then(() => this.playHelpVoice())
       .catch(() => {
         this.playTone({ frequency: 523, duration: 0.14, type: "triangle", volume: 0.06 });
@@ -220,7 +227,7 @@ export default class AudioManager {
       return;
     }
 
-    this.loadAudioBuffer("assets/audio/clear-slime.mp3", "clearSlimeAudioBuffer")
+    this.loadAudioBuffer(VOICE_PATHS.clearSlime, "clearSlimeAudioBuffer")
       .then(() => this.playClearSlimeVoice())
       .catch(() => {
         this.playTone({ frequency: 440, duration: 0.14, type: "triangle", volume: 0.06 });
@@ -356,8 +363,7 @@ export default class AudioManager {
     }
 
     const trackPaths = [
-      `assets/audio/chapter${scene.bgmIndex}.mp3`,
-      `assets/chapter${scene.bgmIndex}.mp3`,
+      `assets/audio/bgm/chapter${scene.bgmIndex}.mp3`,
     ];
     this.fetchFirstExistingTrack(trackPaths)
       .then((response) => {
