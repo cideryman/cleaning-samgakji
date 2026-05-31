@@ -5,6 +5,7 @@ export default class PlayerController {
     this.scene = scene;
     this.movePath = [];
     this.currentPathIndex = 0;
+    this.cleanTarget = null;
   }
 
   createInput() {
@@ -81,31 +82,48 @@ export default class PlayerController {
       scene.mouseMoveTarget = null;
       scene.isMouseMoveHeld = false;
       this.movePath = [];
-    } else if (scene.mouseMoveTarget && !isKeyboardMoving) {
-      this.movePath = []; // Clear A* path when actively dragging
-      const dx = scene.mouseMoveTarget.x - scene.player.x;
-      const dy = scene.mouseMoveTarget.y - scene.player.y;
-      if (Math.hypot(dx, dy) <= 10) {
-        scene.mouseMoveTarget = null;
-      } else {
-        velocity.set(dx, dy);
+      this.cleanTarget = null; // keyboard input overrides auto clean target!
+    } else {
+      // 실시간 거리 체크로 청소 사정거리 내 진입 시 자동 정지 및 쓸기 트리거
+      if (this.cleanTarget && this.cleanTarget.active && !this.cleanTarget.getData("cleaned")) {
+        const dist = Math.hypot(this.cleanTarget.x - scene.player.x, this.cleanTarget.y - scene.player.y);
+        if (dist <= 62) {
+          this.movePath = [];
+          scene.player.setVelocity(0, 0);
+          this.autoSweepCleanTarget();
+        }
       }
-    } else if (this.movePath && this.movePath.length > 0 && !isKeyboardMoving) {
-      // Follow the A* path waypoints
-      const targetPoint = this.movePath[this.currentPathIndex];
-      if (targetPoint) {
-        const dx = targetPoint.x - scene.player.x;
-        const dy = targetPoint.y - scene.player.y;
-        const distance = Math.hypot(dx, dy);
 
-        if (distance <= 12) {
-          this.currentPathIndex++;
-          if (this.currentPathIndex >= this.movePath.length) {
-            this.movePath = [];
-            scene.player.setVelocity(0, 0);
-          }
+      if (scene.mouseMoveTarget && !isKeyboardMoving) {
+        this.movePath = []; // Clear A* path when actively dragging
+        const dx = scene.mouseMoveTarget.x - scene.player.x;
+        const dy = scene.mouseMoveTarget.y - scene.player.y;
+        if (Math.hypot(dx, dy) <= 10) {
+          scene.mouseMoveTarget = null;
         } else {
           velocity.set(dx, dy);
+        }
+      } else if (this.movePath && this.movePath.length > 0 && !isKeyboardMoving) {
+        // Follow the A* path waypoints
+        const targetPoint = this.movePath[this.currentPathIndex];
+        if (targetPoint) {
+          const dx = targetPoint.x - scene.player.x;
+          const dy = targetPoint.y - scene.player.y;
+          const distance = Math.hypot(dx, dy);
+
+          if (distance <= 12) {
+            this.currentPathIndex++;
+            if (this.currentPathIndex >= this.movePath.length) {
+              this.movePath = [];
+              scene.player.setVelocity(0, 0);
+              // A* 주행이 완전히 끝난 시점에 거리 미진입 등으로 남아있던 타겟 자동 청소 최종 확인 트리거!
+              if (this.cleanTarget && this.cleanTarget.active && !this.cleanTarget.getData("cleaned")) {
+                this.autoSweepCleanTarget();
+              }
+            }
+          } else {
+            velocity.set(dx, dy);
+          }
         }
       }
     }
@@ -328,11 +346,56 @@ export default class PlayerController {
     }
   }
 
+  setCleanTarget(slime) {
+    const scene = this.scene;
+    if (!slime || !slime.active || slime.getData("cleaned")) {
+      this.cleanTarget = null;
+      return;
+    }
+
+    // A* 알고리즘으로 슬라임 근처까지의 경로 계산
+    if (scene.pathfindingSystem) {
+      const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, slime.x, slime.y);
+      if (path && path.length > 0) {
+        this.movePath = path;
+        this.currentPathIndex = 0;
+        this.cleanTarget = slime;
+        scene.mouseMoveTarget = null; // 드래그 타겟 무효화
+      }
+    }
+  }
+
+  autoSweepCleanTarget() {
+    const scene = this.scene;
+    const target = this.cleanTarget;
+    this.cleanTarget = null; // target clear
+
+    if (!target || !target.active || target.getData("cleaned")) return;
+
+    // 1. 타겟 방향으로 플레이어가 쳐다보도록 방향 보정!
+    const dx = target.x - scene.player.x;
+    const dy = target.y - scene.player.y;
+    let dirKey = "down";
+    if (Math.abs(dx) > Math.abs(dy)) {
+      dirKey = dx < 0 ? "left" : "right";
+      scene.lastDirection.set(dx < 0 ? -1 : 1, 0);
+    } else {
+      dirKey = dy < 0 ? "up" : "down";
+      scene.lastDirection.set(0, dy < 0 ? -1 : 1);
+    }
+    
+    this.setPlayerDirectionTexture(dirKey, false);
+
+    // 2. 쓸기 실행!
+    scene.cleaningSystem?.trySweep();
+  }
+
   cancelMoveTarget() {
     const scene = this.scene;
     scene.mouseMoveTarget = null;
     scene.isMouseMoveHeld = false;
     this.movePath = [];
     this.currentPathIndex = 0;
+    this.cleanTarget = null;
   }
 }

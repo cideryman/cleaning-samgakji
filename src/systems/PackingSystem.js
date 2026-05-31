@@ -38,6 +38,7 @@ export default class PackingSystem {
           <strong>여행 가방</strong>
           <span>필요한 짐을 골라 가방에 넣어요.</span>
         </div>
+        <div class="shop-alert-box"></div>
         <div class="clothing-shop-progress packing-progress"></div>
         <div class="clothing-shop-body packing-body"></div>
         <div class="clothing-shop-summary packing-summary"></div>
@@ -51,6 +52,7 @@ export default class PackingSystem {
 
   close() {
     const scene = this.scene;
+    this.hideAlert();
     scene.packingModal?.remove();
     scene.packingModal = null;
     scene.packingSelectedKeys = new Set();
@@ -58,6 +60,33 @@ export default class PackingSystem {
     scene.packingStepIndex = 0;
     scene.packingPageIndex = 0;
     scene.packingMode = "category";
+  }
+
+  showAlert(message) {
+    const alertBox = this.scene.packingModal?.querySelector(".shop-alert-box");
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.style.display = "flex";
+    
+    alertBox.style.animation = "none";
+    alertBox.offsetHeight; // trigger reflow
+    alertBox.style.animation = "";
+
+    if (this.alertTimeout) clearTimeout(this.alertTimeout);
+    this.alertTimeout = setTimeout(() => {
+      alertBox.style.display = "none";
+    }, 6500); // 짐싸기 알림 텍스트가 살짝 더 긴 편이므로 가독성을 위해 노출 시간을 소폭 늘림
+  }
+
+  hideAlert() {
+    const alertBox = this.scene.packingModal?.querySelector(".shop-alert-box");
+    if (alertBox) {
+      alertBox.style.display = "none";
+    }
+    if (this.alertTimeout) {
+      clearTimeout(this.alertTimeout);
+      this.alertTimeout = null;
+    }
   }
 
   getCurrentCategory() {
@@ -81,6 +110,8 @@ export default class PackingSystem {
   renderStep() {
     const scene = this.scene;
     if (!scene.packingModal) return;
+
+    this.hideAlert();
 
     const progress = scene.packingModal.querySelector(".packing-progress");
     const body = scene.packingModal.querySelector(".packing-body");
@@ -109,9 +140,9 @@ export default class PackingSystem {
         .filter(Boolean)
         .join(" ");
       return `<span class="${className}">${category.label}</span>`;
-    }).join("");
+    }).join("<span style='margin: 0 4px; color: #a48b73;'>➔</span>");
     const reviewClass = scene.packingMode === "review" ? "clothing-shop-step is-current" : "clothing-shop-step";
-    return `${steps}<span class="${reviewClass}">가방 확인</span>`;
+    return `${steps}<span style='margin: 0 4px; color: #a48b73;'>➔</span><span class="${reviewClass}">가방 확인</span>`;
   }
 
   renderCategory(body, footer) {
@@ -149,20 +180,17 @@ export default class PackingSystem {
       grid.appendChild(button);
     });
 
-    const previousCategory = PACKING_CATEGORIES[scene.packingStepIndex - 1];
-    const nextCategory = PACKING_CATEGORIES[scene.packingStepIndex + 1];
-    if (pageCount > 1) {
-      this.addFooterButton(footer, "이전", "previous-page", "secondary");
-      this.addFooterButton(footer, "다음", "next-page", "secondary");
+    const isFirstPage = scene.packingStepIndex === 0 && scene.packingPageIndex === 0;
+    if (!isFirstPage) {
+      this.addFooterButton(footer, "이전", "prev-step", "secondary");
     }
-    if (previousCategory) {
-      this.addFooterButton(footer, `${previousCategory.label} 가기`, "previous-category", "secondary");
-    }
-    this.addFooterButton(
-      footer,
-      nextCategory ? `${nextCategory.label} 가기` : "가방 확인하기",
-      "next-category",
-    );
+
+    const isLastCategory = scene.packingStepIndex === PACKING_CATEGORIES.length - 1;
+    const isLastPage = scene.packingPageIndex === pageCount - 1;
+    const nextLabel = (isLastCategory && isLastPage) ? "가방 확인하기" : "다음";
+    
+    this.addFooterButton(footer, nextLabel, "next-step");
+    this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
 
@@ -201,9 +229,9 @@ export default class PackingSystem {
       });
     }
 
-    const lastCategory = PACKING_CATEGORIES[PACKING_CATEGORIES.length - 1];
-    this.addFooterButton(footer, `${lastCategory.label} 가기`, "previous-category", "secondary");
+    this.addFooterButton(footer, "이전", "prev-step", "secondary");
     this.addFooterButton(footer, "짐싸기 완료", "complete");
+    this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
 
@@ -219,23 +247,18 @@ export default class PackingSystem {
   }
 
   handleAction(action) {
-    if (action === "next-category") {
-      this.advanceStep();
+    if (action === "next-step") {
+      this.advanceSequentialStep();
       return;
     }
 
-    if (action === "previous-category") {
-      this.goBackStep();
+    if (action === "prev-step") {
+      this.goBackSequentialStep();
       return;
     }
 
-    if (action === "next-page") {
-      this.movePage(1);
-      return;
-    }
-
-    if (action === "previous-page") {
-      this.movePage(-1);
+    if (action === "close") {
+      this.close();
       return;
     }
 
@@ -244,39 +267,56 @@ export default class PackingSystem {
     }
   }
 
-  advanceStep() {
+  advanceSequentialStep() {
     const scene = this.scene;
-    if (scene.packingMode === "review") return;
-
-    if (scene.packingStepIndex >= PACKING_CATEGORIES.length - 1) {
-      scene.packingMode = "review";
-    } else {
-      scene.packingStepIndex += 1;
+    if (scene.packingMode === "review") {
+      this.completeSelection();
+      return;
     }
-    scene.packingPageIndex = 0;
+
+    const category = this.getCurrentCategory();
+    const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+    const pageSize = this.getPageSize();
+    const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+
+    if (scene.packingPageIndex < pageCount - 1) {
+      scene.packingPageIndex += 1;
+    } else {
+      if (scene.packingStepIndex < PACKING_CATEGORIES.length - 1) {
+        scene.packingStepIndex += 1;
+        scene.packingPageIndex = 0;
+      } else {
+        scene.packingMode = "review";
+      }
+    }
     scene.selectedPackingIndex = 0;
     this.renderStep();
   }
 
-  goBackStep() {
+  goBackSequentialStep() {
     const scene = this.scene;
     if (scene.packingMode === "review") {
       scene.packingMode = "category";
       scene.packingStepIndex = PACKING_CATEGORIES.length - 1;
-    } else if (scene.packingStepIndex > 0) {
-      scene.packingStepIndex -= 1;
+      const category = this.getCurrentCategory();
+      const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+      const pageSize = this.getPageSize();
+      const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+      scene.packingPageIndex = pageCount - 1;
+    } else {
+      if (scene.packingPageIndex > 0) {
+        scene.packingPageIndex -= 1;
+      } else {
+        if (scene.packingStepIndex > 0) {
+          scene.packingStepIndex -= 1;
+          const category = this.getCurrentCategory();
+          const items = PACKING_ITEMS.filter((item) => item.category === category.key);
+          const pageSize = this.getPageSize();
+          const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+          scene.packingPageIndex = pageCount - 1;
+        }
+      }
     }
-    scene.packingPageIndex = 0;
-    scene.selectedPackingIndex = 0;
-    this.renderStep();
-  }
-
-  movePage(delta) {
-    const scene = this.scene;
-    const category = this.getCurrentCategory();
-    const items = PACKING_ITEMS.filter((item) => item.category === category.key);
-    const pageCount = Math.max(1, Math.ceil(items.length / this.getPageSize()));
-    scene.packingPageIndex = (scene.packingPageIndex + delta + pageCount) % pageCount;
     scene.selectedPackingIndex = 0;
     this.renderStep();
   }
@@ -286,12 +326,7 @@ export default class PackingSystem {
     // 현실 안전 지도: 지갑과 교통카드는 큰 여행 가방(캐리어) 안에 넣지 않도록 배제
     if (itemKey === "wallet" || itemKey === "transit_card") {
       const label = itemKey === "wallet" ? "지갑" : "교통카드";
-      scene.showSpeechBubble?.(
-        scene.player,
-        `💡 ${label}은(는) 가방 깊숙이 넣으면 차표를 사거나\n지하철을 탈 때 불편해요! 주머니나 보조 가방에 챙겨요!`,
-        5000
-      );
-      scene.showQuestToast?.(`${label}은(는) 몸에 가깝게 따로 챙겨두는 것이 안전해요!`, 3600);
+      this.showAlert(`💡 ${label}은(는) 가방 깊숙이 넣으면 차표 예매나 하차 시 꺼내기 힘들어요! 주머니나 보조 백에 따로 휴대하는 것이 훨씬 편하고 안전해요!`);
       scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
       return;
     }
@@ -402,7 +437,8 @@ export default class PackingSystem {
     const scene = this.scene;
     const items = this.getSelectedItems();
     if (!items.length) {
-      scene.showQuestToast("여행 가방에 짐을 최소 하나는 넣어주세요!");
+      this.showAlert("❌ 여행 가방 안에 챙겨갈 소지품이 최소 1개 이상 들어있어야 짐싸기를 완료할 수 있습니다!");
+      scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
       return;
     }
     this.openNameTagCustomizer();

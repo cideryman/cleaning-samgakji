@@ -28,6 +28,7 @@ export default class ClothingShopSystem {
           <strong>삼각옷방</strong>
           <span>마음에 드는 것을 고른 뒤 한 번에 계산해요.</span>
         </div>
+        <div class="shop-alert-box"></div>
         <div class="clothing-shop-progress"></div>
         <div class="clothing-shop-body"></div>
         <div class="clothing-shop-summary"></div>
@@ -41,12 +42,40 @@ export default class ClothingShopSystem {
 
   close() {
     const scene = this.scene;
+    this.hideAlert();
     scene.clothingShopModal?.remove();
     scene.clothingShopModal = null;
     scene.clothingShopSelectedKeys = new Set();
     scene.selectedClothingShopIndex = 0;
     scene.clothingShopStepIndex = 0;
     scene.clothingShopMode = "category";
+  }
+
+  showAlert(message) {
+    const alertBox = this.scene.clothingShopModal?.querySelector(".shop-alert-box");
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.style.display = "flex";
+    
+    alertBox.style.animation = "none";
+    alertBox.offsetHeight; // trigger reflow
+    alertBox.style.animation = "";
+
+    if (this.alertTimeout) clearTimeout(this.alertTimeout);
+    this.alertTimeout = setTimeout(() => {
+      alertBox.style.display = "none";
+    }, 5000);
+  }
+
+  hideAlert() {
+    const alertBox = this.scene.clothingShopModal?.querySelector(".shop-alert-box");
+    if (alertBox) {
+      alertBox.style.display = "none";
+    }
+    if (this.alertTimeout) {
+      clearTimeout(this.alertTimeout);
+      this.alertTimeout = null;
+    }
   }
 
   getShopIconFile(textureKey) {
@@ -79,6 +108,8 @@ export default class ClothingShopSystem {
     const scene = this.scene;
     if (!scene.clothingShopModal) return;
 
+    this.hideAlert();
+
     const progress = scene.clothingShopModal.querySelector(".clothing-shop-progress");
     const body = scene.clothingShopModal.querySelector(".clothing-shop-body");
     const footer = scene.clothingShopModal.querySelector(".clothing-shop-footer");
@@ -107,16 +138,16 @@ export default class ClothingShopSystem {
     const steps = CLOTHING_SHOP_CATEGORIES.map((category, index) => {
       const isDone = index < scene.clothingShopStepIndex || scene.clothingShopMode === "review";
       const isCurrent = index === scene.clothingShopStepIndex && scene.clothingShopMode !== "review";
-      const className = ["clothing-shop-step", "clothing-shop-option", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
+      const className = ["clothing-shop-step", isDone ? "is-done" : "", isCurrent ? "is-current" : ""]
         .filter(Boolean)
         .join(" ");
-      return `<button type="button" class="${className}" data-action="category" data-category-index="${index}">${category.label}</button>`;
-    }).join("");
+      return `<span class="${className}">${category.label}</span>`;
+    }).join("<span style='margin: 0 4px; color: #a48b73;'>➔</span>");
 
     const reviewClass = scene.clothingShopMode === "review"
-      ? "clothing-shop-step clothing-shop-option is-current"
-      : "clothing-shop-step clothing-shop-option";
-    return `${steps}<button type="button" class="${reviewClass}" data-action="review">계산하기</button>`;
+      ? "clothing-shop-step is-current"
+      : "clothing-shop-step";
+    return `${steps}<span style='margin: 0 4px; color: #a48b73;'>➔</span><span class="${reviewClass}">계산하기</span>`;
   }
 
   bindProgressButtons(progress) {
@@ -164,14 +195,13 @@ export default class ClothingShopSystem {
       grid.appendChild(button);
     });
 
-    const previousCategory = CLOTHING_SHOP_CATEGORIES[scene.clothingShopStepIndex - 1];
     const nextCategory = CLOTHING_SHOP_CATEGORIES[scene.clothingShopStepIndex + 1];
     if (scene.clothingShopStepIndex > 0) {
-      this.addFooterButton(footer, `${previousCategory.label} 보기`, "previous-category", "secondary");
+      this.addFooterButton(footer, "이전", "previous-category", "secondary");
     }
     this.addFooterButton(
       footer,
-      nextCategory ? `${nextCategory.label} 보기` : "확인하기",
+      nextCategory ? "다음" : "확인하기",
       "next-category",
     );
     this.addFooterButton(footer, "계산하기", "review", "secondary");
@@ -213,8 +243,7 @@ export default class ClothingShopSystem {
     }
 
     this.addFooterButton(footer, "계산하기", "checkout");
-    const lastCategory = CLOTHING_SHOP_CATEGORIES[CLOTHING_SHOP_CATEGORIES.length - 1];
-    this.addFooterButton(footer, `${lastCategory.label} 보기`, "previous-category", "secondary");
+    this.addFooterButton(footer, "이전", "previous-category", "secondary");
     this.addFooterButton(footer, "나가기", "close", "secondary");
     this.renderSummary();
   }
@@ -315,7 +344,8 @@ export default class ClothingShopSystem {
     if (!item) return;
 
     if (this.hasTravelPrepItem(item.key)) {
-      scene.showQuestToast("이미 준비한 물건이에요.");
+      this.showAlert("💡 이미 준비하여 지참하고 있는 물건입니다.");
+      scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
       return;
     }
 
@@ -338,7 +368,8 @@ export default class ClothingShopSystem {
     const scene = this.scene;
     const items = this.getSelectedItems().filter((item) => !this.hasTravelPrepItem(item.key));
     if (!items.length) {
-      scene.showQuestToast("먼저 살 물건을 골라주세요.");
+      this.showAlert("💡 먼저 구매할 옷을 최소 1개 이상 선택해 주세요!");
+      scene.playTone?.({ frequency: 220, duration: 0.12, type: "square", volume: 0.035 });
       return;
     }
 
@@ -477,7 +508,8 @@ export default class ClothingShopSystem {
     const scene = this.scene;
     const balance = scene.moneySystem?.money ?? 0;
     const shortfall = Math.max(0, totalPrice - balance);
-    scene.showQuestToast(`돈이 ${shortfall.toLocaleString()}원 부족해요. 항목을 빼보세요.`, 5000);
+    this.showAlert(`❌ 소지하고 계신 돈이 ${shortfall.toLocaleString()}원 부족합니다! 장바구니에서 일부 상품을 제외해 주세요.`);
+    scene.playTone?.({ frequency: 220, duration: 0.15, type: "square", volume: 0.035 });
   }
 
   refreshSelection() {

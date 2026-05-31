@@ -93,6 +93,7 @@ export default class SlimeSystem {
     slime.setDepth(4);
     slime.setData("cleaned", false);
     slime.setData("trashType", normalizedType);
+    this.setupInteractiveTrash(slime);
     slime.setAlpha(0);
     slime.setScale(0.35);
 
@@ -161,6 +162,7 @@ export default class SlimeSystem {
     slime.setData("cleaned", false);
     slime.setData("trashType", baseType);
     slime.setData("specialType", specialType);
+    this.setupInteractiveTrash(slime);
 
     slime.setAlpha(0);
     slime.setScale(0.35);
@@ -268,5 +270,29 @@ export default class SlimeSystem {
       const randomFrame = Phaser.Math.Between(0, maxFrames - 1);
       slime.setFrame(randomFrame);
     }
+  }
+
+  setupInteractiveTrash(slime) {
+    slime.setInteractive({ useHandCursor: true });
+    slime.on("pointerover", () => {
+      if (!slime.getData("cleaned")) {
+        slime.setTint(0xffeb3b); // 황금빛 호버 하이라이트
+      }
+    });
+    slime.on("pointerout", () => {
+      slime.clearTint();
+    });
+    slime.on("pointerdown", (pointer) => {
+      const button = pointer.event?.button ?? pointer.button;
+      if (button === 0) { // 좌클릭 시
+        const scene = this.scene;
+        if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
+        if (!scene.stateManager?.canMove()) return;
+        if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+
+        // 플레이어 컨트롤러에 청소 타겟으로 등록
+        scene.playerController?.setCleanTarget(slime);
+      }
+    });
   }
 }

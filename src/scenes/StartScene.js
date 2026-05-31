@@ -68,33 +68,53 @@ export default class StartScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-DOWN", () => this.moveSelection(1));
     this.input.keyboard.on("keydown-ENTER", () => this.activateSelection());
     this.input.keyboard.on("keydown-SPACE", () => this.activateSelection());
-    this.updateSelection();
+
+    // 화면 크기 변경 및 가로 모드 회전 감지 리스너 바인딩
+    this.onResizeBound = () => this.handleViewportResize();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", this.onResizeBound);
+    } else {
+      window.addEventListener("resize", this.onResizeBound);
+    }
+
+    // 씬 해제 시 리스너 완벽 회수 (메모리 누수 방지)
+    this.events.on("shutdown", () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", this.onResizeBound);
+      } else {
+        window.removeEventListener("resize", this.onResizeBound);
+      }
+      if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+    });
+
+    // 시작 화면 띄운 직후 가로/세로 최종 배치 수행
+    this.repositionUI();
   }
 
   addStartBackground(centerX, centerY) {
-    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x91c77d);
+    this.bgRectangle = this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x91c77d);
     if (!this.textures.exists("start_park_background")) return;
 
-    const bg = this.add.image(centerX, centerY, "start_park_background");
+    this.bgImage = this.add.image(centerX, centerY, "start_park_background");
     const source = this.textures.get("start_park_background").getSourceImage();
     const scale = Math.max(this.scale.width / source.width, this.scale.height / source.height);
-    bg.setScale(scale);
-    bg.setDepth(0);
+    this.bgImage.setScale(scale);
+    this.bgImage.setDepth(0);
 
-    this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x21352c, 0.12).setDepth(1);
-    this.add.rectangle(centerX, this.scale.height - 96, this.scale.width, 192, 0x21352c, 0.18).setDepth(1);
+    this.overlay1 = this.add.rectangle(centerX, centerY, this.scale.width, this.scale.height, 0x21352c, 0.12).setDepth(1);
+    this.overlay2 = this.add.rectangle(centerX, this.scale.height - 96, this.scale.width, 192, 0x21352c, 0.18).setDepth(1);
   }
 
   addTitle(centerX, centerY) {
     const titleY = centerY - 126;
-    this.add.text(centerX + 3, titleY + 4, "삼각지 대청소", {
+    this.titleShadow = this.add.text(centerX + 3, titleY + 4, "삼각지 대청소", {
       fontFamily: "Arial",
       fontSize: "46px",
       color: "#10261e",
       fontStyle: "bold",
     }).setOrigin(0.5).setDepth(2);
 
-    this.add.text(centerX, titleY, "삼각지 대청소", {
+    this.titleText = this.add.text(centerX, titleY, "삼각지 대청소", {
       fontFamily: "Arial",
       fontSize: "46px",
       color: "#fff8d7",
@@ -103,13 +123,108 @@ export default class StartScene extends Phaser.Scene {
       strokeThickness: 8,
     }).setOrigin(0.5).setDepth(3);
 
-    this.add.text(centerX, titleY + 52, "청소하고, 모으고, 여행을 준비해요", {
+    this.subtitleText = this.add.text(centerX, titleY + 52, "청소하고, 모으고, 여행을 준비해요", {
       fontFamily: "Arial",
       fontSize: "18px",
       color: "#f5fff0",
       stroke: "#21352c",
       strokeThickness: 4,
     }).setOrigin(0.5).setDepth(3);
+  }
+
+  handleViewportResize() {
+    if (!this.sys || !this.sys.isActive()) return;
+
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+    this.resizeTimeout = setTimeout(() => {
+      if (!this.sys || !this.sys.isActive() || !this.scale) return;
+
+      const { width, height } = getViewportSize();
+      this.scale.resize(width, height);
+      this.repositionUI();
+    }, 150); // standalone PWA 회전 렌더링 딜레이 대응 세이프 버퍼
+  }
+
+  repositionUI() {
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+    const viewportHeight = this.scale.height;
+
+    // 모바일 가로 모드(높이 420px 미만)일 때 압축 레이아웃 적용하여 하단 컷오프를 완벽 차단
+    const isCompact = viewportHeight < 420;
+    
+    const buttonHeight = isCompact ? 30 : 38;
+    const buttonGap = isCompact ? 41 : 50;
+    const buttonFontSize = isCompact ? "18px" : "23px";
+    
+    const buttonLayout = {
+      width: isCompact ? 220 : 236,
+      height: buttonHeight,
+      gap: buttonGap
+    };
+
+    const hasCheckpoint = CheckpointStorage.hasSave();
+    let startY = centerY - 10;
+    if (hasCheckpoint) {
+      startY = isCompact ? centerY - 58 : centerY - 46;
+    } else {
+      startY = isCompact ? centerY - 25 : centerY - 10;
+    }
+
+    // 1. 배경 재조정
+    if (this.bgRectangle) {
+      this.bgRectangle.setPosition(centerX, centerY);
+      this.bgRectangle.setSize(this.scale.width, this.scale.height);
+    }
+    if (this.bgImage) {
+      this.bgImage.setPosition(centerX, centerY);
+      const source = this.textures.get("start_park_background").getSourceImage();
+      const scale = Math.max(this.scale.width / source.width, this.scale.height / source.height);
+      this.bgImage.setScale(scale);
+    }
+    if (this.overlay1) {
+      this.overlay1.setPosition(centerX, centerY);
+      this.overlay1.setSize(this.scale.width, this.scale.height);
+    }
+    if (this.overlay2) {
+      const overlay2Height = isCompact ? 130 : 192;
+      this.overlay2.setPosition(centerX, this.scale.height - (overlay2Height / 2));
+      this.overlay2.setSize(this.scale.width, overlay2Height);
+    }
+
+    // 2. 타이틀 재배치
+    const titleY = isCompact ? centerY - 110 : centerY - 126;
+    const titleFontSize = isCompact ? "34px" : "46px";
+    const subtitleFontSize = isCompact ? "14px" : "18px";
+    const subtitleOffset = isCompact ? 38 : 52;
+
+    if (this.titleShadow) {
+      this.titleShadow.setPosition(centerX + 3, titleY + 4);
+      this.titleShadow.setFontSize(titleFontSize);
+    }
+    if (this.titleText) {
+      this.titleText.setPosition(centerX, titleY);
+      this.titleText.setFontSize(titleFontSize);
+    }
+    if (this.subtitleText) {
+      this.subtitleText.setPosition(centerX, titleY + subtitleOffset);
+      this.subtitleText.setFontSize(subtitleFontSize);
+    }
+
+    // 3. 버튼 리스트 재배치
+    this.options.forEach((option, index) => {
+      const y = startY + buttonLayout.gap * index;
+      
+      option.box.setPosition(centerX, y);
+      option.box.setSize(buttonLayout.width, buttonLayout.height);
+      option.shadow.setPosition(centerX + 3, y + 4);
+      option.shadow.setSize(buttonLayout.width, buttonLayout.height);
+      
+      option.text.setPosition(centerX, y);
+      option.text.setFontSize(buttonFontSize);
+    });
+
+    this.updateSelection();
   }
 
   createOption(x, y, label, action, kind = "action", layout = { width: 236, height: 50 }) {

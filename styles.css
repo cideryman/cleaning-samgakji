@@ -3712,3 +3712,159 @@ body.ui-large-text .name-tag-preview-container label { font-size: 16px !importan
 body.ui-large-text .tag-owner-name { font-size: 24px !important; }
 body.ui-large-text .name-tag-submit-btn { font-size: 20px !important; }
 
+/* ==========================================================================
+   Mobile Landscape & Narrow Height Optimization (max-height: 500px)
+   ========================================================================== */
+@media screen and (max-height: 500px) {
+  /* 1. 휴식 및 성취 모달 스케일 다운 */
+  .rest-stats-panel {
+    padding: 12px 16px !important;
+    gap: 8px !important;
+    max-height: 96vh !important;
+  }
+  .rest-stats-header strong {
+    font-size: 18px !important;
+  }
+  .rest-stats-header span {
+    font-size: 12px !important;
+  }
+  .rest-stats-body {
+    max-height: 48vh !important;
+    gap: 6px !important;
+  }
+  .stats-row {
+    padding: 6px 12px !important;
+    gap: 10px !important;
+  }
+  .stats-row-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
+  }
+  .stats-row-info label {
+    font-size: 11px !important;
+  }
+  .stats-row-info span {
+    font-size: 15px !important;
+  }
+  .stats-quests-card {
+    padding: 8px 12px !important;
+    gap: 4px !important;
+  }
+  .stats-quest-item {
+    font-size: 13px !important;
+  }
+  .stats-quest-checkbox {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 11px !important;
+  }
+  .rest-close-btn {
+    min-height: 36px !important;
+    font-size: 14px !important;
+  }
+
+  /* 2. 옷가게 및 짐싸기 패널 스크롤/축소 */
+  .clothing-shop-panel {
+    width: min(680px, 96vw) !important;
+    max-height: 96vh !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+  .clothing-shop-header strong {
+    font-size: 18px !important;
+  }
+  .clothing-shop-header span {
+    font-size: 12px !important;
+  }
+  .clothing-shop-body {
+    max-height: 46vh !important;
+    overflow-y: auto !important;
+    gap: 8px !important;
+  }
+  .clothing-shop-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .clothing-shop-item {
+    grid-template-rows: 42px auto auto !important;
+    min-height: 92px !important;
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+  .clothing-shop-item img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .clothing-shop-item .item-label {
+    font-size: 12px !important;
+  }
+  .clothing-shop-item .item-price {
+    font-size: 11px !important;
+  }
+  
+  /* 짐싸기 그리드 축소 */
+  .packing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .packing-item {
+    grid-template-rows: 42px auto auto !important;
+    min-height: 92px !important;
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+  .packing-item img {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  /* 영수증 및 이름택 스크롤 지원 */
+  .receipt-container,
+  .name-tag-modal {
+    max-height: 52vh !important;
+    overflow-y: auto !important;
+    padding-right: 6px;
+  }
+  
+  .receipt-paper {
+    padding: 10px 14px !important;
+  }
+  
+  .receipt-question p {
+    font-size: 13px !important;
+    margin: 3px 0 !important;
+  }
+}
+
+/* 쇼핑 및 짐싸기 인라인 경고창 스타일 */
+.shop-alert-box {
+  display: none;
+  background-color: #ffeef0;
+  border: 2px solid #ffccd2;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  color: #d9383a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: shakeAlert 0.4s ease-in-out;
+}
+
+@keyframes shakeAlert {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+body.ui-large-text .shop-alert-box {
+  font-size: 16px !important;
+}
+
+
+
