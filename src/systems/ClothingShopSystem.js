@@ -511,7 +511,6 @@ export default class ClothingShopSystem {
 
       if (scene.clothesQuestState === "completed") {
         scene.saveCheckpoint("clothes_extra_items_bought");
-        this.open();
         return;
       }
       scene.completeClothesShoppingQuest();

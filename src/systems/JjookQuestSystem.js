@@ -410,6 +410,18 @@ export default class JjookQuestSystem {
     const activeTargetY = adjusted.y;
     const activeDistance = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, activeTargetX, activeTargetY);
 
+    const roadTop = 192;
+    const roadBottom = 270;
+    const isNpcNorth = scene.jjookNpc.y < roadTop;
+    const isNpcSouth = scene.jjookNpc.y > roadBottom;
+    const isNpcOnRoad = scene.jjookNpc.y >= roadTop && scene.jjookNpc.y <= roadBottom;
+    const isTargetNorth = targetY < roadTop;
+    const isTargetSouth = targetY > roadBottom;
+    const isCrossingRoad = isNpcOnRoad || (isNpcNorth && isTargetSouth) || (isNpcSouth && isTargetNorth);
+
+    const isIntermediate = (activeTargetX !== targetX || activeTargetY !== targetY) || isCrossingRoad;
+    const effectiveStopDistance = isIntermediate ? 0 : stopDistance;
+
     const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
     const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
     const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
@@ -424,14 +436,14 @@ export default class JjookQuestSystem {
 
     // Orthogonal movement: X-axis prioritized.
     if (Math.abs(dx) > 8) {
-      const stepX = Math.min(step, Math.abs(dx) - (Math.abs(dy) <= 8 ? stopDistance : 0));
+      const stepX = Math.min(step, Math.abs(dx) - (Math.abs(dy) <= 8 ? effectiveStopDistance : 0));
       if (stepX > 0) {
         moveX = Math.sign(dx) * stepX;
         scene.jjookNpc.x += moveX;
         directionKey = moveX < 0 ? "left" : "right";
       }
     } else if (Math.abs(dy) > 8) {
-      const stepY = Math.min(step, Math.abs(dy) - stopDistance);
+      const stepY = Math.min(step, Math.abs(dy) - effectiveStopDistance);
       if (stepY > 0) {
         moveY = Math.sign(dy) * stepY;
         scene.jjookNpc.y += moveY;

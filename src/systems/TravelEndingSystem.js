@@ -338,6 +338,15 @@ export default class TravelEndingSystem {
     const scene = this.scene;
     scene.audioManager.playPhoneRingSound();
 
+    // Pre-emptively load ending background to prevent any race condition or black screen later
+    if (!scene.textures.exists("ending_chapter1_final")) {
+      const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
+      if (asset) {
+        scene.load.image("ending_chapter1_final", asset.path);
+        scene.load.start();
+      }
+    }
+
     scene.dialogueSystem.start([
       {
         name: "알림",
@@ -350,44 +359,56 @@ export default class TravelEndingSystem {
         text: "전화를 받으시겠습니까?",
         choices: [
           { label: "📞 전화 수락하기", onSelect: () => this.handlePhoneCallDialogue() },
-          { label: "🔇 나중에 받기", onSelect: () => this.handlePhoneCallDialogue() },
+          { label: "🔇 나중에 받기", onSelect: () => this.declinePhoneCall() },
         ],
       },
     ]);
   }
 
+  declinePhoneCall() {
+    const scene = this.scene;
+    scene.audioManager?.stopPhoneRingSound?.();
+    this.showPhoneCallResumeButton();
+  }
+
   handlePhoneCallDialogue() {
     const scene = this.scene;
+    this.hidePhoneCallResumeButton();
     // Soft tone signifying line connected
     scene.audioManager.playTone({ frequency: 587.33, duration: 0.18, type: "sine", volume: 0.05 });
     
     scene.dialogueSystem.start([
       { name: "해냄이", portraitKey: "haenaem_smile", text: "여보세요? 엄마!" },
-      { name: "엄마", portraitKey: "mother_allowance", text: "해냄아! 서울역이랑 경복궁에는 잘 도착했니? 재미있게 놀고 있어?" },
+      { name: "엄마", portraitKey: "mother_smile", text: "해냄아! 서울역이랑 경복궁에는 잘 도착했니? 재미있게 놀고 있어?" },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "네! 쭉쭉이랑 경복궁도 가고 놀이공원도 왔어요. 사람들이 진짜 많아서 살짝 떨렸지만요." },
       { name: "해냄이", portraitKey: "haenaem_determined", text: "삼각지에서 연습했던 대로 표지판도 읽고 차근차근 걸었더니 하나도 헤매지 않고 잘 왔어요!" },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "어휴, 우리 해냄이가 스스로 부딪히며 서울 여행을 멋지게 주도하고 있구나. 엄마는 목소리만 들어도 정말 든든해." },
-      { name: "엄마", portraitKey: "mother_allowance", text: "약국이랑 옷가게에서 잔돈 계산도 또박또박 해내더니, 이제는 완전한 어른이 다 되었네." },
+      { name: "엄마", portraitKey: "mother_smile", text: "어휴, 우리 해냄이가 스스로 부딪히며 서울 여행을 멋지게 주도하고 있구나. 엄마는 목소리만 들어도 정말 든든해." },
+      { name: "엄마", portraitKey: "mother_calm", text: "약국이랑 옷가게에서 잔돈 계산도 또박또박 해내더니, 이제는 완전한 어른이 다 되었네." },
       { name: "해냄이", portraitKey: "haenaem_smile", text: "엄마가 믿어주고 응원 용돈도 듬뿍 챙겨주신 덕분이에요. 다녀가서 삼각지 이웃분들 선물도 사갈게요!" },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "선물은 무슨, 우리 해냄이가 안전하고 웃는 얼굴로 영주행 기차 타고 돌아오는 게 가장 큰 선물이란다. 재밌게 즐기고 이따 역에서 만나자." },
+      { name: "엄마", portraitKey: "mother_smile", text: "선물은 무슨, 우리 해냄이가 안전하고 웃는 얼굴로 영주행 기차 타고 돌아오는 게 가장 큰 선물이란다. 재밌게 즐기고 이따 역에서 만나자." },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "응! 사랑해요 엄마, 이따 저녁에 뵈어요!" }
     ], () => {
       // Sound representing hanging up
       scene.audioManager.playTone({ frequency: 440.00, duration: 0.25, type: "sine", volume: 0.03 });
       scene.time.delayedCall(400, () => {
-        // Preload ending background texture if it doesn't exist to prevent black screen race condition
-        if (!scene.textures.exists("ending_chapter1_final")) {
-          const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
-          if (asset) {
-            scene.load.image("ending_chapter1_final", asset.path);
-            scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
-              this.transitionWithFade(() => this.finishChapterOneEnding());
-            });
-            scene.load.start();
-            return;
-          }
-        }
-        this.transitionWithFade(() => this.finishChapterOneEnding());
+        let isTransitionStarted = false;
+
+        // Show a temporary black screen interactive skip listener
+        const skipListener = () => {
+          if (isTransitionStarted) return;
+          isTransitionStarted = true;
+          scene.input.off("pointerdown", skipListener);
+          this.finishChapterOneEnding();
+          scene.cameras.main.fadeIn(400, 0, 0, 0);
+        };
+        scene.input.once("pointerdown", skipListener);
+
+        scene.time.delayedCall(100, () => {
+          if (isTransitionStarted) return;
+          isTransitionStarted = true;
+          scene.input.off("pointerdown", skipListener);
+          this.transitionWithFade(() => this.finishChapterOneEnding());
+        });
       });
     });
   }
@@ -442,5 +463,76 @@ export default class TravelEndingSystem {
     scene.clearInteriorScene();
     document.body.classList.add("start-screen");
     scene.scene.start("StartScene");
+  }
+
+  showPhoneCallResumeButton() {
+    if (this.phoneCallResumeButton) return;
+    const scene = this.scene;
+
+    const viewportWidth = Math.max(768, scene.scale.width || 768);
+    const viewportHeight = Math.max(480, scene.scale.height || 480);
+    const centerX = viewportWidth / 2;
+    const centerY = viewportHeight / 2;
+
+    const container = scene.add.container(centerX, centerY).setDepth(65);
+    
+    const glow = scene.add.circle(0, 0, 72, 0xff5a5a, 0.4);
+    glow.setStrokeStyle(3, 0xff8e8e, 0.8);
+    
+    scene.tweens.add({
+      targets: glow,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      alpha: 0.15,
+      duration: 1000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+
+    const phoneImage = scene.add.image(0, -10, "mother_phone");
+    phoneImage.setDisplaySize(116, 116);
+    
+    phoneImage.setInteractive({ useHandCursor: true });
+    phoneImage.on("pointerover", () => {
+      phoneImage.setScale(phoneImage.scaleX * 1.1);
+      scene.playTone?.({ frequency: 660, duration: 0.08, type: "sine", volume: 0.02 });
+    });
+    phoneImage.on("pointerout", () => {
+      phoneImage.setScale(phoneImage.scaleX / 1.1);
+    });
+
+    const label = scene.add.text(0, 72, "📞 전화 받기", {
+      fontFamily: "Arial",
+      fontSize: "20px",
+      color: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#cc3333",
+      padding: { x: 14, y: 8 },
+      align: "center"
+    }).setOrigin(0.5);
+    
+    label.setInteractive({ useHandCursor: true });
+
+    const triggerReceive = () => {
+      this.hidePhoneCallResumeButton();
+      scene.audioManager?.stopPhoneRingSound?.();
+      this.handlePhoneCallDialogue();
+    };
+
+    phoneImage.on("pointerdown", triggerReceive);
+    label.on("pointerdown", triggerReceive);
+
+    container.add([glow, phoneImage, label]);
+    
+    this.phoneCallResumeButton = container;
+    scene.interiorSceneGroup?.add(container);
+  }
+
+  hidePhoneCallResumeButton() {
+    if (this.phoneCallResumeButton) {
+      this.phoneCallResumeButton.destroy();
+      this.phoneCallResumeButton = null;
+    }
   }
 }

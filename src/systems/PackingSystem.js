@@ -15,6 +15,7 @@ export default class PackingSystem {
   open() {
     const scene = this.scene;
     this.close();
+    this.hideResumeButton();
     // 현실 안전 지도: 가방 짐 목록에서 지갑(wallet)과 교통카드(transit_card)는 강제 제외하여
     // 사용자가 소지품을 따로 보조 가방이나 주머니에 챙기도록 학습을 유도합니다.
     scene.packingSelectedKeys = new Set(
@@ -63,6 +64,82 @@ export default class PackingSystem {
 
     // Restore focus to Phaser game canvas
     scene.game.canvas?.focus?.();
+
+    // Show resume button in the middle of the screen if packing is closed but not finished
+    if (scene.packingQuestState !== "completed" && scene.interiorSceneType === "home") {
+      this.showResumeButton();
+    }
+  }
+
+  showResumeButton() {
+    if (this.resumeButton) return;
+    const scene = this.scene;
+
+    const viewportWidth = Math.max(768, scene.scale.width || 768);
+    const viewportHeight = Math.max(480, scene.scale.height || 480);
+    const centerX = viewportWidth / 2;
+    const centerY = viewportHeight / 2;
+
+    const container = scene.add.container(centerX, centerY).setDepth(65);
+    
+    const glow = scene.add.circle(0, 0, 72, 0xffd75a, 0.4);
+    glow.setStrokeStyle(3, 0xf7d96f, 0.8);
+    
+    scene.tweens.add({
+      targets: glow,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      alpha: 0.15,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+
+    const bagImage = scene.add.image(0, -10, "travel_bag");
+    bagImage.setDisplaySize(116, 116);
+    
+    bagImage.setInteractive({ useHandCursor: true });
+    bagImage.on("pointerover", () => {
+      bagImage.setScale(bagImage.scaleX * 1.1);
+      scene.playTone?.({ frequency: 520, duration: 0.08, type: "sine", volume: 0.02 });
+    });
+    bagImage.on("pointerout", () => {
+      bagImage.setScale(bagImage.scaleX / 1.1);
+    });
+
+    const label = scene.add.text(0, 72, "🎒 가방 꾸리기 재개", {
+      fontFamily: "Arial",
+      fontSize: "20px",
+      color: "#ffffff",
+      fontStyle: "bold",
+      backgroundColor: "#21352c",
+      padding: { x: 14, y: 8 },
+      align: "center"
+    }).setOrigin(0.5);
+    
+    label.setInteractive({ useHandCursor: true });
+
+    const triggerResume = () => {
+      scene.playTone?.({ frequency: 880, duration: 0.12, type: "triangle", volume: 0.04 });
+      this.hideResumeButton();
+      this.open();
+    };
+
+    bagImage.on("pointerdown", triggerResume);
+    label.on("pointerdown", triggerResume);
+
+    container.add([glow, bagImage, label]);
+    
+    this.resumeButton = container;
+    scene.interiorSceneGroup?.add(container);
+  }
+
+  hideResumeButton() {
+    if (this.resumeButton) {
+      this.resumeButton.destroy();
+      this.resumeButton = null;
+    }
   }
 
   showAlert(message) {

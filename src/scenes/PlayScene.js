@@ -2649,4 +2649,5 @@ export default class PlayScene extends Phaser.Scene {
 
     return "오늘 하루도 씩씩하고 즐겁게 일해봐요!";
   }
+
 }
