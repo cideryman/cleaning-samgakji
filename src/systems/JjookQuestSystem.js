@@ -194,22 +194,40 @@ export default class JjookQuestSystem {
     scene.clearQuestMarker("clothesShop");
     scene.clearQuestMarker("clothesQuest");
     scene.saveCheckpoint("clothes_completed");
-    scene.dialogueSystem.start([
-      { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
-      { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "오~ 이제 진짜 서울 가는 느낌 난다!" },
-      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
-      {
-        name: "쭉쭉이",
-        portraitKey: "jjook_travel_bag",
-        text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
-        choices: [
-          { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
-          { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => this.declinePackingQuest() },
-        ],
-      },
-    ], () => {
-      scene.clearInteriorScene();
-    });
+    
+    const startDialogue = () => {
+      scene.dialogueSystem.start([
+        { name: "쭉쭉이", portraitKey: "jjook_smile", text: "오! 잘 어울린다!" },
+        { name: "쭉쭉이", portraitKey: "jjook_expectant", text: "오~ 이제 진짜 서울 가는 느낌 난다!" },
+        { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워! 마음에 드는 옷을 직접 고르니까 더 설렌다." },
+        {
+          name: "쭉쭉이",
+          portraitKey: "jjook_travel_bag",
+          text: "해냄아, 우리 이제 여행 짐도 슬슬 준비해야 하지 않을까?",
+          choices: [
+            { label: "그래! 짐 싸러 가자!", onSelect: () => this.acceptPackingQuest() },
+            { label: "아니! 돈 더 벌어서 옷 더 사고 싶어!", onSelect: () => this.declinePackingQuest() },
+          ],
+        },
+      ], () => {
+        scene.clearInteriorScene();
+      });
+    };
+
+    if (scene.player) {
+      scene.playerController?.playWalkAnimation?.("down");
+      scene.tweens.add({
+        targets: scene.player,
+        y: scene.player.y + 48,
+        duration: 500,
+        onComplete: () => {
+          scene.playerController?.stopWalkAnimation?.();
+          scene.time.delayedCall(200, startDialogue);
+        }
+      });
+    } else {
+      startDialogue();
+    }
   }
 
   startPackingOfferDialogue({ repeat = false } = {}) {

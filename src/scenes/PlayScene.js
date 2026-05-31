@@ -152,6 +152,7 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiQuestSystem = new YebiQuestSystem(this);
     this.playerController = new PlayerController(this);
     this.interactionSystem = new InteractionSystem(this);
+    this.interactionSystem.setupInteractiveZones();
     this.slimeSystem = new SlimeSystem(this);
     this.cleaningSystem = new CleaningSystem(this);
     this.uiManager = new UIManager(this);

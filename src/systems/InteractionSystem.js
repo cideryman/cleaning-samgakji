@@ -6,6 +6,29 @@ export default class InteractionSystem {
     this.scene = scene;
   }
 
+  setupInteractiveZones() {
+    const scene = this.scene;
+    const createDoorZone = (type, configPoint, width, height) => {
+      const pos = scene.getMapPoint?.(type + "_door", configPoint) || configPoint;
+      if (!pos || pos.x === undefined) return;
+      const rect = scene.add.rectangle(pos.x, pos.y, width, height, 0xffff00, 0.4);
+      rect.setAlpha(0);
+      rect.setDepth(15);
+      rect.setInteractive({ cursor: 'pointer' });
+      rect.on("pointerover", () => rect.setAlpha(1));
+      rect.on("pointerout", () => rect.setAlpha(0));
+      rect.on("pointerdown", () => {
+        if (scene.playerController) {
+          scene.playerController.setInteractionTarget(type, { x: pos.x, y: pos.y + 30 });
+        }
+      });
+    };
+
+    createDoorZone("hospital", GAME_CONFIG.hospitalDoor, 144, 112);
+    createDoorZone("pharmacy", GAME_CONFIG.pharmacyDoor, 136, 108);
+    createDoorZone("clothing_store", GAME_CONFIG.clothingStoreDoor, 156, 116);
+  }
+
   handlePrimaryAction() {
     const scene = this.scene;
     if (scene.sceneControlSystem?.isWorldInputBlocked()) return;

@@ -371,6 +371,19 @@ export default class PlayerController {
     }
   }
 
+  setInteractionTarget(type, position) {
+    const scene = this.scene;
+    if (scene.pathfindingSystem) {
+      const path = scene.pathfindingSystem.findPath(scene.player, position);
+      if (path && path.length > 0) {
+        this.movePath = path;
+        this.currentPathIndex = 0;
+        this.interactionTarget = type;
+        scene.mouseMoveTarget = null;
+      }
+    }
+  }
+
   autoSweepCleanTarget() {
     const scene = this.scene;
     const target = this.cleanTarget;

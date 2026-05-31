@@ -259,7 +259,7 @@ export default class TravelEndingSystem {
     scene.dialogueSystem.start([
       { name: "엄마", portraitKey: "mother_smile", text: "어머, 우리 해냄이가 스스로 서울 갈 준비를 이렇게나 꼼꼼히 끝냈네!" },
       { name: "엄마", portraitKey: "mother_calm", text: "삼각지 동네 청소도 앞장서서 하고, 혼자서 장보기도 해내다니 엄마는 참 대견하단다." },
-      { name: "엄마", portraitKey: "mother_allowance_2", text: "이건 해냄이가 흘린 멋진 땀방울을 칭찬하며 엄마가 주는 선물, 특별 보너스 용돈이란다!" },
+      { name: "엄마", portraitKey: "mother_allowance", text: "이건 해냄이가 흘린 멋진 땀방울을 칭찬하며 엄마가 주는 선물, 특별 보너스 용돈이란다!" },
       { name: "해냄이", portraitKey: "haenaem_touched", text: "우와, 진짜요? 정말 고마워요, 엄마! 잘 쓰고 안전하게 다녀올게요!" },
     ], () => {
       scene.moneySystem?.addMoney(TRAVEL_ALLOWANCE_REWARD);
@@ -398,8 +398,8 @@ export default class TravelEndingSystem {
           if (isTransitionStarted) return;
           isTransitionStarted = true;
           scene.input.off("pointerdown", skipListener);
-          this.finishChapterOneEnding();
-          scene.cameras.main.fadeIn(400, 0, 0, 0);
+          scene.cameras.main.fadeOut(200, 0, 0, 0);
+          scene.time.delayedCall(200, () => this.finishChapterOneEnding());
         };
         scene.input.once("pointerdown", skipListener);
 
@@ -407,7 +407,10 @@ export default class TravelEndingSystem {
           if (isTransitionStarted) return;
           isTransitionStarted = true;
           scene.input.off("pointerdown", skipListener);
-          this.transitionWithFade(() => this.finishChapterOneEnding());
+          scene.cameras.main.fadeOut(850, 0, 0, 0);
+          scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.finishChapterOneEnding();
+          });
         });
       });
     });
@@ -430,29 +433,54 @@ export default class TravelEndingSystem {
     scene.stateManager?.set(SceneState.CUTSCENE);
     scene.player?.setVelocity(0, 0);
     scene.playerController?.stopWalkAnimation?.();
-    scene.showInteriorScene("ending_chapter1_final", "ending");
 
-    const viewportWidth = Math.max(768, scene.scale.width || 768);
-    const viewportHeight = Math.max(480, scene.scale.height || 480);
-    const centerX = viewportWidth / 2;
-    const promptY = Math.min(viewportHeight - 46, viewportHeight * 0.9);
-    const promptBack = scene.add.rectangle(centerX, promptY, Math.min(560, viewportWidth - 56), 54, 0x21352c, 0.72);
-    promptBack.setScrollFactor(0);
-    promptBack.setDepth(74);
-    promptBack.setStrokeStyle(3, 0xf7d96f, 0.9);
-    const prompt = scene.add.text(centerX, promptY, "스페이스 또는 화면 터치로 시작화면으로", {
-      fontFamily: "Arial",
-      fontSize: "22px",
-      color: "#fff3d0",
-      fontStyle: "bold",
-      align: "center",
-    }).setOrigin(0.5);
-    prompt.setScrollFactor(0);
-    prompt.setDepth(75);
-    scene.interiorSceneGroup?.addMultiple?.([promptBack, prompt]);
+    const showEnding = () => {
+      scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
+      scene.cameras.main.fadeIn(850, 0, 0, 0);
+      
+      const addPromptWhenReady = () => {
+        if (scene.interiorSceneGroup && scene.interiorSceneType === "ending") {
+          const viewportWidth = Math.max(768, scene.scale.width || 768);
+          const viewportHeight = Math.max(480, scene.scale.height || 480);
+          const centerX = viewportWidth / 2;
+          const promptY = Math.min(viewportHeight - 46, viewportHeight * 0.9);
+          const promptBack = scene.add.rectangle(centerX, promptY, Math.min(560, viewportWidth - 56), 54, 0x21352c, 0.72);
+          promptBack.setScrollFactor(0);
+          promptBack.setDepth(74);
+          promptBack.setStrokeStyle(3, 0xf7d96f, 0.9);
+          const prompt = scene.add.text(centerX, promptY, "스페이스 또는 화면 터치로 시작화면으로", {
+            fontFamily: "Arial",
+            fontSize: "22px",
+            color: "#fff3d0",
+            fontStyle: "bold",
+            align: "center",
+          }).setOrigin(0.5);
+          prompt.setScrollFactor(0);
+          prompt.setDepth(75);
+          scene.interiorSceneGroup.addMultiple([promptBack, prompt]);
 
-    scene.input.keyboard.once("keydown-SPACE", () => this.returnToStartScreenFromEnding());
-    scene.input.once("pointerdown", () => this.returnToStartScreenFromEnding());
+          scene.input.keyboard.once("keydown-SPACE", () => this.returnToStartScreenFromEnding());
+          scene.input.once("pointerdown", () => this.returnToStartScreenFromEnding());
+        } else {
+          scene.time.delayedCall(100, addPromptWhenReady);
+        }
+      };
+      
+      addPromptWhenReady();
+    };
+
+    if (scene.textures.exists("ending_chapter1_final")) {
+      showEnding();
+    } else {
+      const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
+      if (asset) {
+        scene.load.image("ending_chapter1_final", asset.path);
+        scene.load.once(Phaser.Loader.Events.COMPLETE, showEnding);
+        scene.load.start();
+      } else {
+        showEnding();
+      }
+    }
   }
 
   returnToStartScreenFromEnding() {

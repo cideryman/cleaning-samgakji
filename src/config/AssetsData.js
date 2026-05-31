@@ -197,6 +197,7 @@ export const LAZY_IMAGE_KEYS = [
   "ending_seoul_station",
   "ending_gyeongbokgung",
   "ending_amusement_park",
+  "ending_chapter1_final",
   "hospital_interior",
   "pharmacy_interior",
   "clothing_store_interior",
