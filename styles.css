@@ -4196,3 +4196,252 @@ body.large-text .settings-ok-btn { font-size: 22px; min-height: 56px; }
     touch-action: pan-y;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Mobile DOM modal scroll accessibility
+   -------------------------------------------------------------------------- */
+
+.rest-stats-modal,
+.clothing-shop-modal,
+.packing-modal,
+.name-tag-modal {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+.rest-stats-panel,
+.clothing-shop-panel,
+.packing-panel,
+.name-tag-panel {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+@media (pointer: coarse) and (orientation: landscape), (max-height: 500px) {
+  .rest-stats-modal,
+  .clothing-shop-modal,
+  .packing-modal,
+  .name-tag-modal {
+    align-items: flex-start !important;
+    justify-items: center !important;
+    place-items: start center !important;
+    height: 100svh;
+    height: 100dvh;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+  }
+
+  .rest-stats-panel,
+  .clothing-shop-panel,
+  .packing-panel,
+  .name-tag-panel {
+    max-height: calc(100svh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    min-height: 0 !important;
+  }
+
+  .rest-stats-body,
+  .clothing-shop-body,
+  .packing-body,
+  .clothing-shop-grid,
+  .packing-grid,
+  .clothing-shop-review-list,
+  .packing-review-list {
+    overflow: visible !important;
+    max-height: none !important;
+    touch-action: pan-y;
+  }
+
+  .rest-stats-panel {
+    grid-template-rows: auto auto auto !important;
+    width: min(540px, 94vw) !important;
+    padding: 10px 12px !important;
+  }
+
+  .rest-stats-footer,
+  .clothing-shop-footer,
+  .packing-footer,
+  .name-tag-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    padding-top: 8px !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    background: inherit;
+  }
+
+  .clothing-shop-panel,
+  .packing-panel {
+    grid-template-rows: auto auto auto auto auto !important;
+    width: min(760px, 96vw) !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+
+  .clothing-shop-header {
+    gap: 10px !important;
+  }
+
+  .clothing-shop-progress {
+    gap: 4px !important;
+  }
+
+  .clothing-shop-step {
+    min-width: 46px !important;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+  }
+
+  .clothing-shop-summary {
+    padding: 6px !important;
+  }
+
+  .clothing-shop-money-grid {
+    gap: 5px !important;
+  }
+
+  .clothing-shop-money-grid div {
+    padding: 4px 6px !important;
+  }
+
+  .clothing-shop-money-grid span {
+    font-size: 10px !important;
+  }
+
+  .clothing-shop-money-grid strong {
+    font-size: 13px !important;
+  }
+
+  .clothing-shop-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .clothing-shop-item,
+  .packing-item {
+    grid-template-rows: 34px auto auto !important;
+    min-height: 78px !important;
+    padding: 5px !important;
+    gap: 3px !important;
+  }
+
+  .clothing-shop-item img,
+  .packing-item img {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .clothing-shop-item .item-label,
+  .packing-item .item-label {
+    font-size: 11px !important;
+  }
+
+  .clothing-shop-item .item-price,
+  .packing-item .item-price,
+  .clothing-shop-item .item-status {
+    font-size: 10px !important;
+  }
+
+  .clothing-shop-footer-button {
+    min-width: 92px !important;
+    min-height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+  }
+
+  .packing-bag-preview {
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .packing-bag-preview > img {
+    width: 86px !important;
+    max-height: 104px !important;
+  }
+
+  .name-tag-panel {
+    width: min(720px, 96vw) !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  .name-tag-header {
+    padding-bottom: 6px !important;
+  }
+
+  .name-tag-header strong {
+    font-size: 18px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .name-tag-header span {
+    font-size: 12px !important;
+  }
+
+  .name-tag-body {
+    grid-template-columns: minmax(190px, 0.9fr) minmax(220px, 1fr) !important;
+    gap: 10px !important;
+    align-items: start;
+  }
+
+  .name-tag-preview-container {
+    order: 1;
+  }
+
+  .name-tag-controls {
+    order: 2;
+    gap: 8px !important;
+  }
+
+  .control-group {
+    gap: 4px !important;
+  }
+
+  .control-group input[type="text"] {
+    padding: 6px 9px !important;
+    font-size: 13px !important;
+  }
+
+  .color-picker {
+    gap: 6px !important;
+  }
+
+  .color-btn {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .route-info {
+    padding: 6px 9px !important;
+    font-size: 13px !important;
+  }
+
+  .name-tag-preview {
+    height: 132px !important;
+    padding: 10px !important;
+  }
+
+  .tag-city {
+    font-size: 13px !important;
+  }
+
+  .tag-owner-name {
+    font-size: 17px !important;
+  }
+
+  .tag-barcode {
+    height: 18px !important;
+  }
+
+  .name-tag-submit-btn {
+    min-height: 38px !important;
+    font-size: 14px !important;
+  }
+}

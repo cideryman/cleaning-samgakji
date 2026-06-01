@@ -81,10 +81,25 @@ function startGame() {
   } catch (e) {}
 
   document.addEventListener("contextmenu", (event) => event.preventDefault());
+  const scrollableDomModalSelector = [
+    ".settings-modal",
+    ".settings-panel",
+    ".rest-stats-modal",
+    ".rest-stats-panel",
+    ".clothing-shop-modal",
+    ".clothing-shop-panel",
+    ".packing-modal",
+    ".packing-panel",
+    ".name-tag-modal",
+    ".name-tag-panel",
+  ].join(",");
   document.addEventListener(
     "touchmove",
     (event) => {
       if (event.target instanceof Element && event.target.closest(".game-shell")) {
+        if (event.target.closest(scrollableDomModalSelector)) {
+          return;
+        }
         event.preventDefault();
       }
     },
