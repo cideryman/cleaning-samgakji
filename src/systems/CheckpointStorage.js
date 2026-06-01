@@ -149,6 +149,7 @@ export default class CheckpointStorage {
       chapterId,
       checkpointId: "prologue_complete",
       savedAt: Date.now(),
+      tutorialState: "intro",
       money: 0,
       totalCleanedCount: 0,
       cleanedCanCount: 0,
@@ -185,6 +186,7 @@ export default class CheckpointStorage {
       chapterId,
       checkpointId,
       savedAt: Date.now(),
+      tutorialState: scene.tutorialState ?? "intro",
       money: scene.moneySystem?.money ?? 0,
       totalCleanedCount: scene.totalCleanedCount ?? 0,
       cleanedCanCount: scene.cleanedCanCount ?? 0,
@@ -246,6 +248,7 @@ export default class CheckpointStorage {
     if (!scene || !data) return false;
 
     scene.restoredCheckpointId = data.checkpointId;
+    scene.tutorialState = this.inferTutorialState(data);
     scene.totalCleanedCount = data.totalCleanedCount ?? 0;
     scene.cleanedCanCount = data.cleanedCanCount ?? 0;
     scene.recyclingInventory = { normal: 0, can: 0, plastic: 0, ...(data.recyclingInventory ?? {}) };
@@ -276,6 +279,12 @@ export default class CheckpointStorage {
     }
 
     this.applyQuestData(scene, data.quests ?? {});
+    if (scene.tutorialSystem) {
+      scene.tutorialSystem.state = scene.tutorialState;
+      if (scene.tutorialState === "completed") {
+        scene.tutorialSystem.clearGraphics?.();
+      }
+    }
     this.applyNpcState(scene, data);
 
     scene.updateBacchusButton?.();
@@ -284,6 +293,35 @@ export default class CheckpointStorage {
     scene.yebiQuestSystem?.updateUI();
     this.hideCompletedQuestHud(scene);
     return true;
+  }
+
+  static inferTutorialState(data) {
+    if (data?.tutorialState) return data.tutorialState;
+    if (data?.checkpointId === "prologue_complete") return "intro";
+
+    const quests = data?.quests ?? {};
+    const hasQuestProgress = Boolean(
+      quests.canQuest?.isActive
+      || quests.canQuest?.isCompleted
+      || quests.recycleQuest?.isUnlocked
+      || quests.recycleQuest?.isActive
+      || quests.recycleQuest?.isCompleted
+      || Boolean(quests.jjookQuestState && quests.jjookQuestState !== JjookQuestState.LOCKED)
+      || Boolean(quests.sunisuniQuestState && quests.sunisuniQuestState !== SunisuniQuestState.LOCKED)
+      || Boolean(quests.clothesQuestState && quests.clothesQuestState !== ClothesQuestState.LOCKED)
+      || Boolean(quests.packingQuestState && quests.packingQuestState !== PackingQuestState.LOCKED)
+    );
+
+    if (
+      hasQuestProgress
+      || (data?.totalCleanedCount ?? 0) > 0
+      || (data?.cleanedCanCount ?? 0) > 0
+      || (data?.checkpointId && data.checkpointId !== "prologue_complete")
+    ) {
+      return "completed";
+    }
+
+    return "intro";
   }
 
   static applyQuestData(scene, quests) {

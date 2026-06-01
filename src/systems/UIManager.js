@@ -284,6 +284,10 @@ export default class UIManager {
           <span id="rest-stats-time">08:00</span>
         </div>
         <div class="rest-stats-body">
+          <div class="rest-daily-note">
+            <label>오늘의 한 마디</label>
+            <p id="stats-daily-quote">천천히 해도 괜찮아. 오늘도 한 걸음 나아갔어.</p>
+          </div>
           <!-- 여비 저축 현황 -->
           <div class="stats-row">
             <div class="stats-row-icon">💰</div>
@@ -318,10 +322,6 @@ export default class UIManager {
               <span id="stats-achievement-count">0개 완료</span>
             </div>
             <div class="achievement-grid" id="stats-achievement-grid" aria-label="오늘 해낸 일"></div>
-          </div>
-          <div class="rest-daily-note">
-            <label>오늘의 한 마디</label>
-            <p id="stats-daily-quote">천천히 해도 괜찮아. 오늘도 한 걸음 나아갔어.</p>
           </div>
         </div>
         <div class="rest-stats-footer">

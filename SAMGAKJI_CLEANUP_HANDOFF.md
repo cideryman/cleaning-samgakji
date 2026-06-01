@@ -121,6 +121,48 @@ npm.cmd run build
 
 ## 4. 최근 완료 작업 로그
 
+### 2026-06-01 저장 후 나가기 이어하기 쓰레기 리스폰 수정
+문제:
+- 인게임 설정창의 `게임 저장하고 나가기` 후 시작 화면에서 `이어하기`를 누르면 쓰레기 리스폰이 멈추는 문제가 있었습니다.
+
+원인:
+- 체크포인트 저장 데이터에 `tutorialState`가 포함되지 않았습니다.
+- 이어하기 복원 후 실제 진행은 복구되지만 `tutorialState`가 초기값 `intro`로 남아, `SlimeSystem.startRespawnLoop()`의 튜토리얼 중 리스폰 차단 조건에 걸렸습니다.
+
+변경:
+- `src/systems/CheckpointStorage.js`
+  - `saveSceneCheckpoint()`와 `savePrologueCompleted()` 저장 데이터에 `tutorialState` 추가.
+  - `applyToScene()`에서 `tutorialState`를 복원.
+  - 기존 저장처럼 `tutorialState`가 없는 경우에도 체크포인트, 청소 수, 퀘스트 진행도를 보고 튜토리얼 완료 상태를 추론하는 `inferTutorialState()` 추가.
+  - 복원 직후 `TutorialSystem` 내부 state도 scene 상태와 동기화.
+
+검증 필요:
+- 설정창에서 저장 후 나가기 -> 이어하기 -> 12초 안팎으로 쓰레기가 다시 생성되는지 확인.
+- 프롤로그 직후 저장/이어하기에서는 튜토리얼이 정상 시작되는지 확인.
+
+검증:
+- `node --check src/systems/CheckpointStorage.js` 통과.
+- `node --check src/systems/UIManager.js` 통과.
+- `git diff --check` 통과. 줄바꿈 경고만 있음.
+- `npm.cmd run build` 통과.
+
+### 2026-06-01 커피잔 휴식/통계창 성취 앨범 개선
+변경:
+- `src/systems/UIManager.js`
+  - 기존 여비 게이지, 청소 수, 분리배출 수는 유지.
+  - `오늘 해낸 일` 앨범 섹션 추가.
+  - 청소 시작, 분리수거, 쭉쭉이 도움, 수니수니 도움, 옷가게, 짐싸기를 배지 카드로 표시.
+  - 완료 여부는 현재 퀘스트 상태와 청소/분리수거 수를 기준으로 판단.
+  - 진행 상황에 따라 바뀌는 `오늘의 한 마디` 추가.
+- `styles.css`
+  - 새 에셋 없이 CSS 카드와 이모지 중심의 앨범 스타일 추가.
+  - 모바일 가로 화면에서는 3열의 작은 배지로 줄이고 기존 overlay/panel 스크롤 구조를 유지.
+
+검증:
+- `node --check src/systems/UIManager.js` 통과.
+- `git diff --check` 통과. 줄바꿈 경고만 있음.
+- `npm.cmd run build` 통과.
+
 ### 2026-06-01 NextGoalSystem 짧은 목표 안내 HUD 추가
 변경:
 - `src/systems/NextGoalSystem.js` 추가.
