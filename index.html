@@ -176,6 +176,10 @@
             <button id="setting-toggle-sound" class="setting-btn" type="button">소리: 켜기</button>
           </div>
           <div class="setting-item">
+            <span class="setting-label">배움 노트</span>
+            <button id="setting-open-notes" class="setting-btn" type="button">배움 노트 보기</button>
+          </div>
+          <div class="setting-item">
             <span class="setting-label">전체화면</span>
             <button id="setting-toggle-fullscreen" class="setting-btn" type="button">전체화면: 끄기</button>
           </div>
@@ -183,6 +187,23 @@
         <div class="settings-footer">
           <button id="settings-save-exit" class="settings-ok-btn settings-save-exit-btn" type="button">게임 저장하고 나가기</button>
           <button id="settings-ok" class="settings-ok-btn" type="button">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Notes Modal -->
+    <div id="edu-notes-modal" class="edu-notes-modal" style="display: none;" aria-hidden="true">
+      <div class="edu-notes-panel">
+        <button id="edu-notes-close" class="edu-notes-close" type="button" aria-label="close">&times;</button>
+        <div class="edu-notes-header">
+          <h2>📓 배움 노트</h2>
+          <p class="edu-notes-subtitle">7대 시설 자립생활 배움 앨범</p>
+        </div>
+        <div class="edu-notes-body">
+          <div id="edu-notes-list" class="edu-notes-list"></div>
+        </div>
+        <div class="edu-notes-footer">
+          <button id="edu-notes-ok" class="edu-notes-ok-btn" type="button">닫기</button>
         </div>
       </div>
     </div>

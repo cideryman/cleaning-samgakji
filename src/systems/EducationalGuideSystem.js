@@ -1,10 +1,21 @@
 import { EDUCATIONAL_GUIDE_DATA } from "../config/EducationalGuideData.js";
 
+const KEY_MAP = {
+  "hospital": "hospital",
+  "pharmacy": "pharmacy",
+  "clothing_shop": "clothing",
+  "vending_machine": "vending",
+  "traffic_light": "crosswalk",
+  "recycling_center": "recycling",
+  "bus_stop": "busStop"
+};
+
 export default class EducationalGuideSystem {
   constructor(scene) {
     this.scene = scene;
     this.icons = [];
     this.isOpen = false;
+    this.openedFromNotes = false;
 
     this.modalEl = null;
     this.titleEl = null;
@@ -45,13 +56,20 @@ export default class EducationalGuideSystem {
 
   spawnGuideIcons() {
     const scene = this.scene;
+    this.icons = [];
+
     EDUCATIONAL_GUIDE_DATA.forEach((facility) => {
+      const mappedKey = KEY_MAP[facility.key];
+      const seen = scene.educationGuideSeen?.[mappedKey] === true;
+
       const container = scene.add.container(facility.x, facility.y);
       container.setDepth(20);
 
-      // Circle background (with transparency for premium overlay blend)
+      container.facility = facility;
+      container.mappedKey = mappedKey;
+
+      // Circle background
       const circle = scene.add.circle(0, 0, 18, 0xffd75a);
-      circle.setAlpha(0.82);
       circle.setStrokeStyle(3, 0x21352c);
       circle.setInteractive({ useHandCursor: true });
 
@@ -67,9 +85,10 @@ export default class EducationalGuideSystem {
 
       // Micro-animations: Hover Scale
       circle.on("pointerover", () => {
+        const currentSeen = scene.educationGuideSeen?.[mappedKey] === true;
         scene.tweens.add({
           targets: container,
-          scale: 1.15,
+          scale: currentSeen ? 1.1 : 1.15,
           duration: 120,
           overwrite: true
         });
@@ -90,8 +109,62 @@ export default class EducationalGuideSystem {
         this.openGuideModal(facility);
       });
 
-      // Floating dynamic idle animation
-      scene.tweens.add({
+      container.circleObj = circle;
+      container.textObj = text;
+
+      this.icons.push(container);
+      this.applyIconStyle(container, seen);
+    });
+  }
+
+  applyIconStyle(container, seen) {
+    const scene = this.scene;
+    const circle = container.circleObj;
+    const text = container.textObj;
+    const facility = container.facility;
+
+    if (container.floatTween) {
+      container.floatTween.stop();
+      container.floatTween = null;
+    }
+
+    if (seen) {
+      // Small, quiet "다시보기" style
+      circle.setRadius(11);
+      circle.setFillStyle(0xffd75a, 0.42);
+      circle.setStrokeStyle(2, 0x21352c, 0.5);
+      circle.setAlpha(0.42);
+
+      text.setStyle({
+        fontSize: "13px",
+        color: "rgba(33, 53, 44, 0.6)"
+      });
+      text.setAlpha(0.6);
+
+      container.y = facility.y;
+      container.floatTween = scene.tweens.add({
+        targets: container,
+        y: facility.y - 2,
+        duration: 3500,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut"
+      });
+    } else {
+      // Standard highlight style
+      circle.setRadius(18);
+      circle.setFillStyle(0xffd75a, 0.82);
+      circle.setStrokeStyle(3, 0x21352c, 1.0);
+      circle.setAlpha(1.0);
+
+      text.setStyle({
+        fontSize: "22px",
+        color: "#21352c"
+      });
+      text.setAlpha(1.0);
+
+      container.y = facility.y;
+      container.floatTween = scene.tweens.add({
         targets: container,
         y: facility.y - 6,
         duration: 1200 + Math.random() * 400,
@@ -99,18 +172,27 @@ export default class EducationalGuideSystem {
         repeat: -1,
         ease: "Sine.easeInOut"
       });
-
-      this.icons.push(container);
-    });
+    }
   }
 
   openGuideModal(facility) {
     if (this.isOpen) return;
 
     const scene = this.scene;
-    if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return;
+    if (scene.sceneControlSystem?.isWorldInputBlocked?.() && !this.openedFromNotes) return;
 
     this.isOpen = true;
+
+    // Track viewed seen state
+    const mappedKey = KEY_MAP[facility.key];
+    if (mappedKey && scene.educationGuideSeen) {
+      scene.educationGuideSeen[mappedKey] = true;
+      const targetIcon = this.icons.find(icon => icon.mappedKey === mappedKey);
+      if (targetIcon) {
+        this.applyIconStyle(targetIcon, true);
+      }
+      scene.saveCheckpoint("edu_seen_" + mappedKey);
+    }
 
     // Play button click tone if audioManager exists
     scene.audioManager?.playTone?.({ frequency: 660, duration: 0.08, type: "sine", volume: 0.05 });
@@ -158,8 +240,63 @@ export default class EducationalGuideSystem {
       this.modalEl.setAttribute("aria-hidden", "true");
     }
 
-    // Unblock world controls
-    scene.sceneControlSystem?.blockWorldInput?.(false);
+    if (this.openedFromNotes) {
+      this.openedFromNotes = false;
+      scene.htmlUiBindingSystem?.showLearningNotes?.();
+      this.renderLearningNotes();
+    } else {
+      // Unblock world controls
+      scene.sceneControlSystem?.blockWorldInput?.(false);
+    }
+  }
+
+  renderLearningNotes() {
+    const scene = this.scene;
+    const listEl = scene.eduNotesList;
+    if (!listEl) return;
+
+    listEl.innerHTML = "";
+
+    const emojiMap = {
+      "hospital": "🏥",
+      "pharmacy": "💊",
+      "clothing_shop": "👕",
+      "vending_machine": "🥤",
+      "traffic_light": "🚦",
+      "recycling_center": "♻️",
+      "bus_stop": "🚌"
+    };
+
+    EDUCATIONAL_GUIDE_DATA.forEach((facility) => {
+      const mappedKey = KEY_MAP[facility.key];
+      const seen = scene.educationGuideSeen?.[mappedKey] === true;
+
+      const card = document.createElement("div");
+      card.className = "edu-note-card";
+
+      const emoji = emojiMap[facility.key] || "💡";
+
+      card.innerHTML = `
+        <div class="edu-note-info">
+          <span class="edu-note-icon">${emoji}</span>
+          <span class="edu-note-title">${facility.title}</span>
+        </div>
+        <span class="edu-note-status ${seen ? 'seen' : 'unseen'}">
+          ${seen ? '봤어요 ✓' : '아직 안 봤어요'}
+        </span>
+      `;
+
+      card.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        scene.htmlUiBindingSystem?.hideLearningNotes();
+        this.openedFromNotes = true;
+        this.openGuideModal(facility);
+      });
+
+      listEl.appendChild(card);
+    });
   }
 
   destroy() {
@@ -168,6 +305,9 @@ export default class EducationalGuideSystem {
     window.removeEventListener("keydown", this.escHandler);
 
     this.icons.forEach((icon) => {
+      if (icon.floatTween) {
+        icon.floatTween.stop();
+      }
       icon.destroy();
     });
     this.icons = [];

@@ -12,11 +12,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="&#49340;&#44033;&#51648; &#45824;&#52397;&#49548;" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="manifest" href="/cleaning-samgakji/assets/manifest-YvffR-Fj.webmanifest" />
+    <link rel="manifest" href="/cleaning-samgakji/assets/manifest-CJZbSARO.webmanifest" />
     <link rel="apple-touch-icon" href="/cleaning-samgakji/assets/icon-180-CN5dL70T.png" />
     <script src="./vendor/phaser.min.js"></script>
-    <script type="module" crossorigin src="/cleaning-samgakji/assets/index-DAKdC4cz.js"></script>
-    <link rel="stylesheet" crossorigin href="/cleaning-samgakji/assets/index-Cpt-cmMV.css">
+    <script type="module" crossorigin src="/cleaning-samgakji/assets/index-DoOWgOwS.js"></script>
+    <link rel="stylesheet" crossorigin href="/cleaning-samgakji/assets/index-CasEWewd.css">
   </head>
   <body class="start-screen">
     <main class="game-shell">
@@ -30,21 +30,8 @@
         <div class="money-ui">
           <div class="money-item">
             <img src="/cleaning-samgakji/assets/10000won-CIcl3RrN.png" alt="&#47564;&#50896;" class="money-icon icon-10000">
-            <span id="count10000">0</span>
+            <span id="totalMoney">0&#50896;</span>
           </div>
-          <div class="money-item">
-            <img src="/cleaning-samgakji/assets/1000won-Cv3X_H7e.png" alt="&#52380;&#50896;" class="money-icon icon-1000">
-            <span id="count1000">0</span>
-          </div>
-          <div class="money-item coin-item">
-            <img src="/cleaning-samgakji/assets/500WON-ClEjIuEv.png" alt="&#50724;&#48177;&#50896;" class="money-icon coin-icon icon-500">
-            <span id="count500">0</span>
-          </div>
-          <div class="money-item coin-item">
-            <img src="/cleaning-samgakji/assets/100WON-BoBDQmIt.png" alt="&#48177;&#50896;" class="money-icon coin-icon icon-100">
-            <span id="count100">0</span>
-          </div>
-          <div class="money-total" id="totalMoney">&#8361;0</div>
           <div class="trash-inventory-ui" aria-label="collected trash">
             <div class="trash-inventory-item" title="&#51068;&#48152; &#50416;&#47112;&#44592;">
               <img src="/cleaning-samgakji/assets/trash-BzRK6sK0.png" alt="&#51068;&#48152; &#50416;&#47112;&#44592;" class="trash-inventory-icon">
@@ -190,6 +177,10 @@
             <button id="setting-toggle-sound" class="setting-btn" type="button">소리: 켜기</button>
           </div>
           <div class="setting-item">
+            <span class="setting-label">배움 노트</span>
+            <button id="setting-open-notes" class="setting-btn" type="button">배움 노트 보기</button>
+          </div>
+          <div class="setting-item">
             <span class="setting-label">전체화면</span>
             <button id="setting-toggle-fullscreen" class="setting-btn" type="button">전체화면: 끄기</button>
           </div>
@@ -197,6 +188,23 @@
         <div class="settings-footer">
           <button id="settings-save-exit" class="settings-ok-btn settings-save-exit-btn" type="button">게임 저장하고 나가기</button>
           <button id="settings-ok" class="settings-ok-btn" type="button">확인</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Learning Notes Modal -->
+    <div id="edu-notes-modal" class="edu-notes-modal" style="display: none;" aria-hidden="true">
+      <div class="edu-notes-panel">
+        <button id="edu-notes-close" class="edu-notes-close" type="button" aria-label="close">&times;</button>
+        <div class="edu-notes-header">
+          <h2>📓 배움 노트</h2>
+          <p class="edu-notes-subtitle">7대 시설 자립생활 배움 앨범</p>
+        </div>
+        <div class="edu-notes-body">
+          <div id="edu-notes-list" class="edu-notes-list"></div>
+        </div>
+        <div class="edu-notes-footer">
+          <button id="edu-notes-ok" class="edu-notes-ok-btn" type="button">닫기</button>
         </div>
       </div>
     </div>

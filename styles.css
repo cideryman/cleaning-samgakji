@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   color-scheme: light;
   font-family: Arial, "Malgun Gothic", sans-serif;
   background: #edf6f0;
@@ -4333,6 +4333,7 @@ body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
 .rest-stats-panel,
 .name-tag-panel,
 .edu-guide-panel,
+.edu-notes-panel,
 .settings-panel {
   max-height: 85vh !important;
   overflow-y: auto !important;
@@ -4346,6 +4347,7 @@ body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
 .packing-modal,
 .rest-stats-modal,
 .settings-modal,
+.edu-notes-modal,
 .edu-guide-modal {
   overflow-y: hidden !important;
 }
@@ -4367,6 +4369,7 @@ body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
   .clothing-shop-modal,
   .packing-modal,
   .rest-stats-modal,
+  .edu-notes-modal,
   .edu-guide-modal {
     align-items: flex-start !important;
     justify-items: center !important;

@@ -468,3 +468,34 @@ npm.cmd run build
 주의:
 - 쓰레기 인벤토리 아이콘 영역은 그대로 유지했습니다.
 - 실제 돈 계산 로직은 변경하지 않았고, 화면 표시 방식만 바꿨습니다.
+
+### 2026-06-01 배움 시스템 축소 및 "배움 노트" 복습 앨범 추가
+
+요청 반영:
+- 7대 자립생활 배움터 물음표 시스템을 "첫 학습 강조 + 이후 조용한 다시보기" 구조로 개선했습니다.
+- 인게임 설정창 내에 "배움 노트 보기" 버튼을 연동하고, 카드로 구성된 7대 시설 리스트를 통해 교육 모달을 다시 열 수 있는 전용 "배움 노트" 오버레이 모달을 도입했습니다.
+
+수정 및 추가 파일:
+1. `src/systems/EducationalGuideSystem.js` [MODIFY]
+   - 각 시설에 대한 seen 열람 상태를 확인하고, 미열람 시설은 기존의 크고 눈에 잘 띄는 노란색 물음표 + floating sine-wave 애니메이션을 유지합니다.
+   - 열람을 완료한 시설은 더 작고 조용한 "다시보기" 상태(Alpha 0.42, circle 크기 축소, 애니메이션 거의 멈춤)로 스타일을 자동 전환합니다.
+   - 7대 시설 교육 안내 리스트를 동적으로 구축하여 봤어요/안봤어요 상태 및 픽토그램/클릭 동작을 결합하는 `renderLearningNotes()`를 추가 구현했습니다.
+   - 배움 노트에서 특정 카드를 클릭해 세부 교육 모달을 열었을 때, 닫기 클릭 시 다시 배움 노트 모달로 회귀할 수 있도록 `openedFromNotes` 흐름 제어를 도입했습니다.
+2. `src/systems/CheckpointStorage.js` [MODIFY]
+   - 신규 게임 시작 및 체크포인트 세이브 시 `educationGuideSeen` 7대 시설(hospital, pharmacy, clothing, vending, crosswalk, recycling, busStop) Seen 상태를 누락 없이 저장 및 복구하도록 업데이트했습니다.
+   - 기존 저장 데이터와의 호환을 보장하도록 병합 구조(`...(data.educationGuideSeen ?? {})`)를 적용했습니다.
+3. `index.html` [MODIFY]
+   - 인게임 설정창 body 내에 "배움 노트 보기" (`#setting-open-notes`) 버튼을 정렬했습니다.
+   - 하단에 7대 시설 카드가 바인딩될 `#edu-notes-modal` 마크업 구조를 완벽하게 선언했습니다.
+4. `styles.css` [MODIFY]
+   - 배움 노트 모달, 판넬, 리스트 카드, 뱃지 상태 태그(`.edu-note-status.seen` / `.unseen`)에 대한 프리미엄 다크/골드그린 계열 스타일을 추가했습니다.
+   - 모바일 가로화면에서도 화면이 잘리지 않도록 `-webkit-overflow-scrolling: touch`, `overscroll-behavior: contain`, `overflow-y: auto`, `touch-action: pan-y`를 포함한 스크롤 및 레이아웃 반응형 보정 규칙을 완비했습니다.
+5. `src/systems/HtmlUiBindingSystem.js` [MODIFY]
+   - "배움 노트 보기" 및 닫기/확인 버튼에 대한 DOM 연동 및 클릭 이벤트 리스너를 매핑했습니다.
+   - 모달 열기/닫기 시 `scene.sceneControlSystem?.blockWorldInput`과 설정 모달과의 전환 연결고리를 안정적으로 바인딩했습니다.
+6. `src/scenes/PlayScene.js` [MODIFY]
+   - 체크포인트 복원이 없는 경우에 대비해 `educationGuideSeen` 기본값 false 딕셔너리를 create 수명주기에 초기화했습니다.
+
+검증:
+- `cmd.exe /c "npm run build"` 빌드 성공 확인.
+- 퀘스트 물음표와의 충돌이 없고, 교육 모달 열람 시 seen 처리 및 지도 상의 물음표가 즉시 작고 조용한 다시보기 형태로 바뀌는 것을 성공적으로 보증했습니다.

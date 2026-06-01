@@ -25,6 +25,11 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleJoystick = document.querySelector("#setting-toggle-joystick");
     scene.settingToggleFullscreen = document.querySelector("#setting-toggle-fullscreen");
     scene.settingToggleSound = document.querySelector("#setting-toggle-sound");
+    scene.settingOpenNotes = document.querySelector("#setting-open-notes");
+    scene.eduNotesModal = document.querySelector("#edu-notes-modal");
+    scene.eduNotesClose = document.querySelector("#edu-notes-close");
+    scene.eduNotesOk = document.querySelector("#edu-notes-ok");
+    scene.eduNotesList = document.querySelector("#edu-notes-list");
 
     scene.completeOverlay = document.querySelector("#completeOverlay");
     scene.specialToast = document.querySelector("#specialToast");
@@ -93,6 +98,17 @@ export default class HtmlUiBindingSystem {
       event?.preventDefault();
       event?.stopPropagation();
       this.toggleSettings();
+    };
+    scene.settingOpenNotesHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      this.hideSettings();
+      scene.educationalGuideSystem?.renderLearningNotes?.();
+      this.showLearningNotes();
+    };
+    scene.eduNotesCloseHandler = () => {
+      this.hideLearningNotes();
+      this.showSettings();
     };
     scene.settingsCloseHandler = () => {
       this.hideSettings();
@@ -179,6 +195,9 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleJoystick?.addEventListener("click", scene.settingToggleJoystickHandler);
     scene.settingToggleFullscreen?.addEventListener("click", scene.settingToggleFullscreenHandler);
     scene.settingToggleSound?.addEventListener("click", scene.settingToggleSoundHandler);
+    scene.settingOpenNotes?.addEventListener("click", scene.settingOpenNotesHandler);
+    scene.eduNotesClose?.addEventListener("click", scene.eduNotesCloseHandler);
+    scene.eduNotesOk?.addEventListener("click", scene.eduNotesCloseHandler);
 
     document.addEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.addEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
@@ -214,6 +233,9 @@ export default class HtmlUiBindingSystem {
     scene.settingToggleJoystick?.removeEventListener("click", scene.settingToggleJoystickHandler);
     scene.settingToggleFullscreen?.removeEventListener("click", scene.settingToggleFullscreenHandler);
     scene.settingToggleSound?.removeEventListener("click", scene.settingToggleSoundHandler);
+    scene.settingOpenNotes?.removeEventListener("click", scene.settingOpenNotesHandler);
+    scene.eduNotesClose?.removeEventListener("click", scene.eduNotesCloseHandler);
+    scene.eduNotesOk?.removeEventListener("click", scene.eduNotesCloseHandler);
 
     document.removeEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.removeEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
@@ -241,6 +263,7 @@ export default class HtmlUiBindingSystem {
     if (scene.speedBuffTimerEl) scene.speedBuffTimerEl.textContent = "";
     if (scene.jjookFollowTimerEl) scene.jjookFollowTimerEl.textContent = "";
     this.hideSettings();
+    this.hideLearningNotes();
   }
 
   toggleSettings() {
@@ -270,6 +293,26 @@ export default class HtmlUiBindingSystem {
   hideSettings() {
     const scene = this.scene;
     const modal = scene.settingsModal;
+    if (!modal) return;
+
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    scene.sceneControlSystem?.blockWorldInput?.(false);
+  }
+
+  showLearningNotes() {
+    const scene = this.scene;
+    const modal = scene.eduNotesModal;
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    scene.sceneControlSystem?.blockWorldInput?.(true);
+  }
+
+  hideLearningNotes() {
+    const scene = this.scene;
+    const modal = scene.eduNotesModal;
     if (!modal) return;
 
     modal.style.display = "none";

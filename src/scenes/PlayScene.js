@@ -209,6 +209,15 @@ export default class PlayScene extends Phaser.Scene {
     this.updateHud();
     this.updateTravelPrepHud();
     this.updateCameraZoom();
+    this.educationGuideSeen = {
+      hospital: false,
+      pharmacy: false,
+      clothing: false,
+      vending: false,
+      crosswalk: false,
+      recycling: false,
+      busStop: false
+    };
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
     this.updateNpcRoaming(true);

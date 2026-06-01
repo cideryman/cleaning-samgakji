@@ -156,6 +156,15 @@ export default class CheckpointStorage {
       recyclingInventory: { normal: 0, can: 0, plastic: 0 },
       flags: {},
       drinkInventory: [],
+      educationGuideSeen: {
+        hospital: false,
+        pharmacy: false,
+        clothing: false,
+        vending: false,
+        crosswalk: false,
+        recycling: false,
+        busStop: false
+      },
       quests: {
         canQuest: { isActive: false, isCompleted: false, current: 0 },
         recycleQuest: {
@@ -191,6 +200,15 @@ export default class CheckpointStorage {
       totalCleanedCount: scene.totalCleanedCount ?? 0,
       cleanedCanCount: scene.cleanedCanCount ?? 0,
       recyclingInventory: { ...(scene.recyclingInventory ?? { normal: 0, can: 0, plastic: 0 }) },
+      educationGuideSeen: scene.educationGuideSeen ?? {
+        hospital: false,
+        pharmacy: false,
+        clothing: false,
+        vending: false,
+        crosswalk: false,
+        recycling: false,
+        busStop: false
+      },
       flags: {
         hasBroomUpgrade: Boolean(scene.hasBroomUpgrade),
         hasDroppedBroomUpgrade: Boolean(scene.hasDroppedBroomUpgrade),
@@ -252,6 +270,16 @@ export default class CheckpointStorage {
     scene.totalCleanedCount = data.totalCleanedCount ?? 0;
     scene.cleanedCanCount = data.cleanedCanCount ?? 0;
     scene.recyclingInventory = { normal: 0, can: 0, plastic: 0, ...(data.recyclingInventory ?? {}) };
+    scene.educationGuideSeen = {
+      hospital: false,
+      pharmacy: false,
+      clothing: false,
+      vending: false,
+      crosswalk: false,
+      recycling: false,
+      busStop: false,
+      ...(data.educationGuideSeen ?? {})
+    };
 
     const flags = data.flags ?? {};
     scene.hasBroomUpgrade = Boolean(flags.hasBroomUpgrade);
