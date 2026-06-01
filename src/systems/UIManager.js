@@ -2,6 +2,7 @@ import { GAME_CONFIG } from "../config/GameConstants.js";
 import {
   ClothesQuestState,
   JjookQuestState,
+  PackingQuestState,
   RecycleQuestState,
   SunisuniQuestState,
 } from "../config/QuestStates.js";
@@ -310,18 +311,17 @@ export default class UIManager {
               <span id="stats-recycled-text">0개</span>
             </div>
           </div>
-          <!-- 완료한 퀘스트 체크리스트 -->
-          <div class="stats-quests-card">
-            <label>이웃 돕기 퀘스트 현황</label>
-            <div class="stats-quest-item" id="quest-item-yebi">
-              <div class="stats-quest-checkbox"></div> 여비(Yeobi)의 분리수거장 돕기
+          <!-- 오늘 해낸 일 앨범 -->
+          <div class="rest-album-card">
+            <div class="rest-album-title">
+              <strong>오늘 해낸 일</strong>
+              <span id="stats-achievement-count">0개 완료</span>
             </div>
-            <div class="stats-quest-item" id="quest-item-jjook">
-              <div class="stats-quest-checkbox"></div> 쭉쭉이(Jjook)의 지갑 찾아주기
-            </div>
-            <div class="stats-quest-item" id="quest-item-sunisuni">
-              <div class="stats-quest-checkbox"></div> 아픈 수니수니(Sunisuni) 돕기
-            </div>
+            <div class="achievement-grid" id="stats-achievement-grid" aria-label="오늘 해낸 일"></div>
+          </div>
+          <div class="rest-daily-note">
+            <label>오늘의 한 마디</label>
+            <p id="stats-daily-quote">천천히 해도 괜찮아. 오늘도 한 걸음 나아갔어.</p>
           </div>
         </div>
         <div class="rest-stats-footer">
@@ -392,28 +392,113 @@ export default class UIManager {
     const recycledTextEl = this.restModalEl.querySelector("#stats-recycled-text");
     if (recycledTextEl) recycledTextEl.textContent = `${scene.totalRecycledCount}개`;
 
-    // 📜 퀘스트 완료 목록 체크 (QuestStates에 바인딩된 상수와 대조)
+    this.renderAchievementAlbum();
+  }
+
+  renderAchievementAlbum() {
+    if (!this.restModalEl) return;
+
+    const scene = this.scene;
     const yebiState = scene.yebiQuestSystem?.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
     const jjookState = scene.jjookQuestState ?? JjookQuestState.LOCKED;
     const sunisuniState = scene.sunisuniQuestState ?? SunisuniQuestState.LOCKED;
+    const clothesState = scene.clothesQuestState ?? ClothesQuestState.LOCKED;
+    const packingState = scene.packingQuestState ?? PackingQuestState.LOCKED;
 
-    const yebiQuestEl = this.restModalEl.querySelector("#quest-item-yebi");
-    const jjookQuestEl = this.restModalEl.querySelector("#quest-item-jjook");
-    const sunisuniQuestEl = this.restModalEl.querySelector("#quest-item-sunisuni");
+    const achievements = [
+      {
+        icon: "🧹",
+        label: "청소 시작",
+        detail: `${scene.totalCleanedCount ?? 0}개`,
+        done: (scene.totalCleanedCount ?? 0) > 0,
+      },
+      {
+        icon: "♻️",
+        label: "분리수거",
+        detail: `${scene.totalRecycledCount ?? 0}개`,
+        done: yebiState === RecycleQuestState.COMPLETED || (scene.totalRecycledCount ?? 0) > 0,
+      },
+      {
+        icon: "🏃",
+        label: "쭉쭉이 도움",
+        detail: "지갑 찾기",
+        done: jjookState === JjookQuestState.COMPLETED,
+      },
+      {
+        icon: "💊",
+        label: "수니수니 도움",
+        detail: "병원·약국",
+        done: sunisuniState === SunisuniQuestState.QUEST_COMPLETE,
+      },
+      {
+        icon: "👕",
+        label: "옷가게",
+        detail: "여행 준비",
+        done: clothesState === ClothesQuestState.COMPLETED,
+      },
+      {
+        icon: "🎒",
+        label: "짐싸기",
+        detail: "가방 준비",
+        done: [PackingQuestState.COMPLETED, PackingQuestState.GOING_BUS_STOP, PackingQuestState.BOARDING_BUS, PackingQuestState.TRAVELING_HOME, PackingQuestState.ENDING_COMPLETE].includes(packingState),
+      },
+    ];
 
-    this.renderQuestCheckbox(yebiQuestEl, yebiState === RecycleQuestState.COMPLETED);
-    this.renderQuestCheckbox(jjookQuestEl, jjookState === JjookQuestState.COMPLETED);
-    this.renderQuestCheckbox(sunisuniQuestEl, sunisuniState === SunisuniQuestState.QUEST_COMPLETE);
+    const completed = achievements.filter((item) => item.done).length;
+    const grid = this.restModalEl.querySelector("#stats-achievement-grid");
+    if (grid) {
+      grid.innerHTML = achievements.map((item) => `
+        <div class="achievement-badge ${item.done ? "is-done" : "is-pending"}">
+          <span class="achievement-icon" aria-hidden="true">${item.done ? item.icon : "○"}</span>
+          <span class="achievement-label">${item.label}</span>
+          <small>${item.done ? item.detail : "아직"}</small>
+        </div>
+      `).join("");
+    }
+
+    const countEl = this.restModalEl.querySelector("#stats-achievement-count");
+    if (countEl) {
+      countEl.textContent = `${completed}개 완료`;
+    }
+
+    const quoteEl = this.restModalEl.querySelector("#stats-daily-quote");
+    if (quoteEl) {
+      quoteEl.textContent = this.getDailyQuote({ completed, achievements });
+    }
   }
 
-  // 퀘스트 체크마크 보조 렌더러
-  renderQuestCheckbox(el, isDone) {
-    if (!el) return;
-    el.classList.toggle("is-done", isDone);
-    const checkbox = el.querySelector(".stats-quest-checkbox");
-    if (checkbox) {
-      checkbox.textContent = isDone ? "✓" : "";
+  getDailyQuote({ completed, achievements }) {
+    const scene = this.scene;
+    const money = scene.moneySystem?.money ?? 0;
+
+    if (scene.packingQuestState === PackingQuestState.ENDING_COMPLETE || scene.isChapterComplete) {
+      return "스스로 준비한 여행은 오래 기억에 남아. 정말 멋진 하루였어.";
     }
+    if (scene.packingQuestState === PackingQuestState.COMPLETED) {
+      return "가방까지 챙겼어. 이제 여행 준비가 아주 든든해졌어.";
+    }
+    if (scene.clothesQuestState === ClothesQuestState.COMPLETED) {
+      return "필요한 것을 고르고 계산까지 해냈어. 여행이 한층 가까워졌어.";
+    }
+    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
+      return "아픈 친구를 도운 마음이 오늘의 가장 반짝이는 성취야.";
+    }
+    if (scene.jjookQuestState === JjookQuestState.COMPLETED) {
+      return "친구를 돕고 함께 걸었어. 청소가 더 즐거워지는 순간이야.";
+    }
+    if ((scene.totalRecycledCount ?? 0) > 0 || scene.yebiQuestSystem?.getRecycleQuestState?.() === RecycleQuestState.COMPLETED) {
+      return "나눠서 버리는 습관이 삼각지를 더 깨끗하게 만들고 있어.";
+    }
+    if ((scene.totalCleanedCount ?? 0) >= 20) {
+      return "벌써 많이 치웠어. 꾸준함이 모이면 거리도 마음도 환해져.";
+    }
+    if ((scene.totalCleanedCount ?? 0) > 0) {
+      return "첫 쓰레기를 치운 것부터 이미 좋은 변화가 시작됐어.";
+    }
+    if (money > 0 || completed > 0 || achievements.some((item) => item.done)) {
+      return "작은 행동을 모으면 큰 준비가 돼. 오늘도 잘하고 있어.";
+    }
+    return "천천히 해도 괜찮아. 오늘도 한 걸음 나아가면 충분해.";
   }
 
   // --- 2️⃣ 친환경 특수 쓰레기 습득 시 화면 중앙 오버레이 팝업 연출 ---

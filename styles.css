@@ -2990,6 +2990,126 @@ body.ui-large-text .edu-guide-ok-btn {
   background: #fff3a3;
 }
 
+.rest-album-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 3px solid #d6b98f;
+  border-radius: 12px;
+  background: #fff8dc;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+.rest-album-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: #3d3229;
+}
+
+.rest-album-title strong {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.rest-album-title span {
+  padding: 3px 8px;
+  border: 2px solid #21352c;
+  border-radius: 999px;
+  background: #ffd75a;
+  color: #21352c;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.achievement-badge {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 9px;
+  border: 2px solid #b9d8c2;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #21352c;
+}
+
+.achievement-badge.is-done {
+  border-color: #2f8f5b;
+  background: #ecfbdf;
+  box-shadow: 0 3px 0 rgba(47, 143, 91, 0.24);
+}
+
+.achievement-badge.is-pending {
+  opacity: 0.66;
+}
+
+.achievement-icon {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #21352c;
+  border-radius: 50%;
+  background: #fffdf6;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.achievement-label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.achievement-badge small {
+  min-width: 0;
+  overflow: hidden;
+  color: #597e5f;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rest-daily-note {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 2px dashed #c8892c;
+  border-radius: 12px;
+  background: #fffdf6;
+  color: #3d3229;
+}
+
+.rest-daily-note label {
+  color: #8a5b2e;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.rest-daily-note p {
+  margin: 0;
+  color: #21352c;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .rest-stats-footer {
   display: grid;
   grid-template-columns: 1fr;
@@ -3783,6 +3903,48 @@ body.ui-large-text .name-tag-submit-btn { font-size: 20px !important; }
   .rest-close-btn {
     min-height: 36px !important;
     font-size: 14px !important;
+  }
+  .rest-album-card {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+  .rest-album-title strong {
+    font-size: 15px !important;
+  }
+  .rest-album-title span {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+  .achievement-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .achievement-badge {
+    grid-template-columns: 24px minmax(0, 1fr) !important;
+    padding: 5px !important;
+    column-gap: 5px !important;
+  }
+  .achievement-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 13px !important;
+  }
+  .achievement-label {
+    font-size: 11px !important;
+  }
+  .achievement-badge small {
+    font-size: 9px !important;
+  }
+  .rest-daily-note {
+    padding: 8px 10px !important;
+    gap: 4px !important;
+  }
+  .rest-daily-note label {
+    font-size: 11px !important;
+  }
+  .rest-daily-note p {
+    font-size: 13px !important;
+    line-height: 1.35 !important;
   }
 
   /* 2. ?룰?寃?諛?吏먯떥湲??⑤꼸 ?ㅽ겕濡?異뺤냼 */
