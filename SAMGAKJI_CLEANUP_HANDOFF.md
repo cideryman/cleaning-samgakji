@@ -499,3 +499,45 @@ npm.cmd run build
 검증:
 - `cmd.exe /c "npm run build"` 빌드 성공 확인.
 - 퀘스트 물음표와의 충돌이 없고, 교육 모달 열람 시 seen 처리 및 지도 상의 물음표가 즉시 작고 조용한 다시보기 형태로 바뀌는 것을 성공적으로 보증했습니다.
+- 단, 설정창 내에서 "배움 노트 보기" 버튼을 눌렀을 때, `#edu-notes-modal` 팝업이 노출되지 않는 현상이 일부 환경에서 보고되어 추후 디버깅이 필요합니다. (월드 물음표 축소/다시보기 기능 자체는 완벽하게 동작하며 저장도 호환됩니다.)
+
+### 2026-06-01 NPC 기억 대사 1단계 추가
+
+요청 반영:
+- 머리 위 친분도 게이지나 새 이미지 에셋 없이, 기존 진행 상태를 바탕으로 NPC가 해냄이의 행동을 기억하는 듯한 말풍선을 띄우는 1단계 시스템을 추가했습니다.
+- 대상은 맵 위에 실제 NPC로 존재하는 `여비(yebi)`, `쭉쭉이(jjook)`, `수니수니(sunisuni)`만입니다.
+- 엄마는 맵 위 NPC가 아니라 스토리/전화 대화 전용 인물이므로 이번 랜덤 말풍선 연동 대상에서 제외했습니다. 추후 필요하면 `StoryMemoryLine` 같은 별도 흐름으로 다루는 주석만 남겼습니다.
+
+수정 및 추가 파일:
+1. `src/systems/NpcMemorySystem.js` [ADD]
+   - `getMemorySpeech(npcKey)` 진입점 추가.
+   - `getYebiMemorySpeech()`, `getJjookMemorySpeech()`, `getSunisuniMemorySpeech()`로 NPC별 조건을 분리했습니다.
+   - 조건에 맞는 후보가 여러 개면 랜덤 선택하되, 같은 NPC의 직전 문구는 가능한 한 피하도록 `lastSpeechByNpc`를 둡니다.
+   - 튜토리얼, 대화창, 상점/짐싸기/인테리어/컷신/엔딩 등 월드 입력이 막힌 상태에서는 기억 말풍선을 반환하지 않습니다.
+2. `src/scenes/PlayScene.js` [MODIFY]
+   - `NpcMemorySystem`을 시스템 초기화 흐름에 추가했습니다.
+   - 기존 NPC 로밍 중 랜덤 말풍선(`maybeShowNpcAmbientLine`)과 45~75초 주기의 랜덤 NPC 말풍선(`triggerRandomNpcBubble`)에서 먼저 `npcMemorySystem.getMemorySpeech(npcKey)`를 확인합니다.
+   - 기억 대사가 없으면 기존 `NPC_ROAM_CONFIG.messages` 랜덤 대사를 그대로 fallback으로 사용합니다.
+   - 기존 `getNpcRememberSpeech()`의 긴 직접 로직은 제거하여 PlayScene 책임을 줄였습니다.
+
+NPC별 기억 대사 조건:
+- 여비
+  - 캔 퀘스트 완료: “해냄아, 캔을 모으는 실력이 정말 좋아졌네!”
+  - 분리수거 퀘스트 완료: “이제 분리수거장도 제법 잘 쓰는구나.”
+  - 누적 분리수거 기록이 충분히 있음: “삼각지가 깨끗해지는 게 보여. 해냄이 덕분이야.”
+  - 특수 재활용 자원 안내를 본 적 있음: “깨끗한 재활용품을 알아보는 눈이 생겼구나!”
+- 쭉쭉이
+  - 지갑/음료 퀘스트 완료: “지난번에 지갑 찾아줘서 정말 고마웠어!”
+  - 플로깅 동행 중: “같이 플로깅하니까 훨씬 재밌다!”
+  - 옷가게 퀘스트 열림/진행/완료: “서울 여행 준비하니까 두근두근하지 않아?”
+  - 짐싸기 이후 흐름: “이제 진짜 여행 가는 느낌이 난다!”
+- 수니수니
+  - 병원/약국 퀘스트 완료: 병원 동행, 약국 동행, 회복 후 휴식 관련 기억 대사.
+  - 병원/약국 진행 중: 현재 동행 상태에 맞는 짧은 고마움 대사.
+
+검증:
+- `node --check src/systems/NpcMemorySystem.js`: 통과
+- `node --check src/scenes/PlayScene.js`: 통과
+- `git diff --check`: 통과, LF/CRLF 줄바꿈 경고만 있음
+- `npm.cmd run build`: 통과
+- 빌드 과정에서 생긴 `dist` 해시 산출물 변경은 소스 작업 범위 유지를 위해 되돌렸습니다.
