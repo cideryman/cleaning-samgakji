@@ -22,6 +22,7 @@ import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
+import NextGoalSystem from "../systems/NextGoalSystem.js";
 import TiledMapSystem from "../systems/TiledMapSystem.js";
 import PathfindingSystem from "../systems/PathfindingSystem.js";
 import UIManager from "../systems/UIManager.js";
@@ -97,6 +98,7 @@ export default class PlayScene extends Phaser.Scene {
     this.interiorSceneSystem = null;
     this.consumableSystem = null;
     this.objectVisibilitySystem = null;
+    this.nextGoalSystem = null;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
     this.audioContext = null;
@@ -140,6 +142,7 @@ export default class PlayScene extends Phaser.Scene {
     this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
     this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
+    this.nextGoalSystem = new NextGoalSystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
       DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
@@ -163,6 +166,7 @@ export default class PlayScene extends Phaser.Scene {
     this.slimeSystem = new SlimeSystem(this);
     this.cleaningSystem = new CleaningSystem(this);
     this.uiManager = new UIManager(this);
+    this.nextGoalSystem?.create();
     this.educationalGuideSystem = new EducationalGuideSystem(this);
     this.educationalGuideSystem.create();
     this.tutorialSystem = new TutorialSystem(this);
@@ -180,6 +184,7 @@ export default class PlayScene extends Phaser.Scene {
       this.educationalGuideSystem?.destroy();
       this.tutorialSystem?.destroy?.();
       this.pathfindingSystem?.destroy();
+      this.nextGoalSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();

@@ -11,17 +11,10 @@ export default class UIManager {
     this.scene = scene;
     this.questToastQueue = [];
     this.isShowingQuestToast = false;
-    this.nextQuestHintEl = document.querySelector("#nextQuestHint");
     
     // 휴식하기 버튼 및 통계 모달 생성
     this.createRestStatsButton();
     this.createRestStatsModal();
-
-    this.nextQuestHintRefreshEvent = this.scene.time.addEvent({
-      delay: 500,
-      loop: true,
-      callback: () => this.updateNextQuestHint(),
-    });
 
     // 씬 셧다운 시 DOM 청소 등록
     this.scene.events.once("shutdown", () => {
@@ -162,7 +155,6 @@ export default class UIManager {
       scene.specialButton.classList.toggle("is-ready", scene.hasUnlockedYebi && !scene.hasUsedYebi);
     }
 
-    this.updateNextQuestHint();
   }
 
   updateNextQuestHint() {

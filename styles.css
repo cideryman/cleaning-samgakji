@@ -1796,25 +1796,47 @@ body.app-fit-mode #game canvas {
 .next-quest-hint {
   display: flex;
   align-items: center;
-  min-height: 24px;
-  max-width: 150px;
+  min-height: 26px;
+  max-width: 178px;
   margin-left: 2px;
-  padding: 3px 8px;
-  border-left: 2px solid rgba(255, 255, 255, 0.28);
+  padding: 4px 10px;
+  border: 2px solid rgba(33, 53, 44, 0.55);
   border-radius: 24px;
-  background: rgba(255, 217, 102, 0.16);
-  color: #ffe58a;
+  background: rgba(255, 229, 138, 0.92);
+  box-shadow: 0 3px 0 rgba(110, 82, 26, 0.36);
+  color: #21352c;
   font-size: 13px;
   font-weight: 900;
   line-height: 1.05;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 1px 1px 0 #000000;
+  text-shadow: none;
+  pointer-events: none;
+  transition: transform 160ms ease, filter 160ms ease;
 }
 
 .next-quest-hint.is-hidden {
   display: none;
+}
+
+.next-quest-hint.is-pulsing {
+  animation: next-goal-pulse 720ms ease-out;
+}
+
+@keyframes next-goal-pulse {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  35% {
+    filter: brightness(1.18);
+    transform: scale(1.035);
+  }
+  100% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
 }
 
 .can-quest-hud {
@@ -2158,10 +2180,10 @@ body.app-fit-mode #game canvas {
   }
 
   .next-quest-hint {
-    max-width: 112px;
+    max-width: 118px;
     min-height: 22px;
     padding: 3px 6px;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .can-quest-hud {
@@ -4070,7 +4092,9 @@ button,
   border-top: 3px solid #e0eae4;
   padding-top: 14px;
   display: flex;
+  flex-direction: column;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .settings-ok-btn {
@@ -4095,11 +4119,21 @@ button,
   box-shadow: 0 1px 0 #c89d27;
 }
 
+.settings-save-exit-btn {
+  background: #ffffff;
+  box-shadow: 0 4px 0 #b8c1bd;
+}
+
+.settings-save-exit-btn:active {
+  box-shadow: 0 1px 0 #b8c1bd;
+}
+
 /* --- Settings Universal Design (Large Text Mode) --- */
 body.large-text .settings-header h2 { font-size: 30px; }
 body.large-text .setting-label { font-size: 20px; }
 body.large-text .setting-btn { font-size: 18px; min-width: 180px; min-height: 48px; }
-body.large-text .settings-ok-btn { font-size: 22px; min-height: 56px; }
+body.large-text .settings-ok-btn,
+body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
 
 /* Mobile Landscape setting adjustments */
 @media screen and (max-height: 500px) {
@@ -4127,6 +4161,10 @@ body.large-text .settings-ok-btn { font-size: 22px; min-height: 56px; }
     padding: 4px 8px !important;
   }
   .settings-ok-btn {
+    min-height: 36px !important;
+    font-size: 14px !important;
+  }
+  .settings-save-exit-btn {
     min-height: 36px !important;
     font-size: 14px !important;
   }

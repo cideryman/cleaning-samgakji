@@ -19,6 +19,7 @@ export default class HtmlUiBindingSystem {
     scene.settingsModal = document.querySelector("#settingsModal");
     scene.settingsClose = document.querySelector("#settings-close");
     scene.settingsOk = document.querySelector("#settings-ok");
+    scene.settingsSaveExit = document.querySelector("#settings-save-exit");
     scene.settingToggleText = document.querySelector("#setting-toggle-text");
     scene.settingToggleTts = document.querySelector("#setting-toggle-tts");
     scene.settingToggleJoystick = document.querySelector("#setting-toggle-joystick");
@@ -96,6 +97,14 @@ export default class HtmlUiBindingSystem {
     scene.settingsCloseHandler = () => {
       this.hideSettings();
     };
+    scene.settingsSaveExitHandler = (event) => {
+      event?.preventDefault();
+      event?.stopPropagation();
+      scene.saveCheckpoint?.("manual_exit");
+      scene.stopAudioForPageExit?.();
+      this.hideSettings();
+      scene.scene.start("StartScene");
+    };
     scene.settingToggleTextHandler = () => {
       const large = scene.registry.get("textSizeLarge") !== true;
       scene.registry.set("textSizeLarge", large);
@@ -164,6 +173,7 @@ export default class HtmlUiBindingSystem {
     scene.settingsButton?.addEventListener("click", scene.settingsHandler);
     scene.settingsClose?.addEventListener("click", scene.settingsCloseHandler);
     scene.settingsOk?.addEventListener("click", scene.settingsCloseHandler);
+    scene.settingsSaveExit?.addEventListener("click", scene.settingsSaveExitHandler);
     scene.settingToggleText?.addEventListener("click", scene.settingToggleTextHandler);
     scene.settingToggleTts?.addEventListener("click", scene.settingToggleTtsHandler);
     scene.settingToggleJoystick?.addEventListener("click", scene.settingToggleJoystickHandler);
@@ -198,6 +208,7 @@ export default class HtmlUiBindingSystem {
     scene.settingsButton?.removeEventListener("click", scene.settingsHandler);
     scene.settingsClose?.removeEventListener("click", scene.settingsCloseHandler);
     scene.settingsOk?.removeEventListener("click", scene.settingsCloseHandler);
+    scene.settingsSaveExit?.removeEventListener("click", scene.settingsSaveExitHandler);
     scene.settingToggleText?.removeEventListener("click", scene.settingToggleTextHandler);
     scene.settingToggleTts?.removeEventListener("click", scene.settingToggleTtsHandler);
     scene.settingToggleJoystick?.removeEventListener("click", scene.settingToggleJoystickHandler);

@@ -121,6 +121,52 @@ npm.cmd run build
 
 ## 4. 최근 완료 작업 로그
 
+### 2026-06-01 NextGoalSystem 짧은 목표 안내 HUD 추가
+변경:
+- `src/systems/NextGoalSystem.js` 추가.
+  - 상단 HUD의 `#nextQuestHint` 캡슐을 전담 관리.
+  - 튜토리얼, 대화창, DOM 모달, 컷신/실내/에필로그, 상점/짐싸기/자판기 메뉴 중에는 자동 숨김.
+  - 자유 이동 중에만 행동 중심 문구를 1줄로 표시.
+  - 현재 진행 중인 퀘스트, 시작 가능한 퀘스트, 다음 해금 금액, 자유 청소 안내 순으로 우선순위 판단.
+  - 500ms interval로 가볍게 갱신하고, 같은 문구 반복 렌더링 방지 및 2초 이내 중복 변경 방지 적용.
+- `src/scenes/PlayScene.js`
+  - `NextGoalSystem` import, 생성, create 호출, shutdown destroy만 추가.
+  - 목표 판단 로직은 `PlayScene.js`에 넣지 않음.
+- `src/systems/UIManager.js`
+  - 기존 `nextQuestHint` 갱신 책임을 제거해 새 시스템과 충돌하지 않게 정리.
+- `styles.css`
+  - 기존 상단 HUD와 어울리는 노란색 계열 캡슐 스타일로 보강.
+  - 목표 변경 시 짧은 pulse 애니메이션 추가.
+  - 모바일 landscape에서는 더 짧고 작은 캡슐로 유지.
+
+확인 필요:
+- 실기기 모바일 가로 화면에서 돈/쓰레기 HUD와 오른쪽 아이콘 스택, 토스트와 시각적으로 겹치지 않는지 확인.
+- 설정/휴식/옷가게/짐싸기/이름표/교육 안내 모달이 열린 동안 캡슐이 숨는지 확인.
+
+검증:
+- `node --check src/systems/NextGoalSystem.js` 통과.
+- `node --check src/scenes/PlayScene.js` 통과.
+- `node --check src/systems/UIManager.js` 통과.
+- `git diff --check` 통과. 줄바꿈 경고만 있음.
+- `npm.cmd run build` 통과.
+
+### 2026-06-01 인게임 설정창 저장 후 나가기 버튼 추가
+변경:
+- `index.html`
+  - 설정창 footer에 `게임 저장하고 나가기` 버튼을 추가.
+- `src/systems/HtmlUiBindingSystem.js`
+  - 설정창 DOM lookup/bind/unbind에 `settings-save-exit` 버튼을 연결.
+  - 클릭 시 `scene.saveCheckpoint("manual_exit")`로 현재 진행을 저장한 뒤 오디오를 정리하고 `StartScene`으로 이동.
+  - `PlayScene.js`에는 새 로직을 추가하지 않음.
+- `styles.css`
+  - 설정창 footer를 세로 버튼 스택으로 바꾸고, 저장 후 나가기 버튼은 흰색 보조 버튼 스타일로 정리.
+  - 큰 글씨 모드와 모바일 landscape 높이 보정에 새 버튼 크기를 포함.
+
+검증:
+- `node --check src/systems/HtmlUiBindingSystem.js` 통과.
+- `git diff --check` 통과. 줄바꿈 경고만 있음.
+- `npm.cmd run build` 통과.
+
 ### 2026-06-01 모바일 DOM 모달 스크롤 안정화
 대상:
 - 인게임 휴식/통계창
@@ -357,4 +403,3 @@ npm.cmd run build
 - 현재 빌드 실패는 아닙니다.
 - Phaser를 `vendor/phaser.min.js`로 직접 불러오는 현재 구조 때문에 Vite가 알려주는 경고입니다.
 - 당장 고칠 필요는 없고, 나중에 Phaser를 npm 패키지 import 방식으로 바꿀 때 함께 정리할 수 있습니다.
-
