@@ -9,6 +9,15 @@ const PROFILE_KEY = "samgakji_save_profile";
 const PROFILE_VERSION = 2;
 const CHAPTER_KEY_PREFIX = "samgakji_save_chapter_";
 const SAVE_VERSION = 2;
+const DEFAULT_EDUCATION_GUIDE_SEEN = {
+  hospital: false,
+  pharmacy: false,
+  clothing: false,
+  vending: false,
+  crosswalk: false,
+  recycling: false,
+  busStop: false,
+};
 
 export default class CheckpointStorage {
   // --- 1️⃣ 마스터 프로필 관리 API ---
@@ -156,15 +165,7 @@ export default class CheckpointStorage {
       recyclingInventory: { normal: 0, can: 0, plastic: 0 },
       flags: {},
       drinkInventory: [],
-      educationGuideSeen: {
-        hospital: false,
-        pharmacy: false,
-        clothing: false,
-        vending: false,
-        crosswalk: false,
-        recycling: false,
-        busStop: false
-      },
+      educationGuideSeen: this.normalizeEducationGuideSeen(),
       quests: {
         canQuest: { isActive: false, isCompleted: false, current: 0 },
         recycleQuest: {
@@ -200,15 +201,7 @@ export default class CheckpointStorage {
       totalCleanedCount: scene.totalCleanedCount ?? 0,
       cleanedCanCount: scene.cleanedCanCount ?? 0,
       recyclingInventory: { ...(scene.recyclingInventory ?? { normal: 0, can: 0, plastic: 0 }) },
-      educationGuideSeen: scene.educationGuideSeen ?? {
-        hospital: false,
-        pharmacy: false,
-        clothing: false,
-        vending: false,
-        crosswalk: false,
-        recycling: false,
-        busStop: false
-      },
+      educationGuideSeen: this.normalizeEducationGuideSeen(scene.educationGuideSeen),
       flags: {
         hasBroomUpgrade: Boolean(scene.hasBroomUpgrade),
         hasDroppedBroomUpgrade: Boolean(scene.hasDroppedBroomUpgrade),
@@ -270,16 +263,7 @@ export default class CheckpointStorage {
     scene.totalCleanedCount = data.totalCleanedCount ?? 0;
     scene.cleanedCanCount = data.cleanedCanCount ?? 0;
     scene.recyclingInventory = { normal: 0, can: 0, plastic: 0, ...(data.recyclingInventory ?? {}) };
-    scene.educationGuideSeen = {
-      hospital: false,
-      pharmacy: false,
-      clothing: false,
-      vending: false,
-      crosswalk: false,
-      recycling: false,
-      busStop: false,
-      ...(data.educationGuideSeen ?? {})
-    };
+    scene.educationGuideSeen = this.normalizeEducationGuideSeen(data.educationGuideSeen);
 
     const flags = data.flags ?? {};
     scene.hasBroomUpgrade = Boolean(flags.hasBroomUpgrade);
@@ -350,6 +334,13 @@ export default class CheckpointStorage {
     }
 
     return "intro";
+  }
+
+  static normalizeEducationGuideSeen(loadedSeen = {}) {
+    const safeLoadedSeen = loadedSeen && typeof loadedSeen === "object" && !Array.isArray(loadedSeen)
+      ? loadedSeen
+      : {};
+    return Object.assign({}, DEFAULT_EDUCATION_GUIDE_SEEN, safeLoadedSeen);
   }
 
   static applyQuestData(scene, quests) {

@@ -66,9 +66,10 @@ export default class TutorialSystem {
 
     // Create the premium guide card element
     this.createGuideCard();
+    const controls = this.getControlCopy();
     this.updateGuideText(
       "반갑습니다, 해냄이!",
-      "W, A, S, D 키보드 방향키나 마우스를 원형이 있는 곳까지 클릭해 걸어가 보세요!"
+      `${controls.move} 원형이 있는 곳까지 이동해 보세요!`
     );
 
     // Create Floor Target Ring
@@ -201,7 +202,7 @@ export default class TutorialSystem {
 
     this.updateGuideText(
       "쓸기 조작 배우기",
-      "쓰레기가 나타났어요!\n슬라임 가까이 다가가서 [Spacebar]를 누르면 빗자루질로 쓸 수 있어요!"
+      `쓰레기가 나타났어요!\n슬라임 가까이 다가가서 ${this.getControlCopy().sweep} 빗자루질로 쓸 수 있어요!`
     );
 
     // Make mobile sweep button flash/highlight
@@ -227,7 +228,7 @@ export default class TutorialSystem {
 
     this.updateGuideText(
       "분리수거 제출 배우기",
-      "쓰레기를 주웠어요! 분리수거장에 가서 버려볼까요?\n화면에 보이는 점선을 따라 수거함 앞에 다가가서 [Spacebar]를 눌러보세요!"
+      `쓰레기를 주웠어요! 분리수거장에 가서 버려볼까요?\n점선을 따라 수거함 앞에 다가가서 ${this.getControlCopy().interact} 제출해 보세요!`
     );
 
     // Clear highlight outline on sweep
@@ -247,7 +248,7 @@ export default class TutorialSystem {
 
     this.updateGuideText(
       "NPC와 대화하기",
-      "참 잘하셨어요! 보상으로 100원을 얻었습니다.\n이제 물음표가 떠 있는 여비(Yeobi) NPC를 마우스로 클릭하여 대화해 보세요!"
+      `참 잘하셨어요! 보상으로 100원을 얻었습니다.\n이제 물음표가 떠 있는 여비에게 ${this.getControlCopy().talk} 대화해 보세요!`
     );
 
     // Add gold marker over Yebi NPC
@@ -308,16 +309,16 @@ export default class TutorialSystem {
     if (this.state !== TUTORIAL_STATE.COMPLETED) {
       switch (this.state) {
         case TUTORIAL_STATE.MOVE:
-          hint = "W, A, S, D 방향키나 마우스 클릭을 이용해 노란 원 방향으로 캐릭터를 움직여 보세요!";
+          hint = `${this.getControlCopy().move} 노란 원 방향으로 캐릭터를 움직여 보세요!`;
           break;
         case TUTORIAL_STATE.SWEEP:
-          hint = "슬라임 가까이 서서 키보드의 스페이스바(Space)를 눌러 빗자루질을 해보세요!";
+          hint = `슬라임 가까이 서서 ${this.getControlCopy().sweep} 빗자루질을 해보세요!`;
           break;
         case TUTORIAL_STATE.DEPOSIT:
-          hint = "오른쪽 끝 분리수거함 앞으로 다가가서 스페이스바(Space)를 눌러 쓰레기를 넣어보세요!";
+          hint = `오른쪽 끝 분리수거함 앞으로 다가가서 ${this.getControlCopy().interact} 쓰레기를 넣어보세요!`;
           break;
         case TUTORIAL_STATE.NPC:
-          hint = "물음표가 떠 있는 여비 NPC를 마우스로 직접 클릭하여 대화를 걸어 보세요!";
+          hint = `물음표가 떠 있는 여비에게 ${this.getControlCopy().talk} 대화를 걸어 보세요!`;
           break;
       }
     } else {
@@ -325,11 +326,13 @@ export default class TutorialSystem {
       if (scene.isInDialogue || scene.interiorSceneGroup) return;
 
       if (scene.sunisuniQuestState === "going_hospital" && scene.isPlayerNearHospitalDoor?.()) {
-        hint = "병원 문 앞에 다가서서 [Spacebar] 키를 누르면 병원 안으로 들어갈 수 있어요!";
+        hint = `병원 문 앞에 다가서서 ${this.getControlCopy().interact} 안으로 들어갈 수 있어요!`;
       } else if (scene.sunisuniQuestState === "going_pharmacy" && scene.isPlayerNearPharmacyDoor?.()) {
-        hint = "약국 문 앞에 다가서서 [Spacebar] 키를 누르면 약국 안으로 들어갈 수 있어요!";
+        hint = `약국 문 앞에 다가서서 ${this.getControlCopy().interact} 안으로 들어갈 수 있어요!`;
       } else if (scene.clothesQuestState === "shopping" && scene.isPlayerNearClothingStoreDoor?.()) {
-        hint = "옷가게 문 앞에 다가서서 [Spacebar] 키를 누르면 옷가게 안으로 들어갈 수 있어요!";
+        hint = `옷가게 문 앞에 다가서서 ${this.getControlCopy().interact} 안으로 들어갈 수 있어요!`;
+      } else if (scene.jjookQuestState === "wallet_found" && scene.isPlayerNearVendingMachine?.()) {
+        hint = `자판기 앞에서는 ${this.getControlCopy().interact} 음료를 고를 수 있어요.`;
       } else if (scene.jjookQuestState === "wallet_missing") {
         hint = "도로 아래쪽 화단이나 길가 주변에서 반짝반짝 빛나는 갈색 지갑을 찾아보세요!";
       }
@@ -361,6 +364,29 @@ export default class TutorialSystem {
     `;
     // Announce to Screen Readers for accessibility
     this.guideCard.setAttribute("aria-live", "assertive");
+  }
+
+  getControlCopy() {
+    if (this.isTouchDevice()) {
+      return {
+        move: "왼쪽 화면을 누른 채 움직여서",
+        sweep: "오른쪽 아래 빗자루 버튼을 누르면",
+        interact: "가까이에서 빗자루 버튼을 누르면",
+        talk: "가까이 가서 터치하거나 빗자루 버튼을 눌러",
+      };
+    }
+
+    return {
+      move: "WASD/방향키로 움직이거나 마우스로 클릭해서",
+      sweep: "스페이스바를 누르면",
+      interact: "스페이스바를 누르면",
+      talk: "마우스로 클릭하거나 스페이스바를 눌러",
+    };
+  }
+
+  isTouchDevice() {
+    return window.matchMedia?.("(pointer: coarse)")?.matches
+      || navigator.maxTouchPoints > 0;
   }
 
   removeGuideCard() {

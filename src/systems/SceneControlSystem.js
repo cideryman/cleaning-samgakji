@@ -1,19 +1,48 @@
 export default class SceneControlSystem {
   constructor(scene) {
     this.scene = scene;
+    this.worldInputBlocked = false;
+  }
+
+  blockWorldInput(blocked = true) {
+    this.worldInputBlocked = Boolean(blocked);
+    if (this.worldInputBlocked) {
+      this.scene.playerController?.cancelMoveTarget?.();
+    }
   }
 
   isWorldInputBlocked() {
     const scene = this.scene;
     return Boolean(
-      scene.isMissionComplete
+      this.worldInputBlocked
+      || scene.isMissionComplete
       || scene.isInDialogue
       || scene.vendingMenuGroup
       || scene.clothingShopModal
       || scene.packingModal
       || scene.interiorSceneGroup
+      || this.hasOpenDomOverlay()
       || (scene.stateManager && !scene.stateManager.canInteract()),
     );
+  }
+
+  hasOpenDomOverlay() {
+    return [
+      "#settingsModal",
+      "#edu-notes-modal",
+      "#edu-guide-modal",
+      ".rest-stats-modal.is-visible",
+      ".name-tag-modal",
+      ".clothing-shop-modal",
+      ".packing-modal",
+    ].some((selector) => this.isVisibleElement(document.querySelector(selector)));
+  }
+
+  isVisibleElement(element) {
+    if (!element) return false;
+    if (element.hidden || element.getAttribute("aria-hidden") === "true") return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0";
   }
 
   restartGame() {

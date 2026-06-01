@@ -555,9 +555,6 @@ export default class SunisuniQuestSystem {
     scene.clearQuestMarker("sunisuniQuest");
     scene.hasMedicine = false;
     scene.hasBacchus = true;
-    scene.moneySystem?.addMoney(10000);
-    scene.playMoneyRewardSound();
-    scene.showMoneyRewardAnimation?.(10000, { label: "수고비", icon: "./assets/ui/10000won.png" });
     scene.showFloatingItem("bacchus_item", scene.player.x + 28, scene.player.y - 68, 58);
     scene.updateBacchusButton();
     scene.saveCheckpoint("sunisuni_completed");
@@ -568,7 +565,7 @@ export default class SunisuniQuestSystem {
     scene.dialogueSystem.start([
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "정말 고마워." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이건 같이 가준 보답이야." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이 활력수는 같이 가준 고마운 마음이야." },
       { name: "엄마", portraitKey: "mother_smile", text: "해냄이, 오늘은 청소뿐 아니라 아픈 친구도 도왔구나!" },
       { name: "엄마", portraitKey: "mother_smile", text: "스스로 생각하고 도와준 모습이 정말 멋졌어." },
     ], () => scene.sendSunisuniBackToBench());

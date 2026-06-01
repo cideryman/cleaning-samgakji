@@ -99,6 +99,9 @@ export default class HtmlUiBindingSystem {
       event?.stopPropagation();
       this.toggleSettings();
     };
+    scene.domOverlayInputTrapHandler = (event) => {
+      event?.stopPropagation();
+    };
     scene.settingOpenNotesHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
@@ -187,6 +190,10 @@ export default class HtmlUiBindingSystem {
     window.addEventListener("pointercancel", scene.moveStopHandler);
     
     scene.settingsButton?.addEventListener("click", scene.settingsHandler);
+    scene.settingsModal?.addEventListener("pointerdown", scene.domOverlayInputTrapHandler);
+    scene.settingsModal?.addEventListener("touchstart", scene.domOverlayInputTrapHandler);
+    scene.eduNotesModal?.addEventListener("pointerdown", scene.domOverlayInputTrapHandler);
+    scene.eduNotesModal?.addEventListener("touchstart", scene.domOverlayInputTrapHandler);
     scene.settingsClose?.addEventListener("click", scene.settingsCloseHandler);
     scene.settingsOk?.addEventListener("click", scene.settingsCloseHandler);
     scene.settingsSaveExit?.addEventListener("click", scene.settingsSaveExitHandler);
@@ -225,6 +232,10 @@ export default class HtmlUiBindingSystem {
     window.removeEventListener("pointercancel", scene.moveStopHandler);
     
     scene.settingsButton?.removeEventListener("click", scene.settingsHandler);
+    scene.settingsModal?.removeEventListener("pointerdown", scene.domOverlayInputTrapHandler);
+    scene.settingsModal?.removeEventListener("touchstart", scene.domOverlayInputTrapHandler);
+    scene.eduNotesModal?.removeEventListener("pointerdown", scene.domOverlayInputTrapHandler);
+    scene.eduNotesModal?.removeEventListener("touchstart", scene.domOverlayInputTrapHandler);
     scene.settingsClose?.removeEventListener("click", scene.settingsCloseHandler);
     scene.settingsOk?.removeEventListener("click", scene.settingsCloseHandler);
     scene.settingsSaveExit?.removeEventListener("click", scene.settingsSaveExitHandler);

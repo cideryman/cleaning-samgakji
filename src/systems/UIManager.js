@@ -359,13 +359,13 @@ export default class UIManager {
       
       // 물리 엔진 및 플레이어 조작 차단
       this.scene.physics?.world?.pause();
-      this.scene.blockWorldInput?.(true);
+      this.scene.sceneControlSystem?.blockWorldInput?.(true);
     } else {
       this.restModalEl.classList.remove("is-visible");
       
       // 물리 엔진 복구 및 조작 재개
       this.scene.physics?.world?.resume();
-      this.scene.blockWorldInput?.(false);
+      this.scene.sceneControlSystem?.blockWorldInput?.(false);
     }
   }
 

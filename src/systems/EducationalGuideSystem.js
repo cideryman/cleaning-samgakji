@@ -41,9 +41,14 @@ export default class EducationalGuideSystem {
   bindEvents() {
     this.closeHandler = () => this.closeGuideModal();
     this.okHandler = () => this.closeGuideModal();
+    this.modalInputTrapHandler = (event) => {
+      event.stopPropagation();
+    };
 
     this.closeBtnEl?.addEventListener("click", this.closeHandler);
     this.okBtnEl?.addEventListener("click", this.okHandler);
+    this.modalEl?.addEventListener("pointerdown", this.modalInputTrapHandler);
+    this.modalEl?.addEventListener("touchstart", this.modalInputTrapHandler);
 
     // ESC key closes the modal
     this.escHandler = (event) => {
@@ -302,6 +307,8 @@ export default class EducationalGuideSystem {
   destroy() {
     this.closeBtnEl?.removeEventListener("click", this.closeHandler);
     this.okBtnEl?.removeEventListener("click", this.okHandler);
+    this.modalEl?.removeEventListener("pointerdown", this.modalInputTrapHandler);
+    this.modalEl?.removeEventListener("touchstart", this.modalInputTrapHandler);
     window.removeEventListener("keydown", this.escHandler);
 
     this.icons.forEach((icon) => {
@@ -311,6 +318,10 @@ export default class EducationalGuideSystem {
       icon.destroy();
     });
     this.icons = [];
+  }
+
+  isModalOpen() {
+    return this.isOpen || this.scene.eduNotesModal?.style?.display !== "none";
   }
 
   getPictogramHtml(key) {

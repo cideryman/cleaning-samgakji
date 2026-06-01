@@ -541,3 +541,115 @@ NPC별 기억 대사 조건:
 - `git diff --check`: 통과, LF/CRLF 줄바꿈 경고만 있음
 - `npm.cmd run build`: 통과
 - 빌드 과정에서 생긴 `dist` 해시 산출물 변경은 소스 작업 범위 유지를 위해 되돌렸습니다.
+
+### 2026-06-02 배움노트 오버레이/입력 차단 안정화
+
+수정한 오류:
+- 배움노트가 게임 화면 뒤쪽에 가려지거나 정상 모달처럼 보이지 않는 문제를 수정했습니다.
+- 설정창, 배움노트, 교육 상세창, 휴식창 같은 HTML 오버레이가 떠 있을 때 Phaser 월드 입력이 새어 들어가 NPC 대화/쓰레기 줍기/이동이 실행될 수 있는 문제를 줄였습니다.
+
+수정 파일:
+1. `src/systems/SceneControlSystem.js`
+   - 실제로 동작하는 `blockWorldInput(blocked)` 메서드를 추가했습니다.
+   - `isWorldInputBlocked()`가 명시적 입력 차단 상태와 주요 DOM 오버레이 표시 상태를 함께 확인하도록 확장했습니다.
+   - 오버레이가 열릴 때 플레이어 클릭 이동 목표를 취소하도록 했습니다.
+2. `src/systems/UIManager.js`
+   - 휴식창이 기존의 존재하지 않는 `scene.blockWorldInput()` 대신 `scene.sceneControlSystem.blockWorldInput()`을 사용하도록 수정했습니다.
+3. `src/systems/HtmlUiBindingSystem.js`
+   - 설정창/배움노트 모달에 pointer/touch 이벤트 전파 차단을 추가해 터치가 게임 캔버스로 내려가지 않게 했습니다.
+4. `src/systems/EducationalGuideSystem.js`
+   - 교육 상세 모달에도 pointer/touch 이벤트 전파 차단을 추가했습니다.
+   - `isModalOpen()`을 추가해 다른 시스템에서 교육 모달/배움노트 표시 여부를 확인할 수 있게 했습니다.
+5. `src/systems/CheckpointStorage.js`
+   - `educationGuideSeen` 저장/복원 시 `Object.assign({}, defaultSeen, loadedSeen)` 방식의 안전 병합을 적용했습니다.
+   - 저장 데이터가 없거나 깨진 타입이어도 기본값으로 회복되도록 `normalizeEducationGuideSeen()`을 추가했습니다.
+6. `styles.css`
+   - `edu-notes-modal`, `edu-notes-panel`, `edu-note-card` 등 배움노트 전용 CSS를 추가했습니다.
+   - 배움노트와 교육 상세창의 z-index를 Phaser 캔버스/HUD보다 확실히 위에 오도록 조정했습니다.
+   - 배움노트는 HTML/CSS Grid 기반 카드 레이아웃으로 구성되어 모바일 가로 화면 대응이 쉽도록 유지했습니다.
+
+원인 분석:
+- 이 게임은 Phaser 캔버스 위에 HTML/CSS 기반 HUD와 모달을 함께 얹는 구조입니다.
+- Phaser 월드는 캔버스 안에서 계속 입력을 받고, HTML 오버레이는 DOM 이벤트를 따로 받습니다.
+- 따라서 HTML 모달이 화면에 보이더라도 다음 조건 중 하나라도 빠지면 터치/클릭이 캔버스까지 내려갈 수 있습니다.
+  - DOM 모달의 `z-index`가 Phaser 캔버스/HUD보다 낮음.
+  - DOM 모달에 `pointer-events: auto`가 없거나, 보이는 패널 외부가 입력을 받지 않음.
+  - 모달의 `pointerdown`/`touchstart` 이벤트에서 `stopPropagation()`을 하지 않음.
+  - Phaser 쪽 `isWorldInputBlocked()`가 DOM 모달 표시 상태를 모름.
+- 이번 배움노트 문제는 “화면에는 오버레이처럼 보여야 하는데 실제 레이어/입력 차단 구조가 완전하지 않은 상태”에서 발생했습니다.
+
+해결 원칙:
+- 새 HTML 오버레이를 만들 때는 CSS와 Phaser 입력 차단을 반드시 같이 처리합니다.
+- CSS만으로 `z-index`를 올리는 것은 충분하지 않습니다. Phaser 월드 입력 차단도 함께 해야 합니다.
+- 오버레이 루트는 기본적으로 아래 속성을 갖는 것을 권장합니다.
+  - `position: fixed`
+  - `inset: 0`
+  - `z-index`: 기존 HUD/캔버스보다 높은 값
+  - `pointer-events: auto`
+  - 모바일 스크롤이 필요한 경우 `touch-action: pan-y`, `overscroll-behavior: contain`, `-webkit-overflow-scrolling: touch`
+- 오버레이 루트 또는 패널에는 `pointerdown`, `touchstart`에서 `event.stopPropagation()`을 걸어 캔버스로 이벤트가 새지 않게 합니다.
+- 오버레이가 열렸는지 여부는 `SceneControlSystem.hasOpenDomOverlay()`에 등록합니다.
+- 월드 입력을 수동으로 막아야 하는 오버레이는 `scene.sceneControlSystem.blockWorldInput(true/false)`를 사용합니다.
+- 오버레이가 열릴 때는 `playerController.cancelMoveTarget()`처럼 이미 걸린 이동 목표도 취소해야 합니다.
+
+앞으로 새 DOM 오버레이를 추가할 때 체크리스트:
+1. `styles.css`에서 오버레이 루트가 `fixed + high z-index + pointer-events: auto`인지 확인.
+2. `HtmlUiBindingSystem.js` 또는 해당 시스템에서 `pointerdown/touchstart stopPropagation` 등록.
+3. `SceneControlSystem.hasOpenDomOverlay()` 목록에 셀렉터 추가.
+4. 열기/닫기 시 `blockWorldInput(true/false)`가 필요한지 판단.
+5. 모바일 가로/세로에서 내부 패널이 스크롤 가능한지 확인.
+6. 오버레이가 열려 있을 때 NPC 대화, 청소, 이동, 자판기/상점 입력이 실행되지 않는지 확인.
+
+검토한 제안에 대한 판단:
+- `educationGuideSeen` 안전 병합: 적용 완료. 기존 세이브 호환성과 깨진 데이터 방어에 도움이 됩니다.
+- 휴식창 성취 앨범: 현재도 HTML/CSS Grid 기반이므로 Phaser 그래픽보다 좋은 방향입니다. 앞으로 배지를 추가해도 CSS Grid/Flexbox 유지 권장.
+- 오늘의 칭찬 시스템 쿨타임: 현재 별도 `NpcPraiseSystem.js`는 없습니다. 추후 만들 경우, 단순 시간 쿨타임보다 “플레이어가 일정 거리 이상 이동했거나 새 쓰레기를 치운 뒤” 가끔 트리거하는 방식이 더 자연스럽습니다.
+- 병원/약국/상점/집/엔딩 등 화면 전환 페이드 인/아웃: 동의합니다. 바로 적용하지 않고 다음 기능 후보로 등록합니다. `InteriorSceneSystem` 또는 별도 `SceneTransitionSystem`으로 분리하는 것을 추천합니다.
+
+새 미해결 오류:
+- 에필로그 엄마 전화 후 검은 화면이 유지되고 엔딩 화면이 로딩되지 않는 문제가 보고되었습니다.
+- 우선 확인 후보:
+  - `TravelEndingSystem`의 엄마 전화 이후 `showFinalEndingScene()` 진입 여부
+  - `ending_chapter1_final` 텍스처 로드 완료 타이밍
+  - `interiorSceneGroup` 정리와 다음 배경 표시 순서
+  - 엔딩 BGM/배경 로드 실패 시 fallback 처리
+
+### 2026-06-02 수니수니 보상/활력수/상단 아이콘/튜토리얼 개선
+
+이번 요청 우선순위:
+1. 쉬운 오류 수정: 활력수 버튼 터치 불가, 수니수니 퀘스트 돈 보상 제거.
+2. 작은 UI 정리: 커피잔 휴식 버튼과 설정 버튼 크기/행 정렬 통일.
+3. 안내 개선: 튜토리얼 문구를 PC/모바일 조작 방식에 맞춰 분기하고, 건물 입장/자판기 사용 힌트 추가.
+4. 추후 확장 후보: 튜토리얼을 더 큰 단계형 시스템으로 확장해 병원/약국/자판기/옷가게 첫 진입마다 한 번씩 짧은 카드 안내를 띄우는 구조.
+
+수정한 내용:
+- `src/systems/SunisuniQuestSystem.js`
+  - 수니수니 퀘스트 완료 시 10,000원 지급, 돈 보상 효과음, 돈 보상 애니메이션을 제거했습니다.
+  - 보상은 활력수만 유지하고, 완료 대사를 “활력수 선물” 맥락으로 변경했습니다.
+- `styles.css`
+  - `.bacchus-button:not([hidden])` 상태에서 `pointer-events: auto`를 명시해 활력수 아이콘 터치가 실제 버튼 입력으로 들어가도록 수정했습니다.
+  - `.rest-btn`을 설정 버튼과 같은 58px 원형 버튼으로 맞추고, 설정 버튼 왼쪽 같은 행에 정렬했습니다.
+- `src/systems/TutorialSystem.js`
+  - `getControlCopy()`와 `isTouchDevice()`를 추가해 PC와 모바일 안내 문구를 분리했습니다.
+  - PC는 WASD/방향키/마우스/스페이스 기준, 모바일은 왼쪽 터치 이동/오른쪽 빗자루 버튼 기준으로 안내합니다.
+  - 병원/약국/옷가게 입장 힌트와 자판기 사용 힌트도 같은 조작 문구를 재사용하도록 정리했습니다.
+
+오류별 해결 방법과 원칙:
+- 수니수니 돈 보상 제거
+  - 해결: `SunisuniQuestSystem.completeQuest()`에서 `moneySystem.addMoney(10000)`, 돈 효과음, 돈 보상 애니메이션을 제거했습니다.
+  - 원칙: 퀘스트 보상 변경은 대사, 실제 지급 로직, 보상 애니메이션을 함께 수정해야 합니다. 하나만 바꾸면 “말은 선물인데 돈도 들어옴” 같은 불일치가 생깁니다.
+- 활력수 터치 불가
+  - 원인: `.bacchus-button` 기본 스타일에 `pointer-events: none`이 있고, 보이는 상태에서 이를 되돌리지 않아 버튼은 보이지만 클릭/터치가 통과했습니다.
+  - 해결: `.bacchus-button:not([hidden])`에 `pointer-events: auto`를 추가했습니다.
+  - 원칙: `hidden`으로 표시/숨김을 제어하는 버튼은 visible 상태 CSS에 `display`, `opacity`, `pointer-events`를 모두 확인해야 합니다.
+- 커피잔/설정 아이콘 정렬
+  - 해결: `.rest-btn`을 설정 버튼과 같은 58px 원형 버튼 기준으로 맞추고, 설정 버튼 왼쪽 같은 행에 배치했습니다.
+  - 원칙: HUD 버튼은 개별 위치값을 감으로 맞추지 말고, 같은 기준 크기/같은 safe-area 계산식을 공유해야 모바일에서 덜 흔들립니다.
+- 튜토리얼 PC/모바일 문구 분기
+  - 해결: `TutorialSystem.getControlCopy()`로 기기별 조작 문구를 한곳에서 반환하게 했습니다.
+  - 원칙: 조작 안내 문구를 각 단계에 하드코딩하지 말고, 공통 helper에서 PC/모바일 문구를 반환하게 해야 이후 조작 방식 변경에 안전합니다.
+
+주의:
+- 수니수니 퀘스트 완료 후 돈 보상이 없어졌으므로, 기존 플레이 밸런스에서 10,000원이 줄어듭니다. 의도된 변경입니다.
+- 활력수 아이콘은 보유 중 또는 효과 지속 중에만 보입니다.
+- 튜토리얼은 아직 “초반 핵심 조작 + 막힐 때 도움말” 중심입니다. 사용자가 원하면 추후 `TutorialSystem`을 더 세분화해 첫 건물 입장/첫 자판기/첫 상점 사용을 별도 1회성 카드로 확장하는 것을 추천합니다.
