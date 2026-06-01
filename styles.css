@@ -1708,16 +1708,15 @@ body.app-fit-mode #game canvas {
 .money-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  min-width: 60px;
+  gap: 7px;
+  min-width: 126px;
   background: rgba(0, 0, 0, 0.28);
-  padding: 3px 6px 3px 4px;
+  padding: 3px 10px 3px 5px;
   border-radius: 32px;
 }
 
 .money-item.coin-item {
-  min-width: 44px;
-  padding-left: 5px;
+  display: none;
 }
 
 .money-icon {
@@ -1738,22 +1737,17 @@ body.app-fit-mode #game canvas {
 }
 
 .money-item span {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: bold;
-  min-width: 18px;
-  text-align: center;
+  min-width: 64px;
+  text-align: left;
   color: #ffd966;
   text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
 }
 
 .money-total {
-  border-left: 2px solid rgba(255, 255, 255, 0.4);
-  padding-left: 8px;
-  margin-left: 2px;
-  font-size: 15px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
+  display: none;
 }
 
 .trash-inventory-ui {
@@ -2129,13 +2123,13 @@ body.app-fit-mode #game canvas {
   }
 
   .money-item {
-    min-width: 54px;
+    min-width: 118px;
     gap: 3px;
-    padding: 3px 5px 3px 4px;
+    padding: 3px 8px 3px 4px;
   }
 
   .money-item.coin-item {
-    min-width: 40px;
+    display: none;
   }
   
   .money-icon {
@@ -2150,12 +2144,11 @@ body.app-fit-mode #game canvas {
   
   .money-item span {
     font-size: 14px;
-    min-width: 12px;
+    min-width: 58px;
   }
   
   .money-total {
-    font-size: 14px;
-    padding-left: 7px;
+    display: none;
   }
 
   .trash-inventory-ui {
