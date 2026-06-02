@@ -4817,3 +4817,75 @@ body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
     font-size: 14px !important;
   }
 }
+
+/* ==========================================================================
+   Right HUD Stack & Prologue/Epilogue HUD Control
+   ========================================================================== */
+
+/* Hide HUD and controls for start screen, prologue, and epilogue */
+body.start-screen .money-ui,
+body.start-screen .rest-btn,
+body.start-screen .right-hud-stack,
+body.start-screen .touch-controls,
+body.prologue-scene-active .money-ui,
+body.prologue-scene-active .rest-btn,
+body.prologue-scene-active .right-hud-stack,
+body.prologue-scene-active .touch-controls,
+body.epilogue-scene-active .money-ui,
+body.epilogue-scene-active .rest-btn,
+body.epilogue-scene-active .right-hud-stack,
+body.epilogue-scene-active .touch-controls {
+  display: none !important;
+}
+
+/* Vertical HUD Stacking Container */
+.right-hud-stack {
+  position: absolute;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 94px);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Ensure buttons in stack don't use absolute positioning and override any specific media queries */
+.right-hud-stack .bacchus-button,
+.right-hud-stack .effect-button,
+.right-hud-stack .travel-prep-hud,
+.right-hud-stack .jjook-follow-hud,
+.right-hud-stack .speed-buff-hud {
+  position: relative !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  top: auto !important;
+  pointer-events: auto;
+}
+
+/* Travel Prep Modal List Item styling */
+.travel-prep-list-item {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fffdf9;
+  border: 2px solid #21352c;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.travel-prep-list-item img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.travel-prep-list-item span {
+  font-size: 16px;
+  font-weight: bold;
+  color: #21352c;
+}
+

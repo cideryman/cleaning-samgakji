@@ -40,7 +40,9 @@ export default class HtmlUiBindingSystem {
     scene.travelPrepHudEl = document.querySelector("#travelPrepHud");
     scene.travelPrepBagIconEl = document.querySelector("#travelPrepBagIcon");
     scene.travelPrepCountEl = document.querySelector("#travelPrepCount");
-    scene.travelPrepFanEl = document.querySelector("#travelPrepFan");
+    scene.travelPrepModal = document.querySelector("#travelPrepModal");
+    scene.travelPrepCloseBtn = document.querySelector("#travel-prep-close");
+    scene.travelPrepOkBtn = document.querySelector("#travel-prep-ok");
     scene.resultTrashCountEl = document.querySelector("#resultTrashCount");
     scene.resultCanCountEl = document.querySelector("#resultCanCount");
     scene.resultHelpUsedEl = document.querySelector("#resultHelpUsed");
@@ -53,6 +55,9 @@ export default class HtmlUiBindingSystem {
     scene.toggleSettingsModal = () => this.toggleSettings();
     scene.hideSettingsModal = () => this.hideSettings();
     scene.updateSettingsLabels = () => this.updateLabels();
+    scene.toggleTravelPrepModal = () => this.toggleTravelPrep();
+    scene.showTravelPrepModal = () => this.showTravelPrep();
+    scene.hideTravelPrepModal = () => this.hideTravelPrep();
 
     // 핸들러 바인딩 및 씬 등록
     scene.restartHandler = () => scene.restartGame();
@@ -77,7 +82,7 @@ export default class HtmlUiBindingSystem {
     scene.travelPrepHandler = (event) => {
       event?.preventDefault();
       event?.stopPropagation();
-      scene.toggleTravelPrepFan();
+      scene.toggleTravelPrepModal();
     };
     scene.moveStartHandler = (event) => scene.startFloatingJoystick(event);
     scene.moveUpdateHandler = (event) => scene.updateJoystick(event);
@@ -206,6 +211,11 @@ export default class HtmlUiBindingSystem {
     scene.eduNotesClose?.addEventListener("click", scene.eduNotesCloseHandler);
     scene.eduNotesOk?.addEventListener("click", scene.eduNotesCloseHandler);
 
+    scene.travelPrepModal?.addEventListener("pointerdown", scene.domOverlayInputTrapHandler);
+    scene.travelPrepModal?.addEventListener("touchstart", scene.domOverlayInputTrapHandler);
+    scene.travelPrepCloseBtn?.addEventListener("click", () => scene.hideTravelPrepModal?.());
+    scene.travelPrepOkBtn?.addEventListener("click", () => scene.hideTravelPrepModal?.());
+
     document.addEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.addEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
     window.addEventListener("resize", scene.resizeHandler);
@@ -220,7 +230,7 @@ export default class HtmlUiBindingSystem {
     const scene = this.scene;
     scene.restartButton?.removeEventListener("click", scene.restartHandler);
     scene.sweepButton?.removeEventListener("pointerdown", scene.sweepHandler);
-    scene.specialButton?.removeEventListener("pointerdown", scene.specialHandler); // 기존 레거시의 bacchusHandler 오인성 버그 정정
+    scene.specialButton?.removeEventListener("pointerdown", scene.specialHandler);
     scene.bacchusButton?.removeEventListener("pointerdown", scene.bacchusHandler);
     scene.travelPrepHudEl?.removeEventListener("pointerdown", scene.travelPrepHandler);
     window.removeEventListener("pointerdown", scene.audioUnlockHandler);
@@ -248,6 +258,9 @@ export default class HtmlUiBindingSystem {
     scene.eduNotesClose?.removeEventListener("click", scene.eduNotesCloseHandler);
     scene.eduNotesOk?.removeEventListener("click", scene.eduNotesCloseHandler);
 
+    scene.travelPrepCloseBtn?.removeEventListener("click", () => scene.hideTravelPrepModal?.());
+    scene.travelPrepOkBtn?.removeEventListener("click", () => scene.hideTravelPrepModal?.());
+
     document.removeEventListener("fullscreenchange", scene.fullscreenChangeHandler);
     document.removeEventListener("webkitfullscreenchange", scene.fullscreenChangeHandler);
     window.removeEventListener("resize", scene.resizeHandler);
@@ -265,16 +278,13 @@ export default class HtmlUiBindingSystem {
     if (scene.bacchusTimerEl) scene.bacchusTimerEl.textContent = "";
     scene.travelPrepHudEl?.classList.remove("is-visible", "is-open");
     scene.travelPrepHudEl?.setAttribute("aria-hidden", "true");
-    if (scene.travelPrepFanEl) {
-      scene.travelPrepFanEl.innerHTML = "";
-      scene.travelPrepFanEl.setAttribute("aria-hidden", "true");
-    }
     scene.speedBuffHudEl?.classList.remove("is-visible");
     scene.jjookFollowHudEl?.classList.remove("is-visible");
     if (scene.speedBuffTimerEl) scene.speedBuffTimerEl.textContent = "";
     if (scene.jjookFollowTimerEl) scene.jjookFollowTimerEl.textContent = "";
     this.hideSettings();
     this.hideLearningNotes();
+    this.hideTravelPrep();
   }
 
   toggleSettings() {
@@ -358,5 +368,40 @@ export default class HtmlUiBindingSystem {
       scene.settingToggleSound.textContent = isSound ? "소리: 켜기" : "소리: 끄기";
       scene.settingToggleSound.classList.toggle("is-off", !isSound);
     }
+  }
+
+  toggleTravelPrep() {
+    const scene = this.scene;
+    const modal = scene.travelPrepModal;
+    if (!modal) return;
+
+    if (modal.style.display === "none") {
+      this.showTravelPrep();
+    } else {
+      this.hideTravelPrep();
+    }
+  }
+
+  showTravelPrep() {
+    const scene = this.scene;
+    const modal = scene.travelPrepModal;
+    if (!modal) return;
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+    scene.sceneControlSystem?.blockWorldInput?.(true);
+
+    scene.clothingShopSystem?.renderTravelPrepList?.();
+  }
+
+  hideTravelPrep() {
+    const scene = this.scene;
+    const modal = scene.travelPrepModal;
+    if (!modal) return;
+
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
+    scene.sceneControlSystem?.blockWorldInput?.(false);
+    scene.game.canvas?.focus?.();
   }
 }

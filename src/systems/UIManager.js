@@ -261,7 +261,8 @@ export default class UIManager {
       this.toggleRestStatsModal();
     });
 
-    stage.appendChild(btn);
+    const container = document.querySelector(".touch-controls") || stage;
+    container.appendChild(btn);
     this.restBtnEl = btn;
   }
 

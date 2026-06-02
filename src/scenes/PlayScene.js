@@ -118,6 +118,7 @@ export default class PlayScene extends Phaser.Scene {
     this.htmlUiBindingSystem = new HtmlUiBindingSystem(this);
     this.resetRunState();
     document.body.classList.remove("start-screen");
+    document.body.classList.remove("epilogue-scene-active");
 
     const isLargeText = this.registry.get("textSizeLarge") === true || window.localStorage?.getItem("samgakji_text_size_large") === "true";
     document.body.classList.toggle("ui-large-text", isLargeText);
@@ -223,6 +224,9 @@ export default class PlayScene extends Phaser.Scene {
     };
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
+    if (this.packingQuestState === "traveling_home" || this.packingQuestState === "ending_complete") {
+      document.body.classList.add("epilogue-scene-active");
+    }
     this.updateNpcRoaming(true);
     
     if (this.tutorialState === "completed") {
@@ -1145,7 +1149,7 @@ export default class PlayScene extends Phaser.Scene {
       .map((item) => ({ ...item }));
     this.packingQuestState = PackingQuestState.COMPLETED;
     this.saveCheckpoint("dev_packing_completed");
-    this.finishChapterOneEnding();
+    this.travelEndingSystem?.finishChapterOneEnding();
   }
 
   ensureDevMoney(amount) {

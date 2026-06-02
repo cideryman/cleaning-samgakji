@@ -641,11 +641,8 @@ export default class ClothingShopSystem {
     if (!scene.travelPrepHudEl) return;
 
     if (!items.length) {
-      scene.isTravelPrepFanOpen = false;
-      scene.travelPrepHudEl.classList.remove("is-visible", "is-open");
+      scene.travelPrepHudEl.classList.remove("is-visible");
       scene.travelPrepHudEl.setAttribute("aria-hidden", "true");
-      scene.travelPrepFanEl?.replaceChildren();
-      scene.travelPrepFanEl?.setAttribute("aria-hidden", "true");
       if (scene.travelPrepCountEl) scene.travelPrepCountEl.textContent = "0";
       return;
     }
@@ -655,69 +652,28 @@ export default class ClothingShopSystem {
     scene.travelPrepHudEl.setAttribute("aria-label", `준비한 옷 ${items.length}개 보기`);
     if (scene.travelPrepBagIconEl) scene.travelPrepBagIconEl.src = "./assets/shop-icons/paper-bag.png";
     if (scene.travelPrepCountEl) scene.travelPrepCountEl.textContent = String(items.length);
-    this.renderTravelPrepFan();
   }
 
-  toggleTravelPrepFan() {
+  renderTravelPrepList() {
     const scene = this.scene;
-    if (!scene.travelPrepItems?.length) return;
-    scene.isTravelPrepFanOpen = !scene.isTravelPrepFanOpen;
-    this.renderTravelPrepFan();
-  }
+    const body = document.querySelector("#travel-prep-body");
+    if (!body) return;
 
-  renderTravelPrepFan() {
-    const scene = this.scene;
-    if (!scene.travelPrepFanEl || !scene.travelPrepHudEl) return;
+    body.innerHTML = "";
     const items = Array.isArray(scene.travelPrepItems) ? scene.travelPrepItems : [];
-    scene.travelPrepFanEl.replaceChildren();
-    const useGridLayout = items.length > 5;
-    scene.travelPrepHudEl.classList.toggle("is-open", scene.isTravelPrepFanOpen && items.length > 0);
-    scene.travelPrepHudEl.classList.toggle("is-grid", useGridLayout);
-    scene.travelPrepHudEl.classList.toggle("is-fan", !useGridLayout);
-    scene.travelPrepFanEl.setAttribute("aria-hidden", scene.isTravelPrepFanOpen ? "false" : "true");
+    if (items.length === 0) {
+      body.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">준비한 옷이 없습니다.</div>';
+      return;
+    }
 
-    const maxGridColumns = 5;
-    items.forEach((item, index) => {
-      let x = 0;
-      let y = 0;
-      let rotation = 0;
-
-      if (useGridLayout) {
-        const row = Math.floor(index / maxGridColumns);
-        const rows = Math.ceil(items.length / maxGridColumns);
-        const rowStart = row * maxGridColumns;
-        const rowCount = Math.min(maxGridColumns, items.length - rowStart);
-        const col = index - rowStart;
-        x = -16 - (rowCount - 1 - col) * 62;
-        y = -108 - (rows - 1 - row) * 66;
-      } else {
-        const spread = items.length <= 1 ? 0 : 70;
-        const startAngle = items.length <= 1 ? 235 : 198;
-        const angle = startAngle + (items.length <= 1 ? 0 : (spread * index) / (items.length - 1));
-        const radians = Phaser.Math.DegToRad(angle);
-        x = Math.cos(radians) * 96;
-        y = Math.sin(radians) * 96;
-        rotation = angle - 238;
-      }
-
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "travel-prep-fan-item";
-      button.style.setProperty("--fan-x", `${x.toFixed(1)}px`);
-      button.style.setProperty("--fan-y", `${y.toFixed(1)}px`);
-      button.style.setProperty("--fan-rotation", `${rotation.toFixed(1)}deg`);
-      button.style.setProperty("--fan-delay", `${Math.min(index, 8) * 24}ms`);
-      button.setAttribute("aria-label", `${item.label} 준비됨`);
-      button.innerHTML = `
+    items.forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "travel-prep-list-item";
+      div.innerHTML = `
         <img src="./assets/shop-icons/${this.getShopIconFile(item.texture)}" alt="" aria-hidden="true" />
         <span>${item.label}</span>
       `;
-      button.addEventListener("pointerdown", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        scene.showQuestToast(`${item.label} 준비했어요.`);
-      });
-      scene.travelPrepFanEl.appendChild(button);
+      body.appendChild(div);
     });
   }
 }

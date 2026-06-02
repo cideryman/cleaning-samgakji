@@ -171,6 +171,7 @@ export default class TravelEndingSystem {
 
   boardTravelBus() {
     const scene = this.scene;
+    document.body.classList.add("epilogue-scene-active");
     scene.showQuestToast("버스를 타고 집으로 가요.", 2600);
     scene.player?.setVisible(false);
     scene.jjookNpc?.setVisible(false);
@@ -573,6 +574,7 @@ export default class TravelEndingSystem {
     scene.stopSceneMusic();
     scene.stopChapterMusic();
     scene.clearInteriorScene();
+    document.body.classList.remove("epilogue-scene-active");
     document.body.classList.add("start-screen");
     scene.scene.start("StartScene");
   }

@@ -272,6 +272,21 @@ npm.cmd run build
 
 ## 8. 최근 변경 로그
 
+### 2026-06-02 HUD 레이아웃 개선 및 에필로그 UI/모달 버그 수정
+
+- `index.html`, `styles.css`
+- `src/scenes/PlayScene.js`
+- `src/systems/UIManager.js`
+- `src/systems/HtmlUiBindingSystem.js`
+- `src/systems/ClothingShopSystem.js`
+- `src/systems/TravelEndingSystem.js`
+- **휴식 버튼 레이어 수정**: `.rest-btn`을 `.game-stage` 대신 `.touch-controls` 하위로 추가하여 설정 버튼과 동일 레벨로 맞추고, 상점 등의 모달 오버레이가 뜰 때 뒤쪽으로 자연스럽게 가려지도록 수정했습니다.
+- **프롤로그/에필로그 UI 가리기**: 에필로그 진행 상태(`body.epilogue-scene-active`) 클래스를 추가 및 제어하여 상단 HUD, 휴식창(커피잔), 옷가방(오른쪽 HUD 스택), 설정창이 화면에 나타나지 않도록 가렸습니다.
+- **오른쪽 HUD 스택화**: Bacchus, 속도 버프, 쭉쭉이 동행, 옷가방(종이가방) HUD를 `.right-hud-stack` 컨테이너로 감싸 빗자루 위에 세로로 동적 적재되도록 만들었습니다. 종이가방이 존재할 경우 flex-direction 속성을 통해 빗자루 바로 위에 항상 고정되도록 구현했습니다.
+- **옷가방 모달 변환**: 기존 부채꼴로 펼쳐지던 방식 대신 설정창과 같은 스타일의 `#travelPrepModal` 팝업 모달창으로 구입한 옷 목록을 볼 수 있게 변경했습니다.
+- **버그 수정**: 개발자용 치트 명령어(`forceCompleteDevPackingQuest`) 실행 시 `this.finishChapterOneEnding` 대신 `this.travelEndingSystem?.finishChapterOneEnding`을 호출하도록 정정했습니다.
+- 검증: `node --check` 모든 수정 파일 통과, `npm.cmd run build` 빌드 통과.
+
 ### 2026-06-02 넓은 장애물 길찾기 회피 보강
 
 - `src/systems/PathfindingSystem.js`

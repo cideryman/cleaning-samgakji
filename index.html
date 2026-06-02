@@ -47,18 +47,25 @@
           </div>
           <div id="nextQuestHint" class="next-quest-hint is-hidden" aria-hidden="true"></div>
         </div>
-        <div id="speedBuffHud" class="speed-buff-hud effect-button" aria-hidden="true">
-          <img src="./assets/effects/acceleration.png" alt="" aria-hidden="true" />
-          <span id="speedBuffTimer" aria-hidden="true"></span>
-        </div>
-        <div id="jjookFollowHud" class="jjook-follow-hud effect-button" aria-hidden="true">
-          <img src="./assets/portraits/jjook-default.png" alt="" aria-hidden="true" />
-          <span id="jjookFollowTimer" aria-hidden="true"></span>
-        </div>
-        <div id="travelPrepHud" class="travel-prep-hud prep-item-hud effect-button" aria-hidden="true">
-          <img id="travelPrepBagIcon" src="./assets/shop-icons/paper-bag.png" alt="" aria-hidden="true" />
-          <span id="travelPrepCount" class="travel-prep-count" aria-hidden="true">0</span>
-          <div id="travelPrepFan" class="travel-prep-fan" aria-hidden="true"></div>
+        <!-- Right HUD Stack (Vertically stacked buttons above the broom) -->
+        <div class="right-hud-stack">
+          <!-- Item HUDs stack here, auto-collapsing. Stacks from bottom to top due to column-reverse -->
+          <div id="travelPrepHud" class="travel-prep-hud prep-item-hud effect-button" aria-hidden="true">
+            <img id="travelPrepBagIcon" src="./assets/shop-icons/paper-bag.png" alt="" aria-hidden="true" />
+            <span id="travelPrepCount" class="travel-prep-count" aria-hidden="true">0</span>
+          </div>
+          <button id="bacchusButton" class="bacchus-button" type="button" aria-label="활력수" hidden>
+            <img src="./assets/ui/bacchus.png" alt="" aria-hidden="true" />
+            <span id="bacchusTimer" aria-hidden="true"></span>
+          </button>
+          <div id="speedBuffHud" class="speed-buff-hud effect-button" aria-hidden="true">
+            <img src="./assets/effects/acceleration.png" alt="" aria-hidden="true" />
+            <span id="speedBuffTimer" aria-hidden="true"></span>
+          </div>
+          <div id="jjookFollowHud" class="jjook-follow-hud effect-button" aria-hidden="true">
+            <img src="./assets/portraits/jjook-default.png" alt="" aria-hidden="true" />
+            <span id="jjookFollowTimer" aria-hidden="true"></span>
+          </div>
         </div>
         <div id="canQuestHud" class="can-quest-hud is-hidden" aria-hidden="true">
           <div class="can-quest-label" id="canQuestLabel">&#53300;&#49828;&#53944; &#50630;&#51020;</div>
@@ -98,10 +105,6 @@
         <div class="touch-controls" aria-label="mobile controls">
           <button id="specialButton" class="special-button" type="button" aria-label="yebi item" hidden>
             <img src="./assets/ui/yebi-button.png" alt="" aria-hidden="true" />
-          </button>
-          <button id="bacchusButton" class="bacchus-button" type="button" aria-label="활력수" hidden>
-            <img src="./assets/ui/bacchus.png" alt="" aria-hidden="true" />
-            <span id="bacchusTimer" aria-hidden="true"></span>
           </button>
           <button id="sweepButton" type="button" aria-label="sweep">
             <img src="./assets/ui/broom-button.png" alt="" aria-hidden="true" />
@@ -204,6 +207,22 @@
         </div>
         <div class="edu-notes-footer">
           <button id="edu-notes-ok" class="edu-notes-ok-btn" type="button">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Prep Bag Modal -->
+    <div id="travelPrepModal" class="settings-modal" style="display: none;" aria-hidden="true">
+      <div class="settings-panel">
+        <button id="travel-prep-close" class="settings-close" type="button" aria-label="close">&times;</button>
+        <div class="settings-header">
+          <h2>🎒 준비한 옷가방</h2>
+        </div>
+        <div id="travel-prep-body" class="settings-body" style="max-height: 280px; overflow-y: auto;">
+          <!-- list of items -->
+        </div>
+        <div class="settings-footer">
+          <button id="travel-prep-ok" class="settings-ok-btn" type="button">확인</button>
         </div>
       </div>
     </div>
