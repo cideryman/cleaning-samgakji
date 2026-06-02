@@ -7,6 +7,7 @@ export default class PathfindingSystem {
     this.cols = 0;
     this.rows = 0;
     this.grid = []; // 2D grid: 1 = walkable, 0 = blocked
+    this.collisionPadding = 0;
   }
 
   create() {
@@ -20,6 +21,7 @@ export default class PathfindingSystem {
 
     this.cols = Math.ceil(worldWidth / this.gridSize);
     this.rows = Math.ceil(worldHeight / this.gridSize);
+    this.collisionPadding = this.getCollisionPadding();
 
     // Initialize all grid cells as walkable (1)
     this.grid = Array.from({ length: this.rows }, () => Array(this.cols).fill(1));
@@ -30,10 +32,9 @@ export default class PathfindingSystem {
     // 1. Check Phaser static group walls (fallback mode or static colliders)
     if (scene.walls && typeof scene.walls.getChildren === "function") {
       scene.walls.getChildren().forEach((child) => {
-        if (child.getBounds) {
-          staticColliders.push(child.getBounds());
-        } else if (child.body) {
-          staticColliders.push(new Phaser.Geom.Rectangle(child.body.x, child.body.y, child.body.width, child.body.height));
+        const bounds = this.getStaticColliderBounds(child);
+        if (bounds) {
+          staticColliders.push(this.getPaddedRect(bounds, this.collisionPadding));
         }
       });
     }
@@ -41,10 +42,9 @@ export default class PathfindingSystem {
     // 2. Check Phaser static group map object walls (benches, trees, etc.)
     if (scene.objectWalls && typeof scene.objectWalls.getChildren === "function") {
       scene.objectWalls.getChildren().forEach((child) => {
-        if (child.getBounds) {
-          staticColliders.push(child.getBounds());
-        } else if (child.body) {
-          staticColliders.push(new Phaser.Geom.Rectangle(child.body.x, child.body.y, child.body.width, child.body.height));
+        const bounds = this.getStaticColliderBounds(child);
+        if (bounds) {
+          staticColliders.push(this.getPaddedRect(bounds, this.collisionPadding));
         }
       });
     }
@@ -52,7 +52,9 @@ export default class PathfindingSystem {
     // 3. Check extra rectangular collision definitions if cached
     if (Array.isArray(scene.objectCollisionRects)) {
       scene.objectCollisionRects.forEach((rect) => {
-        staticColliders.push(rect);
+        if (rect) {
+          staticColliders.push(this.getPaddedRect(rect, this.collisionPadding));
+        }
       });
     }
 
@@ -65,10 +67,11 @@ export default class PathfindingSystem {
         const y = r * this.gridSize + this.gridSize / 2;
         cellRect.setTo(c * this.gridSize, r * this.gridSize, this.gridSize, this.gridSize);
 
-        // A. Check Tilemap Collision layer if scene.walls is a TilemapLayer
+        // A. Check Tilemap Collision layer if scene.walls is a TilemapLayer.
+        // Use the player's body clearance area, not only the center point, so wider obstacles are avoided.
         if (scene.walls && typeof scene.walls.getTileAtWorldXY === "function") {
-          const tile = scene.walls.getTileAtWorldXY(x, y, true);
-          if (tile && tile.index !== -1 && tile.collides) {
+          const tileCheckRect = this.getPaddedRect(cellRect, this.collisionPadding);
+          if (this.isBlockedByTileLayer(scene.walls, tileCheckRect, x, y)) {
             this.grid[r][c] = 0; // Blocked
             continue;
           }
@@ -92,6 +95,42 @@ export default class PathfindingSystem {
     console.log(`Pathfinding grid initialized. Size: ${this.cols}x${this.rows} cells.`);
   }
 
+  getCollisionPadding() {
+    const bodyWidth = GAME_CONFIG.playerBodyWidth || 28;
+    const bodyHeight = GAME_CONFIG.playerBodyHeight || 36;
+    return Math.ceil(Math.max(bodyWidth, bodyHeight) / 2);
+  }
+
+  getStaticColliderBounds(child) {
+    if (!child) return null;
+    if (child.body) {
+      return new Phaser.Geom.Rectangle(child.body.x, child.body.y, child.body.width, child.body.height);
+    }
+    if (typeof child.getBounds === "function") {
+      return child.getBounds();
+    }
+    return null;
+  }
+
+  getPaddedRect(rect, padding) {
+    return new Phaser.Geom.Rectangle(
+      rect.x - padding,
+      rect.y - padding,
+      rect.width + padding * 2,
+      rect.height + padding * 2
+    );
+  }
+
+  isBlockedByTileLayer(layer, rect, fallbackX, fallbackY) {
+    if (typeof layer.getTilesWithinWorldXY === "function") {
+      const tiles = layer.getTilesWithinWorldXY(rect.x, rect.y, rect.width, rect.height, true);
+      return tiles.some((tile) => tile && tile.index !== -1 && tile.collides);
+    }
+
+    const tile = layer.getTileAtWorldXY(fallbackX, fallbackY, true);
+    return !!(tile && tile.index !== -1 && tile.collides);
+  }
+
   /**
    * Find a path from pixel (startX, startY) to pixel (endX, endY)
    * Returns an array of Phaser.Math.Vector2 waypoint coordinates
@@ -102,6 +141,8 @@ export default class PathfindingSystem {
     let startR = Math.floor(startY / this.gridSize);
     let endC = Math.floor(endX / this.gridSize);
     let endR = Math.floor(endY / this.gridSize);
+    let finalTargetX = endX;
+    let finalTargetY = endY;
 
     // 2. Clamp grid coordinates inside bounds
     startC = Phaser.Math.Clamp(startC, 0, this.cols - 1);
@@ -122,10 +163,12 @@ export default class PathfindingSystem {
 
     // 4. Fallback: If clicked target is blocked, automatically relocate to the nearest walkable cell
     if (!this.isWalkable(endC, endR)) {
-      const nearestEnd = this.findNearestWalkableCell(endC, endR);
+      const nearestEnd = this.findNearestWalkableCell(endC, endR, 14);
       if (nearestEnd) {
         endC = nearestEnd.c;
         endR = nearestEnd.r;
+        finalTargetX = endC * this.gridSize + this.gridSize / 2;
+        finalTargetY = endR * this.gridSize + this.gridSize / 2;
       } else {
         return []; // Cannot move to any adjacent target
       }
@@ -133,7 +176,7 @@ export default class PathfindingSystem {
 
     // If starting and ending in the same grid cell, move straight to the final destination point
     if (startC === endC && startR === endR) {
-      return [new Phaser.Math.Vector2(endX, endY)];
+      return [new Phaser.Math.Vector2(finalTargetX, finalTargetY)];
     }
 
     // 5. Standard A* Algorithm
@@ -217,9 +260,10 @@ export default class PathfindingSystem {
 
     path.reverse();
 
-    // Optimize: replace the very last coordinate with the exact clicked coordinate for precision
+    // Optimize: replace the very last coordinate with the clicked coordinate only when it is safe.
+    // If the click landed on a blocked object, keep the relocated safe cell center instead.
     if (path.length > 0) {
-      path[path.length - 1].set(endX, endY);
+      path[path.length - 1].set(finalTargetX, finalTargetY);
     }
 
     return path;
@@ -283,7 +327,7 @@ export default class PathfindingSystem {
     return (dc + dr) + (Math.SQRT2 - 2) * Math.min(dc, dr);
   }
 
-  findNearestWalkableCell(c, r) {
+  findNearestWalkableCell(c, r, maxDistance = 8) {
     let queue = [{ c, r, dist: 0 }];
     const visited = Array.from({ length: this.rows }, () => Array(this.cols).fill(false));
     visited[r][c] = true;
@@ -294,8 +338,7 @@ export default class PathfindingSystem {
         return { c: current.c, r: current.r };
       }
 
-      // BFS up to 6 cells away
-      if (current.dist >= 6) continue;
+      if (current.dist >= maxDistance) continue;
 
       const directions = [
         { dc: 0, dr: -1 },
