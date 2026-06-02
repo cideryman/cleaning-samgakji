@@ -18,6 +18,15 @@ const DEFAULT_EDUCATION_GUIDE_SEEN = {
   recycling: false,
   busStop: false,
 };
+const DEFAULT_NEIGHBORHOOD_BLOOM = {
+  stage: 0,
+  unlockedStages: {
+    stage1: false,
+    stage2: false,
+    stage3: false,
+    stage4: false,
+  },
+};
 
 export default class CheckpointStorage {
   // --- 1️⃣ 마스터 프로필 관리 API ---
@@ -166,6 +175,7 @@ export default class CheckpointStorage {
       flags: {},
       drinkInventory: [],
       educationGuideSeen: this.normalizeEducationGuideSeen(),
+      neighborhoodBloom: this.normalizeNeighborhoodBloom(),
       quests: {
         canQuest: { isActive: false, isCompleted: false, current: 0 },
         recycleQuest: {
@@ -202,6 +212,7 @@ export default class CheckpointStorage {
       cleanedCanCount: scene.cleanedCanCount ?? 0,
       recyclingInventory: { ...(scene.recyclingInventory ?? { normal: 0, can: 0, plastic: 0 }) },
       educationGuideSeen: this.normalizeEducationGuideSeen(scene.educationGuideSeen),
+      neighborhoodBloom: this.normalizeNeighborhoodBloom(scene.neighborhoodBloom),
       flags: {
         hasBroomUpgrade: Boolean(scene.hasBroomUpgrade),
         hasDroppedBroomUpgrade: Boolean(scene.hasDroppedBroomUpgrade),
@@ -264,6 +275,7 @@ export default class CheckpointStorage {
     scene.cleanedCanCount = data.cleanedCanCount ?? 0;
     scene.recyclingInventory = { normal: 0, can: 0, plastic: 0, ...(data.recyclingInventory ?? {}) };
     scene.educationGuideSeen = this.normalizeEducationGuideSeen(data.educationGuideSeen);
+    scene.neighborhoodBloom = this.normalizeNeighborhoodBloom(data.neighborhoodBloom);
 
     const flags = data.flags ?? {};
     scene.hasBroomUpgrade = Boolean(flags.hasBroomUpgrade);
@@ -341,6 +353,20 @@ export default class CheckpointStorage {
       ? loadedSeen
       : {};
     return Object.assign({}, DEFAULT_EDUCATION_GUIDE_SEEN, safeLoadedSeen);
+  }
+
+  static normalizeNeighborhoodBloom(loadedBloom = {}) {
+    const safeBloom = loadedBloom && typeof loadedBloom === "object" && !Array.isArray(loadedBloom)
+      ? loadedBloom
+      : {};
+    const safeUnlockedStages = safeBloom.unlockedStages && typeof safeBloom.unlockedStages === "object" && !Array.isArray(safeBloom.unlockedStages)
+      ? safeBloom.unlockedStages
+      : {};
+
+    return {
+      stage: Math.max(0, Math.min(4, Number(safeBloom.stage) || 0)),
+      unlockedStages: Object.assign({}, DEFAULT_NEIGHBORHOOD_BLOOM.unlockedStages, safeUnlockedStages),
+    };
   }
 
   static applyQuestData(scene, quests) {

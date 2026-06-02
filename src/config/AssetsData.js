@@ -158,6 +158,9 @@ export const SPRITESHEET_ASSETS = [
   { key: "sweat_effect", path: "assets/sprites/sweat-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "star_effect", path: "assets/sprites/star-effect.png", frameWidth: 128, frameHeight: 128 },
   { key: "heart_effect", path: "assets/sprites/heart-effect.png", frameWidth: 128, frameHeight: 128 },
+  { key: "flowerbed_growth", path: "assets/sprites/flowerbed_growth.png", frameWidth: 160, frameHeight: 96 },
+  { key: "flowerbed_growth2", path: "assets/sprites/flowerbed_growth2.png", frameWidth: 160, frameHeight: 96 },
+  { key: "butterfly_idle", path: "assets/sprites/butterfly_idle.png", frameWidth: 64, frameHeight: 64 },
 ];
 
 export const TILED_MAP = {

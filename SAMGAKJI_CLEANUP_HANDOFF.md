@@ -399,3 +399,103 @@ Git에 올릴 것:
 - `.github` 폴더는 GitHub 설정/워크플로/페이지 설정에 쓰일 수 있으므로 용도를 확인하기 전 삭제하지 않습니다.
 - `assets/unused`, 자동차 원본 폴더처럼 사용 여부가 불확실한 폴더는 `rg`로 코드 참조를 확인한 뒤 삭제합니다.
 - 에셋 파일명은 가능하면 영어 소문자/하이픈/언더스코어로 정리합니다.
+
+## 10. 2026-06-02 작업 로그: 동네 변화 시스템
+
+### NeighborhoodProgressSystem 추가
+
+요청 반영:
+- `NeighborhoodProgressSystem.js`를 새로 만들어 청소 누적 수와 주요 퀘스트 진행도에 따라 맵 화단이 자라고, Stage 3부터 나비가 찾아오는 시스템을 추가했습니다.
+- 새 UI, 모달, 앨범, 도감, 휴식창 섹션은 만들지 않았습니다. 변화는 맵 장식 오브젝트로만 표현합니다.
+- 화단과 나비는 충돌체가 없고, A* 길찾기 walkable grid와 플레이어 이동/상호작용을 방해하지 않습니다.
+
+새로 만든 파일:
+- `src/systems/NeighborhoodProgressSystem.js`
+
+수정한 기존 파일:
+- `src/config/AssetsData.js`
+  - `flowerbed_growth`, `flowerbed_growth2`, `butterfly_idle` 스프라이트시트를 등록했습니다.
+- `src/config/InitialGameState.js`
+  - `neighborhoodBloom` 기본 상태를 추가했습니다.
+- `src/systems/CheckpointStorage.js`
+  - 체크포인트 저장/복원에 `neighborhoodBloom`을 추가했습니다.
+  - 기존 세이브에 값이 없거나 깨진 타입이어도 기본값으로 병합하는 `normalizeNeighborhoodBloom()`을 추가했습니다.
+- `src/scenes/PlayScene.js`
+  - import, constructor null 필드, 시스템 인스턴스 생성, `create()`, `update()`, shutdown destroy만 추가했습니다.
+  - PlayScene 추가량은 약 7줄 수준이며, 성장 조건/생성/저장 로직은 새 시스템 내부에 둔 상태입니다.
+
+에셋 등록 위치:
+- `assets/sprites/flowerbed_growth.png`
+  - 4프레임 가로 스프라이트시트, 640x96, frame 160x96
+- `assets/sprites/flowerbed_growth2.png`
+  - 4프레임 가로 스프라이트시트, 640x96, frame 160x96
+- `assets/sprites/butterfly_idle.png`
+  - 3프레임 가로 스프라이트시트, 192x64, frame 64x64
+
+화단 기본 좌표:
+1. `flowerbed_1`: `{ x: 1030, y: 392 }`
+2. `flowerbed_2`: `{ x: 458, y: 595 }`
+3. `flowerbed_3`: `{ x: 900, y: 306 }`
+4. `flowerbed_4`: `{ x: 1340, y: 720 }`
+
+Tiled에서 화단 위치 조정 방법:
+- 코드 기본 좌표는 fallback입니다. Tiled에서 같은 이름의 오브젝트를 만들면 Tiled 좌표가 우선됩니다.
+- `spawn` 오브젝트 레이어에 포인트 오브젝트를 추가합니다.
+- 오브젝트 이름을 아래처럼 지정합니다.
+  - `flowerbed_1`
+  - `flowerbed_2`
+  - `flowerbed_3`
+  - `flowerbed_4`
+- 이 오브젝트는 충돌용이 아니라 위치 앵커입니다. collision 레이어나 map_objects 충돌 설정을 추가하지 마세요.
+- 도로, 횡단보도, 건물 문 앞, 자판기 앞, 분리수거통 앞, NPC 대기 위치, 좁은 길목에는 두지 않는 것이 좋습니다.
+
+단계별 조건:
+- Stage 0
+  - 기본 상태
+  - 화단 4곳 Frame 0
+- Stage 1
+  - 총 청소 200개 이상
+  - 첫 번째 화단 Frame 1
+- Stage 2
+  - 총 청소 500개 이상 + 분리수거 퀘스트 완료
+  - 첫 번째 화단 Frame 2, 두 번째 화단 Frame 1
+- Stage 3
+  - 총 청소 1000개 이상 + 쭉쭉이 지갑/음료 퀘스트 완료
+  - 첫 번째 화단 Frame 3, 두 번째 Frame 2, 세 번째 Frame 1
+  - 나비 1마리 등장
+- Stage 4
+  - 총 청소 1800개 이상 + 수니수니 병원/약국 퀘스트 완료
+  - 화단 4곳 모두 Frame 3
+  - 나비 최대 3마리 등장
+
+저장 구조:
+```js
+neighborhoodBloom: {
+  stage: 0,
+  unlockedStages: {
+    stage1: false,
+    stage2: false,
+    stage3: false,
+    stage4: false
+  }
+}
+```
+
+피드백:
+- 새 단계가 처음 해금될 때만 기존 toast를 짧게 사용합니다.
+- 예: “화단에 작은 꽃이 피었어요.”, “나비가 찾아왔어요.”
+- 큰 오버레이나 새 UI는 만들지 않았습니다.
+
+검증:
+- `node --check src/systems/NeighborhoodProgressSystem.js`: 통과
+- `node --check src/scenes/PlayScene.js`: 통과
+- `node --check src/systems/CheckpointStorage.js`: 통과
+- `node --check src/config/AssetsData.js`: 통과
+- `node --check src/config/InitialGameState.js`: 통과
+- 단계 조건 모의 테스트: `0 -> 1 -> 2 -> 3 -> 4` 통과
+- `npm.cmd run build`: 통과
+- 소스 대상 `git diff --check`: 통과
+
+주의:
+- 전체 `git diff --check`는 현재 `assets/maps/chapter1-samgakji-map.json`의 기존 trailing whitespace 때문에 실패합니다. 이번 작업에서는 Tiled 맵 파일을 수정하지 않는 조건이 있었으므로 해당 파일은 건드리지 않았습니다.
+- 화단 에셋이 없으면 시스템이 조용히 fallback 또는 생성 생략으로 넘어가도록 설계했지만, 현재 실제 에셋은 `assets/sprites`에 존재합니다.

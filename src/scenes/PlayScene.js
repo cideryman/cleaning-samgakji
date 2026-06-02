@@ -24,6 +24,7 @@ import SlimeSystem from "../systems/SlimeSystem.js";
 import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
 import NextGoalSystem from "../systems/NextGoalSystem.js";
 import NpcMemorySystem from "../systems/NpcMemorySystem.js";
+import NeighborhoodProgressSystem from "../systems/NeighborhoodProgressSystem.js";
 import TiledMapSystem from "../systems/TiledMapSystem.js";
 import PathfindingSystem from "../systems/PathfindingSystem.js";
 import UIManager from "../systems/UIManager.js";
@@ -101,6 +102,7 @@ export default class PlayScene extends Phaser.Scene {
     this.objectVisibilitySystem = null;
     this.nextGoalSystem = null;
     this.npcMemorySystem = null;
+    this.neighborhoodProgressSystem = null;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
     this.audioContext = null;
@@ -147,6 +149,7 @@ export default class PlayScene extends Phaser.Scene {
     this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
     this.nextGoalSystem = new NextGoalSystem(this);
     this.npcMemorySystem = new NpcMemorySystem(this);
+    this.neighborhoodProgressSystem = new NeighborhoodProgressSystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
       DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
@@ -189,6 +192,7 @@ export default class PlayScene extends Phaser.Scene {
       this.tutorialSystem?.destroy?.();
       this.pathfindingSystem?.destroy();
       this.nextGoalSystem?.destroy();
+      this.neighborhoodProgressSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
       this.closePackingMenu?.();
@@ -200,6 +204,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.neighborhoodProgressSystem?.create();
     this.travelEndingSystem?.createPermanentBusStopObjects?.();
     this.createSunisuniAnimations();
     this.createRecyclingCenter();
@@ -224,6 +229,7 @@ export default class PlayScene extends Phaser.Scene {
     };
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
+    this.neighborhoodProgressSystem?.refresh({ silent: true });
     if (this.packingQuestState === "traveling_home" || this.packingQuestState === "ending_complete") {
       document.body.classList.add("epilogue-scene-active");
     }
@@ -314,6 +320,7 @@ export default class PlayScene extends Phaser.Scene {
     this.updateJjookAutoPlogging();
     this.roadTrafficSystem?.update(delta);
     this.routeGuideSystem?.update();
+    this.neighborhoodProgressSystem?.update();
     this.travelEndingSystem?.checkBusStopArrival();
     this.updateNpcRoaming();
     this.separateNpcSprites();

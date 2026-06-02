@@ -101,6 +101,15 @@ export function createInitialGameState() {
     mapObjects: {},
     objectWalls: null,
     objectCollisionRects: [],
+    neighborhoodBloom: {
+      stage: 0,
+      unlockedStages: {
+        stage1: false,
+        stage2: false,
+        stage3: false,
+        stage4: false,
+      },
+    },
     tutorialState: "intro",
     currentChapter: 1,
     isChapterComplete: false,
