@@ -18,7 +18,7 @@ export default class YebiQuestSystem {
       type: "collect_cans",
       target: 20,
       current: 0,
-      reward: 10000,
+      reward: 0,
       isActive: false,
       isCompleted: false,
     };
@@ -517,7 +517,7 @@ export default class YebiQuestSystem {
               onSelect: () => {
                 scene.dialogueSystem.start([
                   { name: "해냄이", portraitKey: "haenaem_confused", text: "네. 어떤 걸 도와드리면 될까요?" },
-                  { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 특별한 선물을 줄게!" },
+                  { name: "여비", portraitKey: "yeobi", text: "고마워! 캔 20개만 모아주면 더 넓게 쓸 수 있는 빗자루를 줄게!" },
                 ], () => this.startQuest());
               },
             },
@@ -664,14 +664,13 @@ export default class YebiQuestSystem {
     if (scene.isRecycleMaster) return;
 
     scene.isRecycleMaster = true;
-    scene.playMoneyRewardSound();
+    scene.playItemPickupSound();
     scene.showCleanFeedback(scene.player.x, scene.player.y, true);
     scene.showQuestToast("분리수거 보상 개방! 맞는 통에 넣으면 100원");
     scene.dialogueSystem?.start([
-      { name: "여비", portraitKey: "yeobi", text: "역시 해냄이야! 이제 쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어." },
-      { name: "여비", portraitKey: "yeobi", text: "그리고 약속한 멋진 빗자루야. 더 넓게 쓸어보자!" },
+      { name: "여비", portraitKey: "yeobi", text: "역시 해냄이야! 이제 분리수거장이 열렸어." },
+      { name: "여비", portraitKey: "yeobi", text: "쓰레기를 치우면 100원, 분리수거장에 맞게 넣으면 100원을 더 받을 수 있어. 나눠 버리는 습관이 진짜 실력이야!" },
     ]);
-    scene.dropBroomUpgrade();
     scene.saveCheckpoint("recycle_completed");
   }
 
@@ -890,14 +889,9 @@ export default class YebiQuestSystem {
     quest.current = quest.target;
     this.updateUI();
 
-    this.scene.moneySystem?.addMoney(quest.reward);
-    this.scene.playMoneyRewardSound?.();
-    this.scene.showMoneyRewardAnimation?.(quest.reward, {
-      label: "선물",
-      icon: "./assets/ui/10000won.png",
-      framed: false,
-    });
-    this.scene.showQuestToast?.(`보상 ${quest.reward.toLocaleString()}원 획득!`);
+    this.scene.playItemPickupSound?.();
+    this.scene.dropBroomUpgrade?.();
+    this.scene.showQuestToast?.("빗자루 획득! 더 넓게 쓸 수 있어요.");
     if (this.scene.player) {
       this.scene.showCleanFeedback?.(this.scene.player.x, this.scene.player.y, true);
     }
@@ -910,7 +904,7 @@ export default class YebiQuestSystem {
         {
           name: "여비",
           portraitKey: "yeobi",
-          text: "고마워! 캔 20개를 모아줬으니 약속한 선물이야!",
+          text: "고마워! 캔 20개를 모아줬으니 약속한 빗자루야. 이제 더 넓게 쓸어보자!",
         },
       ]);
     });

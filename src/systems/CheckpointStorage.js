@@ -412,7 +412,7 @@ export default class CheckpointStorage {
       scene.setQuestMarker?.("sunisuniHospital", scene.sunisuniNpc, "!");
     }
 
-    if (scene.hasDroppedBroomUpgrade && !scene.hasBroomUpgrade) {
+    if ((scene.hasDroppedBroomUpgrade || canCompleted) && !scene.hasBroomUpgrade) {
       scene.dropBroomUpgrade?.();
     }
 
