@@ -2115,6 +2115,58 @@
                  "width":0,
                  "x":1117,
                  "y":899
+                },
+                {
+                 "height":0,
+                 "id":99,
+                 "name":"slime_spawn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":250,
+                 "y":840
+                },
+                {
+                 "height":0,
+                 "id":100,
+                 "name":"slime_spawn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":565,
+                 "y":965
+                },
+                {
+                 "height":0,
+                 "id":101,
+                 "name":"slime_spawn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":760,
+                 "y":930
+                },
+                {
+                 "height":0,
+                 "id":102,
+                 "name":"slime_spawn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":980,
+                 "y":980
                 }, 
                 {
                  "height":0,

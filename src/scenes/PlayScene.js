@@ -877,12 +877,13 @@ export default class PlayScene extends Phaser.Scene {
       { left: 150, right: 1040, top: 360, bottom: 470 },
       { left: 540, right: 760, top: 238, bottom: 610 },
       { left: 680, right: 1250, top: 220, bottom: 356 },
-      { left: 300, right: 870, top: 570, bottom: 704 },
+      { left: 300, right: 870, top: 570, bottom: 760 },
       { left: 860, right: 1250, top: 460, bottom: 565 },
       { left: 1040, right: 1410, top: 360, bottom: 525 },
-      { left: 1030, right: 1430, top: 600, bottom: 825 },
-      { left: 1220, right: 1415, top: 440, bottom: 700 },
-      { left: 160, right: 460, top: 488, bottom: 620 },
+      { left: 1030, right: 1430, top: 600, bottom: 930 },
+      { left: 1220, right: 1415, top: 440, bottom: 760 },
+      { left: 160, right: 520, top: 488, bottom: 920 },
+      { left: 520, right: 1040, top: 800, bottom: 990 },
     ];
     const allPositions = [...existingPositions];
 
