@@ -7,6 +7,8 @@ const TRAVEL_ALLOWANCE_REWARD = 20000;
 export default class TravelEndingSystem {
   constructor(scene) {
     this.scene = scene;
+    this.isFinalEndingStarting = false;
+    this.finalEndingLoadTimer = null;
   }
 
   getBusStopPoint() {
@@ -338,15 +340,6 @@ export default class TravelEndingSystem {
     const scene = this.scene;
     scene.audioManager.playPhoneRingSound();
 
-    // Pre-emptively load ending background to prevent any race condition or black screen later
-    if (!scene.textures.exists("ending_chapter1_final")) {
-      const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
-      if (asset) {
-        scene.load.image("ending_chapter1_final", asset.path);
-        scene.load.start();
-      }
-    }
-
     scene.dialogueSystem.start([
       {
         name: "알림",
@@ -407,16 +400,18 @@ export default class TravelEndingSystem {
           if (isTransitionStarted) return;
           isTransitionStarted = true;
           scene.input.off("pointerdown", skipListener);
-          scene.cameras.main.fadeOut(850, 0, 0, 0);
           scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             this.finishChapterOneEnding();
           });
+          scene.cameras.main.fadeOut(850, 0, 0, 0);
         });
       });
     });
   }
 
   finishChapterOneEnding() {
+    if (this.isFinalEndingStarting) return;
+    this.isFinalEndingStarting = true;
     const scene = this.scene;
     scene.packingQuestState = "ending_complete";
     scene.isChapterComplete = true;
@@ -434,8 +429,12 @@ export default class TravelEndingSystem {
     scene.player?.setVelocity(0, 0);
     scene.playerController?.stopWalkAnimation?.();
 
-    const showEnding = () => {
-      scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
+    const showEnding = (isReady = true) => {
+      if (isReady) {
+        scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
+      } else {
+        this.showFinalEndingFallback();
+      }
       scene.cameras.main.fadeIn(850, 0, 0, 0);
       
       const addPromptWhenReady = () => {
@@ -469,18 +468,103 @@ export default class TravelEndingSystem {
       addPromptWhenReady();
     };
 
-    if (scene.textures.exists("ending_chapter1_final")) {
-      showEnding();
-    } else {
-      const asset = EXTERNAL_ASSETS.find((a) => a.key === "ending_chapter1_final");
-      if (asset) {
-        scene.load.image("ending_chapter1_final", asset.path);
-        scene.load.once(Phaser.Loader.Events.COMPLETE, showEnding);
-        scene.load.start();
-      } else {
-        showEnding();
-      }
+    this.loadFinalEndingTexture(showEnding);
+  }
+
+  loadFinalEndingTexture(onReady) {
+    const scene = this.scene;
+    const key = "ending_chapter1_final";
+    if (scene.textures.exists(key)) {
+      onReady(true);
+      return;
     }
+
+    const asset = EXTERNAL_ASSETS.find((a) => a.key === key);
+    if (!asset) {
+      onReady(false);
+      return;
+    }
+
+    let isSettled = false;
+    let handleComplete = null;
+    const settle = (isReady) => {
+      if (isSettled) return;
+      isSettled = true;
+      this.finalEndingLoadTimer?.remove(false);
+      this.finalEndingLoadTimer = null;
+      if (handleComplete) {
+        scene.load.off(Phaser.Loader.Events.COMPLETE, handleComplete);
+      }
+      onReady(isReady || scene.textures.exists(key));
+    };
+
+    handleComplete = () => settle(scene.textures.exists(key));
+
+    const enqueueLoad = () => {
+      try {
+        if (!scene.textures.exists(key)) {
+          scene.load.image(key, asset.path);
+        }
+        scene.load.once(Phaser.Loader.Events.COMPLETE, handleComplete);
+        if (!scene.load.isLoading?.()) {
+          scene.load.start();
+        }
+      } catch {
+        settle(false);
+      }
+    };
+
+    this.finalEndingLoadTimer?.remove(false);
+    this.finalEndingLoadTimer = scene.time.delayedCall(3500, () => settle(false));
+
+    if (scene.load.isLoading?.()) {
+      scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+        if (scene.textures.exists(key)) {
+          settle(true);
+        } else {
+          enqueueLoad();
+        }
+      });
+      return;
+    }
+
+    enqueueLoad();
+  }
+
+  showFinalEndingFallback() {
+    const scene = this.scene;
+    scene.interiorSceneSystem?.clear?.();
+    document.body.classList.add("interior-scene-active");
+    document.body.dataset.interiorScene = "ending";
+    scene.interiorSceneGroup = scene.add.group();
+    scene.interiorSceneType = "ending";
+
+    const viewportWidth = Math.max(768, scene.scale.width || 768);
+    const viewportHeight = Math.max(480, scene.scale.height || 480);
+    const centerX = viewportWidth / 2;
+    const centerY = viewportHeight / 2;
+    const back = scene.add.rectangle(centerX, centerY, viewportWidth * 2, viewportHeight * 2, 0x101818, 1);
+    back.setScrollFactor(0);
+    back.setDepth(58);
+    const title = scene.add.text(centerX, centerY - 24, "챕터 1 완료", {
+      fontFamily: "Arial",
+      fontSize: "34px",
+      color: "#fff3d0",
+      fontStyle: "bold",
+      align: "center",
+    }).setOrigin(0.5);
+    title.setScrollFactor(0);
+    title.setDepth(60);
+    const message = scene.add.text(centerX, centerY + 34, "삼각지에서 배운 준비가 서울 여행으로 이어졌어요.", {
+      fontFamily: "Arial",
+      fontSize: "21px",
+      color: "#ffffff",
+      align: "center",
+      wordWrap: { width: Math.min(620, viewportWidth - 80) },
+    }).setOrigin(0.5);
+    message.setScrollFactor(0);
+    message.setDepth(60);
+    scene.interiorSceneGroup.addMultiple([back, title, message]);
   }
 
   returnToStartScreenFromEnding() {

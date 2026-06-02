@@ -38,6 +38,29 @@ export default class SlimeSystem {
     });
   }
 
+  ensureActiveTrash(minCount = Math.min(GAME_CONFIG.waveSize || 12, GAME_CONFIG.maxSlimes || 24)) {
+    const scene = this.scene;
+    if (!scene.trashSlimes) return;
+    if (
+      scene.tutorialState === "intro" ||
+      scene.tutorialState === "move" ||
+      scene.tutorialState === "sweep" ||
+      scene.tutorialState === "deposit" ||
+      scene.tutorialState === "npc"
+    ) {
+      return;
+    }
+
+    const activeCount = scene.trashSlimes
+      .getChildren()
+      .filter((trash) => trash.active && !trash.getData("cleaned")).length;
+    const maxCount = GAME_CONFIG.maxSlimes || minCount;
+    const spawnCount = Math.max(0, Math.min(minCount, maxCount) - activeCount);
+    for (let index = 0; index < spawnCount; index += 1) {
+      this.respawnSlime();
+    }
+  }
+
   respawnSlime() {
     const scene = this.scene;
     const cam = scene.cameras.main;

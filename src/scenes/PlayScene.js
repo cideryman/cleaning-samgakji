@@ -227,6 +227,7 @@ export default class PlayScene extends Phaser.Scene {
     
     if (this.tutorialState === "completed") {
       this.slimeSystem?.startRespawnLoop();
+      this.slimeSystem?.ensureActiveTrash();
     }
     
     // 3️⃣ 45~75초 주기로 마을 주민 랜덤 한 줄 말풍선 대사 연출 (주민 기억 & 서울 기대감)
