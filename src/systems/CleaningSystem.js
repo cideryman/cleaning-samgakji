@@ -158,7 +158,7 @@ export default class CleaningSystem {
     scene.updateHud();
 
     scene.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
-      if (scene.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
+      if (this.getActiveTrashCount() < GAME_CONFIG.maxSlimes) {
         scene.slimeSystem.respawnSlime();
       }
     });
@@ -305,10 +305,16 @@ export default class CleaningSystem {
 
     if (shouldRespawn) {
       scene.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
-        if (scene.trashSlimes.getChildren().length < GAME_CONFIG.maxSlimes) {
+        if (this.getActiveTrashCount() < GAME_CONFIG.maxSlimes) {
           scene.slimeSystem.respawnSlime();
         }
       });
     }
+  }
+
+  getActiveTrashCount() {
+    return this.scene.trashSlimes
+      ?.getChildren()
+      .filter((trash) => trash.active && !trash.getData("cleaned")).length || 0;
   }
 }

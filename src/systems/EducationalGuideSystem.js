@@ -10,6 +10,16 @@ const KEY_MAP = {
   "bus_stop": "busStop"
 };
 
+const PICTOGRAM_ASSETS = {
+  "hospital": "assets/buildings/hospital-building.png",
+  "pharmacy": "assets/buildings/pharmacy-building.png",
+  "clothing_shop": "assets/buildings/clothing-store.png",
+  "vending_machine": "assets/vending/vending-machine-full.png",
+  "traffic_light": "assets/traffic/pedestrian-light.png",
+  "recycling_center": "assets/recycling/recycling-center.png",
+  "bus_stop": "assets/props/bus-stop-sign.png"
+};
+
 export default class EducationalGuideSystem {
   constructor(scene) {
     this.scene = scene;
@@ -262,16 +272,6 @@ export default class EducationalGuideSystem {
 
     listEl.innerHTML = "";
 
-    const emojiMap = {
-      "hospital": "🏥",
-      "pharmacy": "💊",
-      "clothing_shop": "👕",
-      "vending_machine": "🥤",
-      "traffic_light": "🚦",
-      "recycling_center": "♻️",
-      "bus_stop": "🚌"
-    };
-
     EDUCATIONAL_GUIDE_DATA.forEach((facility) => {
       const mappedKey = KEY_MAP[facility.key];
       const seen = scene.educationGuideSeen?.[mappedKey] === true;
@@ -279,11 +279,14 @@ export default class EducationalGuideSystem {
       const card = document.createElement("div");
       card.className = "edu-note-card";
 
-      const emoji = emojiMap[facility.key] || "💡";
+      const iconPath = this.getPictogramAsset(facility.key);
+      const iconHtml = iconPath
+        ? `<img class="edu-note-icon-img" src="${iconPath}" alt="" aria-hidden="true" />`
+        : `<span class="edu-note-icon">💡</span>`;
 
       card.innerHTML = `
         <div class="edu-note-info">
-          <span class="edu-note-icon">${emoji}</span>
+          <span class="edu-note-icon">${iconHtml}</span>
           <span class="edu-note-title">${facility.title}</span>
         </div>
         <span class="edu-note-status ${seen ? 'seen' : 'unseen'}">
@@ -324,7 +327,16 @@ export default class EducationalGuideSystem {
     return this.isOpen || this.scene.eduNotesModal?.style?.display !== "none";
   }
 
+  getPictogramAsset(key) {
+    return PICTOGRAM_ASSETS[key] || null;
+  }
+
   getPictogramHtml(key) {
+    const assetPath = this.getPictogramAsset(key);
+    if (assetPath) {
+      return `<img class="pictogram-img pictogram-img-${key}" src="${assetPath}" alt="" aria-hidden="true" />`;
+    }
+
     switch (key) {
       case "hospital":
         return `

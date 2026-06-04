@@ -2,7 +2,7 @@ export const GAME_CONFIG = {
   worldWidth: 1664,
   worldHeight: 1088,
   playerSpeed: 135,
-  waveSize: 30,
+  waveSize: 34,
   totalGoal: 30,
   canCount: 20,
   yebiRemoveCount: 10,
@@ -22,11 +22,11 @@ export const GAME_CONFIG = {
   sweepCooldownMs: 420,
   feedbackSparkleCount: 14,
   canFeedbackSparkleCount: 18,
-  slimeSpawnMinDistance: 72,
+  slimeSpawnMinDistance: 58,
   wideCameraZoom: 1,
   joystickRadius: 78,
-  slimeRespawnDelayMs: 12000,
-  maxSlimes: 25,
+  slimeRespawnDelayMs: 8000,
+  maxSlimes: 34,
   rewardPerSlime: 100,
   specialTrashSpawnChance: 0.0025, // 0.25% 확률
   specialTrashReward: 2000, // 2000원 보상

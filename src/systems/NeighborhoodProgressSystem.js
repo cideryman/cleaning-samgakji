@@ -36,6 +36,13 @@ const STAGE_MESSAGES = {
   4: "동네 화단이 풍성해졌어요.",
 };
 
+const STAGE_REQUIREMENTS = {
+  stage1Cleaned: 60,
+  stage2Cleaned: 150,
+  stage3Cleaned: 320,
+  stage4Cleaned: 600,
+};
+
 export default class NeighborhoodProgressSystem {
   constructor(scene) {
     this.scene = scene;
@@ -107,10 +114,10 @@ export default class NeighborhoodProgressSystem {
     const isJjookCompleted = scene.jjookQuestState === JjookQuestState.COMPLETED;
     const isSunisuniCompleted = scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE;
 
-    if (cleaned >= 1800 && isSunisuniCompleted) return 4;
-    if (cleaned >= 1000 && isJjookCompleted) return 3;
-    if (cleaned >= 500 && isRecycleCompleted) return 2;
-    if (cleaned >= 200) return 1;
+    if (cleaned >= STAGE_REQUIREMENTS.stage4Cleaned && isSunisuniCompleted) return 4;
+    if (cleaned >= STAGE_REQUIREMENTS.stage3Cleaned && isJjookCompleted) return 3;
+    if (cleaned >= STAGE_REQUIREMENTS.stage2Cleaned && isRecycleCompleted) return 2;
+    if (cleaned >= STAGE_REQUIREMENTS.stage1Cleaned) return 1;
     return 0;
   }
 

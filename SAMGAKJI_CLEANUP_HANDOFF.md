@@ -151,6 +151,7 @@
 - 이어하기 시 `CheckpointStorage.applyToScene()` 이후 `tutorialSystem.state` 같은 시스템 내부 상태도 동기화합니다.
 - 튜토리얼 완료 상태라면 `SlimeSystem.startRespawnLoop()`가 다시 시작되어야 합니다.
 - 이어하기 직후 맵에 쓰레기가 너무 적으면 `SlimeSystem.ensureActiveTrash()` 같은 보장 함수가 호출되어야 합니다.
+- 쓰레기 리스폰은 현재 카메라 화면 밖 위치를 우선 선택해야 합니다. 플레이어가 방금 청소한 화면에 즉시 다시 생기는 느낌을 막는 UX 기준입니다.
 - 새 퀘스트가 쓰레기 생성/제거/청소 상태에 영향을 주면, 저장 후 이어하기 시 같은 상태가 재현되는지 확인합니다.
 - 체크포인트 복원 전에만 쓰레기 생성 여부를 판단하지 않습니다.
 
@@ -279,6 +280,28 @@ npm.cmd run build
 - 추후 필요하면 여백 제거보다 패턴/프레임 디자인으로 자연스럽게 처리하는 방식을 우선 검토합니다.
 
 ## 8. 최근 변경 로그
+
+### 2026-06-04 7대시설 학습 픽토그램 에셋화
+
+- `src/systems/EducationalGuideSystem.js`
+- `styles.css`
+- 7대시설 학습 모달의 코드 SVG 픽토그램을 기존 픽셀 에셋 기반 이미지로 교체했습니다.
+- 병원, 약국, 옷가게, 자판기, 보행자 신호등, 분리수거장, 버스정류장에 기존 건물/오브젝트/교통/분리수거 에셋을 사용합니다.
+- 배움노트 목록의 이모지 아이콘도 같은 에셋 계열의 작은 이미지로 교체했습니다.
+- 검증: `node --check src/systems/EducationalGuideSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
+
+### 2026-06-04 쓰레기 리스폰/동네 변화 난이도 재조정
+
+- `src/config/GameConstants.js`
+- `src/systems/CleaningSystem.js`
+- `src/systems/NeighborhoodProgressSystem.js`
+- 쓰레기 체감 밀도를 높이기 위해 초기 배치 기준 `waveSize`를 `30 -> 34`, 동시 유지 상한 `maxSlimes`를 `25 -> 34`로 조정했습니다.
+- 리스폰 대기 시간을 `12000ms -> 8000ms`로 줄이고, 스폰 최소 간격을 `72px -> 58px`로 낮춰 Tiled의 `slime_spawn` 포인트가 더 촘촘하게 활용되도록 조정했습니다.
+- 청소 후 예약 리스폰 조건을 전체 group child 수가 아니라 active/미청소 쓰레기 수 기준으로 변경해, 비활성 오브젝트가 남아도 리스폰이 막히지 않게 했습니다.
+- 특수 쓰레기 확률은 이전에 낮춘 `0.25%` 값을 유지했습니다. 이번 작업은 일반 쓰레기 리스폰 체감 개선이 목적입니다.
+- 꽃/화단 변화 조건을 낮췄습니다: Stage 1 `200 -> 60`, Stage 2 `500 -> 150 + 분리수거 완료`, Stage 3 `1000 -> 320 + 쭉쭉이 완료`, Stage 4 `1800 -> 600 + 수니수니 완료`.
+- `NeighborhoodProgressSystem`은 쓰레기 스폰 장소를 직접 줄이지 않습니다. 스폰 축소처럼 느껴질 경우 우선 `waveSize`, `maxSlimes`, `slimeRespawnDelayMs`, `slimeSpawnMinDistance`, Tiled `slime_spawn` 포인트의 collision 겹침 여부를 확인합니다.
+- 검증: `node --check src/config/GameConstants.js`, `node --check src/systems/CleaningSystem.js`, `node --check src/systems/NeighborhoodProgressSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
 
 ### 2026-06-04 자판기 음료 모달 오버레이 배경 보강
 

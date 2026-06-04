@@ -2632,6 +2632,37 @@ body.ui-large-text .edu-guide-ok-btn {
   height: 76px;
 }
 
+.pictogram-img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgba(33, 53, 44, 0.18));
+}
+
+.pictogram-img-hospital,
+.pictogram-img-pharmacy,
+.pictogram-img-clothing_shop {
+  width: 82px;
+  height: 82px;
+}
+
+.pictogram-img-vending_machine {
+  width: 70px;
+  height: 78px;
+}
+
+.pictogram-img-traffic_light,
+.pictogram-img-bus_stop {
+  width: 72px;
+  height: 72px;
+}
+
+.pictogram-img-recycling_center {
+  width: 78px;
+  height: 78px;
+}
+
 /* 紐⑤컮??landscape 諛?醫곸? ?붾㈃ ???*/
 @media (max-width: 520px) {
   .edu-guide-content-wrapper {
@@ -2644,6 +2675,10 @@ body.ui-large-text .edu-guide-ok-btn {
     height: 80px;
   }
   .pictogram-svg {
+    width: 66px;
+    height: 66px;
+  }
+  .pictogram-img {
     width: 66px;
     height: 66px;
   }
@@ -4401,8 +4436,20 @@ button,
 }
 
 .edu-note-icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 25px;
   line-height: 1;
+}
+
+.edu-note-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .edu-note-title {
