@@ -6,6 +6,7 @@ export default class PlayerController {
     this.movePath = [];
     this.currentPathIndex = 0;
     this.cleanTarget = null;
+    this.sweepPointTarget = null;
     this.interactionTarget = null;
   }
 
@@ -41,6 +42,9 @@ export default class PlayerController {
     scene.input.on("pointermove", (pointer) => this.handleMouseMovePointerMove(pointer));
     scene.input.on("pointerup", (pointer) => this.handleMouseMovePointerUp(pointer));
     scene.input.on("pointerupoutside", (pointer) => this.handleMouseMovePointerUp(pointer));
+    scene.input.on("gameobjectover", (_, gameObject) => this.applyNpcHoverFeedback(gameObject));
+    scene.input.on("gameobjectout", (_, gameObject) => this.clearNpcHoverFeedback(gameObject));
+    scene.input.on("gameobjectdown", (_, gameObject) => this.applyNpcClickFeedback(gameObject));
   }
 
   update() {
@@ -84,6 +88,7 @@ export default class PlayerController {
       scene.isMouseMoveHeld = false;
       this.movePath = [];
       this.cleanTarget = null; // keyboard input overrides auto clean target!
+      this.sweepPointTarget = null;
       this.interactionTarget = null;
     } else {
       // 실시간 거리 체크로 청소 사정거리 내 진입 시 자동 정지 및 쓸기 트리거
@@ -102,6 +107,9 @@ export default class PlayerController {
         const dy = scene.mouseMoveTarget.y - scene.player.y;
         if (Math.hypot(dx, dy) <= 10) {
           scene.mouseMoveTarget = null;
+          if (this.sweepPointTarget) {
+            this.autoSweepPointTarget();
+          }
         } else {
           velocity.set(dx, dy);
         }
@@ -124,6 +132,9 @@ export default class PlayerController {
               }
               if (this.interactionTarget) {
                 this.autoTriggerInteractionTarget();
+              }
+              if (this.sweepPointTarget) {
+                this.autoSweepPointTarget();
               }
             }
           } else {
@@ -153,7 +164,8 @@ export default class PlayerController {
     const scene = this.scene;
     const button = pointer.event?.button ?? pointer.button;
     const pointerType = pointer.event?.pointerType || pointer.pointerType || "mouse";
-    if (pointerType !== "mouse" || button !== 0) return;
+    if (pointerType === "mouse" && button !== 0) return;
+    if (!this.isPointerTypeSupportedForTapMove(pointer, pointerType)) return;
     if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
     if (!scene.stateManager?.canMove()) return;
     if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
@@ -187,7 +199,8 @@ export default class PlayerController {
     const scene = this.scene;
     const button = pointer.event?.button ?? pointer.button;
     const pointerType = pointer.event?.pointerType || pointer.pointerType || "mouse";
-    if (pointerType !== "mouse" || button !== 0) return;
+    if (pointerType === "mouse" && button !== 0) return;
+    if (!this.isPointerTypeSupportedForTapMove(pointer, pointerType)) return;
     if (!scene.isMouseMoveHeld) return;
 
     scene.isMouseMoveHeld = false;
@@ -204,18 +217,67 @@ export default class PlayerController {
         if (path && path.length > 0) {
           this.movePath = path;
           this.currentPathIndex = 0;
+          this.cleanTarget = null;
+          this.interactionTarget = null;
+          this.sweepPointTarget = { x: worldPoint.x, y: worldPoint.y };
           scene.mouseMoveTarget = null; // Unset drag target
         } else {
           this.movePath = [];
+          this.sweepPointTarget = null;
           scene.mouseMoveTarget = null;
         }
       } else {
         // Fallback to direct straight line if pathfinding isn't ready
         const worldPoint = pointer.positionToCamera(scene.cameras.main);
         scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
+        this.sweepPointTarget = { x: worldPoint.x, y: worldPoint.y };
         this.movePath = [];
       }
     }
+  }
+
+  isPointerTypeSupportedForTapMove(pointer, pointerType) {
+    if (pointerType === "mouse") return true;
+    if (pointerType === "touch" || pointerType === "pen") {
+      return this.scene.registry.get("joystickEnabled") === false
+        || this.isPointerOutsideJoystickStartSide(pointer);
+    }
+    return false;
+  }
+
+  isPointerOutsideJoystickStartSide(pointer) {
+    const event = pointer?.event;
+    const clientX = event?.clientX;
+    if (typeof clientX !== "number") return true;
+    return clientX > window.innerWidth / 2;
+  }
+
+  isNpcGameObject(gameObject) {
+    const scene = this.scene;
+    return gameObject
+      && gameObject.active !== false
+      && gameObject.visible !== false
+      && [scene.yebiNpc, scene.jjookNpc, scene.sunisuniNpc].includes(gameObject);
+  }
+
+  applyNpcHoverFeedback(gameObject) {
+    if (!this.isNpcGameObject(gameObject)) return;
+    gameObject.setTint(0xffeb3b);
+  }
+
+  clearNpcHoverFeedback(gameObject) {
+    if (!this.isNpcGameObject(gameObject)) return;
+    gameObject.clearTint();
+  }
+
+  applyNpcClickFeedback(gameObject) {
+    if (!this.isNpcGameObject(gameObject)) return;
+    gameObject.setTint(0x7cff8a);
+    this.scene.time.delayedCall(160, () => {
+      if (this.isNpcGameObject(gameObject)) {
+        gameObject.clearTint();
+      }
+    });
   }
 
   getPlayerSpeed() {
@@ -374,10 +436,12 @@ export default class PlayerController {
   setInteractionTarget(type, position) {
     const scene = this.scene;
     if (scene.pathfindingSystem) {
-      const path = scene.pathfindingSystem.findPath(scene.player, position);
+      const path = scene.pathfindingSystem.findPath(scene.player.x, scene.player.y, position.x, position.y);
       if (path && path.length > 0) {
         this.movePath = path;
         this.currentPathIndex = 0;
+        this.cleanTarget = null;
+        this.sweepPointTarget = null;
         this.interactionTarget = type;
         scene.mouseMoveTarget = null;
       }
@@ -409,6 +473,32 @@ export default class PlayerController {
     scene.cleaningSystem?.trySweep();
   }
 
+  autoSweepPointTarget() {
+    const scene = this.scene;
+    const target = this.sweepPointTarget;
+    this.sweepPointTarget = null;
+
+    if (!target || !scene.player?.active) return;
+    if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return;
+    if (!scene.stateManager?.canInteract?.()) return;
+
+    const dx = target.x - scene.player.x;
+    const dy = target.y - scene.player.y;
+    if (Math.hypot(dx, dy) > 96) return;
+
+    let dirKey = "down";
+    if (Math.abs(dx) > Math.abs(dy)) {
+      dirKey = dx < 0 ? "left" : "right";
+      scene.lastDirection.set(dx < 0 ? -1 : 1, 0);
+    } else if (Math.abs(dy) > 4) {
+      dirKey = dy < 0 ? "up" : "down";
+      scene.lastDirection.set(0, dy < 0 ? -1 : 1);
+    }
+
+    this.setPlayerDirectionTexture(dirKey, false);
+    scene.cleaningSystem?.trySweep();
+  }
+
   cancelMoveTarget() {
     const scene = this.scene;
     scene.mouseMoveTarget = null;
@@ -416,6 +506,7 @@ export default class PlayerController {
     this.movePath = [];
     this.currentPathIndex = 0;
     this.cleanTarget = null;
+    this.sweepPointTarget = null;
     this.interactionTarget = null;
   }
 
