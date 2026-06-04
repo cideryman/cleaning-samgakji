@@ -8,6 +8,8 @@ export default class VendingMachineSystem {
     this.options = [];
     this.selectedIndex = 0;
     this.inputLockedUntil = 0;
+    this.backdrop = null;
+    this.resizeHandler = null;
   }
 
   open({ completeQuestOnSelect = false } = {}) {
@@ -27,10 +29,21 @@ export default class VendingMachineSystem {
     this.group = group;
     scene.vendingMenuGroup = group;
 
-    const dim = scene.add.rectangle(384, 240, 768, 480, 0x000000, 0.45);
+    const overlaySize = this.getOverlaySize();
+    const dim = scene.add.rectangle(
+      overlaySize.width / 2,
+      overlaySize.height / 2,
+      overlaySize.width,
+      overlaySize.height,
+      0x000000,
+      0.45
+    );
     dim.setScrollFactor(0);
     dim.setDepth(60);
     group.add(dim);
+    this.backdrop = dim;
+    this.resizeHandler = () => this.syncBackdropSize();
+    scene.scale.on("resize", this.resizeHandler);
 
     const title = scene.add.text(384, 128, "마실 음료를 골라줘", {
       fontFamily: "Arial",
@@ -115,8 +128,13 @@ export default class VendingMachineSystem {
 
   close() {
     const scene = this.scene;
+    if (this.resizeHandler) {
+      scene.scale.off("resize", this.resizeHandler);
+      this.resizeHandler = null;
+    }
     this.group?.clear(true, true);
     this.group = null;
+    this.backdrop = null;
     this.options = [];
     scene.vendingMenuGroup = null;
     scene.vendingMenuOptions = [];
@@ -126,6 +144,21 @@ export default class VendingMachineSystem {
     if (scene.jjookQuestState === JjookQuestState.CHOOSING_DRINK) {
       scene.jjookQuestState = scene.jjookStateBeforeVending || JjookQuestState.COMPLETED;
     }
+  }
+
+  getOverlaySize() {
+    const scene = this.scene;
+    return {
+      width: scene.scale?.width || scene.game?.config?.width || 768,
+      height: scene.scale?.height || scene.game?.config?.height || 480,
+    };
+  }
+
+  syncBackdropSize() {
+    if (!this.backdrop) return;
+    const overlaySize = this.getOverlaySize();
+    this.backdrop.setPosition(overlaySize.width / 2, overlaySize.height / 2);
+    this.backdrop.setSize(overlaySize.width, overlaySize.height);
   }
 
   handleKeyboard() {
