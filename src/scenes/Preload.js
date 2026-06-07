@@ -1,4 +1,12 @@
-import { EXTERNAL_ASSETS, SPRITESHEET_ASSETS, TILED_MAP, AUDIO_ASSETS, LAZY_IMAGE_KEYS, LAZY_AUDIO_KEYS } from "../config/AssetsData.js";
+import {
+  AUDIO_ASSETS,
+  EXTERNAL_ASSETS,
+  INTERIOR_TILED_MAPS,
+  LAZY_AUDIO_KEYS,
+  LAZY_IMAGE_KEYS,
+  SPRITESHEET_ASSETS,
+  TILED_MAP,
+} from "../config/AssetsData.js";
 
 const TILED_TILESET_TEXT_KEY_PREFIX = "tiled_tileset_source:";
 
@@ -27,6 +35,11 @@ export default class Preload extends Phaser.Scene {
     this.load.json("dialogues", "src/data/dialogues.json");
     this.load.json(TILED_MAP.jsonKey, TILED_MAP.path);
     this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
+    INTERIOR_TILED_MAPS.forEach((map) => {
+      this.load.json(map.jsonKey, map.path);
+      this.load.tilemapTiledJSON(map.key, map.path);
+      this.load.image(map.tilesetKey, map.tilesetPath);
+    });
   }
 
   create() {
@@ -34,6 +47,7 @@ export default class Preload extends Phaser.Scene {
     if (didQueueExternalTilesets) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => {
         this.normalizeExternalTiledTilesets();
+        this.normalizeInteriorTiledMaps();
         this.queueTiledTilesetImagesThenFinish();
       });
       this.load.start();
@@ -41,6 +55,7 @@ export default class Preload extends Phaser.Scene {
     }
 
     this.normalizeExternalTiledTilesets();
+    this.normalizeInteriorTiledMaps();
     this.queueTiledTilesetImagesThenFinish();
   }
 
@@ -138,6 +153,34 @@ export default class Preload extends Phaser.Scene {
     if (tilemapData?.tilesets) {
       tilemapData.tilesets = normalizedTilesets.map((tileset) => ({ ...tileset }));
     }
+  }
+
+  normalizeInteriorTiledMaps() {
+    INTERIOR_TILED_MAPS.forEach((interiorMap) => {
+      const mapJson = this.cache.json.get(interiorMap.jsonKey);
+      if (!mapJson?.tilesets?.length) return;
+
+      const normalizedTilesets = mapJson.tilesets.map((tileset) => ({
+        firstgid: tileset.firstgid || 1,
+        columns: interiorMap.columns,
+        image: interiorMap.tilesetPath,
+        imageheight: interiorMap.imageHeight,
+        imagewidth: interiorMap.imageWidth,
+        margin: 0,
+        name: interiorMap.tilesetName,
+        spacing: 0,
+        tilecount: interiorMap.tileCount,
+        tileheight: interiorMap.tileHeight,
+        tilewidth: interiorMap.tileWidth,
+      }));
+
+      mapJson.tilesets = normalizedTilesets;
+      const tilemapCacheEntry = this.cache.tilemap.get(interiorMap.key);
+      const tilemapData = tilemapCacheEntry?.data || tilemapCacheEntry;
+      if (tilemapData?.tilesets) {
+        tilemapData.tilesets = normalizedTilesets.map((tileset) => ({ ...tileset }));
+      }
+    });
   }
 
   parseTiledTilesetSource(tilesetText, sourcePath) {

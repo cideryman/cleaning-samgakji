@@ -13,6 +13,7 @@ import DialogueManager from "../systems/DialogueManager.js";
 import DialogueSystem from "../systems/DialogueSystem.js";
 import AudioManager from "../systems/AudioManager.js";
 import InteriorSceneSystem from "../systems/InteriorSceneSystem.js";
+import PharmacyMapSystem from "../systems/PharmacyMapSystem.js";
 import InteractionSystem from "../systems/InteractionSystem.js";
 import ConsumableSystem from "../systems/ConsumableSystem.js";
 import MoneySystem from "../systems/MoneySystem.js";
@@ -98,6 +99,7 @@ export default class PlayScene extends Phaser.Scene {
     this.audioManager = null;
     this.sceneControlSystem = null;
     this.interiorSceneSystem = null;
+    this.pharmacyMapSystem = null;
     this.consumableSystem = null;
     this.objectVisibilitySystem = null;
     this.nextGoalSystem = null;
@@ -144,6 +146,7 @@ export default class PlayScene extends Phaser.Scene {
     this.dialogueManager = new DialogueManager(this, { dialogueSystem: this.dialogueSystem });
     this.audioManager = new AudioManager(this);
     this.interiorSceneSystem = new InteriorSceneSystem(this);
+    this.pharmacyMapSystem = new PharmacyMapSystem(this);
     this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
     this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
@@ -2368,6 +2371,10 @@ export default class PlayScene extends Phaser.Scene {
 
 
   showInteriorScene(textureKey, type = "hospital") {
+    if (type === "pharmacy" && this.pharmacyMapSystem?.show()) {
+      return;
+    }
+
     if (!this.textures.exists(textureKey)) {
       const asset = EXTERNAL_ASSETS.find((a) => a.key === textureKey);
       if (asset) {
@@ -2387,6 +2394,7 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   clearInteriorScene() {
+    this.pharmacyMapSystem?.clear();
     this.interiorSceneSystem?.clear();
     if (this.player) {
       this.player.setVelocity(0, 0);

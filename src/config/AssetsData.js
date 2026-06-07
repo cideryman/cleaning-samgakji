@@ -65,6 +65,16 @@ export const EXTERNAL_ASSETS = [
   { key: "convenience_store", path: "assets/buildings/convenience-store.png" },
   { key: "hospital_interior", path: "assets/interiors/hospital-interior.png" },
   { key: "pharmacy_interior", path: "assets/interiors/pharmacy-interior.png" },
+  { key: "pharmacy_shelf_general", path: "assets/interiors/pharmacy/pharmacy-shelf-general.png" },
+  { key: "pharmacy_shelf_cold", path: "assets/interiors/pharmacy/pharmacy-shelf-cold.png" },
+  { key: "pharmacy_shelf_care", path: "assets/interiors/pharmacy/pharmacy-shelf-care.png" },
+  { key: "pharmacy_shelf_health", path: "assets/interiors/pharmacy/pharmacy-shelf-health.png" },
+  { key: "pharmacy_counter", path: "assets/interiors/pharmacy/pharmacy-counter.png" },
+  { key: "pharmacy_prescription_drop", path: "assets/interiors/pharmacy/pharmacy-prescription-drop.png" },
+  { key: "pharmacy_plant", path: "assets/interiors/pharmacy/pharmacy-plant.png" },
+  { key: "pharmacy_waiting_chair", path: "assets/interiors/pharmacy/pharmacy-waiting-chair.png" },
+  { key: "pharmacy_poster", path: "assets/interiors/pharmacy/pharmacy-poster.png" },
+  { key: "pharmacy_medicine_bag_display", path: "assets/interiors/pharmacy/pharmacy-medicine-bag-display.png" },
   { key: "clothing_store_interior", path: "assets/interiors/clothing-store-interior.png" },
   { key: "pedestrian_light_back", path: "assets/traffic/pedestrian-light-back.png" },
   { key: "pedestrian_stop_sign", path: "assets/traffic/pedestrian-stop-sign.png" },
@@ -151,6 +161,7 @@ export const SPRITESHEET_ASSETS = [
   { key: "jjook_walk_up", path: "assets/sprites/jjook-walk-up.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_left", path: "assets/sprites/jjook-walk-left.png", frameWidth: 64, frameHeight: 96 },
   { key: "jjook_walk_right", path: "assets/sprites/jjook-walk-right.png", frameWidth: 64, frameHeight: 96 },
+  { key: "pharmacist_sprite", path: "assets/sprites/pharmacist.png", frameWidth: 64, frameHeight: 96 },
   { key: "bus_right", path: "assets/vehicles/bus-right.png", frameWidth: 384, frameHeight: 192 },
   { key: "car_yellow_left", path: "assets/vehicles/car-yellow-left.png", frameWidth: 256, frameHeight: 128 },
   { key: "car_blue_left", path: "assets/vehicles/car-blue-left.png", frameWidth: 256, frameHeight: 128 },
@@ -171,6 +182,23 @@ export const TILED_MAP = {
   jsonKey: "chapter1_map_json",
   path: "assets/maps/chapter1-samgakji-map.json",
 };
+
+export const INTERIOR_TILED_MAPS = [
+  {
+    key: "pharmacy_map",
+    jsonKey: "pharmacy_map_json",
+    path: "assets/maps/pharmacy-map.json",
+    tilesetName: "pharmacy",
+    tilesetKey: "pharmacy_tiles",
+    tilesetPath: "assets/tilesets/pharmacy.png",
+    tileWidth: 32,
+    tileHeight: 32,
+    tileCount: 240,
+    columns: 20,
+    imageWidth: 640,
+    imageHeight: 384,
+  },
+];
 
 export const AUDIO_ASSETS = [
   { key: "thanks_voice", path: "assets/audio/voice/thanks.mp3" },
