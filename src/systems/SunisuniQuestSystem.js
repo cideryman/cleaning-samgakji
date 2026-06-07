@@ -365,20 +365,50 @@ export default class SunisuniQuestSystem {
   handlePharmacyInteraction() {
     const scene = this.scene;
     if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
-      this.startPharmacyRevisitDialogue();
+      this.enterPharmacyInterior("revisit");
+      return;
+    }
+
+    if (scene.sunisuniQuestState !== SunisuniQuestState.GOING_PHARMACY || !scene.hasPrescription) return;
+    this.enterPharmacyInterior("quest");
+  }
+
+  enterPharmacyInterior(mode = "quest") {
+    const scene = this.scene;
+    scene.playSceneMusic("ambient_pharmacy_bgm", 0.24);
+    scene.pharmacyMapSystem?.setInteractionMode(mode);
+    scene.showInteriorScene("pharmacy_interior", "pharmacy");
+    scene.showQuestToast("\uCE74\uC6B4\uD130 \uC55E\uC73C\uB85C \uAC00\uC11C \uC57D\uC0AC\uC5D0\uAC8C \uB9D0\uC744 \uAC78\uC5B4\uBCF4\uC138\uC694.", 3200);
+  }
+
+  startPharmacyCounterDialogue(mode = "quest") {
+    const scene = this.scene;
+    if (mode === "revisit" || scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE) {
+      this.startPharmacyRevisitDialogue(true);
       return;
     }
 
     if (scene.sunisuniQuestState !== SunisuniQuestState.GOING_PHARMACY || !scene.hasPrescription) return;
     scene.sunisuniQuestState = SunisuniQuestState.MEDICINE_PAID;
-    scene.playSceneMusic("ambient_pharmacy_bgm", 0.24);
-    scene.showInteriorScene("pharmacy_interior", "pharmacy");
     scene.dialogueSystem.start([
-      { name: "약사", portraitKey: "chemist", text: "안녕하세요. 처방전이 있으면 보여주세요." },
-      { name: "약사", portraitKey: "chemist", text: "처방전을 확인할게요. 잠시만 기다려 주세요." },
-      { name: "약사", portraitKey: "chemist", text: "처방약이 나왔습니다." },
-      { name: "약사", portraitKey: "chemist", text: "이 약은 수니수니 님만 드셔야 해요. 다른 사람이 먹으면 안 됩니다." },
-      { name: "약사", portraitKey: "chemist", text: "밥을 먹고 30분 뒤에 드세요. 이제 약값 5,000원을 결제해 주세요." },
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uC548\uB155\uD558\uC138\uC694. \uCC98\uBC29\uC804\uC774 \uC788\uC73C\uBA74 \uBCF4\uC5EC\uC8FC\uC138\uC694." },
+      { name: "\uD574\uB0C4\uC774", portraitKey: "haenaem_determined", text: "\uB124. \uC218\uB2C8\uC218\uB2C8 \uB2D8 \uCC98\uBC29\uC804\uC774\uC5D0\uC694." },
+    ], () => {
+      scene.pharmacyMapSystem?.playTransferItem("prescription_item", "player", "pharmacist", {
+        width: 118,
+        height: 88,
+        onComplete: () => this.confirmPrescriptionAtPharmacy(),
+      });
+    });
+  }
+
+  confirmPrescriptionAtPharmacy() {
+    const scene = this.scene;
+    scene.dialogueSystem.start([
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uCC98\uBC29\uC804\uC744 \uD655\uC778\uD560\uAC8C\uC694. \uC7A0\uC2DC\uB9CC \uAE30\uB2E4\uB824 \uC8FC\uC138\uC694." },
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uCC98\uBC29\uC57D\uC774 \uB098\uC654\uC2B5\uB2C8\uB2E4." },
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uC774 \uC57D\uC740 \uC218\uB2C8\uC218\uB2C8 \uB2D8\uB9CC \uB4DC\uC154\uC57C \uD574\uC694. \uB2E4\uB978 \uC0AC\uB78C\uC774 \uBA39\uC73C\uBA74 \uC548 \uB429\uB2C8\uB2E4." },
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uBC25\uC744 \uBA39\uACE0 30\uBD84 \uB4A4\uC5D0 \uB4DC\uC138\uC694. \uC774\uC81C \uC57D\uAC12 5,000\uC6D0\uC744 \uACB0\uC81C\uD574 \uC8FC\uC138\uC694." },
     ], () => this.payForMedicine());
   }
 
@@ -387,20 +417,20 @@ export default class SunisuniQuestSystem {
     if (scene.moneySystem && scene.moneySystem.money < 5000) {
       scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
       scene.clearInteriorScene();
-      scene.showQuestToast("약값 5,000원이 필요해요.");
+      scene.showQuestToast("\uC57D\uAC12 5,000\uC6D0\uC774 \uD544\uC694\uD574\uC694.");
       return;
     }
 
     scene.dialogueSystem.start([
-      { name: "약사", portraitKey: "chemist", text: "약값은 5,000원입니다. 10,000원 지폐를 내고 거스름돈을 계산해 볼까요?" },
+      { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uC57D\uAC12\uC740 5,000\uC6D0\uC785\uB2C8\uB2E4. 10,000\uC6D0 \uC9C0\uD3D0\uB97C \uB0B4\uBA74 \uAC70\uC2A4\uB984\uB3C8\uC744 \uACC4\uC0B0\uD574 \uBCFC\uAE4C\uC694?" },
       {
-        name: "해냄이",
+        name: "\uD574\uB0C4\uC774",
         portraitKey: "haenaem_determined",
-        text: "약사 선생님께 10,000원을 드렸습니다. 거스름돈은 얼마를 받아야 할까요?",
+        text: "\uC57D\uC0AC \uC120\uC0DD\uB2D8\uAED8 10,000\uC6D0\uC744 \uB4DC\uB838\uC2B5\uB2C8\uB2E4. \uAC70\uC2A4\uB984\uB3C8\uC740 \uC5BC\uB9C8\uB97C \uBC1B\uC544\uC57C \uD560\uAE4C\uC694?",
         choices: [
-          { label: "3,000원", onSelect: () => this.handlePharmacyChangeSelection(3000) },
-          { label: "5,000원", onSelect: () => this.handlePharmacyChangeSelection(5000) },
-          { label: "7,000원", onSelect: () => this.handlePharmacyChangeSelection(7000) },
+          { label: "3,000\uC6D0", onSelect: () => this.handlePharmacyChangeSelection(3000) },
+          { label: "5,000\uC6D0", onSelect: () => this.handlePharmacyChangeSelection(5000) },
+          { label: "7,000\uC6D0", onSelect: () => this.handlePharmacyChangeSelection(7000) },
         ]
       }
     ]);
@@ -412,39 +442,55 @@ export default class SunisuniQuestSystem {
       if (!scene.moneySystem?.deductMoney(5000)) {
         scene.sunisuniQuestState = SunisuniQuestState.GOING_PHARMACY;
         scene.clearInteriorScene();
-        scene.showQuestToast("약값 5,000원이 필요해요.");
+        scene.showQuestToast("\uC57D\uAC12 5,000\uC6D0\uC774 \uD544\uC694\uD574\uC694.");
         return;
       }
 
       scene.hasPrescription = false;
       scene.hasMedicine = true;
-      scene.playVendingPaymentAnimationLike("bill_10000", () => {
-        scene.showFloatingItem("medicine_bag", Math.max(384, (scene.scale.width || 768) / 2), Math.max(240, (scene.scale.height || 480) / 2), { width: 150, height: 150 }, true, {
-          duration: 360,
-          hold: 1900,
-          floatY: -12,
-          onComplete: () => {
-            scene.dialogueSystem.start([
-              { name: "약사", portraitKey: "chemist", text: "맞아요! 10,000원을 내셨으니, 5,000원을 뺀 5,000원이 거스름돈입니다." },
-              { name: "약사", portraitKey: "chemist", text: "거스름돈 5,000원과 약 봉투를 잘 챙겨 주세요." },
-              { name: "약사", portraitKey: "chemist", text: "약은 꼭 설명대로 먹어야 해요." },
-            ], () => this.completeQuest());
-          },
-        });
+      scene.pharmacyMapSystem?.playTransferItem("bill_10000", "player", "pharmacist", {
+        width: 132,
+        height: 80,
+        onComplete: () => {
+          scene.pharmacyMapSystem?.playTransferItem("bill_5000", "pharmacist", "player", {
+            width: 118,
+            height: 72,
+            onComplete: () => {
+              scene.pharmacyMapSystem?.playTransferItem("medicine_bag", "pharmacist", "player", {
+                width: 112,
+                height: 112,
+                onComplete: () => {
+                  scene.dialogueSystem.start([
+                    { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uB9DE\uC544\uC694. 10,000\uC6D0\uC744 \uB0C8\uC73C\uB2C8 5,000\uC6D0\uC744 \uBE80 5,000\uC6D0\uC774 \uAC70\uC2A4\uB984\uB3C8\uC785\uB2C8\uB2E4." },
+                    { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uAC70\uC2A4\uB984\uB3C8 5,000\uC6D0\uACFC \uC57D\uBD09\uD22C\uB97C \uC798 \uCC59\uACA8 \uC8FC\uC138\uC694." },
+                    { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uC57D\uC740 \uAF2D \uC124\uBA85\uB300\uB85C \uBA39\uC5B4\uC57C \uD574\uC694." },
+                  ], () => {
+                    scene.pharmacyMapSystem?.walkPlayerToExit(() => this.completeQuest());
+                  });
+                },
+              });
+            },
+          });
+        },
       });
     } else {
       scene.playTone?.({ frequency: 180, duration: 0.2, type: "sawtooth", volume: 0.05 });
       scene.dialogueSystem.start([
-        { name: "약사", portraitKey: "chemist", text: "아니에요. 10,000원을 내고 5,000원짜리 약을 샀어요." },
-        { name: "약사", portraitKey: "chemist", text: "10,000원에서 5,000원을 빼면 얼마가 남을까요? 다시 계산해 봐요." },
+        { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "\uC544\uB2C8\uC5D0\uC694. 10,000\uC6D0\uC744 \uB0B4\uACE0 5,000\uC6D0\uC9DC\uB9AC \uC57D\uC744 \uC0AC\uB294 \uAC70\uC608\uC694." },
+        { name: "\uC57D\uC0AC", portraitKey: "chemist", text: "10,000\uC6D0\uC5D0\uC11C 5,000\uC6D0\uC744 \uBE7C\uBA74 \uC5BC\uB9C8\uAC00 \uB0A8\uC744\uAE4C\uC694? \uB2E4\uC2DC \uACC4\uC0B0\uD574 \uBD10\uC694." },
       ], () => this.payForMedicine());
     }
   }
 
-  startPharmacyRevisitDialogue() {
+  startPharmacyRevisitDialogue(skipScene = false) {
     const scene = this.scene;
-    scene.playSceneMusic("ambient_pharmacy_bgm", 0.24);
-    scene.showInteriorScene("pharmacy_interior", "pharmacy");
+    if (!skipScene) {
+      scene.playSceneMusic("ambient_pharmacy_bgm", 0.24);
+      scene.pharmacyMapSystem?.setInteractionMode("revisit");
+      scene.showInteriorScene("pharmacy_interior", "pharmacy");
+      scene.showQuestToast("\uCE74\uC6B4\uD130 \uC55E\uC73C\uB85C \uAC00\uC11C \uC57D\uC0AC\uC5D0\uAC8C \uB9D0\uC744 \uAC78\uC5B4\uBCF4\uC138\uC694.", 3200);
+      return;
+    }
     scene.dialogueSystem.start([
       {
         name: "약사",

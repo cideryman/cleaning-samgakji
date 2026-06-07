@@ -24,6 +24,17 @@
 - 저장값 추가 시 기존 세이브와 병합 fallback을 둡니다. 예: `Object.assign({}, defaultValue, loadedValue)`.
 - 에셋 경로를 바꿀 때는 `AssetsData.js`, preload, 실제 파일명을 함께 확인합니다.
 - 변경 후 최소 `node --check <수정 파일>`과 `npm.cmd run build`를 실행합니다.
+- Korean dialogue/text files must be saved as UTF-8. Do not convert files to ANSI/CP949.
+- If Korean looks garbled only in PowerShell output, first check the file encoding/editor display before rewriting text; the terminal code page may be the problem, not the file.
+- When editing Korean-heavy files, prefer a UTF-8 aware editor or script and verify with `node --check` plus an in-game/browser check when possible.
+
+## NPC Interaction Guide
+
+- NPC dialogue should start by direct click/touch on the NPC, not by Space.
+- Do not add floating "Space / touch" prompt text above the map for NPC conversations.
+- If the player is too far from the NPC, click/touch should move Haenaem near the NPC first; the player clicks/touches the NPC again when close enough.
+- Interactive NPCs and objects should use the existing yellow hover/touch feedback style where possible.
+- Keep this rule consistent for world NPCs and interior-map NPCs such as the pharmacist.
 
 ## 최근 완료
 
@@ -46,6 +57,17 @@
   - 사용자가 만든 약국 오브젝트 PNG는 영어 파일명으로 `assets/interiors/pharmacy/`에 복사했습니다.
   - 현재 `pharmacy-map.json`은 바닥/벽 타일맵이고 오브젝트 레이어가 없습니다. 그래서 `PharmacyMapData.js`의 fallback 좌표로 약장, 카운터, 화분, 포스터, 약사 NPC를 배치합니다.
   - 나중에 Tiled object layer를 추가하면 object의 `texture`, `key`, `asset`, name, type 값을 읽어 같은 시스템에서 렌더링할 수 있습니다.
+- Pharmacy interaction update:
+  - Entering the pharmacy now opens the interior map only.
+  - The pharmacy no longer uses floating "Space / touch" prompt text.
+  - The player must move the interior Haenaem sprite to the counter, then directly click/touch the pharmacist sprite to start the pharmacy dialogue.
+  - Standing near the pharmacist/counter must not auto-start dialogue. Tapping the pharmacist while too far away only moves Haenaem toward the counter; the player taps the pharmacist again when close enough.
+  - Pharmacist hover/touch uses the same yellow tint interaction feedback style as other interactive NPCs/objects.
+  - During the Sunisuni quest, Sunisuni is also placed inside the pharmacy interior as a companion. Revisit mode keeps the pharmacy as Haenaem-only.
+  - Prescription, 10,000 won bill, 5,000 won change, and medicine bag are transferred through the air between Haenaem and the pharmacist using `PharmacyMapSystem.playTransferItem()`.
+  - A green circular exit marker is placed in the lower-right corner of the pharmacy interior. Click/touch it to leave.
+  - After receiving the medicine bag, Haenaem and Sunisuni walk to the exit marker before the world quest-complete dialogue resumes.
+  - `PharmacyMapSystem` now owns pharmacy-only player movement, companion placement, pharmacist click/touch interaction, exit marker handling, and transfer animation.
 
 ## Tiled 편집 규칙
 
@@ -57,6 +79,21 @@
 - 약국 내부처럼 별도 Tiled 맵을 만들 때는 `AssetsData.js`의 `INTERIOR_TILED_MAPS`에 등록하세요.
 
 ## 현재 남은 문제
+
+Pharmacy touch bug:
+   - Reported issue: touching/clicking the pharmacist in the pharmacy interior does not start dialogue.
+   - Intended rule: NPC dialogue must remain click/touch-only, not Space-based.
+   - Suspected causes: map-wide input zone depth intercepting pointer events, pharmacist interactive rectangle not matching scaled display size, or interior map depth/input order blocking the pharmacist sprite.
+   - Check `src/systems/PharmacyMapSystem.js`: pharmacist `setInteractive`, pointer event order, mapZone depth, and whether mapZone pointer handling catches taps before the pharmacist.
+   - Do not reintroduce floating "Space / touch" prompt text as a workaround.
+
+0. Neighborhood/NPC memory dialogue expansion
+   - User requested this as a later task, not for immediate implementation.
+   - Current random speech can already prefer `NpcMemorySystem`.
+   - Next step: when the player directly taps/clicks Yebi, Jjook, or Sunisuni during a neighborhood progress/memory moment, show the same memory line in the main dialogue window with a fitting portrait.
+   - Haenaem should answer with a short thanks or acknowledgement line.
+   - Do not add gauge UI or new assets for this step.
+   - Do not touch mother/prologue/epilogue phone events.
 
 1. 에필로그 엄마 전화 후 검은 화면 유지
    - 아직 해결되지 않았습니다.
@@ -81,6 +118,10 @@
    - 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍 동기화.
    - 상점별 내부 맵 전환 확대.
    - 터치/클릭 이동 목표 표시 색상과 크기 조정.
+
+## Deferred Visual TODO
+
+- Pharmacy interior aspect ratio cleanup: keep the interior map's original visual ratio instead of stretching it to fill the viewport. Use black side bars/letterboxing for leftover space, like classic RPG interiors. This is intentionally deferred.
 
 ## 검증 체크리스트
 

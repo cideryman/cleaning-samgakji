@@ -313,6 +313,7 @@ export default class PlayScene extends Phaser.Scene {
     this.handleClothingShopKeyboard();
     this.handlePackingMenuKeyboard();
     this.playerController.update(time, delta);
+    this.pharmacyMapSystem?.update(time, delta);
     this.checkRecycleQuestUnlock();
     this.yebiQuestSystem?.update(time, delta);
     this.checkJjookQuestUnlock();
@@ -1174,6 +1175,11 @@ export default class PlayScene extends Phaser.Scene {
 
   handleSpaceAction() {
     if (this.isInDialogue) {
+      return;
+    }
+
+    if (this.interiorSceneType === "pharmacy") {
+      this.pharmacyMapSystem?.handlePrimaryAction();
       return;
     }
 
