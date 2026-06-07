@@ -48,7 +48,8 @@ export default class YebiQuestSystem {
     const vendingPoint = scene.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
     scene.recycleBins = [];
 
-    const vendingMachine = scene.add.image(
+    const existingVendingMachine = scene.mapObjects?.vending_machine;
+    const vendingMachine = existingVendingMachine || scene.add.image(
       vendingPoint.x,
       vendingPoint.y,
       "vending_machine_full",
@@ -97,13 +98,15 @@ export default class YebiQuestSystem {
       }
     });
     scene.vendingMachine = vendingMachine;
-    scene.addObjectCollider(
-      "vending_machine_collider",
-      vendingPoint.x,
-      vendingPoint.y + 20,
-      76,
-      48,
-    );
+    if (!existingVendingMachine) {
+      scene.addObjectCollider(
+        "vending_machine_collider",
+        vendingMachine.x,
+        vendingMachine.y + 20,
+        76,
+        48,
+      );
+    }
 
     RECYCLE_BIN_CONFIG.forEach((binConfig) => {
       const binPoint = scene.getMapPoint(`recycle_bin_${binConfig.type}`, {
@@ -208,7 +211,9 @@ export default class YebiQuestSystem {
       scene.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
       scene.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
-      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 28, 46, 32);
+      if (!existingBin) {
+        scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 28, 46, 32);
+      }
     });
   }
 

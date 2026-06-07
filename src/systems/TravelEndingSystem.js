@@ -29,7 +29,11 @@ export default class TravelEndingSystem {
     waitingSpot.setDepth(scene.getWorldDepth(stop.y + 42, -0.35));
     scene.permanentBusStopObjects.push(waitingSpot);
 
-    if (scene.textures.exists("bus_stop_sign")) {
+    if (scene.mapObjects?.bus_stop_sign?.active) {
+      const sign = scene.mapObjects.bus_stop_sign;
+      sign.setDisplaySize(57, 108);
+      sign.setDepth(scene.getWorldDepth(sign.y, 0.02));
+    } else if (scene.textures.exists("bus_stop_sign")) {
       const sign = scene.add.image(stop.x - 58, stop.y + 32, "bus_stop_sign");
       sign.setOrigin(0.5, 1);
       sign.setDisplaySize(57, 108);

@@ -650,10 +650,27 @@ neighborhoodBloom: {
   - `recycle_bin_can`
   - `recycle_bin_normal`
   - `recycle_bin_plastic`
+- 이어서 아래 오브젝트도 `map_objects` 레이어에 추가했습니다.
+  - `vending_machine`
+  - `recycling_center_sign`
+  - `street_lamp_recycling`
+  - `street_lamp_vending`
+  - `street_lamp_crosswalk`
+  - `bus_stop_sign`
 - 이제 Tiled에서 이 사각형 오브젝트를 직접 드래그해 위치를 조정할 수 있습니다.
 - 게임은 `map_objects`에 같은 이름의 오브젝트가 있으면 그 위치를 우선 사용하고, 없을 때만 코드 fallback 좌표를 사용합니다.
 - Tiled에서는 PNG 이미지가 아니라 사각형 오브젝트로 보일 수 있습니다. 실제 게임 렌더링은 오브젝트 속성의 `texture` 값을 읽어 처리합니다.
 - 맵 JSON은 스크립트로 파싱/삽입 후 저장했기 때문에 포맷이 일부 정리될 수 있습니다. JSON 파싱과 `npm.cmd run build`는 통과했습니다.
+- 자판기는 `map_objects.vending_machine`이 있으면 그 오브젝트를 재사용하며, 충돌/상호작용 기준도 해당 위치를 따릅니다.
+- 버스정류장 표지판은 `map_objects.bus_stop_sign`이 있으면 추가 생성하지 않고 그 오브젝트를 재사용합니다.
+- `TiledMapSystem.createTiledMapObjects()`는 `map_objects` 오브젝트 좌표를 `mapPoints`에도 반영합니다. 따라서 이름이 같은 코드 fallback이나 상호작용 기준점도 Tiled 오브젝트 위치를 따라갑니다.
+- 벤치/나무/가로등/표지판/자판기/분리수거통에 `codeCollides` 기반 하단 충돌 속성을 일괄 적용했습니다.
+  - 벤치: 대각선 3/4 이미지가 어색하게 막히지 않도록 낮고 얇은 충돌 띠만 적용.
+  - 나무: 밑동 중심의 작은 충돌 박스 적용.
+  - 가로등/표지판: 기둥 중심의 작은 충돌 박스 적용.
+  - 자판기/분리수거통: 하단 받침 중심 충돌 박스 적용.
+- 자판기와 분리수거통은 `map_objects` 오브젝트가 있을 경우 기존 코드의 별도 collider를 중복 생성하지 않도록 정리했습니다.
+- 검증: `node --check src/systems/YebiQuestSystem.js`, `node --check src/systems/TiledMapSystem.js`, `npm.cmd run build` 통과.
 
 수정 파일:
 - `src/config/AssetsData.js`

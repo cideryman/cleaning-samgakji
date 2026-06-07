@@ -221,6 +221,7 @@ export default class TiledMapSystem {
       const objectKey = props.name || object.name;
       if (objectKey) {
         scene.mapObjects[objectKey] = image;
+        this.setMapPoint(objectKey, x, y);
         if (["hospital", "pharmacy", "clothing_store"].includes(objectKey)) {
           this.setupBuildingInteractive(image, objectKey);
         }

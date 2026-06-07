@@ -5496,15 +5496,15 @@
     0,
     0,
     0,
+    28,
     0,
     0,
     0,
+    28,
     0,
     0,
     0,
-    0,
-    0,
-    0,
+    28,
     0,
     0,
     0,
@@ -5603,64 +5603,8 @@
     0,
     0,
     0,
-    1,
-    1,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     28,
     28,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     0,
     0,
     0,
@@ -5769,6 +5713,62 @@
     0,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    28,
+    28,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     28,
     0,
     0,
@@ -5861,67 +5861,11 @@
     0,
     0,
     0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    31,
-    31,
-    31,
-    31,
-    31,
-    31,
-    31,
-    31,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    45,
-    45,
-    45,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    28,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     28,
     28,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    28,
+    28,
+    28,
     0,
     0,
     0,
@@ -6015,6 +5959,62 @@
     0,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    28,
+    28,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    31,
+    31,
+    31,
+    31,
+    31,
+    31,
+    31,
+    31,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    45,
+    45,
+    45,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    28,
     0,
     0,
     0,
@@ -6598,6 +6598,31 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_bench"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 92
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 19
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -17
       }
      ],
      "rotation": 0,
@@ -6642,6 +6667,31 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_bench"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 98
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -18
       }
      ],
      "rotation": 0,
@@ -6686,6 +6736,31 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_bench"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 92
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 19
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -17
       }
      ],
      "rotation": 0,
@@ -6730,6 +6805,31 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_bench"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 85
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -16
       }
      ],
      "rotation": 0,
@@ -6794,6 +6894,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -6827,7 +6932,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -6858,6 +6963,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -6891,7 +7001,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -6922,6 +7032,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -6986,6 +7101,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7019,7 +7139,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 33
       },
       {
        "name": "depth",
@@ -7050,6 +7170,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7114,6 +7239,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7121,7 +7251,7 @@
      "visible": true,
      "width": 152,
      "x": 1443,
-     "y": 751
+     "y": 807
     },
     {
      "height": 164,
@@ -7178,6 +7308,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7211,7 +7346,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -7242,6 +7377,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7399,6 +7539,31 @@
        "name": "texture",
        "type": "string",
        "value": "crosswalk_sign"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -13
       }
      ],
      "rotation": 0,
@@ -7448,6 +7613,31 @@
        "name": "texture",
        "type": "string",
        "value": "pedestrian_stop_sign"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -13
       }
      ],
      "rotation": 0,
@@ -7605,6 +7795,31 @@
        "name": "texture",
        "type": "string",
        "value": "crosswalk_sign"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -13
       }
      ],
      "rotation": 0,
@@ -7654,6 +7869,31 @@
        "name": "texture",
        "type": "string",
        "value": "pedestrian_stop_sign"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 20
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -13
       }
      ],
      "rotation": 0,
@@ -7687,7 +7927,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -7718,6 +7958,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7725,7 +7970,7 @@
      "visible": true,
      "width": 124,
      "x": 192,
-     "y": 576
+     "y": 588
     },
     {
      "height": 146,
@@ -7751,7 +7996,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -7782,6 +8027,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7815,7 +8065,7 @@
       {
        "name": "collisionWidth",
        "type": "int",
-       "value": 34
+       "value": 32
       },
       {
        "name": "depth",
@@ -7846,6 +8096,11 @@
        "name": "texture",
        "type": "string",
        "value": "sunisuni_tree"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
       }
      ],
      "rotation": 0,
@@ -7856,15 +8111,10 @@
      "y": 1056
     },
     {
-     "opacity": 1,
-     "rotation": 0,
-     "type": "map_object",
-     "visible": true,
-     "name": "convenience_store",
-     "x": 312,
-     "y": 624,
-     "width": 224,
      "height": 168,
+     "id": 121,
+     "name": "convenience_store",
+     "opacity": 1,
      "properties": [
       {
        "name": "codeCollides",
@@ -7917,18 +8167,18 @@
        "value": "convenience_store"
       }
      ],
-     "id": 121
-    },
-    {
-     "opacity": 1,
      "rotation": 0,
      "type": "map_object",
      "visible": true,
+     "width": 224,
+     "x": 160,
+     "y": 761
+    },
+    {
+     "height": 85,
+     "id": 122,
      "name": "recycle_bin_can",
-     "x": 1026,
-     "y": 610,
-     "width": 68,
-     "height": 78,
+     "opacity": 1,
      "properties": [
       {
        "name": "displayHeight",
@@ -7954,20 +8204,45 @@
        "name": "texture",
        "type": "string",
        "value": "recycle_bin_can"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 32
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": 28
       }
      ],
-     "id": 122
-    },
-    {
-     "opacity": 1,
      "rotation": 0,
      "type": "map_object",
      "visible": true,
-     "name": "recycle_bin_normal",
-     "x": 1162,
-     "y": 610,
      "width": 68,
-     "height": 78,
+     "x": 1026,
+     "y": 608
+    },
+    {
+     "height": 85,
+     "id": 123,
+     "name": "recycle_bin_normal",
+     "opacity": 1,
      "properties": [
       {
        "name": "displayHeight",
@@ -7993,20 +8268,45 @@
        "name": "texture",
        "type": "string",
        "value": "recycle_bin_normal"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 32
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": 28
       }
      ],
-     "id": 123
-    },
-    {
-     "opacity": 1,
      "rotation": 0,
      "type": "map_object",
      "visible": true,
-     "name": "recycle_bin_plastic",
-     "x": 1298,
-     "y": 610,
      "width": 68,
-     "height": 78,
+     "x": 1162,
+     "y": 610
+    },
+    {
+     "height": 85,
+     "id": 124,
+     "name": "recycle_bin_plastic",
+     "opacity": 1,
      "properties": [
       {
        "name": "displayHeight",
@@ -8032,9 +8332,615 @@
        "name": "texture",
        "type": "string",
        "value": "recycle_bin_plastic"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 32
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": 28
       }
      ],
-     "id": 124
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 68,
+     "x": 1298,
+     "y": 610
+    },
+    {
+     "height": 118,
+     "id": 125,
+     "name": "vending_machine",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 118
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 96
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "vending_machine_full"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 76
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 48
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": 20
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 96,
+     "x": 895,
+     "y": 428
+    },
+    {
+     "height": 49,
+     "id": 126,
+     "name": "recycling_center_sign",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 18
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 46
+      },
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 72
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 134
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "recycling_center_sign"
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 102,
+     "x": 1250,
+     "y": 565
+    },
+    {
+     "height": 104,
+     "id": 127,
+     "name": "street_lamp_recycling",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 1546,
+     "y": 505
+    },
+    {
+     "height": 104,
+     "id": 128,
+     "name": "street_lamp_vending",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 866,
+     "y": 440
+    },
+    {
+     "height": 104,
+     "id": 129,
+     "name": "street_lamp_crosswalk",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 763,
+     "y": 190
+    },
+    {
+     "height": 108,
+     "id": 130,
+     "name": "bus_stop_sign",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 108
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 57
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "bus_stop_sign"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 26
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -19
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 57,
+     "x": 1040,
+     "y": 204
+    },
+    {
+     "height": 104,
+     "id": 131,
+     "name": "street_lamp_recycling",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 1438,
+     "y": 189
+    },
+    {
+     "height": 104,
+     "id": 132,
+     "name": "street_lamp_vending",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 918,
+     "y": 799
+    },
+    {
+     "height": 104,
+     "id": 133,
+     "name": "street_lamp_vending",
+     "opacity": 1,
+     "properties": [
+      {
+       "name": "displayHeight",
+       "type": "int",
+       "value": 104
+      },
+      {
+       "name": "displayWidth",
+       "type": "int",
+       "value": 42
+      },
+      {
+       "name": "originX",
+       "type": "float",
+       "value": 0.5
+      },
+      {
+       "name": "originY",
+       "type": "float",
+       "value": 1
+      },
+      {
+       "name": "texture",
+       "type": "string",
+       "value": "street_lamp"
+      },
+      {
+       "name": "codeCollides",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "collisionWidth",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionHeight",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "collisionOffsetX",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "collisionOffsetY",
+       "type": "int",
+       "value": -12
+      }
+     ],
+     "rotation": 0,
+     "type": "map_object",
+     "visible": true,
+     "width": 42,
+     "x": 384,
+     "y": 824
     }
    ],
    "opacity": 1,
@@ -8864,8 +9770,8 @@
      "type": "logic_point",
      "visible": true,
      "width": 0,
-     "x": 1016,
-     "y": 260
+     "x": 1070,
+     "y": 256
     },
     {
      "height": 0,
@@ -9175,7 +10081,7 @@
   }
  ],
  "nextlayerid": 9,
- "nextobjectid": 125,
+ "nextobjectid": 134,
  "orientation": "orthogonal",
  "renderorder": "right-down",
  "tiledversion": "1.12.1",
