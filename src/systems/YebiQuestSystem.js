@@ -192,13 +192,19 @@ export default class YebiQuestSystem {
         }
       });
 
-      const label = scene.add.text(x, y + 54, binConfig.label, {
+      const labelY = y + 62;
+      const labelPanel = scene.add.graphics();
+      labelPanel.fillStyle(0xffffff, 0.86);
+      labelPanel.fillRoundedRect(x - 33, labelY - 13, 66, 26, 8);
+      labelPanel.lineStyle(2, 0x21352c, 0.45);
+      labelPanel.strokeRoundedRect(x - 33, labelY - 13, 66, 26, 8);
+      labelPanel.setDepth(bin.depth + 0.035);
+
+      const label = scene.add.text(x, labelY, binConfig.label, {
         fontFamily: "Arial",
         fontSize: "13px",
         color: "#21352c",
         fontStyle: "bold",
-        backgroundColor: "rgba(255,255,255,0.78)",
-        padding: { left: 5, right: 5, top: 2, bottom: 2 },
       });
       label.setOrigin(0.5);
       label.setDepth(bin.depth + 0.04);
@@ -211,7 +217,7 @@ export default class YebiQuestSystem {
       );
       scene.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
-      scene.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
+      scene.recycleBins.push({ ...binConfig, x, y, bin, label, labelPanel, zone, spotlight });
       if (!existingBin) {
         scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 28, 46, 32);
       }

@@ -1889,7 +1889,7 @@ export default class PlayScene extends Phaser.Scene {
     if (this.time.now < this.nextNpcAmbientBubbleAt) return;
 
     const message = this.npcMemorySystem?.getMemorySpeech(key) || Phaser.Utils.Array.GetRandom(config.messages);
-    this.showSpeechBubble(sprite, message, 2200);
+    this.showSpeechBubble(sprite, message, 4200);
     this.nextNpcAmbientBubbleAt = this.time.now + Phaser.Math.Between(3400, 6200);
   }
 
@@ -2648,7 +2648,7 @@ export default class PlayScene extends Phaser.Scene {
     const fallbackSpeech = config?.messages?.length ? Phaser.Utils.Array.GetRandom(config.messages) : "오늘 하루도 씩씩하게 보내자!";
     const speech = this.npcMemorySystem.getMemorySpeech(npc.key) || fallbackSpeech;
 
-    this.uiManager.showSpeechBubble(npc.sprite, speech, 3600);
+    this.uiManager.showSpeechBubble(npc.sprite, speech, 4600);
   }
 
 }

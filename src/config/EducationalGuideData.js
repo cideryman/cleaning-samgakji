@@ -38,7 +38,7 @@ export const EDUCATIONAL_GUIDE_DATA = [
     key: "convenience_store",
     title: "편의점 (Convenience Store)",
     x: 272,
-    y: 790,
+    y: 912,
     description: "간단한 먹을거리나 필요한 물건을 살 수 있는 작은 가게입니다.\n\n<b>이용 순서</b>: 필요한 물건을 고르고 계산대에서 차례를 기다려요.\n<b>가격 확인</b>: 물건을 고르기 전에 가격표를 보고 내가 가진 돈으로 살 수 있는지 확인해요.\n<b>준비 중</b>: 아직 문을 열지 않았거나 준비 중이면 다음에 다시 이용하면 돼요."
   },
   {

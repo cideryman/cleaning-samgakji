@@ -59,27 +59,40 @@ export default class UIManager {
     }, duration + 120);
   }
 
-  showSpeechBubble(target, message, duration = 1050) {
+  showSpeechBubble(target, message, duration = 2400) {
     if (!target || !message) return;
 
-    const bubble = this.scene.add.text(target.x, target.y - 58, message, {
+    const container = this.scene.add.container(target.x, target.y - 62);
+    const text = this.scene.add.text(0, 0, message, {
       fontFamily: "Arial",
-      fontSize: "15px",
-      color: "#21352c",
+      fontSize: "16px",
+      color: "#ffffff",
       fontStyle: "bold",
-      backgroundColor: "rgba(255,255,255,0.94)",
-      padding: { left: 8, right: 8, top: 5, bottom: 5 },
+      align: "center",
+      wordWrap: { width: 220, useAdvancedWrap: true },
     });
-    bubble.setOrigin(0.5);
-    bubble.setDepth(20);
+    text.setOrigin(0.5);
+
+    const paddingX = 12;
+    const paddingY = 8;
+    const width = Math.max(48, text.width + paddingX * 2);
+    const height = Math.max(30, text.height + paddingY * 2);
+    const panel = this.scene.add.graphics();
+    panel.fillStyle(0x21352c, 0.94);
+    panel.fillRoundedRect(-width / 2, -height / 2, width, height, 12);
+    panel.lineStyle(2, 0xffd75a, 0.95);
+    panel.strokeRoundedRect(-width / 2, -height / 2, width, height, 12);
+
+    container.add([panel, text]);
+    container.setDepth(20);
 
     this.scene.tweens.add({
-      targets: bubble,
-      y: bubble.y - 18,
+      targets: container,
+      y: container.y - 16,
       alpha: 0,
       duration,
       ease: "Cubic.easeOut",
-      onComplete: () => bubble.destroy(),
+      onComplete: () => container.destroy(),
     });
   }
 
