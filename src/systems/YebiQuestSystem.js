@@ -11,6 +11,7 @@ export default class YebiQuestSystem {
     this.scene = scene;
     this.hasTriggeredRecycleIntro = false;
     this.isRecycleIntroApproachActive = false;
+    this.isRecycleDemoActive = false;
 
     this.canQuest = {
       id: "collect_cans",
@@ -490,7 +491,7 @@ export default class YebiQuestSystem {
           name: "여비",
           portraitKey: "yeobi",
           text: "일반 30개, 캔 10개, 플라스틱 10개를 모아서 분리수거장에 넣어보자!",
-          choices: [{ label: "해볼게", onSelect: () => this.startRecycleQuest() }],
+          choices: [{ label: "해볼게", onSelect: () => this.startRecycleDemoThenQuest() }],
         },
       ]);
       return;
@@ -922,6 +923,136 @@ export default class YebiQuestSystem {
 
     this.recycleQuest.isUnlocked = true;
     return true;
+  }
+
+  startRecycleDemoThenQuest() {
+    const quest = this.recycleQuest;
+    if (!quest.isUnlocked || quest.isCompleted || this.isRecycleDemoActive) return;
+
+    if (!this.scene.recycleBins?.length) {
+      this.startRecycleQuest();
+      return;
+    }
+
+    this.isRecycleDemoActive = true;
+    this.scene.stateManager?.set(SceneState.CUTSCENE);
+    this.scene.player?.setVelocity?.(0, 0);
+    this.scene.playerController?.cancelMoveTarget?.();
+    this.scene.playerController?.stopWalkAnimation?.();
+    this.scene.showQuestToast?.("여비가 분리수거 방법을 보여줘요.", 2600);
+    this.scene.showSpeechBubble?.(this.scene.yebiNpc, "맞는 통에 넣으면 돼!", 2200);
+    this.runRecycleDemoStep(0);
+  }
+
+  getRecycleDemoSteps() {
+    return [
+      { type: "normal", caption: "일반쓰레기는 일반 통에!" },
+      { type: "can", caption: "캔은 캔 통에!" },
+      { type: "plastic", caption: "플라스틱은 플라스틱 통에!" },
+    ];
+  }
+
+  runRecycleDemoStep(index) {
+    const steps = this.getRecycleDemoSteps();
+    if (index >= steps.length) {
+      this.finishRecycleDemo();
+      return;
+    }
+
+    const step = steps[index];
+    const binEntry = this.getRecycleBinByType(step.type);
+    if (!binEntry?.bin?.active) {
+      this.runRecycleDemoStep(index + 1);
+      return;
+    }
+
+    this.scene.time.delayedCall(index === 0 ? 420 : 240, () => {
+      this.showRecycleDemoItem(step, binEntry, () => this.runRecycleDemoStep(index + 1));
+    });
+  }
+
+  getRecycleBinByType(type) {
+    return this.scene.recycleBins?.find((entry) => entry.type === type);
+  }
+
+  showRecycleDemoItem(step, binEntry, onComplete) {
+    const scene = this.scene;
+    const from = scene.yebiNpc?.active
+      ? { x: scene.yebiNpc.x, y: scene.yebiNpc.y - 36 }
+      : { x: binEntry.bin.x - 70, y: binEntry.bin.y - 42 };
+    const to = { x: binEntry.bin.x, y: binEntry.bin.y - 24 };
+    const textureKey = scene.getRandomTrashTexture?.(step.type);
+    const item = textureKey && scene.textures.exists(textureKey)
+      ? scene.add.image(from.x, from.y, textureKey)
+      : scene.add.circle(from.x, from.y, 12, 0xfff3a3, 0.95);
+
+    if (item.setDisplaySize && textureKey) {
+      const size = scene.getTrashDisplaySize?.(textureKey, step.type) || { width: 36, height: 36 };
+      item.setDisplaySize(Math.max(24, size.width * 0.76), Math.max(24, size.height * 0.76));
+    }
+    item.setDepth(scene.getWorldDepth(to.y, 0.7));
+
+    scene.showSpeechBubble?.(scene.yebiNpc || binEntry.bin, step.caption, 1700);
+    if (scene.yebiNpc?.active) {
+      scene.setNpcDirectionTexture?.(
+        scene.yebiNpc,
+        "yeobi",
+        scene.getDirectionKeyFromVector?.(to.x - from.x, to.y - from.y, "down") || "down",
+        false,
+      );
+    }
+
+    scene.tweens.add({
+      targets: item,
+      x: to.x,
+      y: to.y,
+      scaleX: item.scaleX * 0.55,
+      scaleY: item.scaleY * 0.55,
+      duration: 640,
+      ease: "Cubic.easeInOut",
+      onComplete: () => {
+        item.destroy();
+        this.showRecycleDemoSparkle(binEntry.bin, step.type);
+        scene.playItemPickupSound?.();
+        scene.time.delayedCall(260, onComplete);
+      },
+    });
+  }
+
+  showRecycleDemoSparkle(target, type) {
+    const scene = this.scene;
+    const colorByType = {
+      can: 0x6fcf97,
+      normal: 0x79c6ff,
+      plastic: 0xf2c94c,
+    };
+    const color = colorByType[type] || 0xffffff;
+    for (let i = 0; i < 9; i += 1) {
+      const sparkle = scene.add.circle(
+        target.x,
+        target.y - 28,
+        Phaser.Math.Between(3, 5),
+        i % 2 === 0 ? 0xffffff : color,
+        0.92,
+      );
+      sparkle.setDepth(scene.getWorldDepth(target.y, 0.85));
+      scene.tweens.add({
+        targets: sparkle,
+        x: target.x + Phaser.Math.Between(-26, 26),
+        y: target.y - 28 + Phaser.Math.Between(-34, 8),
+        alpha: 0,
+        duration: Phaser.Math.Between(360, 560),
+        ease: "Cubic.easeOut",
+        onComplete: () => sparkle.destroy(),
+      });
+    }
+  }
+
+  finishRecycleDemo() {
+    this.isRecycleDemoActive = false;
+    this.scene.stateManager?.set(SceneState.PLAYING);
+    this.scene.showQuestToast?.("이제 직접 분리수거해 봐요!", 2600);
+    this.startRecycleQuest();
   }
 
   startRecycleQuest() {
