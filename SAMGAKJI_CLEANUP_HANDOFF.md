@@ -7,7 +7,7 @@
 ## 1. 프로젝트 개요
 
 - 프로젝트명: 삼각지 대청소
-- 작업 폴더: `C:\Users\sec\Desktop\cleaning-samgakji`
+- 작업 폴더: 각 작업 PC의 `cleaning-samgakji` 저장소 루트
 - 기술 스택: Phaser.js, Vanilla JavaScript, HTML/CSS DOM UI, Vite
 - 실행/검증 기본 명령: `npm.cmd run build`
 
@@ -256,10 +256,80 @@ npm.cmd run build
 
 ## 7. 현재 남은 작업
 
-우선 확인:
-- 최종 엔딩 엄마 전화 이후 검은 화면 보강이 실제 플레이에서 정상인지 확인.
-- 저장 후 이어하기 직후 쓰레기 즉시 보충이 실제 플레이에서 정상인지 확인.
-- 프롤로그 압축 후 템포가 너무 급하지 않은지 확인.
+### 최우선 미해결 오류
+
+1. 최종 엔딩 엄마 전화 이후 검은 화면
+   - 상태: 2026-06-07 코드 보강 후에도 사용자 확인 결과 미해결. 엔딩 마지막 구간이라 긴급도는 낮추고 보류합니다.
+   - 원래 의도된 흐름:
+     `놀이공원 장면 -> 엄마 전화 수락/대화 -> 카메라 fade out -> 최종 엔딩 이미지(ending_chapter1_final) 표시 -> "스페이스 또는 화면 터치로 시작화면으로" 안내 -> StartScene 복귀`.
+   - 기존 증상:
+     엄마 전화 이후 검은 화면이 유지되고 최종 엔딩 화면이 보이지 않습니다.
+   - 의심 지점:
+     `TravelEndingSystem.handlePhoneCallDialogue()`의 fade out 완료 콜백,
+     `finishChapterOneEnding()`,
+     `showChapterOneEndingScene()`,
+     `loadFinalEndingTexture()`,
+     `InteriorSceneSystem.show("ending_chapter1_final", "ending")`.
+   - 수정 내용:
+     `TravelEndingSystem.transitionToChapterOneEnding()`을 추가해 fade out 완료 이벤트가 오지 않아도 1.2초 뒤 최종 엔딩으로 넘어가도록 했습니다.
+     `showChapterOneEndingScene()`에는 최종 엔딩 texture/그룹 생성 실패 시 fallback 엔딩 화면을 반드시 띄우는 방어선을 추가했습니다.
+   - 결과:
+     위 보강 후에도 실제 플레이에서 검은 화면이 유지됩니다.
+   - 다음에 다시 볼 때의 가설:
+     fade out 자체 또는 카메라 fade 상태가 최종 화면 표시를 막고 있을 가능성이 있습니다.
+     다음 시도는 엄마 전화 종료 후 fade out을 제거하고, 즉시 `clearInteriorScene()` -> 최종 엔딩 화면 표시 -> 필요하면 짧은 fade in만 적용하는 방식이 유력합니다.
+   - 우선순위:
+     엔딩 마지막 장면 문제이므로 당장은 다른 퀘스트 조건/대사/연출 정리를 먼저 진행합니다.
+
+### 확인 완료 또는 낮은 우선순위 확인
+
+- 저장 후 이어하기 직후 쓰레기 즉시 보충: 사용자 확인상 정상.
+- 프롤로그 압축 후 템포: 사용자 확인상 정상.
+- 동네 변화 시스템 화단/나비: 사용자 확인상 정상.
+
+### 밸런스/퀘스트 조건 조정
+
+2026-06-07 반영 완료:
+
+- 캔 모으기 퀘스트: 현재 조건 유지.
+- 분리수거 퀘스트: `25,000원 -> 20,000원`.
+- 쭉쭉이 지갑 퀘스트: `45,000원 -> 58,000원`.
+- 수니수니 퀘스트: `60,000원 -> 80,000원`.
+- 옷가게/여행 준비 퀘스트: `80,000원 -> 95,000원`.
+- 짐싸기는 옷가게 완료 후 선택지로 이어지는 구조라 별도 돈 조건은 추가하지 않았습니다.
+
+의도:
+- 큰 빗자루와 분리수거 보상이 열린 뒤 돈이 빨리 쌓이므로, 중후반 퀘스트가 한꺼번에 겹치지 않도록 간격을 둡니다.
+- 수정 파일: `src/config/GameConstants.js`
+- 다음 확인: 실제 플레이에서 돈 모으는 시간이 과하게 길지 않은지 확인합니다.
+
+### 대사/초상화/연출 수정 요청
+
+1. 수니수니 동행 대사
+   - 2026-06-07 반영 완료.
+   - 수니수니가 “천천히 가줄래?”라고 말하면 해냄이가 “네, 죄송해요. 천천히 같이 걸어갈게요.”라고 직접 답합니다.
+   - 수정 파일: `src/systems/SunisuniQuestSystem.js`
+
+2. 수니수니 퀘스트 완료 보상 연출
+   - 돈 보상은 제거된 상태 유지.
+   - 활력수 획득 표시를 오버레이로 더 명확히 보여줍니다.
+   - 해냄이가 활력수를 받고 기뻐하거나, 처음엔 사양하다 감사히 받는 짧은 상호작용을 추가합니다.
+
+3. 쭉쭉이 초상화
+   - 버스 타러 가자/짐 싸러 가자 단계부터 짐을 든 초상화가 나와 어색합니다.
+   - 실제 짐싸기 이후 또는 여행 출발 이후에만 `jjook_travel_bag`를 쓰고, 그 전에는 `jjook_expectant`/`jjook_smile` 같은 초상화를 사용합니다.
+
+4. 엄마 전화 관련 초상화/전화 아이콘
+   - 전화 거절 후 전화기 표시가 z-depth 문제로 안 보이는 현상 확인 필요.
+   - 엄마와 통화 중 일부 장면에서 해냄이/엄마 초상화 누락 여부 확인 후 보강.
+
+5. 실내 전환 디졸브와 대화창 타이밍
+   - 병원/약국/옷가게 등에서 배경은 디졸브되지만 대화창이 먼저 떠 어색한 현상.
+   - `showInteriorScene()` 또는 각 퀘스트 시스템에서 fade 완료 후 대화 시작하도록 공통 helper를 만드는 방향 권장.
+
+6. 분리수거 퀘스트 시범
+   - 분리수거 퀘스트 시작 시, 여비가 먼저 캔을 들고 통에 넣는 짧은 시범 연출을 보여줍니다.
+   - 이후 해냄이가 직접 일반/캔/플라스틱 분리수거를 진행합니다.
 
 리팩토링 후보:
 1. `NpcAmbientSystem` 분리
@@ -279,6 +349,12 @@ npm.cmd run build
 - 프롤로그 “처음 보기/짧게 보기” 옵션.
 - 신호등/도로 안전 안내 강화.
 - 병원/약국 대사 JSON화 후 음성 경로 추가.
+- 실내/상점/병원/약국/옷가게 진입 시 배경과 대화창이 함께 자연스럽게 나타나는 공통 전환 helper.
+- 터치/클릭한 땅 지점 표시 추가.
+  - 빈 땅을 터치하거나 클릭했을 때 노란색 또는 초록색 링/점/반짝 표시를 짧게 보여줍니다.
+  - 목적: “내가 어디를 눌렀는지”를 즉시 보여줘 모바일 조작감을 높입니다.
+  - 주의: NPC, 자판기, 문, 쓰레기 같은 인터랙티브 오브젝트 클릭에는 표시가 방해되지 않게 합니다.
+  - 구현 후보 위치: `PlayerController`의 빈 땅 클릭/터치 자동 이동 처리 지점 또는 별도 `ClickFeedbackSystem`.
 
 알려진 오류/제약:
 - PWA 가로 화면에서 게임 화면 좌우에 연두색 여백이 생길 수 있습니다.
@@ -513,17 +589,17 @@ Tiled에서 화단 위치 조정 방법:
   - 기본 상태
   - 화단 4곳 Frame 0
 - Stage 1
-  - 총 청소 200개 이상
+  - 총 청소 60개 이상
   - 첫 번째 화단 Frame 1
 - Stage 2
-  - 총 청소 500개 이상 + 분리수거 퀘스트 완료
+  - 총 청소 150개 이상 + 분리수거 퀘스트 완료
   - 첫 번째 화단 Frame 2, 두 번째 화단 Frame 1
 - Stage 3
-  - 총 청소 1000개 이상 + 쭉쭉이 지갑/음료 퀘스트 완료
+  - 총 청소 320개 이상 + 쭉쭉이 지갑/음료 퀘스트 완료
   - 첫 번째 화단 Frame 3, 두 번째 Frame 2, 세 번째 Frame 1
   - 나비 1마리 등장
 - Stage 4
-  - 총 청소 1800개 이상 + 수니수니 병원/약국 퀘스트 완료
+  - 총 청소 600개 이상 + 수니수니 병원/약국 퀘스트 완료
   - 화단 4곳 모두 Frame 3
   - 나비 최대 3마리 등장
 
@@ -558,3 +634,60 @@ neighborhoodBloom: {
 주의:
 - 전체 `git diff --check`는 현재 `assets/maps/chapter1-samgakji-map.json`의 기존 trailing whitespace 때문에 실패합니다. 이번 작업에서는 Tiled 맵 파일을 수정하지 않는 조건이 있었으므로 해당 파일은 건드리지 않았습니다.
 - 화단 에셋이 없으면 시스템이 조용히 fallback 또는 생성 생략으로 넘어가도록 설계했지만, 현재 실제 에셋은 `assets/sprites`에 존재합니다.
+
+### 2026-06-07 분리수거장/맵 장식 fallback 오브젝트 보강
+
+요청 반영:
+- 분리수거통 3종을 조금 키우고, 각 통 아래 자막을 더 아래로 내려 통 이미지를 가리지 않게 했습니다.
+- 분리수거장 표지판, 가로등 3곳, 편의점 건물, 버스정류장 표지판 크기 보정을 추가했습니다.
+- 새 장식은 코드 기본 좌표를 fallback으로 두되, Tiled `spawn` 오브젝트 레이어에 같은 이름의 포인트를 만들면 Tiled 좌표가 우선됩니다.
+- 최초 fallback 보강 때는 `assets/maps/chapter1-samgakji-map.json`을 건드리지 않았지만, 이후 Tiled에서 직접 보이도록 일부 오브젝트를 `map_objects` 레이어에 추가했습니다.
+
+추가 보강:
+- 편의점과 분리수거통 3종이 Tiled 오브젝트 레이어에서 보이지 않는 문제가 있었습니다.
+- `assets/maps/chapter1-samgakji-map.json`의 `map_objects` 레이어에 아래 오브젝트를 추가했습니다.
+  - `convenience_store`
+  - `recycle_bin_can`
+  - `recycle_bin_normal`
+  - `recycle_bin_plastic`
+- 이제 Tiled에서 이 사각형 오브젝트를 직접 드래그해 위치를 조정할 수 있습니다.
+- 게임은 `map_objects`에 같은 이름의 오브젝트가 있으면 그 위치를 우선 사용하고, 없을 때만 코드 fallback 좌표를 사용합니다.
+- Tiled에서는 PNG 이미지가 아니라 사각형 오브젝트로 보일 수 있습니다. 실제 게임 렌더링은 오브젝트 속성의 `texture` 값을 읽어 처리합니다.
+- 맵 JSON은 스크립트로 파싱/삽입 후 저장했기 때문에 포맷이 일부 정리될 수 있습니다. JSON 파싱과 `npm.cmd run build`는 통과했습니다.
+
+수정 파일:
+- `src/config/AssetsData.js`
+  - `recycling_center_sign`, `street_lamp`, `convenience_store` 에셋 키 추가.
+- `src/systems/YebiQuestSystem.js`
+  - 분리수거통 표시 크기 `58x66 -> 68x78`.
+  - 자막 위치 `y + 22 -> y + 54`.
+  - 통 하단 충돌 영역을 통 크기에 맞춰 소폭 보정.
+- `src/systems/TiledMapSystem.js`
+  - `createCodeMapDecorations()` 추가.
+  - Tiled 포인트가 있으면 그 좌표로, 없으면 fallback 좌표로 장식 생성.
+  - 편의점은 진입 불가 건물로만 배치하며 작은 하단 충돌 영역을 둡니다.
+- `src/systems/TravelEndingSystem.js`
+  - `bus_stop_sign` 표시 크기를 1.5배로 확대.
+
+Tiled에서 위치 조정 가능한 포인트 이름:
+- 기존 분리수거통:
+  - `recycle_bin_can`
+  - `recycle_bin_normal`
+  - `recycle_bin_plastic`
+- 새 장식:
+  - `recycling_center_sign`
+  - `street_lamp_recycling`
+  - `street_lamp_vending`
+  - `street_lamp_crosswalk`
+  - `convenience_store`
+
+Tiled 조정 방법:
+- `spawn` 오브젝트 레이어에 Point 오브젝트를 추가합니다.
+- 오브젝트 `name`을 위 이름 중 하나로 지정합니다.
+- 저장 후 게임을 다시 열면 해당 포인트 좌표가 코드 fallback보다 우선됩니다.
+- 편의점/가로등/표지판을 완전히 Tiled `map_objects` 레이어로 이전하고 싶다면, 같은 `name`을 가진 `map_objects` 오브젝트를 만들고 `texture`, `displayWidth`, `displayHeight`, `codeCollides` 속성을 지정하면 됩니다. 이 경우 코드 fallback은 중복 생성되지 않습니다.
+
+다음 확인:
+- 실제 화면에서 새 편의점 위치가 스타트 하단 공터와 잘 맞는지 확인합니다.
+- 가로등 fallback 위치가 길목을 막으면 Tiled 포인트로 옮깁니다.
+- 분리수거통 자막이 통을 가리지 않는지 모바일 가로 화면에서 확인합니다.

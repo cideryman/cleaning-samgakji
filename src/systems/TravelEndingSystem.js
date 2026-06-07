@@ -8,6 +8,7 @@ export default class TravelEndingSystem {
   constructor(scene) {
     this.scene = scene;
     this.isFinalEndingStarting = false;
+    this.isFinalEndingTransitioning = false;
     this.finalEndingLoadTimer = null;
   }
 
@@ -31,7 +32,7 @@ export default class TravelEndingSystem {
     if (scene.textures.exists("bus_stop_sign")) {
       const sign = scene.add.image(stop.x - 58, stop.y + 32, "bus_stop_sign");
       sign.setOrigin(0.5, 1);
-      sign.setDisplaySize(38, 72);
+      sign.setDisplaySize(57, 108);
       sign.setDepth(scene.getWorldDepth(stop.y + 32, 0.02));
       scene.permanentBusStopObjects.push(sign);
     }
@@ -384,30 +385,35 @@ export default class TravelEndingSystem {
     ], () => {
       // Sound representing hanging up
       scene.audioManager.playTone({ frequency: 440.00, duration: 0.25, type: "sine", volume: 0.03 });
-      scene.time.delayedCall(400, () => {
-        let isTransitionStarted = false;
-
-        // Show a temporary black screen interactive skip listener
-        const skipListener = () => {
-          if (isTransitionStarted) return;
-          isTransitionStarted = true;
-          scene.input.off("pointerdown", skipListener);
-          scene.cameras.main.fadeOut(200, 0, 0, 0);
-          scene.time.delayedCall(200, () => this.finishChapterOneEnding());
-        };
-        scene.input.once("pointerdown", skipListener);
-
-        scene.time.delayedCall(100, () => {
-          if (isTransitionStarted) return;
-          isTransitionStarted = true;
-          scene.input.off("pointerdown", skipListener);
-          scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-            this.finishChapterOneEnding();
-          });
-          scene.cameras.main.fadeOut(850, 0, 0, 0);
-        });
-      });
+      scene.time.delayedCall(400, () => this.transitionToChapterOneEnding());
     });
+  }
+
+  transitionToChapterOneEnding() {
+    if (this.isFinalEndingTransitioning || this.isFinalEndingStarting) return;
+
+    const scene = this.scene;
+    this.isFinalEndingTransitioning = true;
+
+    let isSettled = false;
+    let fallbackTimer = null;
+    const finish = () => {
+      if (isSettled) return;
+      isSettled = true;
+      this.isFinalEndingTransitioning = false;
+      fallbackTimer?.remove(false);
+      scene.cameras.main.off(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, finish);
+      this.finishChapterOneEnding();
+    };
+
+    scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, finish);
+    fallbackTimer = scene.time.delayedCall(1200, finish);
+
+    try {
+      scene.cameras.main.fadeOut(850, 0, 0, 0);
+    } catch {
+      finish();
+    }
   }
 
   finishChapterOneEnding() {
@@ -431,11 +437,16 @@ export default class TravelEndingSystem {
     scene.playerController?.stopWalkAnimation?.();
 
     const showEnding = (isReady = true) => {
-      if (isReady) {
+      if (isReady && scene.textures.exists("ending_chapter1_final")) {
         scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
       } else {
         this.showFinalEndingFallback();
       }
+
+      if (!scene.interiorSceneGroup || scene.interiorSceneType !== "ending") {
+        this.showFinalEndingFallback();
+      }
+
       scene.cameras.main.fadeIn(850, 0, 0, 0);
       
       const addPromptWhenReady = () => {
@@ -469,7 +480,15 @@ export default class TravelEndingSystem {
       addPromptWhenReady();
     };
 
-    this.loadFinalEndingTexture(showEnding);
+    let didShowEnding = false;
+    const showEndingOnce = (isReady = true) => {
+      if (didShowEnding) return;
+      didShowEnding = true;
+      showEnding(isReady);
+    };
+
+    scene.time.delayedCall(4200, () => showEndingOnce(false));
+    this.loadFinalEndingTexture(showEndingOnce);
   }
 
   loadFinalEndingTexture(onReady) {

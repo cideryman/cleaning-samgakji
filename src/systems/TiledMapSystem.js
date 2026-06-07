@@ -114,6 +114,7 @@ export default class TiledMapSystem {
 
     this.applyTiledObjects(map);
     this.createTiledMapObjects(map);
+    this.createCodeMapDecorations();
     return true;
   }
 
@@ -316,6 +317,126 @@ export default class TiledMapSystem {
       height,
     ));
     return zone;
+  }
+
+  createCodeMapDecorations() {
+    this.createConvenienceStoreDecoration();
+    this.createRecyclingCenterDecorations();
+    this.createStreetLampDecorations();
+  }
+
+  createConvenienceStoreDecoration() {
+    const scene = this.scene;
+    const start = this.getMapPoint("player_start", scene.playerStart || { x: 320, y: 544 });
+    this.createDecorationObject({
+      key: "convenience_store",
+      pointKey: "convenience_store",
+      textureKey: "convenience_store",
+      fallback: { x: start.x + 104, y: start.y + 248 },
+      displayWidth: 224,
+      displayHeight: 168,
+      collides: true,
+      collisionWidth: 158,
+      collisionHeight: 42,
+      collisionOffsetY: -20,
+    });
+  }
+
+  createRecyclingCenterDecorations() {
+    const scene = this.scene;
+    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+
+    this.createDecorationObject({
+      key: "recycling_center_sign",
+      pointKey: "recycling_center_sign",
+      textureKey: "recycling_center_sign",
+      fallback: { x: center.x - 232, y: center.y + 34 },
+      displayWidth: 134,
+      displayHeight: 72,
+      collides: true,
+      collisionWidth: 78,
+      collisionHeight: 24,
+      collisionOffsetY: -16,
+    });
+  }
+
+  createStreetLampDecorations() {
+    const scene = this.scene;
+    const center = this.getMapPoint("recycling_center", GAME_CONFIG.recyclingCenter);
+    const vending = this.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
+    const crosswalk = this.getMapPoint("crosswalk_west", { x: 728, y: 236 });
+
+    [
+      {
+        key: "street_lamp_recycling",
+        pointKey: "street_lamp_recycling",
+        fallback: { x: center.x + 266, y: center.y + 124 },
+      },
+      {
+        key: "street_lamp_vending",
+        pointKey: "street_lamp_vending",
+        fallback: { x: vending.x + 92, y: vending.y + 54 },
+      },
+      {
+        key: "street_lamp_crosswalk",
+        pointKey: "street_lamp_crosswalk",
+        fallback: { x: crosswalk.x - 60, y: crosswalk.y + 92 },
+      },
+    ].forEach((config) => {
+      this.createDecorationObject({
+        ...config,
+        textureKey: "street_lamp",
+        displayWidth: 42,
+        displayHeight: 104,
+        collides: true,
+        collisionWidth: 24,
+        collisionHeight: 24,
+        collisionOffsetY: -12,
+      });
+    });
+  }
+
+  createDecorationObject({
+    key,
+    pointKey,
+    textureKey,
+    fallback,
+    displayWidth,
+    displayHeight,
+    depthOffset = 0,
+    collides = false,
+    collisionWidth = 48,
+    collisionHeight = 28,
+    collisionOffsetX = 0,
+    collisionOffsetY = 0,
+  }) {
+    const scene = this.scene;
+    if (!key || scene.mapObjects?.[key] || !scene.textures.exists(textureKey)) {
+      return null;
+    }
+
+    const point = this.getMapPoint(pointKey || key, fallback);
+    if (!point) return null;
+
+    const image = scene.add.image(point.x, point.y, textureKey);
+    image.setOrigin(0.5, 1);
+    image.setDisplaySize(displayWidth, displayHeight);
+    image.setData("depthSortY", point.y);
+    image.setDepth(scene.getWorldDepth(point.y, depthOffset));
+    image.setName(key);
+    scene.mapObjects[key] = image;
+
+    if (collides) {
+      this.addObjectCollider(
+        `${key}_collider`,
+        point.x + collisionOffsetX,
+        point.y + collisionOffsetY,
+        collisionWidth,
+        collisionHeight,
+      );
+    }
+
+    return image;
   }
 
   setupBuildingInteractive(image, key) {

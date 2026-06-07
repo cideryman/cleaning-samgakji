@@ -110,8 +110,10 @@ export default class YebiQuestSystem {
         x: center.x + binConfig.xOffset,
         y: center.y + binConfig.yOffset + 76,
       });
-      const x = binPoint.x;
-      const y = binPoint.y;
+      const objectKey = `recycle_bin_${binConfig.type}`;
+      const existingBin = scene.mapObjects?.[objectKey];
+      const x = existingBin?.x ?? binPoint.x;
+      const y = existingBin?.y ?? binPoint.y;
       const zoneWidth = 148;
       const zoneHeight = 150;
       const zoneCenterY = y + 10;
@@ -137,8 +139,8 @@ export default class YebiQuestSystem {
         ease: "Sine.easeInOut",
       });
 
-      const bin = scene.add.image(x, y, binConfig.texture);
-      bin.setDisplaySize(58, 66);
+      const bin = existingBin || scene.add.image(x, y, binConfig.texture);
+      bin.setDisplaySize(68, 78);
       bin.setData("depthSortY", scene.getDepthSortY(bin));
       bin.setDepth(scene.getWorldDepth(bin.getData("depthSortY")));
       
@@ -186,7 +188,7 @@ export default class YebiQuestSystem {
         }
       });
 
-      const label = scene.add.text(x, y + 22, binConfig.label, {
+      const label = scene.add.text(x, y + 54, binConfig.label, {
         fontFamily: "Arial",
         fontSize: "13px",
         color: "#21352c",
@@ -206,7 +208,7 @@ export default class YebiQuestSystem {
       scene.physics.add.existing(zone, true);
       zone.setData("recycleType", binConfig.type);
       scene.recycleBins.push({ ...binConfig, x, y, bin, label, zone, spotlight });
-      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 22, 42, 28);
+      scene.addObjectCollider(`${binConfig.type}_recycle_bin_collider`, x, y + 28, 46, 32);
     });
   }
 

@@ -171,7 +171,7 @@ export default class SunisuniQuestSystem {
     if (scene.sunisuniQuestState === SunisuniQuestState.ACCEPTED_HELP || scene.sunisuniQuestState === SunisuniQuestState.GOING_HOSPITAL) {
       scene.dialogueSystem.start([
         { name: "수니수니", portraitKey: "sunisuni-portrait-worried", portraitSingle: true, text: "조금만 천천히 가줄래...?" },
-        { name: "해냄이", portraitKey: "haenaem_determined", text: "천천히 같이 가야겠다." },
+        { name: "해냄이", portraitKey: "haenaem_determined", text: "네, 죄송해요. 천천히 같이 걸어갈게요." },
       ]);
       return;
     }
