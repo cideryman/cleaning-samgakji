@@ -220,6 +220,7 @@ export default class PlayerController {
           this.cleanTarget = null;
           this.interactionTarget = null;
           this.sweepPointTarget = { x: worldPoint.x, y: worldPoint.y };
+          this.showTapTargetIndicator(worldPoint.x, worldPoint.y);
           scene.mouseMoveTarget = null; // Unset drag target
         } else {
           this.movePath = [];
@@ -231,9 +232,42 @@ export default class PlayerController {
         const worldPoint = pointer.positionToCamera(scene.cameras.main);
         scene.mouseMoveTarget = { x: worldPoint.x, y: worldPoint.y };
         this.sweepPointTarget = { x: worldPoint.x, y: worldPoint.y };
+        this.showTapTargetIndicator(worldPoint.x, worldPoint.y);
         this.movePath = [];
       }
     }
+  }
+
+  showTapTargetIndicator(x, y) {
+    const scene = this.scene;
+    if (!scene?.add || !scene?.tweens) return;
+
+    scene.tapTargetIndicator?.destroy();
+    const multiplier = scene.cleaningSystem?.getSweepMultiplier?.()
+      ?? (scene.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1);
+    const radius = Math.max(
+      GAME_CONFIG.baseSweepWidth,
+      GAME_CONFIG.baseSweepHeight,
+    ) * multiplier / 2;
+    const indicator = scene.add.circle(x, y, radius, 0x55d687, 0.18);
+    indicator.setStrokeStyle(3, 0x1fa866, 0.62);
+    indicator.setDepth(scene.getWorldDepth?.(y, -0.2) ?? 4);
+    scene.tapTargetIndicator = indicator;
+
+    scene.tweens.add({
+      targets: indicator,
+      alpha: 0,
+      scaleX: 1.08,
+      scaleY: 1.08,
+      duration: 520,
+      ease: "Cubic.easeOut",
+      onComplete: () => {
+        if (scene.tapTargetIndicator === indicator) {
+          scene.tapTargetIndicator = null;
+        }
+        indicator.destroy();
+      },
+    });
   }
 
   isPointerTypeSupportedForTapMove(pointer, pointerType) {
@@ -523,6 +557,8 @@ export default class PlayerController {
       scene.handlePharmacyInteraction();
     } else if (target === "clothing_store" && scene.interactionSystem?.isPlayerNearClothingStoreDoor()) {
       scene.handleClothingStoreInteraction();
+    } else if (target === "convenience_store" && scene.interactionSystem?.isPlayerNearConvenienceStoreDoor()) {
+      scene.handleConvenienceStoreInteraction();
     } else if (target === "vending" && scene.interactionSystem?.isPlayerNearVendingMachine()) {
       scene.handleVendingMachineInteraction();
     } else if (target.startsWith("bin_")) {

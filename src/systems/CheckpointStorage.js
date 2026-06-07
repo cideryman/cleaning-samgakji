@@ -17,6 +17,7 @@ const DEFAULT_EDUCATION_GUIDE_SEEN = {
   crosswalk: false,
   recycling: false,
   busStop: false,
+  convenienceStore: false,
 };
 const DEFAULT_NEIGHBORHOOD_BLOOM = {
   stage: 0,
@@ -219,6 +220,7 @@ export default class CheckpointStorage {
         isRecycleMaster: Boolean(scene.isRecycleMaster),
         hasUnlockedYebi: Boolean(scene.hasUnlockedYebi),
         hasUsedYebi: Boolean(scene.hasUsedYebi),
+        hasCheckedConvenienceStore: Boolean(scene.hasCheckedConvenienceStore),
         hasBacchus: Boolean(scene.hasBacchus),
         hospitalRevisitUsed: Boolean(scene.hospitalRevisitUsed),
         hasReceivedPharmacyDrink: Boolean(scene.hasReceivedPharmacyDrink),
@@ -283,6 +285,7 @@ export default class CheckpointStorage {
     scene.isRecycleMaster = Boolean(flags.isRecycleMaster);
     scene.hasUnlockedYebi = Boolean(flags.hasUnlockedYebi);
     scene.hasUsedYebi = Boolean(flags.hasUsedYebi);
+    scene.hasCheckedConvenienceStore = Boolean(flags.hasCheckedConvenienceStore);
     scene.hasBacchus = Boolean(flags.hasBacchus);
     scene.hospitalRevisitUsed = Boolean(flags.hospitalRevisitUsed);
     scene.hasReceivedPharmacyDrink = Boolean(flags.hasReceivedPharmacyDrink);

@@ -81,6 +81,7 @@ export function createInitialGameState() {
     hasAnnouncedRecycleQuest: false,
     hasUnlockedYebi: false,
     hasUsedYebi: false,
+    hasCheckedConvenienceStore: false,
     isMissionComplete: false,
     activeJoystickPointerId: null,
     joystickBase: { x: 0, y: 0 },

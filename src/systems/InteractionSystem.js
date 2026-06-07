@@ -18,6 +18,7 @@ export default class InteractionSystem {
       rect.on("pointerover", () => rect.setAlpha(1));
       rect.on("pointerout", () => rect.setAlpha(0));
       rect.on("pointerdown", () => {
+        if (type === "convenience_store" && scene.hasCheckedConvenienceStore) return;
         if (scene.playerController) {
           scene.playerController.setInteractionTarget(type, { x: pos.x, y: pos.y + 30 });
         }
@@ -27,6 +28,7 @@ export default class InteractionSystem {
     createDoorZone("hospital", GAME_CONFIG.hospitalDoor, 144, 112);
     createDoorZone("pharmacy", GAME_CONFIG.pharmacyDoor, 136, 108);
     createDoorZone("clothing_store", GAME_CONFIG.clothingStoreDoor, 156, 116);
+    createDoorZone("convenience_store", GAME_CONFIG.convenienceStoreDoor, 150, 108);
   }
 
   handlePrimaryAction() {
@@ -62,6 +64,11 @@ export default class InteractionSystem {
 
     if (this.isPlayerNearClothingStoreDoor()) {
       scene.handleClothingStoreInteraction();
+      return true;
+    }
+
+    if (this.isPlayerNearConvenienceStoreDoor() && !scene.hasCheckedConvenienceStore) {
+      scene.handleConvenienceStoreInteraction();
       return true;
     }
 
@@ -122,6 +129,15 @@ export default class InteractionSystem {
     const dx = Math.abs(scene.player.x - door.x);
     const dy = Math.abs(scene.player.y - door.y);
     return dx <= 78 && dy <= 58;
+  }
+
+  isPlayerNearConvenienceStoreDoor() {
+    const scene = this.scene;
+    if (!scene.player) return false;
+    const door = scene.getMapPoint?.("convenience_store_door", GAME_CONFIG.convenienceStoreDoor) || GAME_CONFIG.convenienceStoreDoor;
+    const dx = Math.abs(scene.player.x - door.x);
+    const dy = Math.abs(scene.player.y - door.y);
+    return dx <= 76 && dy <= 58;
   }
 
   isPlayerNearVendingMachine() {

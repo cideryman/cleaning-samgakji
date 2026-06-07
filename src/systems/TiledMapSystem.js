@@ -222,7 +222,7 @@ export default class TiledMapSystem {
       if (objectKey) {
         scene.mapObjects[objectKey] = image;
         this.setMapPoint(objectKey, x, y);
-        if (["hospital", "pharmacy", "clothing_store"].includes(objectKey)) {
+        if (["hospital", "pharmacy", "clothing_store", "convenience_store"].includes(objectKey)) {
           this.setupBuildingInteractive(image, objectKey);
         }
       }
@@ -329,7 +329,7 @@ export default class TiledMapSystem {
   createConvenienceStoreDecoration() {
     const scene = this.scene;
     const start = this.getMapPoint("player_start", scene.playerStart || { x: 320, y: 544 });
-    this.createDecorationObject({
+    const store = this.createDecorationObject({
       key: "convenience_store",
       pointKey: "convenience_store",
       textureKey: "convenience_store",
@@ -341,6 +341,9 @@ export default class TiledMapSystem {
       collisionHeight: 42,
       collisionOffsetY: -20,
     });
+    if (store) {
+      this.setupBuildingInteractive(store, "convenience_store");
+    }
   }
 
   createRecyclingCenterDecorations() {
@@ -455,6 +458,7 @@ export default class TiledMapSystem {
       if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
       if (!scene.stateManager?.canMove()) return;
       if (scene.isMissionComplete || scene.isInDialogue || scene.vendingMenuGroup || scene.clothingShopModal || scene.packingModal || scene.interiorSceneGroup) return;
+      if (key === "convenience_store" && scene.hasCheckedConvenienceStore) return;
 
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
@@ -472,6 +476,10 @@ export default class TiledMapSystem {
         scene.handleClothingStoreInteraction();
         return;
       }
+      if (key === "convenience_store" && scene.interactionSystem?.isPlayerNearConvenienceStoreDoor()) {
+        scene.handleConvenienceStoreInteraction();
+        return;
+      }
 
       // 2. 멀리 있다면 A* 자율주행 시동!
       let doorPoint = null;
@@ -481,6 +489,8 @@ export default class TiledMapSystem {
         doorPoint = scene.getMapPoint("pharmacy_door", GAME_CONFIG.pharmacyDoor);
       } else if (key === "clothing_store") {
         doorPoint = scene.getMapPoint("clothing_store_door", GAME_CONFIG.clothingStoreDoor);
+      } else if (key === "convenience_store") {
+        doorPoint = scene.getMapPoint("convenience_store_door", GAME_CONFIG.convenienceStoreDoor);
       }
 
       if (doorPoint && scene.pathfindingSystem) {

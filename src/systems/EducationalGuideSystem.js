@@ -5,6 +5,7 @@ const KEY_MAP = {
   "pharmacy": "pharmacy",
   "clothing_shop": "clothing",
   "vending_machine": "vending",
+  "convenience_store": "convenienceStore",
   "traffic_light": "crosswalk",
   "recycling_center": "recycling",
   "bus_stop": "busStop"
@@ -15,6 +16,7 @@ const PICTOGRAM_ASSETS = {
   "pharmacy": "assets/buildings/pharmacy-building.png",
   "clothing_shop": "assets/buildings/clothing-store.png",
   "vending_machine": "assets/vending/vending-machine-full.png",
+  "convenience_store": "assets/buildings/convenience-store.png",
   "traffic_light": "assets/traffic/pedestrian-light.png",
   "recycling_center": "assets/recycling/recycling-center.png",
   "bus_stop": "assets/props/bus-stop-sign.png"

@@ -225,7 +225,8 @@ export default class PlayScene extends Phaser.Scene {
       vending: false,
       crosswalk: false,
       recycling: false,
-      busStop: false
+      busStop: false,
+      convenienceStore: false
     };
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
@@ -1228,6 +1229,10 @@ export default class PlayScene extends Phaser.Scene {
     return this.interactionSystem.isPlayerNearClothingStoreDoor();
   }
 
+  isPlayerNearConvenienceStoreDoor() {
+    return this.interactionSystem.isPlayerNearConvenienceStoreDoor();
+  }
+
   isPlayerNearVendingMachine() {
     return this.interactionSystem.isPlayerNearVendingMachine();
   }
@@ -1256,6 +1261,17 @@ export default class PlayScene extends Phaser.Scene {
   handleClothingStoreInteraction() {
     if (this.sceneControlSystem?.isWorldInputBlocked()) return;
     this.jjookQuestSystem?.handleClothingStoreInteraction();
+  }
+
+  handleConvenienceStoreInteraction() {
+    if (this.sceneControlSystem?.isWorldInputBlocked()) return;
+    if (this.hasCheckedConvenienceStore) return;
+
+    this.hasCheckedConvenienceStore = true;
+    this.saveCheckpoint("convenience_store_checked");
+    this.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_confused", text: "아, 아직 준비 중이구나?" },
+    ]);
   }
 
   // ---------------------------------------------------------------------------
