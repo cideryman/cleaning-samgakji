@@ -5,6 +5,11 @@ import { SceneState } from "../config/SceneState.js";
 const RECYCLE_INTRO_TRIGGER_DISTANCE = 132;
 const RECYCLE_INTRO_TALK_OFFSET_X = 58;
 const RECYCLE_INTRO_TALK_OFFSET_Y = 12;
+const RECYCLE_DEMO_CAPTIONS = {
+  normal: "일반쓰레기는 일반 통에!",
+  can: "캔은 캔 통에!",
+  plastic: "플라스틱은 플라스틱 통에!",
+};
 
 export default class YebiQuestSystem {
   constructor(scene) {
@@ -940,22 +945,46 @@ export default class YebiQuestSystem {
       return;
     }
 
+    if (!this.scene.dialogueSystem) {
+      this.beginRecycleDemo();
+      return;
+    }
+
+    this.scene.dialogueSystem.start([
+      {
+        name: "여비",
+        portraitKey: "yeobi",
+        text: "좋아. 내가 먼저 하는 방법을 보여줄게.",
+      },
+    ], () => this.beginRecycleDemo());
+  }
+
+  beginRecycleDemo() {
+    if (!this.scene.recycleBins?.length) {
+      this.startRecycleQuest();
+      return;
+    }
+
     this.isRecycleDemoActive = true;
     this.scene.stateManager?.set(SceneState.CUTSCENE);
     this.scene.player?.setVelocity?.(0, 0);
     this.scene.playerController?.cancelMoveTarget?.();
     this.scene.playerController?.stopWalkAnimation?.();
+    this.scene.pauseNpcRoaming?.("yebi");
+    this.scene.tweens.killTweensOf(this.scene.yebiNpc);
     this.scene.showQuestToast?.("여비가 분리수거 방법을 보여줘요.", 2600);
-    this.scene.showSpeechBubble?.(this.scene.yebiNpc, "맞는 통에 넣으면 돼!", 2200);
+    this.scene.showSpeechBubble?.(this.scene.yebiNpc, "잘 보고 따라 해봐!", 2200);
     this.runRecycleDemoStep(0);
   }
 
   getRecycleDemoSteps() {
-    return [
-      { type: "normal", caption: "일반쓰레기는 일반 통에!" },
-      { type: "can", caption: "캔은 캔 통에!" },
-      { type: "plastic", caption: "플라스틱은 플라스틱 통에!" },
-    ];
+    return [...(this.scene.recycleBins || [])]
+      .filter((entry) => entry?.type && entry?.bin?.active)
+      .sort((a, b) => a.bin.x - b.bin.x)
+      .map((entry) => ({
+        type: entry.type,
+        caption: RECYCLE_DEMO_CAPTIONS[entry.type] || `${entry.label || "쓰레기"}는 맞는 통에!`,
+      }));
   }
 
   runRecycleDemoStep(index) {
@@ -972,13 +1001,44 @@ export default class YebiQuestSystem {
       return;
     }
 
-    this.scene.time.delayedCall(index === 0 ? 420 : 240, () => {
-      this.showRecycleDemoItem(step, binEntry, () => this.runRecycleDemoStep(index + 1));
+    const standPoint = this.getRecycleDemoStandPoint(step.type, binEntry);
+    this.scene.time.delayedCall(index === 0 ? 360 : 220, () => {
+      this.walkYebiToDemoBin(standPoint, binEntry, () => {
+        this.showRecycleDemoItem(step, binEntry, () => this.runRecycleDemoStep(index + 1));
+      });
     });
   }
 
   getRecycleBinByType(type) {
     return this.scene.recycleBins?.find((entry) => entry.type === type);
+  }
+
+  getRecycleDemoStandPoint(type, binEntry) {
+    return this.scene.getMapPoint?.(`recycle_demo_${type}`, {
+      x: binEntry.bin.x,
+      y: binEntry.bin.y + 112,
+    }) || {
+      x: binEntry.bin.x,
+      y: binEntry.bin.y + 112,
+    };
+  }
+
+  walkYebiToDemoBin(target, binEntry, onComplete) {
+    const scene = this.scene;
+    if (!scene.yebiNpc?.active) {
+      onComplete?.();
+      return;
+    }
+
+    scene.tweens.killTweensOf(scene.yebiNpc);
+    scene.walkNpcToTarget?.(scene.yebiNpc, "yeobi", target, {
+      speed: GAME_CONFIG.playerSpeed * 0.62,
+      onComplete: () => {
+        scene.setNpcDirectionTexture?.(scene.yebiNpc, "yeobi", "up", false);
+        scene.showSpeechBubble?.(scene.yebiNpc, binEntry.label || "여기야!", 900);
+        scene.time.delayedCall(260, onComplete);
+      },
+    });
   }
 
   showRecycleDemoItem(step, binEntry, onComplete) {
@@ -1055,10 +1115,23 @@ export default class YebiQuestSystem {
   }
 
   finishRecycleDemo() {
-    this.isRecycleDemoActive = false;
-    this.scene.stateManager?.set(SceneState.PLAYING);
-    this.scene.showQuestToast?.("이제 직접 분리수거해 봐요!", 2600);
-    this.startRecycleQuest();
+    const scene = this.scene;
+    const done = () => {
+      this.isRecycleDemoActive = false;
+      scene.stateManager?.set(SceneState.PLAYING);
+      scene.showQuestToast?.("이제 직접 분리수거해 봐요!", 2600);
+      this.startRecycleQuest();
+    };
+
+    if (scene.yebiNpc?.active) {
+      scene.walkNpcToTarget?.(scene.yebiNpc, "yeobi", this.getRecyclePosition(), {
+        speed: GAME_CONFIG.playerSpeed * 0.62,
+        onComplete: done,
+      });
+      return;
+    }
+
+    done();
   }
 
   startRecycleQuest() {
