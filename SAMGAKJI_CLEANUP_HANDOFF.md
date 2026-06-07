@@ -1,710 +1,78 @@
-# 삼각지 대청소 개발 핸드오프
-
-이 문서는 집/회사 또는 다른 Codex 세션에서 작업을 이어갈 때 현재 상태, 개발 원칙, 남은 작업을 빠르게 확인하기 위한 기준 문서입니다.
-
-앞으로 이 문서를 수정할 때도 아래 구조를 유지합니다. 새 기록은 무작정 뒤에 붙이지 말고, 가능한 한 해당 섹션에 반영합니다. 길어진 작업 기록은 요약만 남기고, 실제 판단에 필요한 원인/수정 파일/검증/다음 확인만 적습니다.
-
-## 1. 프로젝트 개요
-
-- 프로젝트명: 삼각지 대청소
-- 작업 폴더: 각 작업 PC의 `cleaning-samgakji` 저장소 루트
-- 기술 스택: Phaser.js, Vanilla JavaScript, HTML/CSS DOM UI, Vite
-- 실행/검증 기본 명령: `npm.cmd run build`
-
-게임 방향:
-- 발달장애 이용자가 생활 속 청소, 분리수거, 병원/약국, 자판기, 상점, 여행 준비를 자연스럽게 경험하는 2D 픽셀 게임입니다.
-- 퀘스트 보상은 되도록 직접 돈 지급보다 도구, 기능 해금, 생활 경험 중심으로 설계합니다.
-- 돈은 반복 청소와 분리수거 루프에서 얻는 구조를 기본으로 합니다.
-
-## 2. 현재 구현된 기능
-
-- 프롤로그: 쭉쭉이의 서울 여행 제안, 돈 부족 확인, 엄마의 청소 수당 제안, 삼각지 도착.
-- 초반 튜토리얼: 이동, 쓸기, 청소, 여비 NPC와 대화.
-- 여비 퀘스트:
-  - 캔 20개 모으기 완료 시 빗자루 지급.
-  - 분리수거 퀘스트 완료 시 분리수거장 보상 해금.
-  - 분리수거 해금 후 쓰레기 수거 100원 + 맞는 통에 분리수거 시 추가 100원.
-- 쭉쭉이 퀘스트:
-  - 지갑 찾기, 자판기 음료 선택, 플로깅 동행, 옷가게/짐싸기/엔딩 연결.
-- 수니수니/병원/약국 퀘스트:
-  - 병원 동행, 처방전, 약국, 활력수/건강 교육.
-  - 수니수니 완료 보상은 돈 대신 활력수 중심으로 변경됨.
-- 옷가게:
-  - 여행 준비용 옷/신발/외투 등 선택, 한 번에 계산, 보유 아이템 HUD 표시.
-- 짐싸기:
-  - 여행 가방 준비, 이름표 커스터마이저, 엔딩 흐름 연결.
-- 엔딩:
-  - 버스정류장 이동, 집/역/서울 여행 장면, 엄마 전화, 최종 엔딩 화면.
-- 지도/교통:
-  - Tiled 기반 맵, 건물/나무/벤치/분리수거장, 횡단보도, 보행자 신호등, 차량 시스템.
-- UI:
-  - HUD, 다음 목표 안내, 설정창, 저장 후 나가기, 휴식/통계 성취 앨범, 배움노트, 큰 글씨 모드, TTS 토글, 사운드 토글.
-- 조작:
-  - 모바일 조이스틱/빗자루 버튼.
-  - PC 키보드, 스페이스 상호작용, 마우스 클릭 이동/A* 경로 이동, NPC 좌클릭 대화.
-
-## 3. 핵심 시스템 구조
-
-- `src/scenes/PlayScene.js`
-  - 아직 중앙 조립자 역할이 큽니다.
-  - 새 기능 로직을 직접 추가하지 않는 것이 원칙입니다.
-  - 시스템 생성, 연결, update 호출 정도만 남기는 방향으로 계속 줄입니다.
-- `src/scenes/PrologueScene.js`
-  - 프롤로그 대사와 배경 전환.
-  - 최근 대사량을 약 22줄에서 12줄 수준으로 압축했습니다.
-- `src/config/InitialGameState.js`
-  - 게임 기본 상태.
-- `src/config/QuestStates.js`
-  - 퀘스트 상태 문자열 상수.
-- `src/config/AssetsData.js`
-  - 주요 에셋 목록/경로.
-- `src/config/GameConstants.js`
-  - 게임 수치, 좌표, 크기, 보상, 줌 등.
-- `src/controllers/PlayerController.js`
-  - 이동, 키보드/마우스/조이스틱 입력.
-- `src/systems/CheckpointStorage.js`
-  - 저장/이어하기, 기존 세이브 호환 fallback.
-- `src/systems/SlimeSystem.js`
-  - 쓰레기 스폰/리스폰/특수 쓰레기.
-  - `ensureActiveTrash()`로 이어하기 직후 최소 쓰레기 수량을 보장합니다.
-- `src/systems/CleaningSystem.js`
-  - 쓸기, 쓰레기 제거, 보상 처리.
-- `src/systems/YebiQuestSystem.js`
-  - 캔 수집/분리수거 퀘스트.
-- `src/systems/JjookQuestSystem.js`
-  - 쭉쭉이 지갑/자판기/플로깅/옷가게/짐싸기 연결.
-- `src/systems/SunisuniQuestSystem.js`
-  - 수니수니, 병원/약국, 활력수 교육.
-- `src/systems/ClothingShopSystem.js`
-  - 옷가게 DOM 모달, 선택/계산/영수증.
-- `src/systems/PackingSystem.js`
-  - 짐싸기 DOM 모달, 이름표 커스터마이저.
-- `src/systems/TravelEndingSystem.js`
-  - 버스정류장, 집/서울/전화/최종 엔딩.
-  - 최종 엔딩 이미지는 로딩 fallback과 fadeIn 보강이 들어가 있습니다.
-- `src/systems/SceneControlSystem.js`
-  - 월드 입력 차단, DOM 오버레이 감지.
-- `src/systems/HtmlUiBindingSystem.js`
-  - 설정창, 저장 후 나가기, DOM 버튼 바인딩.
-- `src/systems/UIManager.js`
-  - HUD, 휴식/통계창, 토스트.
-- `src/systems/NextGoalSystem.js`
-  - 자유 이동 중 상단 HUD 근처에 짧은 다음 행동 안내 표시.
-- `src/systems/EducationalGuideSystem.js`
-  - 교육 안내/배움노트.
-- `src/systems/DialogSystem.js`, `DialogueManager.js`, `PortraitManager.js`
-  - 대화창, JSON 대사 준비 구조, 초상화 오버레이.
-- `src/systems/PathfindingSystem.js`
-  - A* 경로 탐색.
-- `src/systems/RoadTrafficSystem.js`
-  - 차량/신호등/횡단보도 관련 로직.
-- `src/systems/TiledMapSystem.js`
-  - Tiled 맵 로딩, 오브젝트 레이어, 충돌.
-
-## 4. 반드시 지킬 개발 원칙
-
-### PlayScene 원칙
-
-- `PlayScene.js`에 새 퀘스트 로직, 새 DOM 모달 로직, 새 보상 로직을 직접 넣지 않습니다.
-- 새 기능은 가능한 한 `src/systems/` 안의 기존 시스템 또는 새 시스템에 넣습니다.
-- `PlayScene.js`에는 시스템 생성, 연결, update 호출, 얇은 위임만 남깁니다.
-- 이미 존재하는 중계 함수는 급하게 모두 제거하지 말고, 새 기능 추가 때 하나씩 줄입니다.
-
-### 데이터와 상태 원칙
-
-- 퀘스트 상태 문자열은 가능하면 `QuestStates.js` 상수를 사용합니다.
-- 기본 상태는 `InitialGameState.js` 기준으로 관리합니다.
-- 게임 밸런스 수치, 좌표, 보상, 크기는 가능하면 `GameConstants.js` 또는 config에 둡니다.
-- 대사, 선택지, 음성 경로는 장기적으로 `src/data/dialogues*.json`으로 옮깁니다.
-- 돈/아이템/기능 해금 보상 변경 시 실제 지급 로직, 대사, 효과음, 애니메이션을 함께 확인합니다.
-
-### DOM UI 원칙
-
-- 설정창, 옷가게, 짐싸기, 휴식창, 이름표, 교육 안내는 DOM UI입니다.
-- DOM 모달을 만들 때는 CSS 스크롤 구조와 Phaser 월드 입력 차단을 함께 처리합니다.
-- 모바일 가로 화면에서 하단 버튼이 잘리면 안 됩니다.
-- iPhone Safari/PWA standalone 기준으로 터치 스크롤이 가능해야 합니다.
-
-### 저장/복원 원칙
-
-- 저장 데이터는 단순 수치만 저장하지 말고, 이어하기 후 시스템이 다시 작동할 상태까지 복원해야 합니다.
-- `CheckpointStorage.js`를 수정할 때는 이어하기, 프롤로그 완료, 퀘스트 상태, 튜토리얼 상태, 리스폰을 함께 확인합니다.
-- 오래된 세이브 호환이 필요하면 `CheckpointStorage`에서 추론/fallback을 둡니다.
-
-### 핸드오프 정리 원칙
-
-- 핸드오프는 계속 누적 로그가 아니라, 이어받기용 기준 문서입니다.
-- 새 작업 기록은 해당 섹션에 요약 반영하고, 꼭 필요한 경우에만 “최근 변경 로그”에 추가합니다.
-- 기록 형식은 `문제/원인/수정 파일/검증/다음 확인`을 기본으로 합니다.
-- 오래된 미해결 항목이 해결되면 “남은 작업”에서 제거하거나 상태를 바꿉니다.
-- 인코딩이 깨져 보이는 오래된 문장은 그대로 늘리지 말고, 이해 가능한 한국어로 다시 요약합니다.
-
-## 5. 반복 오류 방지 기준
-
-### 저장/이어하기/리스폰
-
-반복 문제:
-- 저장 후 이어하기에서 튜토리얼/체크포인트 복원 순서 때문에 쓰레기 리스폰이 멈추거나 맵에 쓰레기가 없는 상태로 시작한 적이 있습니다.
-
-기준:
-- 저장 시 `tutorialState`, 퀘스트 상태, 주요 flags, 인벤토리, 돈, 완료 여부가 함께 저장되는지 확인합니다.
-- 이어하기 시 `CheckpointStorage.applyToScene()` 이후 `tutorialSystem.state` 같은 시스템 내부 상태도 동기화합니다.
-- 튜토리얼 완료 상태라면 `SlimeSystem.startRespawnLoop()`가 다시 시작되어야 합니다.
-- 이어하기 직후 맵에 쓰레기가 너무 적으면 `SlimeSystem.ensureActiveTrash()` 같은 보장 함수가 호출되어야 합니다.
-- 쓰레기 리스폰은 현재 카메라 화면 밖 위치를 우선 선택해야 합니다. 플레이어가 방금 청소한 화면에 즉시 다시 생기는 느낌을 막는 UX 기준입니다.
-- 새 퀘스트가 쓰레기 생성/제거/청소 상태에 영향을 주면, 저장 후 이어하기 시 같은 상태가 재현되는지 확인합니다.
-- 체크포인트 복원 전에만 쓰레기 생성 여부를 판단하지 않습니다.
-
-검증:
-- 새 게임 시작 -> 튜토리얼 완료 -> 저장 후 나가기 -> 이어하기 -> 쓰레기가 즉시 보이는지 확인.
-- 쓰레기를 모두 치운 상태 -> 저장 -> 이어하기 -> 일정 수량이 보충되는지 확인.
-- 퀘스트 중 저장 -> 이어하기 -> HUD/마커/리스폰이 정상인지 확인.
-
-### DOM 오버레이/모달 입력 차단과 모바일 스크롤
-
-반복 문제:
-- HTML 모달이 떠 있는데 터치/클릭/스페이스 입력이 뒤쪽 Phaser 캔버스로 내려간 적이 있습니다.
-- 모바일 가로 화면에서 하단 버튼이 잘리고, 터치 스크롤이 막힌 적이 있습니다.
-
-overlay/root 기준:
-- `position: fixed`
-- `inset: 0`
-- Phaser canvas/HUD보다 높은 `z-index`
-- `pointer-events: auto`
-- `overflow-y: auto`
-- `overscroll-behavior: contain`
-- `touch-action: pan-y`
-- `-webkit-overflow-scrolling: touch`
-
-panel 기준:
-- `max-height: calc(100dvh - 안전 여백)`
-- `overflow-y: auto`
-- `touch-action: pan-y`
-- `-webkit-overflow-scrolling: touch`
-
-footer/button 기준:
-- 화면 밖에 `position: absolute; bottom: ...`로 고정하지 않습니다.
-- 필요하면 `position: sticky; bottom: 0` 또는 일반 문서 흐름에 둡니다.
-- `padding-bottom: env(safe-area-inset-bottom)` 계열을 고려합니다.
-
-입력 차단 기준:
-- 오버레이가 열릴 때 `scene.sceneControlSystem.blockWorldInput(true)` 또는 같은 책임의 API를 사용합니다.
-- 오버레이가 닫힐 때 반드시 `blockWorldInput(false)` 또는 대응 정리를 호출합니다.
-- overlay/panel에는 `pointerdown`, `touchstart`에서 `event.stopPropagation()`을 걸어 캔버스로 이벤트가 새지 않게 합니다.
-- 스크롤 가능한 영역에서 무조건 `preventDefault()`를 호출하지 않습니다.
-- `SceneControlSystem.hasOpenDomOverlay()` 목록에 새 모달의 열린 상태를 추가합니다.
-- 모달이 열릴 때 기존 마우스 이동 목표나 자동 상호작용 목표가 있으면 취소합니다.
-
-검증:
-- 모바일 가로 높이 360px 기준에서 모달 하단 버튼까지 스와이프로 접근 가능한지 확인합니다.
-- 모달 위를 터치/스와이프할 때 뒤쪽 NPC 대화, 쓰레기 줍기, 이동, 상점 진입이 실행되지 않는지 확인합니다.
-- 설정창은 현재 정상 기준 UI입니다. 새 모달은 설정창의 overlay/panel 스크롤 구조와 비교합니다.
-- PC 레이아웃이 과하게 바뀌지 않았는지 확인합니다.
-
-### 컷신/일러스트/엔딩 입력 차단
-
-기준:
-- 컷신, 일러스트, 실내 장면, 엔딩 화면이 떠 있는 동안 뒤쪽 월드 입력이 실행되면 안 됩니다.
-- 이미지 닫기, 대화 진행, 엔딩 시작 화면 복귀 같은 해당 장면의 입력은 정상 유지해야 합니다.
-- 큰 이미지 연출 중에는 `SceneControlSystem` 또는 해당 시스템에서 월드 입력을 잠그고, 종료 후 풀어야 합니다.
-
-### 마우스 이동/A* 길찾기
-
-기준:
-- 장애물 판정은 격자 중심점만 보지 말고 플레이어 몸통 여유 공간을 함께 고려해야 합니다.
-- 나무, 벤치, 건물처럼 2~3칸 이상을 차지하는 오브젝트는 충돌 사각형을 기준으로 pathfinding grid에서 막힌 영역으로 처리합니다.
-- 막힌 오브젝트 위를 클릭한 경우 최종 목적지를 원래 클릭 지점으로 되돌리지 말고, 가장 가까운 안전한 walkable cell 중심으로 유지합니다.
-- 대각선 이동은 양옆 직교 칸이 모두 비어 있을 때만 허용해 모서리 끼임을 막습니다.
-- 추후 더 정교한 회피가 필요하면 `PathfindingSystem`의 gridSize, collisionPadding, nearest walkable 탐색 범위를 함께 조정합니다.
-
-### 클릭/터치 입력 우선순위
-
-기준:
-- 건물, 자판기, 분리수거통, NPC, 7대시설 물음표, 쓰레기처럼 명확한 인터랙티브 오브젝트를 누르면 해당 오브젝트의 기존 상호작용이 우선입니다.
-- 빈 땅을 짧게 클릭/터치하면 플레이어가 그 위치로 이동한 뒤 한 번 쓸기를 실행합니다. 한손 플레이 최적화를 위한 기본 동작입니다.
-- 모바일 조이스틱을 켠 상태에서는 왼쪽 절반 터치는 조이스틱 시작 영역으로 유지하고, 오른쪽 짧은 터치만 이동 후 쓸기로 처리합니다.
-- 길게 누르거나 드래그하는 입력은 기존 마우스/터치 이동 흐름을 방해하지 않아야 합니다.
-- 새 인터랙티브 오브젝트를 추가할 때는 `setInteractive`를 적용해 빈 땅 자동 쓸기보다 해당 오브젝트가 먼저 잡히도록 합니다.
-
-## 6. 검증 명령어
-
-기본:
-```powershell
-git status -sb
-git diff --check
-npm.cmd run build
-```
-
-개별 JS 문법 체크:
-```powershell
-node --check src/systems/파일명.js
-node --check src/scenes/파일명.js
-```
-
-회사 PC에서 `vite`를 못 찾는 경우:
-```powershell
-npm.cmd install
-npm.cmd run build
-```
-
-주의:
-- `npm audit fix --force`는 의존성 버전을 크게 흔들 수 있으므로 임의로 실행하지 않습니다.
-- 현재 Vite 빌드에서 아래 경고가 나올 수 있으나 빌드 실패는 아닙니다.
-  - `vendor/phaser.min.js` script cannot be bundled without `type="module"`
-  - `src/pwa.js?v=3` script cannot be bundled without `type="module"`
-- 이 저장소는 `dist/`가 추적 중입니다. `npm.cmd run build` 후 해시 파일 변경이 생길 수 있습니다.
-
-## 7. 현재 남은 작업
-
-### 최우선 미해결 오류
-
-1. 최종 엔딩 엄마 전화 이후 검은 화면
-   - 상태: 2026-06-07 코드 보강 후에도 사용자 확인 결과 미해결. 엔딩 마지막 구간이라 긴급도는 낮추고 보류합니다.
-   - 원래 의도된 흐름:
-     `놀이공원 장면 -> 엄마 전화 수락/대화 -> 카메라 fade out -> 최종 엔딩 이미지(ending_chapter1_final) 표시 -> "스페이스 또는 화면 터치로 시작화면으로" 안내 -> StartScene 복귀`.
-   - 기존 증상:
-     엄마 전화 이후 검은 화면이 유지되고 최종 엔딩 화면이 보이지 않습니다.
-   - 의심 지점:
-     `TravelEndingSystem.handlePhoneCallDialogue()`의 fade out 완료 콜백,
-     `finishChapterOneEnding()`,
-     `showChapterOneEndingScene()`,
-     `loadFinalEndingTexture()`,
-     `InteriorSceneSystem.show("ending_chapter1_final", "ending")`.
-   - 수정 내용:
-     `TravelEndingSystem.transitionToChapterOneEnding()`을 추가해 fade out 완료 이벤트가 오지 않아도 1.2초 뒤 최종 엔딩으로 넘어가도록 했습니다.
-     `showChapterOneEndingScene()`에는 최종 엔딩 texture/그룹 생성 실패 시 fallback 엔딩 화면을 반드시 띄우는 방어선을 추가했습니다.
-   - 결과:
-     위 보강 후에도 실제 플레이에서 검은 화면이 유지됩니다.
-   - 다음에 다시 볼 때의 가설:
-     fade out 자체 또는 카메라 fade 상태가 최종 화면 표시를 막고 있을 가능성이 있습니다.
-     다음 시도는 엄마 전화 종료 후 fade out을 제거하고, 즉시 `clearInteriorScene()` -> 최종 엔딩 화면 표시 -> 필요하면 짧은 fade in만 적용하는 방식이 유력합니다.
-   - 우선순위:
-     엔딩 마지막 장면 문제이므로 당장은 다른 퀘스트 조건/대사/연출 정리를 먼저 진행합니다.
-
-### 확인 완료 또는 낮은 우선순위 확인
-
-- 저장 후 이어하기 직후 쓰레기 즉시 보충: 사용자 확인상 정상.
-- 프롤로그 압축 후 템포: 사용자 확인상 정상.
-- 동네 변화 시스템 화단/나비: 사용자 확인상 정상.
-
-### 밸런스/퀘스트 조건 조정
-
-2026-06-07 반영 완료:
-
-- 캔 모으기 퀘스트: 현재 조건 유지.
-- 분리수거 퀘스트: `25,000원 -> 20,000원`.
-- 쭉쭉이 지갑 퀘스트: `45,000원 -> 58,000원`.
-- 수니수니 퀘스트: `60,000원 -> 80,000원`.
-- 옷가게/여행 준비 퀘스트: `80,000원 -> 95,000원`.
-- 짐싸기는 옷가게 완료 후 선택지로 이어지는 구조라 별도 돈 조건은 추가하지 않았습니다.
-
-의도:
-- 큰 빗자루와 분리수거 보상이 열린 뒤 돈이 빨리 쌓이므로, 중후반 퀘스트가 한꺼번에 겹치지 않도록 간격을 둡니다.
-- 수정 파일: `src/config/GameConstants.js`
-- 다음 확인: 실제 플레이에서 돈 모으는 시간이 과하게 길지 않은지 확인합니다.
-
-### 대사/초상화/연출 수정 요청
-
-1. 수니수니 동행 대사
-   - 2026-06-07 반영 완료.
-   - 수니수니가 “천천히 가줄래?”라고 말하면 해냄이가 “네, 죄송해요. 천천히 같이 걸어갈게요.”라고 직접 답합니다.
-   - 수정 파일: `src/systems/SunisuniQuestSystem.js`
-
-2. 수니수니 퀘스트 완료 보상 연출
-   - 돈 보상은 제거된 상태 유지.
-   - 활력수 획득 표시를 오버레이로 더 명확히 보여줍니다.
-   - 해냄이가 활력수를 받고 기뻐하거나, 처음엔 사양하다 감사히 받는 짧은 상호작용을 추가합니다.
-
-3. 쭉쭉이 초상화
-   - 버스 타러 가자/짐 싸러 가자 단계부터 짐을 든 초상화가 나와 어색합니다.
-   - 실제 짐싸기 이후 또는 여행 출발 이후에만 `jjook_travel_bag`를 쓰고, 그 전에는 `jjook_expectant`/`jjook_smile` 같은 초상화를 사용합니다.
-
-4. 엄마 전화 관련 초상화/전화 아이콘
-   - 전화 거절 후 전화기 표시가 z-depth 문제로 안 보이는 현상 확인 필요.
-   - 엄마와 통화 중 일부 장면에서 해냄이/엄마 초상화 누락 여부 확인 후 보강.
-
-5. 실내 전환 디졸브와 대화창 타이밍
-   - 병원/약국/옷가게 등에서 배경은 디졸브되지만 대화창이 먼저 떠 어색한 현상.
-   - `showInteriorScene()` 또는 각 퀘스트 시스템에서 fade 완료 후 대화 시작하도록 공통 helper를 만드는 방향 권장.
-
-6. 분리수거 퀘스트 시범
-   - 분리수거 퀘스트 시작 시, 여비가 먼저 캔을 들고 통에 넣는 짧은 시범 연출을 보여줍니다.
-   - 이후 해냄이가 직접 일반/캔/플라스틱 분리수거를 진행합니다.
-
-리팩토링 후보:
-1. `NpcAmbientSystem` 분리
-   - 주민/NPC 랜덤 말풍선, 기억 대사, 주변 대사 관리 분리.
-2. `NpcRoamingSystem` 분리
-   - NPC 배회 설정과 update 로직 분리.
-3. `MapObjectFactory` 도입
-   - 나무, 벤치, 건물, 자판기, 안내 오브젝트 생성 분리.
-4. `Preload.js` 에셋 목록 분리
-   - `src/config/assets/coreAssets.js`, `mapAssets.js`, `questAssets.js`, `uiAssets.js`, `audioAssets.js` 등.
-5. 대사 JSON 외부화
-   - 우선순위: 병원/약국 -> 수니수니 -> 쭉쭉이 -> 여비 -> 엔딩.
-6. 실내/상점/병원/엔딩 전환 시스템화
-   - `InteriorSceneSystem` 또는 별도 `SceneTransitionSystem`에서 fade in/out 책임 정리.
-
-기능 후보:
-- 프롤로그 “처음 보기/짧게 보기” 옵션.
-- 신호등/도로 안전 안내 강화.
-- 병원/약국 대사 JSON화 후 음성 경로 추가.
-- 실내/상점/병원/약국/옷가게 진입 시 배경과 대화창이 함께 자연스럽게 나타나는 공통 전환 helper.
-- 터치/클릭한 땅 지점 표시 추가.
-  - 빈 땅을 터치하거나 클릭했을 때 노란색 또는 초록색 링/점/반짝 표시를 짧게 보여줍니다.
-  - 목적: “내가 어디를 눌렀는지”를 즉시 보여줘 모바일 조작감을 높입니다.
-  - 주의: NPC, 자판기, 문, 쓰레기 같은 인터랙티브 오브젝트 클릭에는 표시가 방해되지 않게 합니다.
-  - 구현 후보 위치: `PlayerController`의 빈 땅 클릭/터치 자동 이동 처리 지점 또는 별도 `ClickFeedbackSystem`.
-
-알려진 오류/제약:
-- PWA 가로 화면에서 게임 화면 좌우에 연두색 여백이 생길 수 있습니다.
-- 이번 작업에서는 좌우 여백 제거 작업을 하지 않았습니다. 필수 HUD는 계속 게임 화면 안쪽에 유지하고, 여백을 HUD/설정창 영역으로 적극 활용하지 않습니다.
-- 이전 시도 결과: 게임 화면 확대/줌인·줌아웃은 좌우 여백을 없애지 못하고 게임 화면만 커졌습니다.
-- 이전 시도 결과: 고정 비율 해제는 Safari 브라우저에서는 가능성이 있었지만 PWA에서는 게임 화면이 지나치게 작아졌습니다.
-- 현재 판단: 단순 확대, 비율 해제, 강제 cover 방식은 안정적인 해결책으로 보지 않으며, 안전성 때문에 수정 보류합니다.
-- 추후 필요하면 여백 제거보다 패턴/프레임 디자인으로 자연스럽게 처리하는 방식을 우선 검토합니다.
-
-## 8. 최근 변경 로그
-
-### 2026-06-04 빈 땅 클릭/터치 후 자동 쓸기 추가
-
-- `src/controllers/PlayerController.js`
-- 빈 땅을 짧게 클릭하거나 터치하면 해당 위치로 이동한 뒤 한 번 쓸도록 변경했습니다.
-- 건물, 자판기, NPC, 7대시설 물음표, 쓰레기 등 Phaser `currentlyOver`에 잡히는 인터랙티브 오브젝트는 기존 상호작용을 우선합니다.
-- 모바일 조이스틱이 켜진 상태에서는 왼쪽 절반 터치를 조이스틱 영역으로 유지하고, 오른쪽 짧은 터치에만 자동 이동 후 쓸기를 적용합니다.
-- NPC hover/down 전역 피드백을 추가해 여비/쭉쭉이/수니수니에 마우스를 올리면 노란색, 클릭하면 짧게 초록색 tint가 보이도록 했습니다.
-- 문/상점 자동 이동용 `setInteractionTarget()`이 pathfinding 인자를 잘못 넘기던 문제를 수정했습니다.
-- 검증: `node --check src/controllers/PlayerController.js`, `git diff --check`, `npm.cmd run build` 통과.
-
-### 2026-06-04 7대시설 학습 픽토그램 에셋화
-
-- `src/systems/EducationalGuideSystem.js`
-- `styles.css`
-- 7대시설 학습 모달의 코드 SVG 픽토그램을 기존 픽셀 에셋 기반 이미지로 교체했습니다.
-- 병원, 약국, 옷가게, 자판기, 보행자 신호등, 분리수거장, 버스정류장에 기존 건물/오브젝트/교통/분리수거 에셋을 사용합니다.
-- 배움노트 목록의 이모지 아이콘도 같은 에셋 계열의 작은 이미지로 교체했습니다.
-- 검증: `node --check src/systems/EducationalGuideSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
-
-### 2026-06-04 쓰레기 리스폰/동네 변화 난이도 재조정
-
-- `src/config/GameConstants.js`
-- `src/systems/CleaningSystem.js`
-- `src/systems/NeighborhoodProgressSystem.js`
-- 쓰레기 체감 밀도를 높이기 위해 초기 배치 기준 `waveSize`를 `30 -> 34`, 동시 유지 상한 `maxSlimes`를 `25 -> 34`로 조정했습니다.
-- 리스폰 대기 시간을 `12000ms -> 8000ms`로 줄이고, 스폰 최소 간격을 `72px -> 58px`로 낮춰 Tiled의 `slime_spawn` 포인트가 더 촘촘하게 활용되도록 조정했습니다.
-- 청소 후 예약 리스폰 조건을 전체 group child 수가 아니라 active/미청소 쓰레기 수 기준으로 변경해, 비활성 오브젝트가 남아도 리스폰이 막히지 않게 했습니다.
-- 특수 쓰레기 확률은 이전에 낮춘 `0.25%` 값을 유지했습니다. 이번 작업은 일반 쓰레기 리스폰 체감 개선이 목적입니다.
-- 꽃/화단 변화 조건을 낮췄습니다: Stage 1 `200 -> 60`, Stage 2 `500 -> 150 + 분리수거 완료`, Stage 3 `1000 -> 320 + 쭉쭉이 완료`, Stage 4 `1800 -> 600 + 수니수니 완료`.
-- `NeighborhoodProgressSystem`은 쓰레기 스폰 장소를 직접 줄이지 않습니다. 스폰 축소처럼 느껴질 경우 우선 `waveSize`, `maxSlimes`, `slimeRespawnDelayMs`, `slimeSpawnMinDistance`, Tiled `slime_spawn` 포인트의 collision 겹침 여부를 확인합니다.
-- 검증: `node --check src/config/GameConstants.js`, `node --check src/systems/CleaningSystem.js`, `node --check src/systems/NeighborhoodProgressSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
-
-### 2026-06-04 자판기 음료 모달 오버레이 배경 보강
-
-- `src/systems/VendingMachineSystem.js`
-- 자판기 음료 선택 모달의 어두운 배경이 `768x480` 고정 사각형이라 모바일/PWA 가로 화면의 넓어진 내부 viewport를 덮지 못하던 문제를 수정했습니다.
-- 모달 선택 카드와 버튼 위치는 유지하고, backdrop만 현재 Phaser viewport 크기(`scene.scale.width/height`) 기준으로 확장되도록 변경했습니다.
-- 모달이 열린 상태에서 resize가 발생해도 backdrop 크기를 다시 동기화하도록 보강했습니다.
-- PWA 가로 화면 좌우 연두색 여백 문제는 이번 작업에서 수정하지 않고, 알려진 오류/제약으로 기록했습니다.
-- 검증: `node --check src/systems/VendingMachineSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
-
-### 2026-06-02 HUD 레이아웃 개선 및 에필로그 UI/모달 버그 수정
-
-- `index.html`, `styles.css`
-- `src/scenes/PlayScene.js`
-- `src/systems/UIManager.js`
-- `src/systems/HtmlUiBindingSystem.js`
-- `src/systems/ClothingShopSystem.js`
-- `src/systems/TravelEndingSystem.js`
-- **휴식 버튼 레이어 수정**: `.rest-btn`을 `.game-stage` 대신 `.touch-controls` 하위로 추가하여 설정 버튼과 동일 레벨로 맞추고, 상점 등의 모달 오버레이가 뜰 때 뒤쪽으로 자연스럽게 가려지도록 수정했습니다.
-- **프롤로그/에필로그 UI 가리기**: 에필로그 진행 상태(`body.epilogue-scene-active`) 클래스를 추가 및 제어하여 상단 HUD, 휴식창(커피잔), 옷가방(오른쪽 HUD 스택), 설정창이 화면에 나타나지 않도록 가렸습니다.
-- **오른쪽 HUD 스택화**: Bacchus, 속도 버프, 쭉쭉이 동행, 옷가방(종이가방) HUD를 `.right-hud-stack` 컨테이너로 감싸 빗자루 위에 세로로 동적 적재되도록 만들었습니다. 종이가방이 존재할 경우 flex-direction 속성을 통해 빗자루 바로 위에 항상 고정되도록 구현했습니다.
-- **옷가방 모달 변환**: 기존 부채꼴로 펼쳐지던 방식 대신 설정창과 같은 스타일의 `#travelPrepModal` 팝업 모달창으로 구입한 옷 목록을 볼 수 있게 변경했습니다.
-- **버그 수정**: 개발자용 치트 명령어(`forceCompleteDevPackingQuest`) 실행 시 `this.finishChapterOneEnding` 대신 `this.travelEndingSystem?.finishChapterOneEnding`을 호출하도록 정정했습니다.
-- 검증: `node --check` 모든 수정 파일 통과, `npm.cmd run build` 빌드 통과.
-
-### 2026-06-02 넓은 장애물 길찾기 회피 보강
-
-- `src/systems/PathfindingSystem.js`
-- A* grid 생성 시 플레이어 몸통 여유 공간만큼 정적 충돌 영역을 확장해 나무, 벤치, 건물 같은 넓은 장애물을 더 안정적으로 우회하도록 보강했습니다.
-- 타일 충돌도 중심점 하나가 아니라 플레이어 여유 공간이 포함된 영역으로 판정하도록 변경했습니다.
-- 막힌 오브젝트를 클릭했을 때 마지막 경유지가 다시 막힌 클릭 지점으로 돌아가던 문제를 수정했습니다.
-- 검증: `node --check src/systems/PathfindingSystem.js`, `git diff --check`, `npm.cmd run build` 통과.
-
-### 2026-06-02 쓰레기 스폰 밸런스 조정
-
-- `assets/maps/chapter1-samgakji-map.json`
-- `src/scenes/PlayScene.js`
-- `src/config/GameConstants.js`
-- 하단 지역에도 쓰레기가 더 자연스럽게 나오도록 `slime_spawn` 포인트를 4개 추가했습니다.
-- fallback 스폰 영역도 하단으로 조금 확장했습니다.
-- 특수 쓰레기 등장 확률을 `0.5%`에서 `0.25%`로 낮췄습니다.
-- 검증: 맵 JSON 파싱 통과, `node --check src/config/GameConstants.js`, `node --check src/scenes/PlayScene.js` 통과.
-
-### 2026-06-02 프롤로그 압축
-
-- `src/scenes/PrologueScene.js`
-- 대사량을 약 22줄에서 12줄 수준으로 줄였습니다.
-- 배경 전환 흐름은 유지했습니다.
-- 핵심 흐름은 `서울 여행 제안 -> 돈 부족 -> 엄마의 청소 수당 제안 -> 삼각지 도착`입니다.
-- 검증: `node --check src/scenes/PrologueScene.js`, `npm.cmd run build` 통과.
-
-### 2026-06-02 여비 보상 구조 변경
-
-- `src/systems/YebiQuestSystem.js`
-- `src/systems/CheckpointStorage.js`
-- 캔 모으기 보상: `10,000원` 제거, 빗자루 지급.
-- 분리수거 완료 보상: 빗자루 지급 제거, 분리수거장 보상 해금만 유지.
-- 기존 저장 파일에서 캔 퀘스트 완료 후 빗자루를 못 받은 경우 이어하기 시 빗자루가 드롭되도록 보강.
-- 검증: `node --check src/systems/YebiQuestSystem.js`, `node --check src/systems/CheckpointStorage.js`, `npm.cmd run build` 통과.
-
-### 2026-06-02 최종 엔딩 검은 화면 / 저장 후 재접속 리스폰 보강
-
-- `src/systems/TravelEndingSystem.js`
-- `src/systems/SlimeSystem.js`
-- `src/scenes/PlayScene.js`
-- 최종 엔딩 진입 중복 가드 추가.
-- 최종 엔딩 이미지 로딩 fallback 추가.
-- 로딩 실패/지연 시에도 `fadeIn()`이 실행되도록 보강.
-- 이어하기 후 `SlimeSystem.ensureActiveTrash()`로 최소 쓰레기 수량 보장.
-- 검증: 관련 파일 `node --check`, `npm.cmd run build` 통과.
-
-### 2026-06-02 수니수니 보상/활력수/튜토리얼 개선
-
-- `src/systems/SunisuniQuestSystem.js`
-- 수니수니 퀘스트 완료 시 10,000원 돈 보상 제거.
-- 보상은 활력수 중심으로 유지.
-- 활력수 버튼 터치 문제와 튜토리얼 조작 문구 일부 개선.
-
-### 2026-06-02 배움노트/오버레이 입력 차단 안정화
-
-- `SceneControlSystem`, `UIManager`, `HtmlUiBindingSystem`, `EducationalGuideSystem`, `CheckpointStorage`, `styles.css`
-- HTML 오버레이 표시 중 Phaser 월드 입력이 새는 문제를 줄였습니다.
-- 배움노트/교육 상세창 z-index와 pointer/touch 전파 차단을 정리했습니다.
-- `educationGuideSeen` 저장/복원 안전 병합을 추가했습니다.
-
-### 2026-06-01 모바일 DOM 모달 스크롤 안정화
-
-- `src/main.js`
-- `styles.css`
-- 휴식/통계창, 옷가게, 짐싸기, 이름표 모달의 모바일 가로 화면 스크롤 구조를 보강했습니다.
-- 설정창의 정상 스크롤 구조를 기준으로 overlay/panel 구조를 맞췄습니다.
-
-### 2026-06-01 NextGoalSystem 추가
-
-- `src/systems/NextGoalSystem.js`
-- 자유 이동 중 상단 HUD 근처에 짧은 다음 행동 안내를 표시합니다.
-- 튜토리얼, 대화, DOM 모달, 컷신, 상점/짐싸기 중에는 숨깁니다.
-
-### 2026-06-01 저장 후 나가기 버튼 추가
-
-- `index.html`
-- `src/systems/HtmlUiBindingSystem.js`
-- `styles.css`
-- 설정창에 `게임 저장하고 나가기` 버튼 추가.
-- 클릭 시 체크포인트 저장 후 `StartScene`으로 이동.
-
-### 2026-06-01 휴식/통계창 성취 앨범 개선
-
-- `src/systems/UIManager.js`
-- `styles.css`
-- “오늘 해낸 일” 배지/체크리스트와 “오늘의 한 마디” 추가.
-- 오늘의 한 마디는 휴식창 상단으로 이동.
-
-## 9. Git/에셋 관리 메모
-
-Git에 올릴 것:
-- `assets/`
-- `src/`
-- `index.html`
-- `styles.css`
-- `package.json`
-- `vite.config.js`
-- `manifest.webmanifest`
-- `sw.js`
-- `README.md`
-- 추적 중인 `dist/` 파일
-
-보통 올리지 않을 것:
-- `node_modules/`
-- 임시 원본 이미지 폴더
-- `Thumbs.db`, `photothumb.db`, `.DS_Store`
-- 사용하지 않는 한글 원본 에셋 폴더
-
-주의:
-- `.github` 폴더는 GitHub 설정/워크플로/페이지 설정에 쓰일 수 있으므로 용도를 확인하기 전 삭제하지 않습니다.
-- `assets/unused`, 자동차 원본 폴더처럼 사용 여부가 불확실한 폴더는 `rg`로 코드 참조를 확인한 뒤 삭제합니다.
-- 에셋 파일명은 가능하면 영어 소문자/하이픈/언더스코어로 정리합니다.
-
-## 10. 2026-06-02 작업 로그: 동네 변화 시스템
-
-### NeighborhoodProgressSystem 추가
-
-요청 반영:
-- `NeighborhoodProgressSystem.js`를 새로 만들어 청소 누적 수와 주요 퀘스트 진행도에 따라 맵 화단이 자라고, Stage 3부터 나비가 찾아오는 시스템을 추가했습니다.
-- 새 UI, 모달, 앨범, 도감, 휴식창 섹션은 만들지 않았습니다. 변화는 맵 장식 오브젝트로만 표현합니다.
-- 화단과 나비는 충돌체가 없고, A* 길찾기 walkable grid와 플레이어 이동/상호작용을 방해하지 않습니다.
-
-새로 만든 파일:
-- `src/systems/NeighborhoodProgressSystem.js`
-
-수정한 기존 파일:
-- `src/config/AssetsData.js`
-  - `flowerbed_growth`, `flowerbed_growth2`, `butterfly_idle` 스프라이트시트를 등록했습니다.
-- `src/config/InitialGameState.js`
-  - `neighborhoodBloom` 기본 상태를 추가했습니다.
-- `src/systems/CheckpointStorage.js`
-  - 체크포인트 저장/복원에 `neighborhoodBloom`을 추가했습니다.
-  - 기존 세이브에 값이 없거나 깨진 타입이어도 기본값으로 병합하는 `normalizeNeighborhoodBloom()`을 추가했습니다.
-- `src/scenes/PlayScene.js`
-  - import, constructor null 필드, 시스템 인스턴스 생성, `create()`, `update()`, shutdown destroy만 추가했습니다.
-  - PlayScene 추가량은 약 7줄 수준이며, 성장 조건/생성/저장 로직은 새 시스템 내부에 둔 상태입니다.
-
-에셋 등록 위치:
-- `assets/sprites/flowerbed_growth.png`
-  - 4프레임 가로 스프라이트시트, 640x96, frame 160x96
-- `assets/sprites/flowerbed_growth2.png`
-  - 4프레임 가로 스프라이트시트, 640x96, frame 160x96
-- `assets/sprites/butterfly_idle.png`
-  - 3프레임 가로 스프라이트시트, 192x64, frame 64x64
-
-화단 기본 좌표:
-1. `flowerbed_1`: `{ x: 1030, y: 392 }`
-2. `flowerbed_2`: `{ x: 458, y: 595 }`
-3. `flowerbed_3`: `{ x: 900, y: 306 }`
-4. `flowerbed_4`: `{ x: 1340, y: 720 }`
-
-Tiled에서 화단 위치 조정 방법:
-- 코드 기본 좌표는 fallback입니다. Tiled에서 같은 이름의 오브젝트를 만들면 Tiled 좌표가 우선됩니다.
-- `spawn` 오브젝트 레이어에 포인트 오브젝트를 추가합니다.
-- 오브젝트 이름을 아래처럼 지정합니다.
-  - `flowerbed_1`
-  - `flowerbed_2`
-  - `flowerbed_3`
-  - `flowerbed_4`
-- 이 오브젝트는 충돌용이 아니라 위치 앵커입니다. collision 레이어나 map_objects 충돌 설정을 추가하지 마세요.
-- 도로, 횡단보도, 건물 문 앞, 자판기 앞, 분리수거통 앞, NPC 대기 위치, 좁은 길목에는 두지 않는 것이 좋습니다.
-
-단계별 조건:
-- Stage 0
-  - 기본 상태
-  - 화단 4곳 Frame 0
-- Stage 1
-  - 총 청소 60개 이상
-  - 첫 번째 화단 Frame 1
-- Stage 2
-  - 총 청소 150개 이상 + 분리수거 퀘스트 완료
-  - 첫 번째 화단 Frame 2, 두 번째 화단 Frame 1
-- Stage 3
-  - 총 청소 320개 이상 + 쭉쭉이 지갑/음료 퀘스트 완료
-  - 첫 번째 화단 Frame 3, 두 번째 Frame 2, 세 번째 Frame 1
-  - 나비 1마리 등장
-- Stage 4
-  - 총 청소 600개 이상 + 수니수니 병원/약국 퀘스트 완료
-  - 화단 4곳 모두 Frame 3
-  - 나비 최대 3마리 등장
-
-저장 구조:
-```js
-neighborhoodBloom: {
-  stage: 0,
-  unlockedStages: {
-    stage1: false,
-    stage2: false,
-    stage3: false,
-    stage4: false
-  }
-}
-```
-
-피드백:
-- 새 단계가 처음 해금될 때만 기존 toast를 짧게 사용합니다.
-- 예: “화단에 작은 꽃이 피었어요.”, “나비가 찾아왔어요.”
-- 큰 오버레이나 새 UI는 만들지 않았습니다.
-
-검증:
-- `node --check src/systems/NeighborhoodProgressSystem.js`: 통과
-- `node --check src/scenes/PlayScene.js`: 통과
-- `node --check src/systems/CheckpointStorage.js`: 통과
-- `node --check src/config/AssetsData.js`: 통과
-- `node --check src/config/InitialGameState.js`: 통과
-- 단계 조건 모의 테스트: `0 -> 1 -> 2 -> 3 -> 4` 통과
-- `npm.cmd run build`: 통과
-- 소스 대상 `git diff --check`: 통과
-
-주의:
-- 전체 `git diff --check`는 현재 `assets/maps/chapter1-samgakji-map.json`의 기존 trailing whitespace 때문에 실패합니다. 이번 작업에서는 Tiled 맵 파일을 수정하지 않는 조건이 있었으므로 해당 파일은 건드리지 않았습니다.
-- 화단 에셋이 없으면 시스템이 조용히 fallback 또는 생성 생략으로 넘어가도록 설계했지만, 현재 실제 에셋은 `assets/sprites`에 존재합니다.
-
-### 2026-06-07 분리수거장/맵 장식 fallback 오브젝트 보강
-
-요청 반영:
-- 분리수거통 3종을 조금 키우고, 각 통 아래 자막을 더 아래로 내려 통 이미지를 가리지 않게 했습니다.
-- 분리수거장 표지판, 가로등 3곳, 편의점 건물, 버스정류장 표지판 크기 보정을 추가했습니다.
-- 새 장식은 코드 기본 좌표를 fallback으로 두되, Tiled `spawn` 오브젝트 레이어에 같은 이름의 포인트를 만들면 Tiled 좌표가 우선됩니다.
-- 최초 fallback 보강 때는 `assets/maps/chapter1-samgakji-map.json`을 건드리지 않았지만, 이후 Tiled에서 직접 보이도록 일부 오브젝트를 `map_objects` 레이어에 추가했습니다.
-
-추가 보강:
-- 편의점과 분리수거통 3종이 Tiled 오브젝트 레이어에서 보이지 않는 문제가 있었습니다.
-- `assets/maps/chapter1-samgakji-map.json`의 `map_objects` 레이어에 아래 오브젝트를 추가했습니다.
-  - `convenience_store`
-  - `recycle_bin_can`
-  - `recycle_bin_normal`
-  - `recycle_bin_plastic`
-- 이어서 아래 오브젝트도 `map_objects` 레이어에 추가했습니다.
-  - `vending_machine`
-  - `recycling_center_sign`
-  - `street_lamp_recycling`
-  - `street_lamp_vending`
-  - `street_lamp_crosswalk`
-  - `bus_stop_sign`
-- 이제 Tiled에서 이 사각형 오브젝트를 직접 드래그해 위치를 조정할 수 있습니다.
-- 게임은 `map_objects`에 같은 이름의 오브젝트가 있으면 그 위치를 우선 사용하고, 없을 때만 코드 fallback 좌표를 사용합니다.
-- Tiled에서는 PNG 이미지가 아니라 사각형 오브젝트로 보일 수 있습니다. 실제 게임 렌더링은 오브젝트 속성의 `texture` 값을 읽어 처리합니다.
-- 맵 JSON은 스크립트로 파싱/삽입 후 저장했기 때문에 포맷이 일부 정리될 수 있습니다. JSON 파싱과 `npm.cmd run build`는 통과했습니다.
-- 자판기는 `map_objects.vending_machine`이 있으면 그 오브젝트를 재사용하며, 충돌/상호작용 기준도 해당 위치를 따릅니다.
-- 버스정류장 표지판은 `map_objects.bus_stop_sign`이 있으면 추가 생성하지 않고 그 오브젝트를 재사용합니다.
-- `TiledMapSystem.createTiledMapObjects()`는 `map_objects` 오브젝트 좌표를 `mapPoints`에도 반영합니다. 따라서 이름이 같은 코드 fallback이나 상호작용 기준점도 Tiled 오브젝트 위치를 따라갑니다.
-- 벤치/나무/가로등/표지판/자판기/분리수거통에 `codeCollides` 기반 하단 충돌 속성을 일괄 적용했습니다.
-  - 벤치: 대각선 3/4 이미지가 어색하게 막히지 않도록 낮고 얇은 충돌 띠만 적용.
-  - 나무: 밑동 중심의 작은 충돌 박스 적용.
-  - 가로등/표지판: 기둥 중심의 작은 충돌 박스 적용.
-  - 자판기/분리수거통: 하단 받침 중심 충돌 박스 적용.
-- 자판기와 분리수거통은 `map_objects` 오브젝트가 있을 경우 기존 코드의 별도 collider를 중복 생성하지 않도록 정리했습니다.
-- 검증: `node --check src/systems/YebiQuestSystem.js`, `node --check src/systems/TiledMapSystem.js`, `npm.cmd run build` 통과.
-
-수정 파일:
-- `src/config/AssetsData.js`
-  - `recycling_center_sign`, `street_lamp`, `convenience_store` 에셋 키 추가.
-- `src/systems/YebiQuestSystem.js`
-  - 분리수거통 표시 크기 `58x66 -> 68x78`.
-  - 자막 위치 `y + 22 -> y + 54`.
-  - 통 하단 충돌 영역을 통 크기에 맞춰 소폭 보정.
-- `src/systems/TiledMapSystem.js`
-  - `createCodeMapDecorations()` 추가.
-  - Tiled 포인트가 있으면 그 좌표로, 없으면 fallback 좌표로 장식 생성.
-  - 편의점은 진입 불가 건물로만 배치하며 작은 하단 충돌 영역을 둡니다.
-- `src/systems/TravelEndingSystem.js`
-  - `bus_stop_sign` 표시 크기를 1.5배로 확대.
-
-Tiled에서 위치 조정 가능한 포인트 이름:
-- 기존 분리수거통:
-  - `recycle_bin_can`
-  - `recycle_bin_normal`
-  - `recycle_bin_plastic`
-- 새 장식:
-  - `recycling_center_sign`
-  - `street_lamp_recycling`
-  - `street_lamp_vending`
-  - `street_lamp_crosswalk`
-  - `convenience_store`
-
-Tiled 조정 방법:
-- `spawn` 오브젝트 레이어에 Point 오브젝트를 추가합니다.
-- 오브젝트 `name`을 위 이름 중 하나로 지정합니다.
-- 저장 후 게임을 다시 열면 해당 포인트 좌표가 코드 fallback보다 우선됩니다.
-- 편의점/가로등/표지판을 완전히 Tiled `map_objects` 레이어로 이전하고 싶다면, 같은 `name`을 가진 `map_objects` 오브젝트를 만들고 `texture`, `displayWidth`, `displayHeight`, `codeCollides` 속성을 지정하면 됩니다. 이 경우 코드 fallback은 중복 생성되지 않습니다.
-
-다음 확인:
-- 실제 화면에서 새 편의점 위치가 스타트 하단 공터와 잘 맞는지 확인합니다.
-- 가로등 fallback 위치가 길목을 막으면 Tiled 포인트로 옮깁니다.
-- 분리수거통 자막이 통을 가리지 않는지 모바일 가로 화면에서 확인합니다.
+# 삼각지 대청소 핸드오프
+
+이 문서는 다음 Codex 세션이 바로 이어서 작업할 수 있도록 현재 구조, 원칙, 남은 일을 정리한 기준 문서입니다. 오래된 작업 로그를 계속 누적하지 말고, 같은 내용은 이 문서 안에서 최신 상태로 갱신합니다.
+
+## 현재 프로젝트
+
+- 기술: Phaser.js, Vite, Vanilla JS, HTML/CSS DOM UI.
+- 실행/검증: `npm.cmd run build`.
+- 핵심 파일:
+  - `src/scenes/PlayScene.js`: 아직 가장 큰 조립 파일입니다. 새 기능 로직을 길게 넣지 말고 시스템 파일로 분리합니다.
+  - `src/config/GameConstants.js`: 주요 수치, 좌표 fallback, 퀘스트 기준 금액.
+  - `src/config/InitialGameState.js`: 새 저장 상태 기본값.
+  - `src/systems/CheckpointStorage.js`: 이어하기 저장/복원과 구버전 저장 fallback.
+  - `src/systems/TiledMapSystem.js`: Tiled 맵, 오브젝트, map point, 충돌 처리.
+  - `assets/maps/chapter1-samgakji-map.json`: 챕터 1 필드 맵.
+
+## 작업 원칙
+
+- 기존 플레이를 깨뜨리지 않는 작은 단위로 수정합니다.
+- `PlayScene.js`에 새 기능 본문을 길게 추가하지 않습니다. import, 생성, 연결 정도만 남기고 시스템으로 분리합니다.
+- Tiled에서 위치 조정할 수 있는 것은 가능하면 object layer 또는 spawn point로 둡니다.
+- 오버레이 DOM UI가 열려 있을 때는 반드시 월드 입력을 막습니다. Phaser 캔버스로 터치/클릭/스페이스가 새지 않게 `SceneControlSystem`과 DOM `stopPropagation` 계열 처리를 함께 확인합니다.
+- 저장값을 추가할 때는 기존 저장 데이터와 병합 fallback을 둡니다. 예: `Object.assign({}, defaultValue, loadedValue)`.
+- 이미지/타일 경로를 바꿀 때는 `AssetsData.js`, Tiled tileset, preload 대상, 실제 파일명을 함께 확인합니다.
+
+## 최근 완료
+
+- 돈 HUD를 단순화했습니다: `[만원 아이콘] 71,500원` 형식으로 표시.
+- `NpcMemorySystem.js`를 추가해 여비/쭉쭉이/수니수니의 기억 대사를 기존 랜덤 말풍선의 fallback 위에 얹었습니다. 엄마/전화/프롤로그/에필로그 대사는 건드리지 않습니다.
+- 배움노트 등 DOM 오버레이가 게임 뒤로 숨거나, 오버레이 위 터치가 월드 입력으로 새는 문제를 고쳤습니다. 같은 문제가 생기면 z-index, fixed overlay, pointer/touch propagation, world input block을 함께 점검합니다.
+- `NeighborhoodProgressSystem.js`를 추가했습니다. 청소 누적/퀘스트 진행에 따라 화단이 성장하고 Stage 3부터 나비가 나옵니다. 화단 위치는 Tiled object로 조정 가능하게 유지합니다.
+- 클릭/터치 이동 목표 지점에 반투명 초록 원을 표시합니다. 원 크기는 현재 빗자루 청소 범위에 따라 달라집니다.
+- 편의점 문 point와 학습도우미를 추가했습니다. 편의점은 아직 들어갈 수 없고, 최초 1회만 “아, 아직 준비 중이구나?” 대사를 출력합니다.
+- 수니수니 역할을 편의점 앞 NPC로 바꾸기 위해 시작 위치와 귀환 기준을 편의점 앞쪽으로 변경했습니다. 수니수니 퀘스트 시작 금액은 90,000원입니다.
+
+## Tiled 편집 규칙
+
+- `spawn` layer: 논리 지점입니다. `player_start`, `sunisuni_start`, `convenience_store_door` 같은 위치 기준을 둡니다.
+- `map_objects` layer: 실제 보이는 오브젝트입니다. `texture`, `displayWidth`, `displayHeight`, `collides` 같은 property를 사용합니다.
+- 나무/벤치/건물/자판기/분리수거통의 위치는 가능한 한 Tiled object로 조정합니다.
+- 충돌을 직접 조정하려면 object property로 `collides`, `collisionWidth`, `collisionHeight`, `collisionOffsetX`, `collisionOffsetY`를 씁니다.
+- `park_tiles.png` 같은 추가 타일셋은 Tiled에서 등록할 수 있지만, 게임 로딩 쪽 tileset source/name/key가 맞아야 합니다. 현재 실사용 타일셋은 `samgakji-tiles.png` 중심입니다. 새 타일셋을 본격 사용하려면 preload와 Tiled source 이름을 함께 맞춰야 합니다.
+
+## 현재 해야 할 일
+
+1. 에필로그 엄마 전화 뒤 검은 화면
+   - 아직 해결되지 않았습니다.
+   - 원래 흐름은 엄마 전화 후 최종 엔딩 이미지로 넘어가고, 스페이스/터치 시 시작화면으로 돌아가는 구조입니다.
+   - 의심: fade out 또는 엔딩 이미지 로딩/전환 순서. 급하지 않으면 마지막 엔딩 장면이라 우선순위를 낮춰도 됩니다.
+
+2. 상점 컷씬을 상점 맵으로 전환
+   - 현재 병원/약국/옷가게는 `showInteriorScene(textureKey, type)` 기반 한 장짜리 이미지 컷씬입니다.
+   - 장기적으로는 상점별 내부 map JSON을 추천합니다. 예: `assets/maps/interiors/pharmacy-map.json`, `hospital-map.json`, `clothing-store-map.json`.
+   - 각 내부 맵에는 `player_start`, `exit`, `counter`, `npc_chemist` 같은 object point와 collision layer가 필요합니다.
+   - 가장 안전한 첫 단계는 약국만 별도 맵으로 만들어 레퍼런스 구현하는 것입니다. 단, 현재 퀘스트 진행과 내부 이미지 시스템을 바로 교체하면 위험하므로 별도 `InteriorMapSystem`으로 작게 시작하는 것을 권장합니다.
+
+3. 모바일 로딩 개선
+   - 이미지/BGM 에셋이 많아졌습니다.
+   - 시작 전 필수 에셋과 후반/엔딩 에셋을 분리 로딩하는 계획이 필요합니다.
+   - 후보: 챕터 시작 필수 preload, 상점/엔딩 진입 직전 lazy load, 사용하지 않는 임시 에셋 정리.
+
+4. PlayScene 리팩토링 지속
+   - 다음 우선순위: 이벤트/퀘스트 연결 함수 중 작은 덩어리를 시스템으로 이동합니다.
+   - 이동 후 `node --check`와 `npm.cmd run build`를 실행합니다.
+
+5. 기능 아이디어 백로그
+   - 터치/클릭한 땅 지점 표시 개선은 적용됨. 필요하면 색/지속시간/반경만 조정합니다.
+   - 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍을 맞춥니다.
+   - 분리수거 시범 연출: 여비가 먼저 캔을 옮겨 분리수거하는 장면.
+
+## 검증 체크리스트
+
+- `node --check src/scenes/PlayScene.js`
+- 변경한 시스템 파일별 `node --check`
+- `npm.cmd run build`
+- 새 저장/이어하기 모두 확인
+- 모바일 가로/세로에서 DOM 모달 스크롤 및 버튼 터치 확인
+- Tiled 좌표를 바꾼 기능은 실제 맵 object가 우선 적용되는지 확인

@@ -1852,8 +1852,8 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     if (key === "sunisuni") {
-      const bench = this.getMapPoint("sunisuni_bench", GAME_CONFIG.sunisuniBench);
-      return horizontalPatrol(bench.x - 8, 104);
+      const home = this.getMapPoint("sunisuni_start", GAME_CONFIG.sunisuniSpawn);
+      return horizontalPatrol(home.x, 88);
     }
 
     return [];
