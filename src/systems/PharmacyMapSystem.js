@@ -16,6 +16,7 @@ export default class PharmacyMapSystem {
     this.moveTarget = null;
     this.counterPoint = null;
     this.exitPoint = null;
+    this.tiledObjectPoints = {};
     this.interactionMode = "quest";
     this.hasStartedCounterDialogue = false;
   }
@@ -49,6 +50,7 @@ export default class PharmacyMapSystem {
       this.clear();
       return false;
     }
+    this.cacheTiledObjectPoints();
     this.addDim(centerX, centerY, viewportWidth, viewportHeight);
     this.addObjects();
     this.addNpcs();
@@ -136,17 +138,18 @@ export default class PharmacyMapSystem {
 
     objectLayers.forEach((layer) => {
       layer.objects?.forEach((objectData) => {
+        if (this.isTiledControlObject(objectData)) return;
         const objectKey = this.getTiledObjectTextureKey(objectData, textureMap);
         if (!objectKey || !this.scene.textures.exists(objectKey)) return;
-        const point = this.toScreen(objectData.x, objectData.y);
+        const point = this.getTiledObjectScreenPoint(objectData);
         const image = this.scene.add.image(point.x, point.y, objectKey);
         image.setScrollFactor(0);
         image.setOrigin(0.5, 1);
         image.setDisplaySize(
-          (objectData.width || image.width) * this.layout.scale,
-          (objectData.height || image.height) * this.layout.scale,
+          this.getTiledObjectDisplayWidth(objectData, image) * this.layout.scale,
+          this.getTiledObjectDisplayHeight(objectData, image) * this.layout.scale,
         );
-        image.setDepth(this.getObjectDepth(objectData.y, 0.1));
+        image.setDepth(this.getObjectDepth(this.getTiledObjectDepthY(objectData), this.getTiledObjectDepthOffset(objectData, 0.1)));
         this.group.add(image);
         didAdd = true;
       });
@@ -173,11 +176,14 @@ export default class PharmacyMapSystem {
       poster: "pharmacy_poster",
       prescription: "pharmacy_prescription_drop",
       prescription_drop: "pharmacy_prescription_drop",
+      chair: "pharmacy_waiting_chair",
       shelf_care: "pharmacy_shelf_care",
       shelf_cold: "pharmacy_shelf_cold",
       shelf_general: "pharmacy_shelf_general",
       shelf_health: "pharmacy_shelf_health",
       waiting_chair: "pharmacy_waiting_chair",
+      pharmacist: "pharmacist_sprite",
+      npc_chemist: "pharmacist_sprite",
     };
   }
 
@@ -188,6 +194,12 @@ export default class PharmacyMapSystem {
   }
 
   addNpcs() {
+    const tiledNpcObjects = this.getTiledNpcObjects();
+    if (tiledNpcObjects.length > 0) {
+      tiledNpcObjects.forEach((objectData) => this.addNpcFromTiledObject(objectData));
+      if (this.pharmacist) return;
+    }
+
     PHARMACY_MAP_NPCS.forEach((entry) => {
       if (!this.scene.textures.exists(entry.key)) return;
       const point = this.toScreen(entry.x, entry.y);
@@ -204,9 +216,31 @@ export default class PharmacyMapSystem {
     });
   }
 
+  addNpcFromTiledObject(objectData) {
+    const textureMap = this.getTiledTextureMap();
+    const key = this.getTiledObjectTextureKey(objectData, textureMap) || "pharmacist_sprite";
+    if (!this.scene.textures.exists(key)) return;
+
+    const point = this.getTiledObjectScreenPoint(objectData);
+    const npc = this.scene.add.sprite(point.x, point.y, key, this.getTiledProperty(objectData, "frame", 0));
+    npc.setScrollFactor(0);
+    npc.setOrigin(0.5, 1);
+    npc.setDisplaySize(
+      this.getTiledObjectDisplayWidth(objectData, npc, 64) * this.layout.scale,
+      this.getTiledObjectDisplayHeight(objectData, npc, 96) * this.layout.scale,
+    );
+    npc.setDepth(this.getObjectDepth(this.getTiledObjectDepthY(objectData), this.getTiledObjectDepthOffset(objectData, 0.28)));
+    this.group.add(npc);
+
+    if (this.isTiledObjectNamed(objectData, ["pharmacist", "npc_chemist", "chemist"])) {
+      this.pharmacist = npc;
+      this.setupPharmacistInteraction(npc);
+    }
+  }
+
   setupPharmacistInteraction(npc) {
     npc.setInteractive(
-      new Phaser.Geom.Rectangle(-18, -20, npc.width + 36, npc.height + 40),
+      new Phaser.Geom.Rectangle(-npc.width / 2 - 14, -npc.height - 14, npc.width + 28, npc.height + 28),
       Phaser.Geom.Rectangle.Contains,
     );
     npc.input.useHandCursor = true;
@@ -226,7 +260,7 @@ export default class PharmacyMapSystem {
 
   addInteriorPlayer() {
     const textureKey = this.scene.textures.exists("haenaem_walk_down") ? "haenaem_walk_down" : "player";
-    const start = this.toScreen(548, 336);
+    const start = this.getTiledNamedPoint(["player_start", "haenaem_start"]) || this.toScreen(548, 336);
     const player = this.scene.add.sprite(start.x, start.y, textureKey, 1);
     player.setScrollFactor(0);
     player.setOrigin(0.5, 1);
@@ -234,8 +268,8 @@ export default class PharmacyMapSystem {
     player.setDepth(this.getScreenDepth(start.y, 0.22));
     this.group.add(player);
     this.player = player;
-    this.counterPoint = this.toScreen(366, 326);
-    this.exitPoint = this.toScreen(586, 340);
+    this.counterPoint = this.getTiledNamedPoint(["counter_point", "counter", "pharmacy_counter"]) || this.toScreen(366, 326);
+    this.exitPoint = this.getTiledNamedPoint(["exit", "pharmacy_exit"]) || this.toScreen(586, 340);
   }
 
   addSunisuniCompanion() {
@@ -243,7 +277,7 @@ export default class PharmacyMapSystem {
     const textureKey = this.scene.textures.exists("sunisuni_walk_down") ? "sunisuni_walk_down" : null;
     if (!textureKey) return;
 
-    const point = this.toScreen(254, 334);
+    const point = this.getTiledNamedPoint(["sunisuni_start", "companion_start"]) || this.toScreen(254, 334);
     const sunisuni = this.scene.add.sprite(point.x, point.y, textureKey, 1);
     sunisuni.setScrollFactor(0);
     sunisuni.setOrigin(0.5, 1);
@@ -264,7 +298,7 @@ export default class PharmacyMapSystem {
     );
     mapZone.setScrollFactor(0);
     mapZone.setInteractive();
-    mapZone.setDepth(68);
+    mapZone.setDepth(60.02);
     mapZone.on("pointerdown", (pointer) => this.handleInteriorPointer(pointer));
     this.group.add(mapZone);
 
@@ -565,6 +599,110 @@ export default class PharmacyMapSystem {
     };
   }
 
+  cacheTiledObjectPoints() {
+    this.tiledObjectPoints = {};
+    const objectLayers = this.map?.objects || [];
+    objectLayers.forEach((layer) => {
+      layer.objects?.forEach((objectData) => {
+        const names = [
+          objectData.name,
+          objectData.type,
+          this.getTiledProperty(objectData, "id"),
+          this.getTiledProperty(objectData, "role"),
+        ].filter(Boolean);
+        const point = this.getTiledObjectScreenPoint(objectData);
+        names.forEach((name) => {
+          this.tiledObjectPoints[String(name)] = point;
+        });
+      });
+    });
+  }
+
+  getTiledNamedPoint(names) {
+    for (const name of names) {
+      if (this.tiledObjectPoints?.[name]) return { ...this.tiledObjectPoints[name] };
+    }
+    return null;
+  }
+
+  getTiledNpcObjects() {
+    const objectLayers = this.map?.objects || [];
+    const npcObjects = [];
+    objectLayers.forEach((layer) => {
+      layer.objects?.forEach((objectData) => {
+        const role = this.getTiledProperty(objectData, "role");
+        if (role === "npc" || this.isTiledObjectNamed(objectData, ["pharmacist", "npc_chemist", "chemist"])) {
+          npcObjects.push(objectData);
+        }
+      });
+    });
+    return npcObjects;
+  }
+
+  isTiledControlObject(objectData) {
+    const role = this.getTiledProperty(objectData, "role");
+    if (["point", "spawn", "exit", "npc"].includes(role)) return true;
+    return this.isTiledObjectNamed(objectData, [
+      "player_start",
+      "haenaem_start",
+      "sunisuni_start",
+      "companion_start",
+      "counter_point",
+      "exit",
+      "pharmacy_exit",
+      "pharmacist",
+      "npc_chemist",
+      "chemist",
+    ]);
+  }
+
+  isTiledObjectNamed(objectData, names) {
+    const objectNames = [objectData.name, objectData.type, this.getTiledProperty(objectData, "id")].filter(Boolean);
+    return objectNames.some((objectName) => names.includes(String(objectName)));
+  }
+
+  getTiledObjectScreenPoint(objectData) {
+    const width = objectData.width || 0;
+    const height = objectData.height || 0;
+    const isPoint = objectData.point || (!width && !height);
+    const origin = this.getTiledProperty(objectData, "origin", "bottom");
+    let sourceX = objectData.x || 0;
+    let sourceY = objectData.y || 0;
+
+    if (!isPoint) {
+      sourceX += width / 2;
+      if (origin !== "center") {
+        sourceY += height;
+      } else {
+        sourceY += height / 2;
+      }
+    }
+
+    return this.toScreen(sourceX, sourceY);
+  }
+
+  getTiledObjectDisplayWidth(objectData, image, fallback = image?.width || 64) {
+    return Number(this.getTiledProperty(objectData, "displayWidth", objectData.width || fallback));
+  }
+
+  getTiledObjectDisplayHeight(objectData, image, fallback = image?.height || 64) {
+    return Number(this.getTiledProperty(objectData, "displayHeight", objectData.height || fallback));
+  }
+
+  getTiledObjectDepthY(objectData) {
+    if (objectData.point) return objectData.y || 0;
+    return (objectData.y || 0) + (objectData.height || 0);
+  }
+
+  getTiledObjectDepthOffset(objectData, fallback) {
+    return Number(this.getTiledProperty(objectData, "depthOffset", fallback));
+  }
+
+  getTiledProperty(objectData, name, fallback = null) {
+    const property = objectData.properties?.find((entry) => entry.name === name);
+    return property?.value ?? fallback;
+  }
+
   clear() {
     this.group?.clear(true, true);
     this.group = null;
@@ -576,6 +714,7 @@ export default class PharmacyMapSystem {
     this.moveTarget = null;
     this.counterPoint = null;
     this.exitPoint = null;
+    this.tiledObjectPoints = {};
     this.hasStartedCounterDialogue = false;
 
     if (this.scene.interiorSceneType === "pharmacy") {

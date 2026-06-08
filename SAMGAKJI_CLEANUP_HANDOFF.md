@@ -131,3 +131,14 @@ Pharmacy touch bug:
 - 새 게임과 이어하기 모두 확인
 - 모바일 가로/세로에서 DOM 모달 스크롤과 버튼 터치 확인
 - Tiled 좌표 기반 기능은 실제 object가 우선 적용되는지 확인
+
+## 2026-06-08 Pharmacy Interior Tiled Object Update
+
+- Pharmacy interior objects are now intended to be managed from `assets/maps/pharmacy-map.json` object layers first.
+- `map_objects` layer can contain visible pharmacy props. Use object property `texture` with Phaser keys such as `pharmacy_counter`, `pharmacy_shelf_general`, `pharmacy_shelf_cold`, `pharmacy_shelf_care`, `pharmacy_shelf_health`, `pharmacy_waiting_chair`, `pharmacy_plant`, `pharmacy_prescription_drop`, and `pharmacy_medicine_bag_display`.
+- NPC objects can use `role: npc` and `texture: pharmacist_sprite`; name the pharmacist object `pharmacist`.
+- `spawn` layer can contain point objects named `player_start`, `sunisuni_start`, `counter_point`, and `exit`.
+- `PharmacyMapSystem.js` now reads Tiled object positions before falling back to `PharmacyMapData.js`.
+- The temporary Korean folder `assets/??` was removed after confirming its assets already existed under English paths: `assets/interiors/pharmacy/*.png` and `assets/sprites/pharmacist.png`.
+- `assets/tilesets/pharmacy.tsx` now points to `pharmacy.png`, not a Korean temporary path.
+- Pharmacy map-wide pointer zone depth was lowered so the pharmacist sprite and exit marker can receive click/touch first.
