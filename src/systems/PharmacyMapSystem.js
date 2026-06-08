@@ -17,6 +17,7 @@ export default class PharmacyMapSystem {
     this.counterPoint = null;
     this.exitPoint = null;
     this.tiledObjectPoints = {};
+    this.collisionRects = [];
     this.interactionMode = "quest";
     this.hasStartedCounterDialogue = false;
   }
@@ -51,6 +52,7 @@ export default class PharmacyMapSystem {
       return false;
     }
     this.cacheTiledObjectPoints();
+    this.cacheTiledCollisionRects();
     this.addDim(centerX, centerY, viewportWidth, viewportHeight);
     this.addObjects();
     this.addNpcs();
@@ -394,10 +396,22 @@ export default class PharmacyMapSystem {
 
   moveInteriorPlayer(x, y, delta) {
     const speed = 150 * this.layout.scale;
-    const next = this.clampScreenPointToMap(
-      this.player.x + x * speed * (delta / 1000),
-      this.player.y + y * speed * (delta / 1000),
-    );
+    const distance = speed * (delta / 1000);
+    let next = this.clampScreenPointToMap(this.player.x + x * distance, this.player.y + y * distance);
+
+    if (this.isScreenPointBlocked(next)) {
+      const horizontal = this.clampScreenPointToMap(this.player.x + x * distance, this.player.y);
+      const vertical = this.clampScreenPointToMap(this.player.x, this.player.y + y * distance);
+      if (!this.isScreenPointBlocked(horizontal)) {
+        next = horizontal;
+      } else if (!this.isScreenPointBlocked(vertical)) {
+        next = vertical;
+      } else {
+        next = { x: this.player.x, y: this.player.y };
+        this.moveTarget = null;
+      }
+    }
+
     this.player.setPosition(next.x, next.y);
     this.player.setDepth(this.getScreenDepth(this.player.y, 0.22));
   }
@@ -618,6 +632,24 @@ export default class PharmacyMapSystem {
     });
   }
 
+  cacheTiledCollisionRects() {
+    this.collisionRects = [];
+    const objectLayers = this.map?.objects || [];
+    objectLayers.forEach((layer) => {
+      const isCollisionLayer = layer.name === "collision";
+      layer.objects?.forEach((objectData) => {
+        const role = this.getTiledProperty(objectData, "role");
+        const collides = this.getTiledProperty(objectData, "collides", false);
+        if (!isCollisionLayer && role !== "collision" && collides !== true) return;
+
+        const rect = this.getTiledCollisionRect(objectData);
+        if (rect.width > 0 && rect.height > 0) {
+          this.collisionRects.push(rect);
+        }
+      });
+    });
+  }
+
   getTiledNamedPoint(names) {
     for (const name of names) {
       if (this.tiledObjectPoints?.[name]) return { ...this.tiledObjectPoints[name] };
@@ -681,6 +713,36 @@ export default class PharmacyMapSystem {
     return this.toScreen(sourceX, sourceY);
   }
 
+  getTiledCollisionRect(objectData) {
+    const x = Number(this.getTiledProperty(objectData, "collisionX", objectData.x || 0));
+    const y = Number(this.getTiledProperty(objectData, "collisionY", objectData.y || 0));
+    const width = Number(this.getTiledProperty(objectData, "collisionWidth", objectData.width || 0));
+    const height = Number(this.getTiledProperty(objectData, "collisionHeight", objectData.height || 0));
+    return {
+      x: this.layout.left + x * this.layout.scale,
+      y: this.layout.top + y * this.layout.scale,
+      width: width * this.layout.scale,
+      height: height * this.layout.scale,
+    };
+  }
+
+  isScreenPointBlocked(point) {
+    if (!point || this.collisionRects.length === 0) return false;
+    const footWidth = 18 * this.layout.scale;
+    const footHeight = 10 * this.layout.scale;
+    const footRect = {
+      x: point.x - footWidth / 2,
+      y: point.y - footHeight,
+      width: footWidth,
+      height: footHeight,
+    };
+    return this.collisionRects.some((rect) => this.rectsOverlap(footRect, rect));
+  }
+
+  rectsOverlap(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  }
+
   getTiledObjectDisplayWidth(objectData, image, fallback = image?.width || 64) {
     return Number(this.getTiledProperty(objectData, "displayWidth", objectData.width || fallback));
   }
@@ -715,6 +777,7 @@ export default class PharmacyMapSystem {
     this.counterPoint = null;
     this.exitPoint = null;
     this.tiledObjectPoints = {};
+    this.collisionRects = [];
     this.hasStartedCounterDialogue = false;
 
     if (this.scene.interiorSceneType === "pharmacy") {

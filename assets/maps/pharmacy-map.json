@@ -260,253 +260,186 @@
       "draworder": "topdown",
       "id": 2,
       "name": "map_objects",
-      "opacity": 1,
-      "type": "objectgroup",
-      "visible": true,
-      "x": 0,
-      "y": 0,
       "objects": [
         {
+          "height": 54,
           "id": 1,
           "name": "pharmacy_poster",
-          "type": "image",
-          "x": 57,
-          "y": 71,
-          "width": 54,
-          "height": 54,
-          "rotation": 0,
-          "visible": true,
+          "opacity": 1,
           "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pharmacy_poster"
-            },
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.04
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pharmacy_poster"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 54,
+          "x": 529.686980609418,
+          "y": 37.7590027700831
         },
         {
+          "height": 82,
           "id": 2,
           "name": "shelf_general",
-          "type": "image",
-          "x": 181,
-          "y": 78,
-          "width": 82,
-          "height": 82,
-          "rotation": 0,
-          "visible": true,
+          "opacity": 1,
           "properties": [
+            {
+              "name": "depthOffset",
+              "type": "float",
+              "value": 0.05
+            },
             {
               "name": "texture",
               "type": "string",
               "value": "pharmacy_shelf_general"
-            },
+            }
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 82,
+          "x": 181,
+          "y": 78
+        },
+        {
+          "height": 82,
+          "id": 3,
+          "name": "shelf_cold",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.05
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "name": "shelf_cold",
-          "type": "image",
-          "x": 263,
-          "y": 78,
-          "width": 82,
-          "height": 82,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
               "name": "texture",
               "type": "string",
               "value": "pharmacy_shelf_cold"
-            },
+            }
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 82,
+          "x": 263,
+          "y": 78
+        },
+        {
+          "height": 82,
+          "id": 4,
+          "name": "shelf_care",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.05
-            }
-          ]
-        },
-        {
-          "id": 4,
-          "name": "shelf_care",
-          "type": "image",
-          "x": 345,
-          "y": 78,
-          "width": 82,
-          "height": 82,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
               "name": "texture",
               "type": "string",
               "value": "pharmacy_shelf_care"
-            },
+            }
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 82,
+          "x": 345,
+          "y": 78
+        },
+        {
+          "height": 82,
+          "id": 5,
+          "name": "shelf_health",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.05
-            }
-          ]
-        },
-        {
-          "id": 5,
-          "name": "shelf_health",
-          "type": "image",
-          "x": 427,
-          "y": 78,
-          "width": 82,
-          "height": 82,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
               "name": "texture",
               "type": "string",
               "value": "pharmacy_shelf_health"
-            },
-            {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.05
             }
-          ]
-        },
-        {
-          "id": 6,
-          "name": "prescription_drop",
-          "type": "image",
-          "x": 243,
-          "y": 182,
-          "width": 54,
-          "height": 54,
+          ],
           "rotation": 0,
-          "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pharmacy_prescription_drop"
-            },
-            {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.14
-            }
-          ]
-        },
-        {
-          "id": 7,
-          "name": "counter",
           "type": "image",
-          "x": 256,
-          "y": 164,
-          "width": 220,
-          "height": 118,
-          "rotation": 0,
           "visible": true,
-          "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pharmacy_counter"
-            },
-            {
-              "name": "depthOffset",
-              "type": "float",
-              "value": 0.18
-            }
-          ]
+          "width": 82,
+          "x": 427,
+          "y": 78
         },
         {
+          "height": 82,
           "id": 8,
           "name": "plant",
-          "type": "image",
-          "x": 544,
-          "y": 188,
-          "width": 52,
-          "height": 82,
-          "rotation": 0,
-          "visible": true,
+          "opacity": 1,
           "properties": [
-            {
-              "name": "texture",
-              "type": "string",
-              "value": "pharmacy_plant"
-            },
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.12
-            }
-          ]
-        },
-        {
-          "id": 9,
-          "name": "waiting_chair",
-          "type": "image",
-          "x": 113,
-          "y": 246,
-          "width": 104,
-          "height": 72,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
               "name": "texture",
               "type": "string",
-              "value": "pharmacy_waiting_chair"
-            },
+              "value": "pharmacy_plant"
+            }
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 52,
+          "x": 553.972299168975,
+          "y": 179.357340720222
+        },
+        {
+          "height": 72,
+          "id": 9,
+          "name": "waiting_chair",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
               "value": 0.16
-            }
-          ]
-        },
-        {
-          "id": 10,
-          "name": "medicine_bag",
-          "type": "image",
-          "x": 462,
-          "y": 270,
-          "width": 48,
-          "height": 48,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+            },
             {
               "name": "texture",
               "type": "string",
-              "value": "pharmacy_medicine_bag_display"
-            },
+              "value": "pharmacy_waiting_chair"
+            }
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 104,
+          "x": 99.0387811634349,
+          "y": 206.1108033241
+        },
+        {
+          "height": 96,
+          "id": 11,
+          "name": "pharmacist",
+          "opacity": 1,
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
-              "value": 0.14
-            }
-          ]
-        },
-        {
-          "id": 11,
-          "name": "pharmacist",
-          "type": "npc",
-          "x": 334,
-          "y": 174,
-          "width": 64,
-          "height": 96,
-          "rotation": 0,
-          "visible": true,
-          "properties": [
+              "value": 0.02
+            },
             {
               "name": "role",
               "type": "string",
@@ -516,99 +449,355 @@
               "name": "texture",
               "type": "string",
               "value": "pharmacist_sprite"
+            }
+          ],
+          "rotation": 0,
+          "type": "npc",
+          "visible": true,
+          "width": 64,
+          "x": 334,
+          "y": 154
+        },
+        {
+          "height": 118,
+          "id": 7,
+          "name": "counter",
+          "opacity": 1,
+          "polygon": [
+            {
+              "x": 0,
+              "y": 0
             },
+            {
+              "x": 220,
+              "y": 0
+            },
+            {
+              "x": 220,
+              "y": 118
+            },
+            {
+              "x": 0,
+              "y": 118
+            }
+          ],
+          "properties": [
             {
               "name": "depthOffset",
               "type": "float",
-              "value": 0.28
+              "value": 0.18
+            },
+            {
+              "name": "texture",
+              "type": "string",
+              "value": "pharmacy_counter"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "image",
+          "visible": true,
+          "width": 220,
+          "x": 261.983379501385,
+          "y": 171.97783933518
         }
-      ]
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
     },
     {
       "draworder": "topdown",
       "id": 3,
       "name": "spawn",
-      "opacity": 1,
-      "type": "objectgroup",
-      "visible": true,
-      "x": 0,
-      "y": 0,
       "objects": [
         {
+          "height": 0,
           "id": 12,
           "name": "player_start",
-          "type": "spawn",
+          "opacity": 1,
           "point": true,
-          "x": 548,
-          "y": 336,
-          "rotation": 0,
-          "visible": true,
           "properties": [
             {
               "name": "role",
               "type": "string",
               "value": "spawn"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "spawn",
+          "visible": true,
+          "width": 0,
+          "x": 548,
+          "y": 336
         },
         {
+          "height": 0,
           "id": 13,
           "name": "sunisuni_start",
-          "type": "spawn",
+          "opacity": 1,
           "point": true,
-          "x": 254,
-          "y": 334,
-          "rotation": 0,
-          "visible": true,
           "properties": [
             {
               "name": "role",
               "type": "string",
               "value": "spawn"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "spawn",
+          "visible": true,
+          "width": 0,
+          "x": 275.274238227147,
+          "y": 316.049861495845
         },
         {
+          "height": 0,
           "id": 14,
           "name": "counter_point",
-          "type": "point",
+          "opacity": 1,
           "point": true,
-          "x": 366,
-          "y": 326,
-          "rotation": 0,
-          "visible": true,
           "properties": [
             {
               "name": "role",
               "type": "string",
               "value": "point"
             }
-          ]
+          ],
+          "rotation": 0,
+          "type": "point",
+          "visible": true,
+          "width": 0,
+          "x": 364.005540166205,
+          "y": 310.709141274238
         },
         {
+          "height": 0,
           "id": 15,
           "name": "exit",
-          "type": "exit",
+          "opacity": 1,
           "point": true,
-          "x": 586,
-          "y": 340,
-          "rotation": 0,
-          "visible": true,
           "properties": [
             {
               "name": "role",
               "type": "string",
               "value": "exit"
             }
+          ],
+          "rotation": 0,
+          "type": "exit",
+          "visible": true,
+          "width": 0,
+          "x": 586,
+          "y": 340
+        }
+      ],
+      "opacity": 1,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 6,
+      "name": "collision",
+      "opacity": 0.35,
+      "type": "objectgroup",
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {
+          "id": 27,
+          "name": "counter_collision",
+          "type": "collision",
+          "x": 254,
+          "y": 246,
+          "width": 224,
+          "height": 54,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 28,
+          "name": "shelf_general_collision",
+          "type": "collision",
+          "x": 184,
+          "y": 118,
+          "width": 78,
+          "height": 46,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 29,
+          "name": "shelf_cold_collision",
+          "type": "collision",
+          "x": 266,
+          "y": 118,
+          "width": 78,
+          "height": 46,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 30,
+          "name": "shelf_care_collision",
+          "type": "collision",
+          "x": 348,
+          "y": 118,
+          "width": 78,
+          "height": 46,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 31,
+          "name": "shelf_health_collision",
+          "type": "collision",
+          "x": 430,
+          "y": 118,
+          "width": 78,
+          "height": 46,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 32,
+          "name": "chair_collision",
+          "type": "collision",
+          "x": 120,
+          "y": 286,
+          "width": 90,
+          "height": 30,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 33,
+          "name": "plant_collision",
+          "type": "collision",
+          "x": 548,
+          "y": 238,
+          "width": 44,
+          "height": 36,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 34,
+          "name": "poster_wall_collision",
+          "type": "collision",
+          "x": 44,
+          "y": 58,
+          "width": 112,
+          "height": 58,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
           ]
         }
       ]
     }
   ],
-  "nextlayerid": 4,
-  "nextobjectid": 16,
+  "nextlayerid": 7,
+  "nextobjectid": 35,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",
@@ -616,7 +805,7 @@
   "tilesets": [
     {
       "firstgid": 1,
-      "source": "pharmacy.tsx"
+      "source": "../tilesets/pharmacy.tsx"
     }
   ],
   "tilewidth": 32,

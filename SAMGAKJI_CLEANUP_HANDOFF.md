@@ -142,3 +142,16 @@ Pharmacy touch bug:
 - The temporary Korean folder `assets/??` was removed after confirming its assets already existed under English paths: `assets/interiors/pharmacy/*.png` and `assets/sprites/pharmacist.png`.
 - `assets/tilesets/pharmacy.tsx` now points to `pharmacy.png`, not a Korean temporary path.
 - Pharmacy map-wide pointer zone depth was lowered so the pharmacist sprite and exit marker can receive click/touch first.
+
+## 2026-06-08 Pharmacy Counter And Collision Update
+
+- The pharmacist Tiled object was moved behind the counter visually.
+- In `assets/maps/pharmacy-map.json`, the `pharmacist` object now uses a lower `depthOffset` so the counter renders in front of the pharmacist's lower body.
+- Added a Tiled `collision` object layer for the pharmacy interior.
+- `PharmacyMapSystem.js` now reads collision rectangles from:
+  - Any object in layer named `collision`
+  - Or any object with `role: collision`
+  - Or any object with `collides: true`
+- Current pharmacy collision objects cover the counter, four shelves, chair, plant, and poster/wall area.
+- Interior player movement now blocks against these rectangles and tries horizontal/vertical sliding before stopping.
+- When editing in Tiled, adjust rectangles in the `collision` layer rather than hard-coding collision coordinates in JavaScript.
