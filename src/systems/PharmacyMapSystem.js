@@ -242,7 +242,7 @@ export default class PharmacyMapSystem {
 
   setupPharmacistInteraction(npc) {
     npc.setInteractive(
-      new Phaser.Geom.Rectangle(-npc.width / 2 - 14, -npc.height - 14, npc.width + 28, npc.height + 28),
+      new Phaser.Geom.Rectangle(0, 0, npc.width, npc.height),
       Phaser.Geom.Rectangle.Contains,
     );
     npc.input.useHandCursor = true;
@@ -334,6 +334,10 @@ export default class PharmacyMapSystem {
     pointer.event?.stopPropagation?.();
     if (!this.player || this.scene.isInDialogue) return;
     const point = { x: pointer.x, y: pointer.y };
+    if (this.isPointerOnPharmacist(point)) {
+      this.startCounterDialogueFromPharmacistTap();
+      return;
+    }
     if (this.isNearScreenPoint(point, this.counterPoint, 84 * this.layout.scale)) {
       this.moveTarget = { ...this.counterPoint };
       return;
@@ -584,6 +588,19 @@ export default class PharmacyMapSystem {
   isNearScreenPoint(a, b, distance) {
     if (!a || !b) return false;
     return Math.hypot(a.x - b.x, a.y - b.y) <= distance;
+  }
+
+  isPointerOnPharmacist(point) {
+    if (!point || !this.pharmacist?.active) return false;
+    const bounds = this.pharmacist.getBounds();
+    const padding = 12 * this.layout.scale;
+    const paddedBounds = new Phaser.Geom.Rectangle(
+      bounds.x - padding,
+      bounds.y - padding,
+      bounds.width + padding * 2,
+      bounds.height + padding * 2,
+    );
+    return Phaser.Geom.Rectangle.Contains(paddedBounds, point.x, point.y);
   }
 
   clampScreenPointToMap(x, y) {

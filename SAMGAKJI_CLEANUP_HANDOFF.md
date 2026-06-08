@@ -155,3 +155,24 @@ Pharmacy touch bug:
 - Current pharmacy collision objects cover the counter, four shelves, chair, plant, and poster/wall area.
 - Interior player movement now blocks against these rectangles and tries horizontal/vertical sliding before stopping.
 - When editing in Tiled, adjust rectangles in the `collision` layer rather than hard-coding collision coordinates in JavaScript.
+
+
+## 2026-06-08 Pharmacy Touch Priority Fix
+
+- High-priority pharmacy issue addressed: pharmacist click/touch could fail because the sprite hit area and map-wide input zone competed.
+- PharmacyMapSystem.setupPharmacistInteraction() now uses a standard frame-local hit rectangle: 0, 0, width, height.
+- handleInteriorPointer() now also checks whether the pointer is inside the pharmacist padded bounds. If yes, it calls startCounterDialogueFromPharmacistTap() instead of treating the tap as general floor movement.
+- This keeps the intended rule: no floating Space/touch prompt; direct click/touch on pharmacist starts the pharmacy interaction, or moves Haenaem to the counter first when too far.
+- Manual in-game check still recommended on mobile/PWA: enter pharmacy, tap pharmacist from far away, confirm Haenaem moves to counter, tap pharmacist again, confirm dialogue starts.
+
+
+## 2026-06-08 Pharmacy NPC Overlap Fix
+
+- Fixed a pharmacy interior issue where Haenaem could walk over/through the pharmacist sprite.
+- Cause: the pharmacy counter collision only covered the lower/front area, and the pharmacist NPC did not have a dedicated collision rectangle.
+- Updated `assets/maps/pharmacy-map.json` collision layer with:
+  - `counter_collision` for the front counter body
+  - `counter_back_collision` for the staff-side counter area
+  - `pharmacist_collision` for the pharmacist foot/body space
+- Interior map rule: every walkable-map NPC should have a nearby collision rectangle or a deliberate no-overlap zone in Tiled. Visual sprite placement alone does not block movement.
+- Keep dialogue interaction separate from collision: click/touch on the pharmacist still routes through `PharmacyMapSystem.startCounterDialogueFromPharmacistTap()`.

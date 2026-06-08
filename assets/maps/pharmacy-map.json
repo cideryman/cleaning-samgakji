@@ -610,13 +610,59 @@
       "y": 0,
       "objects": [
         {
-          "id": 27,
+          "id": 35,
           "name": "counter_collision",
           "type": "collision",
           "x": 254,
-          "y": 246,
+          "y": 218,
           "width": 224,
-          "height": 54,
+          "height": 86,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 36,
+          "name": "counter_back_collision",
+          "type": "collision",
+          "x": 262,
+          "y": 176,
+          "width": 206,
+          "height": 52,
+          "rotation": 0,
+          "visible": true,
+          "properties": [
+            {
+              "name": "role",
+              "type": "string",
+              "value": "collision"
+            },
+            {
+              "name": "collides",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 37,
+          "name": "pharmacist_collision",
+          "type": "collision",
+          "x": 322,
+          "y": 206,
+          "width": 84,
+          "height": 50,
           "rotation": 0,
           "visible": true,
           "properties": [
@@ -797,7 +843,7 @@
     }
   ],
   "nextlayerid": 7,
-  "nextobjectid": 35,
+  "nextobjectid": 38,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.1",
