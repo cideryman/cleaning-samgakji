@@ -50,8 +50,7 @@ export default class CleaningSystem {
   getSweepMultiplier() {
     const scene = this.scene;
     const broomMultiplier = scene.hasBroomUpgrade ? GAME_CONFIG.upgradedSweepMultiplier : 1;
-    const bacchusMultiplier = scene.isBacchusActive ? GAME_CONFIG.bacchusSweepMultiplier : 1;
-    return Math.max(broomMultiplier, bacchusMultiplier);
+    return broomMultiplier;
   }
 
   performSweepAt(x, y, width, height, direction = null) {

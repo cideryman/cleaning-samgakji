@@ -78,12 +78,14 @@ export default class EducationalGuideSystem {
     EDUCATIONAL_GUIDE_DATA.forEach((facility) => {
       const mappedKey = KEY_MAP[facility.key];
       const seen = scene.educationGuideSeen?.[mappedKey] === true;
+      const iconPosition = this.getFacilityIconPosition(facility);
 
-      const container = scene.add.container(facility.x, facility.y);
-      container.setDepth(20);
+      const container = scene.add.container(iconPosition.x, iconPosition.y);
+      container.setDepth(80);
 
       container.facility = facility;
       container.mappedKey = mappedKey;
+      container.baseY = iconPosition.y;
 
       // Circle background
       const circle = scene.add.circle(0, 0, 18, 0xffd75a);
@@ -134,11 +136,24 @@ export default class EducationalGuideSystem {
     });
   }
 
+  getFacilityIconPosition(facility) {
+    const scene = this.scene;
+    if (facility.key === "convenience_store") {
+      const doorPoint = scene.getMapPoint?.("convenience_store_door", { x: facility.x, y: facility.y });
+      return {
+        x: doorPoint.x,
+        y: doorPoint.y - 28,
+      };
+    }
+
+    return { x: facility.x, y: facility.y };
+  }
+
   applyIconStyle(container, seen) {
     const scene = this.scene;
     const circle = container.circleObj;
     const text = container.textObj;
-    const facility = container.facility;
+    const baseY = container.baseY ?? container.facility?.y ?? container.y;
 
     if (container.floatTween) {
       container.floatTween.stop();
@@ -158,10 +173,10 @@ export default class EducationalGuideSystem {
       });
       text.setAlpha(0.6);
 
-      container.y = facility.y;
+      container.y = baseY;
       container.floatTween = scene.tweens.add({
         targets: container,
-        y: facility.y - 2,
+        y: baseY - 2,
         duration: 3500,
         yoyo: true,
         repeat: -1,
@@ -180,10 +195,10 @@ export default class EducationalGuideSystem {
       });
       text.setAlpha(1.0);
 
-      container.y = facility.y;
+      container.y = baseY;
       container.floatTween = scene.tweens.add({
         targets: container,
-        y: facility.y - 6,
+        y: baseY - 6,
         duration: 1200 + Math.random() * 400,
         yoyo: true,
         repeat: -1,

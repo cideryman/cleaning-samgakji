@@ -55,8 +55,6 @@ export const GAME_CONFIG = {
   clothingStoreDoor: { x: 708, y: 158 },
   convenienceStoreDoor: { x: 272, y: 944 },
   busStop: { x: 888, y: 260 },
-  bacchusDurationMs: 60000,
-  bacchusSweepMultiplier: 2,
   recyclingCenter: { x: 1068, y: 545 },
   vendingMachine: { x: 818, y: 465 },
   jjookSpawn: { x: 688, y: 610 },

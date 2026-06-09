@@ -43,7 +43,6 @@ export function createInitialGameState() {
     hasBacchus: false,
     hospitalRevisitUsed: false,
     hasReceivedPharmacyDrink: false,
-    isBacchusActive: false,
     bacchusTimer: null,
     bacchusCountdownEvent: null,
     clothesQuestState: ClothesQuestState.LOCKED,

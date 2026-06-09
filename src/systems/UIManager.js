@@ -134,6 +134,32 @@ export default class UIManager {
     window.setTimeout(() => reward.remove(), 3600);
   }
 
+  showItemRewardOverlay({
+    title = "아이템 획득!",
+    itemName = "선물",
+    description = "",
+    icon = "./assets/ui/bacchus.png",
+    duration = 2800,
+  } = {}) {
+    const stage = document.querySelector(".game-stage");
+    if (!stage) return;
+
+    document.querySelectorAll(".item-reward-overlay").forEach((el) => el.remove());
+
+    const overlay = document.createElement("div");
+    overlay.className = "item-reward-overlay";
+    overlay.innerHTML = `
+      <div class="item-reward-card">
+        <div class="item-reward-title">${title}</div>
+        <img class="item-reward-icon" src="${icon}" alt="" aria-hidden="true" />
+        <div class="item-reward-name">${itemName}</div>
+        ${description ? `<div class="item-reward-desc">${description}</div>` : ""}
+      </div>
+    `;
+    stage.appendChild(overlay);
+    window.setTimeout(() => overlay.remove(), duration);
+  }
+
   updateHud() {
     const scene = this.scene;
     const visibleWaveCount = scene.isMissionComplete

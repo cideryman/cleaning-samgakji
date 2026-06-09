@@ -73,6 +73,15 @@
   - This affects existing scripted NPC movement that already uses the shared helper, including Yebi recycle demonstrations, Jjook returning home, and Sunisuni returning to her bench/start point.
   - The route is simplified before tweening so NPCs do not receive every grid cell as a separate visual stop.
   - Remaining work is to migrate any custom per-frame follower/escort logic that still moves directly toward targets without using this shared route.
+- Sunisuni quest dialogue polish:
+  - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
+  - Haenaem now directly explains the stomach pain to the doctor.
+  - Sunisuni completion dialogue was shortened conservatively.
+  - Bacchus/vital drink reward now shows a centered item reward overlay before the usual item button is updated.
+  - Vital drink use now matches other drinks: it grants the shared movement speed buff instead of increasing sweep range.
+- Convenience store learning icon fix:
+  - The convenience store educational guide icon now follows the Tiled `convenience_store_door` point with a small upward offset.
+  - Educational guide icons render at higher depth so they do not disappear behind building sprites.
 
 ## Tiled 편집 규칙
 

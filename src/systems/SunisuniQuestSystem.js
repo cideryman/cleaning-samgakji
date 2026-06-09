@@ -278,12 +278,10 @@ export default class SunisuniQuestSystem {
       { name: "접수 직원", portraitKey: "hospital_staff", text: "네, 수니수니 님 배가 아파서 오셨군요." },
       { name: "접수 직원", portraitKey: "hospital_staff", text: "접수되었습니다. 잠시만 기다리면 의사 선생님을 만날 수 있어요." },
       { name: "의사", portraitKey: "hospital_doctor", text: "안녕하세요. 어디가 어떻게 아픈지 알려주세요." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-worried", text: "해냄아... 내가 긴장해서 말이 잘 안 나와..." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-sick", text: "내 배가 아프다고 대신 말해줄래?" },
       {
         name: "해냄이",
-        portraitKey: "haenaem_confused",
-        text: "의사 선생님께 뭐라고 말할까요?",
+        portraitKey: "haenaem_determined",
+        text: "수니수니 님의 상태를 의사 선생님께 말해볼까요?",
         choices: [
           { label: "배가 아파요.", onSelect: () => this.completeDoctorQuiz() },
           { label: "귀가 아파요.", onSelect: () => this.retryDoctorQuiz() },
@@ -308,6 +306,7 @@ export default class SunisuniQuestSystem {
     scene.clearQuestMarker("sunisuniHospital");
     scene.saveCheckpoint("sunisuni_prescription");
     scene.dialogueSystem.start([
+      { name: "해냄이", portraitKey: "haenaem_determined", text: "수니수니 님이 배가 많이 아파요." },
       { name: "의사", portraitKey: "hospital_doctor", text: "잘 말했어요. 배가 아플 때는 이렇게 아픈 곳을 알려주면 됩니다." },
       { name: "의사", portraitKey: "hospital_doctor", text: "오늘은 처방전을 줄게요. 이 처방전을 가지고 약국으로 가세요." },
       { name: "의사", portraitKey: "hospital_doctor", text: "처방전입니다." },
@@ -601,7 +600,13 @@ export default class SunisuniQuestSystem {
     scene.clearQuestMarker("sunisuniQuest");
     scene.hasMedicine = false;
     scene.hasBacchus = true;
-    scene.showFloatingItem("bacchus_item", scene.player.x + 28, scene.player.y - 68, 58);
+    scene.uiManager?.showItemRewardOverlay?.({
+      title: "선물 획득!",
+      itemName: "활력수",
+      description: "필요할 때 사용하면 잠시 이동속도가 빨라져요.",
+      icon: "./assets/ui/bacchus.png",
+    });
+    scene.showFloatingItem("bacchus_item", Math.max(384, (scene.scale.width || 768) / 2), Math.max(228, (scene.scale.height || 480) / 2 - 34), 86, true, { hold: 900 });
     scene.updateBacchusButton();
     scene.saveCheckpoint("sunisuni_completed");
     if (scene.sunisuniNpc?.active) {
@@ -609,11 +614,10 @@ export default class SunisuniQuestSystem {
       scene.playSunisuniEffect("sunisuni_heart", scene.sunisuniNpc.x, scene.sunisuniNpc.y - 48);
     }
     scene.dialogueSystem.start([
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어." },
-      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "정말 고마워." },
+      { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "해냄이 덕분에 병원도 가고 약도 샀어. 정말 고마워." },
       { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true, text: "이 활력수는 같이 가준 고마운 마음이야." },
-      { name: "엄마", portraitKey: "mother_smile", text: "해냄이, 오늘은 청소뿐 아니라 아픈 친구도 도왔구나!" },
-      { name: "엄마", portraitKey: "mother_smile", text: "스스로 생각하고 도와준 모습이 정말 멋졌어." },
+      { name: "해냄이", portraitKey: "haenaem_touched", text: "고마워요. 꼭 필요할 때만 아껴서 쓸게요." },
+      { name: "엄마", portraitKey: "mother_smile", text: "해냄이, 아픈 친구를 차분히 도와준 모습이 정말 멋졌어." },
     ], () => scene.sendSunisuniBackToBench());
   }
 }
