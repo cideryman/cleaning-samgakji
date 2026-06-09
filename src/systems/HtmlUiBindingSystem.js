@@ -49,6 +49,11 @@ export default class HtmlUiBindingSystem {
     scene.inventoryNormalCountEl = document.querySelector("#inventoryNormalCount");
     scene.inventoryPlasticCountEl = document.querySelector("#inventoryPlasticCount");
     scene.inventoryCanCountEl = document.querySelector("#inventoryCanCount");
+    scene.samgakjiProgressHudEl = document.querySelector("#samgakjiProgressHud");
+    scene.samgakjiProgressLevelEl = document.querySelector("#samgakjiProgressLevel");
+    scene.samgakjiProgressNameEl = document.querySelector("#samgakjiProgressName");
+    scene.samgakjiProgressFillEl = document.querySelector("#samgakjiProgressFill");
+    scene.samgakjiProgressDetailEl = document.querySelector("#samgakjiProgressDetail");
     scene.restartButton = document.querySelector("#restartButton");
 
     // Thin Bridge wraps

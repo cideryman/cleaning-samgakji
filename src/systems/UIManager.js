@@ -195,6 +195,24 @@ export default class UIManager {
       scene.specialButton.classList.toggle("is-ready", scene.hasUnlockedYebi && !scene.hasUsedYebi);
     }
 
+    this.updateSamgakjiProgressHud();
+  }
+
+  updateSamgakjiProgressHud() {
+    const scene = this.scene;
+    const levelInfo = scene.samgakjiProgressSystem?.getLevelInfo?.();
+    if (!levelInfo || !scene.samgakjiProgressHudEl) return;
+
+    const currentCleanedInLevel = levelInfo.cleaned - levelInfo.currentRequired;
+    const neededInLevel = Math.max(0, levelInfo.nextRequired - levelInfo.currentRequired);
+    const detail = levelInfo.isMaxLevel
+      ? "최고 단계"
+      : `다음까지 ${currentCleanedInLevel.toLocaleString()} / ${neededInLevel.toLocaleString()}`;
+
+    if (scene.samgakjiProgressLevelEl) scene.samgakjiProgressLevelEl.textContent = `삼각지 Lv.${levelInfo.level}`;
+    if (scene.samgakjiProgressNameEl) scene.samgakjiProgressNameEl.textContent = levelInfo.name;
+    if (scene.samgakjiProgressDetailEl) scene.samgakjiProgressDetailEl.textContent = detail;
+    if (scene.samgakjiProgressFillEl) scene.samgakjiProgressFillEl.style.width = `${Math.round(levelInfo.progressRatio * 100)}%`;
   }
 
   updateNextQuestHint() {

@@ -1819,6 +1819,73 @@ body.app-fit-mode #game canvas {
   animation: next-goal-pulse 720ms ease-out;
 }
 
+.samgakji-progress-hud {
+  position: absolute;
+  top: 66px;
+  left: 12px;
+  width: min(278px, calc(100% - 132px));
+  padding: 8px 11px 9px;
+  border: 3px solid #21352c;
+  border-radius: 18px;
+  background: rgba(246, 255, 235, 0.94);
+  box-shadow: 0 4px 0 rgba(77, 120, 82, 0.36);
+  color: #21352c;
+  z-index: 19;
+  pointer-events: none;
+  font-family: Arial, sans-serif;
+}
+
+.samgakji-progress-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+}
+
+.samgakji-progress-home {
+  font-size: 17px;
+}
+
+.samgakji-progress-title strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.samgakji-progress-name {
+  margin-top: 3px;
+  color: #4a6c3d;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.samgakji-progress-track {
+  position: relative;
+  height: 9px;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(33, 53, 44, 0.62);
+  border-radius: 999px;
+  background: rgba(33, 53, 44, 0.18);
+}
+
+.samgakji-progress-track span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #73c66b 0%, #ffd75a 100%);
+  transition: width 220ms ease;
+}
+
+.samgakji-progress-detail {
+  margin-top: 4px;
+  color: #2c4734;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
 @keyframes next-goal-pulse {
   0% {
     filter: brightness(1);
@@ -2246,6 +2313,36 @@ body.app-fit-mode #game canvas {
     min-height: 22px;
     padding: 3px 6px;
     font-size: 11px;
+  }
+
+  .samgakji-progress-hud {
+    top: 58px;
+    left: 8px;
+    width: min(232px, calc(100% - 106px));
+    padding: 6px 8px 7px;
+    border-width: 2px;
+    border-radius: 14px;
+  }
+
+  .samgakji-progress-title strong {
+    font-size: 13px;
+  }
+
+  .samgakji-progress-home {
+    font-size: 14px;
+  }
+
+  .samgakji-progress-name {
+    font-size: 11px;
+  }
+
+  .samgakji-progress-track {
+    height: 8px;
+    margin-top: 5px;
+  }
+
+  .samgakji-progress-detail {
+    font-size: 10px;
   }
 
   .can-quest-hud {
@@ -4939,14 +5036,17 @@ body.large-text .settings-save-exit-btn { font-size: 22px; min-height: 56px; }
 
 /* Hide HUD and controls for start screen, prologue, and epilogue */
 body.start-screen .money-ui,
+body.start-screen .samgakji-progress-hud,
 body.start-screen .rest-btn,
 body.start-screen .right-hud-stack,
 body.start-screen .touch-controls,
 body.prologue-scene-active .money-ui,
+body.prologue-scene-active .samgakji-progress-hud,
 body.prologue-scene-active .rest-btn,
 body.prologue-scene-active .right-hud-stack,
 body.prologue-scene-active .touch-controls,
 body.epilogue-scene-active .money-ui,
+body.epilogue-scene-active .samgakji-progress-hud,
 body.epilogue-scene-active .rest-btn,
 body.epilogue-scene-active .right-hud-stack,
 body.epilogue-scene-active .touch-controls {
