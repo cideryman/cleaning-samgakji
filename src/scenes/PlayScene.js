@@ -26,6 +26,7 @@ import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
 import NextGoalSystem from "../systems/NextGoalSystem.js";
 import NpcMemorySystem from "../systems/NpcMemorySystem.js";
 import NeighborhoodProgressSystem from "../systems/NeighborhoodProgressSystem.js";
+import SamgakjiProgressSystem from "../systems/SamgakjiProgressSystem.js";
 import TiledMapSystem from "../systems/TiledMapSystem.js";
 import PathfindingSystem from "../systems/PathfindingSystem.js";
 import UIManager from "../systems/UIManager.js";
@@ -105,6 +106,7 @@ export default class PlayScene extends Phaser.Scene {
     this.nextGoalSystem = null;
     this.npcMemorySystem = null;
     this.neighborhoodProgressSystem = null;
+    this.samgakjiProgressSystem = null;
     this.lastDirection = new Phaser.Math.Vector2(1, 0);
     this.joystickVector = new Phaser.Math.Vector2(0, 0);
     this.audioContext = null;
@@ -153,6 +155,7 @@ export default class PlayScene extends Phaser.Scene {
     this.nextGoalSystem = new NextGoalSystem(this);
     this.npcMemorySystem = new NpcMemorySystem(this);
     this.neighborhoodProgressSystem = new NeighborhoodProgressSystem(this);
+    this.samgakjiProgressSystem = new SamgakjiProgressSystem(this);
     this.dialogueManager.addActionHandlers({
       START_CLOTHES_SHOP: () => this.startClothesShoppingQuest(),
       DECLINE_CLOTHES_SHOP: () => this.declineClothesShoppingQuest(),
@@ -207,6 +210,7 @@ export default class PlayScene extends Phaser.Scene {
     });
 
     this.createMap();
+    this.samgakjiProgressSystem?.create();
     this.neighborhoodProgressSystem?.create();
     this.travelEndingSystem?.createPermanentBusStopObjects?.();
     this.createSunisuniAnimations();
@@ -233,6 +237,7 @@ export default class PlayScene extends Phaser.Scene {
     };
     this.pathfindingSystem?.create();
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
+    this.samgakjiProgressSystem?.refresh({ silent: true });
     this.neighborhoodProgressSystem?.refresh({ silent: true });
     if (this.packingQuestState === "traveling_home" || this.packingQuestState === "ending_complete") {
       document.body.classList.add("epilogue-scene-active");

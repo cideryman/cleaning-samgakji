@@ -110,6 +110,11 @@ export function createInitialGameState() {
         stage4: false,
       },
     },
+    samgakjiProgress: {
+      currentLevel: 1,
+      lastAnnouncedLevel: 1,
+      unlockedLevels: [1],
+    },
     tutorialState: "intro",
     currentChapter: 1,
     isChapterComplete: false,

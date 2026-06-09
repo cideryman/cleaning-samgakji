@@ -4,6 +4,10 @@ import {
   PackingQuestState,
   SunisuniQuestState,
 } from "../config/QuestStates.js";
+import {
+  DEFAULT_SAMGAKJI_PROGRESS_STATE,
+  normalizeSamgakjiProgressState,
+} from "../config/SamgakjiProgressData.js";
 
 const PROFILE_KEY = "samgakji_save_profile";
 const PROFILE_VERSION = 2;
@@ -28,6 +32,7 @@ const DEFAULT_NEIGHBORHOOD_BLOOM = {
     stage4: false,
   },
 };
+const DEFAULT_SAMGAKJI_PROGRESS = DEFAULT_SAMGAKJI_PROGRESS_STATE;
 
 export default class CheckpointStorage {
   // --- 1️⃣ 마스터 프로필 관리 API ---
@@ -177,6 +182,7 @@ export default class CheckpointStorage {
       drinkInventory: [],
       educationGuideSeen: this.normalizeEducationGuideSeen(),
       neighborhoodBloom: this.normalizeNeighborhoodBloom(),
+      samgakjiProgress: this.normalizeSamgakjiProgress(),
       quests: {
         canQuest: { isActive: false, isCompleted: false, current: 0 },
         recycleQuest: {
@@ -214,6 +220,7 @@ export default class CheckpointStorage {
       recyclingInventory: { ...(scene.recyclingInventory ?? { normal: 0, can: 0, plastic: 0 }) },
       educationGuideSeen: this.normalizeEducationGuideSeen(scene.educationGuideSeen),
       neighborhoodBloom: this.normalizeNeighborhoodBloom(scene.neighborhoodBloom),
+      samgakjiProgress: this.normalizeSamgakjiProgress(scene.samgakjiProgress, scene.totalCleanedCount ?? 0),
       flags: {
         hasBroomUpgrade: Boolean(scene.hasBroomUpgrade),
         hasDroppedBroomUpgrade: Boolean(scene.hasDroppedBroomUpgrade),
@@ -278,6 +285,7 @@ export default class CheckpointStorage {
     scene.recyclingInventory = { normal: 0, can: 0, plastic: 0, ...(data.recyclingInventory ?? {}) };
     scene.educationGuideSeen = this.normalizeEducationGuideSeen(data.educationGuideSeen);
     scene.neighborhoodBloom = this.normalizeNeighborhoodBloom(data.neighborhoodBloom);
+    scene.samgakjiProgress = this.normalizeSamgakjiProgress(data.samgakjiProgress, scene.totalCleanedCount);
 
     const flags = data.flags ?? {};
     scene.hasBroomUpgrade = Boolean(flags.hasBroomUpgrade);
@@ -370,6 +378,16 @@ export default class CheckpointStorage {
       stage: Math.max(0, Math.min(4, Number(safeBloom.stage) || 0)),
       unlockedStages: Object.assign({}, DEFAULT_NEIGHBORHOOD_BLOOM.unlockedStages, safeUnlockedStages),
     };
+  }
+
+  static normalizeSamgakjiProgress(loadedProgress = {}, totalCleanedCount = 0) {
+    const safeProgress = loadedProgress && typeof loadedProgress === "object" && !Array.isArray(loadedProgress)
+      ? loadedProgress
+      : {};
+    return normalizeSamgakjiProgressState(
+      Object.assign({}, DEFAULT_SAMGAKJI_PROGRESS, safeProgress),
+      totalCleanedCount,
+    );
   }
 
   static applyQuestData(scene, quests) {
