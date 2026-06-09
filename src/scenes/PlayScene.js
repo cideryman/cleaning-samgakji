@@ -1610,6 +1610,48 @@ export default class PlayScene extends Phaser.Scene {
     ]);
   }
 
+  buildNpcEventRoute(start, target) {
+    const path = this.pathfindingSystem?.findPath?.(start.x, start.y, target.x, target.y);
+    if (Array.isArray(path) && path.length > 1) {
+      const route = this.simplifyNpcPath(path.map((point) => ({ x: point.x, y: point.y })), start);
+      if (route.length > 0) return route;
+    }
+
+    return this.buildNpcRouteThroughCrosswalk(start, target);
+  }
+
+  simplifyNpcPath(path, start) {
+    if (!Array.isArray(path) || path.length === 0) return [];
+
+    const route = [];
+    let previous = start;
+    let previousDirection = null;
+
+    path.forEach((point, index) => {
+      if (Phaser.Math.Distance.Between(previous.x, previous.y, point.x, point.y) <= 6) return;
+
+      const direction = {
+        x: Math.sign(Math.round(point.x - previous.x)),
+        y: Math.sign(Math.round(point.y - previous.y)),
+      };
+      const isLast = index === path.length - 1;
+      const continuesSameDirection = previousDirection
+        && direction.x === previousDirection.x
+        && direction.y === previousDirection.y;
+
+      if (continuesSameDirection && !isLast && route.length > 0) {
+        route[route.length - 1] = point;
+      } else {
+        route.push(point);
+      }
+
+      previous = point;
+      previousDirection = direction;
+    });
+
+    return route;
+  }
+
   walkNpcToTarget(sprite, npcKey, target, { speed = 105, onComplete = null } = {}) {
     if (!sprite?.active || !target) {
       onComplete?.();
@@ -1622,7 +1664,7 @@ export default class PlayScene extends Phaser.Scene {
     }
     this.tweens.killTweensOf(sprite);
 
-    const route = this.buildNpcRouteThroughCrosswalk({ x: sprite.x, y: sprite.y }, target)
+    const route = this.buildNpcEventRoute({ x: sprite.x, y: sprite.y }, target)
       .filter((point) => Phaser.Math.Distance.Between(sprite.x, sprite.y, point.x, point.y) > 6);
     const walkNext = (index = 0) => {
       const point = route[index];

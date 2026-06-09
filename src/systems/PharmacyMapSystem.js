@@ -258,6 +258,33 @@ export default class PharmacyMapSystem {
       npc.clearTint();
       this.startCounterDialogueFromPharmacistTap();
     });
+    this.addPharmacistTapZone(npc);
+  }
+
+  addPharmacistTapZone(npc) {
+    const bounds = npc.getBounds();
+    const zone = this.scene.add.zone(
+      bounds.centerX,
+      bounds.centerY,
+      Math.max(bounds.width + 28 * this.layout.scale, 76 * this.layout.scale),
+      Math.max(bounds.height + 34 * this.layout.scale, 112 * this.layout.scale),
+    );
+    zone.setScrollFactor(0);
+    zone.setDepth(Math.max(npc.depth + 0.02, 68));
+    zone.setInteractive({ useHandCursor: true });
+    zone.on("pointerover", () => {
+      if (!this.scene.isInDialogue && npc.active) npc.setTint(0xffeb3b);
+    });
+    zone.on("pointerout", () => {
+      if (npc.active) npc.clearTint();
+    });
+    zone.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault?.();
+      pointer.event?.stopPropagation?.();
+      if (npc.active) npc.clearTint();
+      this.startCounterDialogueFromPharmacistTap();
+    });
+    this.group?.add(zone);
   }
 
   addInteriorPlayer() {

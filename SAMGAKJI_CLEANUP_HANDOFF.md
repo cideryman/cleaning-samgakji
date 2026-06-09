@@ -68,6 +68,11 @@
   - A green circular exit marker is placed in the lower-right corner of the pharmacy interior. Click/touch it to leave.
   - After receiving the medicine bag, Haenaem and Sunisuni walk to the exit marker before the world quest-complete dialogue resumes.
   - `PharmacyMapSystem` now owns pharmacy-only player movement, companion placement, pharmacist click/touch interaction, exit marker handling, and transfer animation.
+- NPC event movement naturalization phase 1:
+  - `PlayScene.walkNpcToTarget()` now asks `PathfindingSystem.findPath()` for an A* route before falling back to the older crosswalk waypoint route.
+  - This affects existing scripted NPC movement that already uses the shared helper, including Yebi recycle demonstrations, Jjook returning home, and Sunisuni returning to her bench/start point.
+  - The route is simplified before tweening so NPCs do not receive every grid cell as a separate visual stop.
+  - Remaining work is to migrate any custom per-frame follower/escort logic that still moves directly toward targets without using this shared route.
 
 ## Tiled 편집 규칙
 
@@ -80,13 +85,6 @@
 
 ## 현재 남은 문제
 
-Pharmacy touch bug:
-   - Reported issue: touching/clicking the pharmacist in the pharmacy interior does not start dialogue.
-   - Intended rule: NPC dialogue must remain click/touch-only, not Space-based.
-   - Suspected causes: map-wide input zone depth intercepting pointer events, pharmacist interactive rectangle not matching scaled display size, or interior map depth/input order blocking the pharmacist sprite.
-   - Check `src/systems/PharmacyMapSystem.js`: pharmacist `setInteractive`, pointer event order, mapZone depth, and whether mapZone pointer handling catches taps before the pharmacist.
-   - Do not reintroduce floating "Space / touch" prompt text as a workaround.
-
 0. Neighborhood/NPC memory dialogue expansion
    - User requested this as a later task, not for immediate implementation.
    - Current random speech can already prefer `NpcMemorySystem`.
@@ -95,16 +93,21 @@ Pharmacy touch bug:
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.
 
-1. 에필로그 엄마 전화 후 검은 화면 유지
-   - 아직 해결되지 않았습니다.
-   - 원래 흐름은 엄마 전화 후 최종 엔딩 이미지로 넘어가고, Space/터치 입력 시 시작 화면으로 돌아가는 구조입니다.
-   - 의심 지점: fade out 또는 엔딩 이미지 로딩/전환 순서.
-   - 급하지 않으면 마지막 엔딩 장면이므로 우선순위를 낮춥니다. 필요하면 fade를 제거하는 방식도 검토합니다.
+1. 에필로그 엄마 전화 후 검은 화면 유지 - mitigation applied, needs manual verification
+   - Camera fade reset and UTF-8 fallback text were added in `TravelEndingSystem.showChapterOneEndingScene()`.
+   - Final ending return input is now click/touch-only.
+   - Verify the full mother-phone-to-ending flow on PC and mobile before marking fully resolved.
 
-2. 상점 컷신의 맵 전환
-   - 병원/약국/옷가게는 아직 완전한 내부 이동 맵이 아닙니다.
-   - 약국은 첫 레퍼런스로 Tiled 맵 렌더링이 들어갔습니다.
-   - 장기적으로는 `assets/maps/interiors/pharmacy-map.json`, `hospital-map.json`, `clothing-store-map.json`처럼 상점별 내부 맵을 두고 `player_start`, `exit`, `counter`, `npc_chemist` 같은 object point를 쓰는 방식을 추천합니다.
+2. NPC event movement naturalization
+   - Phase 1 is applied for movement that already uses `PlayScene.walkNpcToTarget()`.
+   - Some follower/escort movement may still appear to slide, jaywalk, or ignore obstacles because it uses direct per-frame movement instead of the shared route helper.
+   - Next safe step: inspect Jjook/Sunisuni follower and bus-stop escort movement, then move only the scripted destination-based parts onto `walkNpcToTarget()` or a small NPC route system.
+   - Do not solve this by teleporting NPCs unless the event explicitly needs a scene cut.
+
+3. Store interior map conversion
+   - Hospital/pharmacy/clothing shop are not all full interior movement maps yet.
+   - Pharmacy is the first reference implementation.
+   - Long-term recommendation: use separate interior maps with object points like `player_start`, `exit`, `counter`, and `npc_chemist`.
 
 3. 모바일 로딩 속도
    - 이미지/BGM 에셋이 많아졌습니다.

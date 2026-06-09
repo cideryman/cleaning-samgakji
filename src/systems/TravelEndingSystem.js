@@ -441,6 +441,9 @@ export default class TravelEndingSystem {
     scene.playerController?.stopWalkAnimation?.();
 
     const showEnding = (isReady = true) => {
+      scene.cameras.main.fadeEffect?.reset?.();
+      scene.cameras.main.setAlpha?.(1);
+
       if (isReady && scene.textures.exists("ending_chapter1_final")) {
         scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
       } else {
@@ -451,8 +454,6 @@ export default class TravelEndingSystem {
         this.showFinalEndingFallback();
       }
 
-      scene.cameras.main.fadeIn(850, 0, 0, 0);
-      
       const addPromptWhenReady = () => {
         if (scene.interiorSceneGroup && scene.interiorSceneType === "ending") {
           const viewportWidth = Math.max(768, scene.scale.width || 768);
@@ -463,9 +464,9 @@ export default class TravelEndingSystem {
           promptBack.setScrollFactor(0);
           promptBack.setDepth(74);
           promptBack.setStrokeStyle(3, 0xf7d96f, 0.9);
-          const prompt = scene.add.text(centerX, promptY, "스페이스 또는 화면 터치로 시작화면으로", {
+          const prompt = scene.add.text(centerX, promptY, "화면을 터치하거나 클릭하면 시작 화면으로 돌아가요", {
             fontFamily: "Arial",
-            fontSize: "22px",
+            fontSize: "20px",
             color: "#fff3d0",
             fontStyle: "bold",
             align: "center",
@@ -474,7 +475,6 @@ export default class TravelEndingSystem {
           prompt.setDepth(75);
           scene.interiorSceneGroup.addMultiple([promptBack, prompt]);
 
-          scene.input.keyboard.once("keydown-SPACE", () => this.returnToStartScreenFromEnding());
           scene.input.once("pointerdown", () => this.returnToStartScreenFromEnding());
         } else {
           scene.time.delayedCall(100, addPromptWhenReady);
