@@ -1,12 +1,20 @@
 export const SAMGAKJI_PROGRESS_LEVELS = [
   { level: 1, name: "잠든 삼각지", requiredCleaned: 0 },
-  { level: 2, name: "새싹 돋는 삼각지", requiredCleaned: 50 },
-  { level: 3, name: "꽃피는 삼각지", requiredCleaned: 150 },
-  { level: 4, name: "향기로운 삼각지", requiredCleaned: 350 },
-  { level: 5, name: "빛나는 삼각지", requiredCleaned: 700 },
-  { level: 6, name: "쉬어가는 삼각지", requiredCleaned: 1200 },
-  { level: 7, name: "사람들이 찾는 삼각지", requiredCleaned: 1800 },
-  { level: 8, name: "사랑받는 삼각지", requiredCleaned: 2600 },
+  { level: 2, name: "잠든 삼각지", requiredCleaned: 50 },
+  { level: 3, name: "새싹 돋는 삼각지", requiredCleaned: 120 },
+  { level: 4, name: "새싹 돋는 삼각지", requiredCleaned: 220 },
+  { level: 5, name: "꽃피는 삼각지", requiredCleaned: 350 },
+  { level: 6, name: "꽃피는 삼각지", requiredCleaned: 520 },
+  { level: 7, name: "향기로운 삼각지", requiredCleaned: 700 },
+  { level: 8, name: "향기로운 삼각지", requiredCleaned: 950 },
+  { level: 9, name: "빛나는 삼각지", requiredCleaned: 1200 },
+  { level: 10, name: "빛나는 삼각지", requiredCleaned: 1500 },
+  { level: 11, name: "쉬어가는 삼각지", requiredCleaned: 1800 },
+  { level: 12, name: "쉬어가는 삼각지", requiredCleaned: 2200 },
+  { level: 13, name: "사람들이 찾는 삼각지", requiredCleaned: 2600 },
+  { level: 14, name: "사람들이 찾는 삼각지", requiredCleaned: 3100 },
+  { level: 15, name: "사랑받는 삼각지", requiredCleaned: 3700 },
+  { level: 16, name: "사랑받는 삼각지", requiredCleaned: 4500 },
 ];
 
 export const DEFAULT_SAMGAKJI_PROGRESS_STATE = {

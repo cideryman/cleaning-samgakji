@@ -1,9 +1,3 @@
-import {
-  JjookQuestState,
-  RecycleQuestState,
-  SunisuniQuestState,
-} from "../config/QuestStates.js";
-
 const DEFAULT_BLOOM_STATE = {
   stage: 0,
   unlockedStages: {
@@ -118,13 +112,6 @@ const STAGE_MESSAGES = {
   4: "삼각지가 꽃과 나비로 더 밝아지고 있어요.",
 };
 
-const STAGE_REQUIREMENTS = {
-  stage1Cleaned: 60,
-  stage2Cleaned: 150,
-  stage3Cleaned: 320,
-  stage4Cleaned: 600,
-};
-
 export default class NeighborhoodProgressSystem {
   constructor(scene) {
     this.scene = scene;
@@ -201,17 +188,11 @@ export default class NeighborhoodProgressSystem {
   }
 
   getEligibleStage() {
-    const scene = this.scene;
-    const cleaned = scene.totalCleanedCount ?? 0;
-    const isRecycleCompleted = scene.yebiQuestSystem?.recycleQuest?.isCompleted
-      || scene.yebiQuestSystem?.recycleQuest?.state === RecycleQuestState.COMPLETED;
-    const isJjookCompleted = scene.jjookQuestState === JjookQuestState.COMPLETED;
-    const isSunisuniCompleted = scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE;
-
-    if (cleaned >= STAGE_REQUIREMENTS.stage4Cleaned && isSunisuniCompleted) return 4;
-    if (cleaned >= STAGE_REQUIREMENTS.stage3Cleaned && isJjookCompleted) return 3;
-    if (cleaned >= STAGE_REQUIREMENTS.stage2Cleaned && isRecycleCompleted) return 2;
-    if (cleaned >= STAGE_REQUIREMENTS.stage1Cleaned) return 1;
+    const level = this.getVisualLevel();
+    if (level >= 9) return 4;
+    if (level >= 7) return 3;
+    if (level >= 5) return 2;
+    if (level >= 3) return 1;
     return 0;
   }
 

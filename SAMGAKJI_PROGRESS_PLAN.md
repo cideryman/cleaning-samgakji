@@ -1,7 +1,7 @@
 # 삼각지 발전도 시스템
 
 상태: 기획 확정
-구현 단계: 2단계 구현 완료
+구현 단계: 3단계 구현 완료
 
 ## 최종 목표
 
@@ -15,13 +15,24 @@
 | 레벨 | 이름 | 청소 누적 |
 |---|---|---:|
 | Lv.1 | 잠든 삼각지 | 0 |
-| Lv.2 | 새싹 돋는 삼각지 | 50 |
-| Lv.3 | 꽃피는 삼각지 | 150 |
-| Lv.4 | 향기로운 삼각지 | 350 |
-| Lv.5 | 빛나는 삼각지 | 700 |
-| Lv.6 | 쉬어가는 삼각지 | 1200 |
-| Lv.7 | 사람들이 찾는 삼각지 | 1800 |
-| Lv.8 | 사랑받는 삼각지 | 2600 |
+| Lv.2 | 잠든 삼각지 | 50 |
+| Lv.3 | 새싹 돋는 삼각지 | 120 |
+| Lv.4 | 새싹 돋는 삼각지 | 220 |
+| Lv.5 | 꽃피는 삼각지 | 350 |
+| Lv.6 | 꽃피는 삼각지 | 520 |
+| Lv.7 | 향기로운 삼각지 | 700 |
+| Lv.8 | 향기로운 삼각지 | 950 |
+| Lv.9 | 빛나는 삼각지 | 1200 |
+| Lv.10 | 빛나는 삼각지 | 1500 |
+| Lv.11 | 쉬어가는 삼각지 | 1800 |
+| Lv.12 | 쉬어가는 삼각지 | 2200 |
+| Lv.13 | 사람들이 찾는 삼각지 | 2600 |
+| Lv.14 | 사람들이 찾는 삼각지 | 3100 |
+| Lv.15 | 사랑받는 삼각지 | 3700 |
+| Lv.16 | 사랑받는 삼각지 | 4500 |
+
+레벨 이름은 2레벨 단위로 유지한다.
+예: Lv.1~2는 `잠든 삼각지`, Lv.3~4는 `새싹 돋는 삼각지`.
 
 ## 구현 단계
 
@@ -58,7 +69,68 @@ HUD 표시
 - 가능한 경우 기존 나무/벤치 변화와 연결
 
 상태:
-[ ] 미구현
+[x] 구현
+
+세부 기록:
+- 화단 Stage 0~4는 16레벨 확장에 맞춰 2레벨 단위 흐름으로 연결한다.
+- Lv.1~2: 화단 Stage 0
+- Lv.3~4: 화단 Stage 1
+- Lv.5~6: 화단 Stage 2
+- Lv.7~8: 화단 Stage 3 및 나비 등장
+- Lv.9 이상: 화단 Stage 4 및 나비 증가
+- 기존 neighborhoodBloom 저장값은 하위 호환용으로 유지한다.
+- 기존 Phase 3A의 더러운 오브젝트/회복 오브젝트는 SamgakjiProgressSystem 레벨을 계속 사용한다.
+
+## Phase 4 Level-Up Popup Asset Preparation List
+
+Purpose: level-up feedback for Samgakji itself, not Haenaem.
+
+Recommended folder:
+- `assets/progress/level-up/`
+
+Required assets:
+1. Level-up badge or emblem
+- Format: transparent PNG.
+- Recommended filename pattern:
+  - `samgakji-level-badge-01.png`
+  - `samgakji-level-badge-02.png`
+  - ...
+  - `samgakji-level-badge-16.png`
+- Recommended canvas size: 256 x 256.
+- Safe visual area: keep the main icon within the central 220 x 220 area.
+- Style: simple, bright, readable at mobile size.
+- Text inside image: avoid tiny Korean text. The game UI will render the level/name as HTML text.
+- If creating 16 badges is too much, prepare 8 mood badges instead:
+  - `samgakji-mood-badge-01.png` for Lv.1~2
+  - `samgakji-mood-badge-02.png` for Lv.3~4
+  - ...
+  - `samgakji-mood-badge-08.png` for Lv.15~16
+
+2. Popup sparkle effect, optional
+- Format: transparent PNG spritesheet.
+- Recommended filename: `level-up-sparkle.png`.
+- Frame size: 64 x 64.
+- Frame count: 4 or 6 horizontal frames.
+- Total size examples:
+  - 4 frames: 256 x 64
+  - 6 frames: 384 x 64
+- Use only if it stays light for mobile. CSS animation or Phaser particles can be avoided.
+
+3. Background ribbon or panel decoration, optional
+- Format: transparent PNG.
+- Recommended filename: `level-up-ribbon.png`.
+- Recommended size: 512 x 160.
+- This should be decorative only. Text will be rendered by HTML for accessibility and easy editing.
+
+Popup UI rules:
+- The popup must be an HTML overlay above the game stage.
+- It must block world input while visible.
+- It must include a clear `확인` button.
+- It must show:
+  - `삼각지 Lv.N`
+  - current level name, such as `꽃피는 삼각지`
+  - one short message, such as `삼각지가 조금 더 밝아졌어요.`
+- If no badge asset exists, use text/emoji fallback first.
 
 ### Phase 4
 
