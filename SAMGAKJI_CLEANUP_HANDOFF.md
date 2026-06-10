@@ -198,3 +198,29 @@
 - Samgakji level/progress HUD now lives inside the main top money/trash HUD as a compact status block.
 - Design rule going forward: top HUD should show persistent state only (money, carried trash, Samgakji level/progress). Quest prompts should use contextual tools such as NPC question marks, route arrows, and short toasts only when needed.
 - Recheck mobile landscape after HUD changes, especially overlap with can quest/recycle quest gauges and right-side buttons.
+
+## 2026-06-10 Samgakji Progress Visual Phase 3A
+
+- Implemented the first no-new-sprite pass in `src/systems/NeighborhoodProgressSystem.js`.
+- The existing flowerbed/butterfly system remains intact and still uses its quest-gated bloom stages.
+- New static progress props now read the current Samgakji level from `SamgakjiProgressSystem`.
+- Temporary dirty/neglect spots are generated from Phaser shapes, so no new image assets are required yet.
+- Existing assets are reused for recovered props: `sunisuni_bench`, `sunisuni_tree`, and `street_lamp`.
+- Progress prop keys such as `progress_dirty_planter_west`, `progress_bench_recovered`, and `progress_tree_recovered` can be added as Tiled anchors later; Tiled positions will override fallback coordinates.
+- No collision was added to these visual props. Keep progress dirt visual-only unless a later design deliberately needs blocking.
+- Documented the asset replacement path in `SAMGAKJI_PROGRESS_PLAN.md`: replace generated dirt with `assets/progress/dirty/*.png`, then replace full-grown tree fallback with a tree-growth spritesheet when ready.
+
+## 2026-06-10 Dirty Prop Asset Integration
+
+- Imported six user-provided dirty object PNGs from `assets/지저분한 오브젝트/`.
+- Renamed them to English filenames and moved them to `assets/progress/dirty/`.
+- Removed the now-empty temporary Korean source folder.
+- Registered the six textures in `src/config/AssetsData.js`:
+  - `dirty_trash_bags`
+  - `dirty_cardboard_pile`
+  - `dirty_soil_rubble`
+  - `dirty_concrete_scrap`
+  - `dirty_spilled_bin`
+  - `dirty_paper_rubble`
+- Updated `NeighborhoodProgressSystem.js` so Samgakji progress dirty spots use these real PNGs first, falling back to generated Phaser shapes only if a texture is missing.
+- Current dirty progress props remain visual-only and collision-free.

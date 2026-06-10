@@ -84,3 +84,151 @@ HUD 표시
 기존 “다음 할 일” HUD는 당장 유지한다.
 삼각지 발전도는 장기 동기이고, 다음 할 일은 퀘스트 길잡이라 역할이 다르다.
 Phase 2에서 레벨 HUD가 들어오면 다음 할 일 HUD를 더 작게 만들거나 설정에서 숨기는 방향을 검토한다.
+
+
+## Phase 3 Asset Preparation List
+
+Goal: keep the normal cleanable trash system as-is, and add non-cleanable neighborhood dirt/decay objects that disappear as Samgakji levels up. Recovered objects such as benches, trees, flowerbeds, butterflies, and visitors appear in their place.
+
+### Existing Assets Already Available
+
+- Flowerbed growth spritesheets: `assets/sprites/flowerbed_growth.png`, `assets/sprites/flowerbed_growth2.png`
+  - Current code expects frame size 160 x 96.
+- Butterfly spritesheet: `assets/sprites/butterfly_idle.png`
+  - Current code expects frame size 64 x 64.
+- Bench prop: `assets/props/sunisuni-bench.png`
+  - Static transparent PNG. Recommended displayed size around 104 x 72 world pixels unless adjusted in Tiled.
+- Tree prop: `assets/props/sunisuni-tree.png`
+  - Static transparent PNG. Can remain as fallback/full-grown tree.
+
+### Required New Assets
+
+1. Dirty neighborhood objects, static props
+- Purpose: visual dirt/neglect that Haenaem cannot directly sweep. These disappear when Samgakji level rises.
+- Recommended folder: `assets/progress/dirty/`
+- Recommended format: transparent PNG, English filenames.
+- Recommended size per object: 128 x 96 or 160 x 96 canvas.
+- Visual anchor: bottom-centered, no empty transparent margin below the object.
+- Suggested variants:
+  - `dirty-cardboard-pile.png`
+  - `dirty-weed-patch.png`
+  - `dirty-dust-pile.png`
+  - `dirty-broken-planter.png`
+  - `dirty-old-bench-spot.png`
+  - `dirty-construction-scrap.png`
+- Collision: usually none. These should feel like visual decay, not movement blockers, unless a specific object is intentionally large.
+
+2. Tree growth spritesheet
+- Purpose: tree grows gradually as levels rise.
+- Recommended folder: `assets/progress/nature/`
+- Recommended filename: `tree-growth.png`
+- Recommended frame size: 128 x 128.
+- Recommended frames: 4 horizontal frames.
+  - frame 0: small sprout or sapling
+  - frame 1: young tree
+  - frame 2: medium tree
+  - frame 3: full tree
+- Total image size if horizontal: 512 x 128.
+- Visual anchor: bottom-centered, trunk/base touches bottom edge, no lower transparent padding.
+- If you want a larger full tree, use frame size 160 x 160 instead, but keep all frames the same size.
+
+3. Visitor/person sprites
+- Purpose: later levels make Samgakji feel alive. These can appear at Lv.6 or Lv.7+.
+- Recommended folder: `assets/progress/people/`
+- Recommended standard: match existing NPC movement sheets.
+- Frame size: 64 x 96.
+- Direction files: one spritesheet per direction, 3 frames each.
+  - `visitor-01-walk-down.png` size 192 x 96
+  - `visitor-01-walk-up.png` size 192 x 96
+  - `visitor-01-walk-left.png` size 192 x 96
+  - `visitor-01-walk-right.png` size 192 x 96
+- Frame order: 1 left foot, 2 neutral, 3 right foot, same as Haenaem/NPC standard.
+- Start with 1 visitor set. Add 2-3 variants later only if needed.
+
+### Optional New Assets
+
+- Clean/recovered ground patches: transparent PNG, 128 x 96 or 160 x 96.
+  - Use if dirty objects disappear and the original map tile underneath does not look clean enough.
+- Bench installation sparkle or dust puff: spritesheet 64 x 64, 4 frames.
+  - Nice for Phase 4 level-up polish, not required for Phase 3.
+
+### Static Dirty Props vs Animated/Spritesheet Dirty Props
+
+Recommendation: use 1-frame static PNGs for dirty neighborhood objects at first.
+
+Reason:
+- The player does not directly interact with these objects.
+- They are state markers, not active gameplay objects.
+- Static PNGs are easier to place in Tiled, easier to swap/hide by level, and cheaper on mobile/PWA.
+- Overall quality will come more from strong shape, good placement, and gradual disappearance than from animation.
+
+Use spritesheets only when the object itself transforms in place and the transformation matters visually. Best candidates:
+- tree growth
+- flowerbed growth
+- butterflies/visitors
+- optional sparkle/dust effect
+
+For dirty objects, the high-quality version should still usually be static: make 4-6 polished variants instead of animating one dirty pile.
+
+### Suggested Level Visual Flow
+
+- Lv.1: many dirty props visible; few or no recovery props.
+- Lv.2: some dirty props disappear; small sprouts/early flowerbed frames appear.
+- Lv.3: more dirty props disappear; flowerbeds become clearer.
+- Lv.4: tree growth begins and butterflies can start appearing.
+- Lv.5: benches appear in cleaned spots; larger trees/cleaner park feel.
+- Lv.6+: visitors or resting people appear; Samgakji feels used and cared for.
+
+### Implementation Notes For Later
+
+- Add Tiled object layer anchors for progress props, for example `progress_objects`.
+- Each object should include properties like `texture`, `showUntilLevel`, `showFromLevel`, and optional `frameByLevel`.
+- Keep collision separate. Do not let visual dirty props block the player unless deliberately designed.
+
+## 2026-06-10 Phase 3A: No-New-Sprite Implementation
+
+Status: implemented as a safe first pass.
+
+What changed:
+- `NeighborhoodProgressSystem.js` now creates extra progress props without requiring new image assets.
+- Temporary dirty/neglect props are generated with Phaser shapes, so the feature can be tested before final sprites are ready.
+- Existing assets are reused for recovered props:
+  - `sunisuni_bench`
+  - `sunisuni_tree`
+  - `street_lamp`
+- These props read the current Samgakji level from `SamgakjiProgressSystem`, while the existing flowerbed/butterfly flow keeps its older quest-gated stage logic.
+- Every prop has a stable key such as `progress_dirty_planter_west`, `progress_bench_recovered`, or `progress_tree_recovered`.
+- If a Tiled point/object with the same key is added later, that Tiled position will override the fallback position.
+
+Visual behavior:
+- Low levels show simple dirty patches.
+- As the Samgakji level rises, dirty patches disappear.
+- Existing bench/tree/lamp props appear at later levels as a temporary recovery visualization.
+- No collision is attached to these temporary progress props.
+
+Replacement path when final assets are ready:
+- Replace the generated dirty patches with transparent PNGs under `assets/progress/dirty/`.
+- Keep the same object keys so code changes stay small.
+- Add Tiled anchors for exact placement before tuning code fallback coordinates.
+- Tree growth should later replace the temporary full-grown `sunisuni_tree` fallback with a level-based spritesheet.
+
+## 2026-06-10 Dirty Prop Asset Integration
+
+Status: implemented.
+
+Imported assets:
+- Source folder removed after import: `assets/지저분한 오브젝트/`
+- Destination folder: `assets/progress/dirty/`
+- Registered Phaser texture keys:
+  - `dirty_trash_bags`: `assets/progress/dirty/dirty-trash-bags.png`
+  - `dirty_cardboard_pile`: `assets/progress/dirty/dirty-cardboard-pile.png`
+  - `dirty_soil_rubble`: `assets/progress/dirty/dirty-soil-rubble.png`
+  - `dirty_concrete_scrap`: `assets/progress/dirty/dirty-concrete-scrap.png`
+  - `dirty_spilled_bin`: `assets/progress/dirty/dirty-spilled-bin.png`
+  - `dirty_paper_rubble`: `assets/progress/dirty/dirty-paper-rubble.png`
+
+Implementation notes:
+- `NeighborhoodProgressSystem.js` now uses these real dirty PNGs first.
+- The older generated Phaser-shape dirty patch remains only as a fallback if a texture is missing.
+- All imported dirty images are 160 x 96 transparent PNGs, matching the recommended static dirty prop size.
+- The props remain visual-only and do not add collision.

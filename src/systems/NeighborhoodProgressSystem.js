@@ -21,6 +21,88 @@ const FLOWERBED_ANCHORS = [
   { key: "flowerbed_4", fallback: { x: 1340, y: 720 }, texture: "flowerbed_growth2" },
 ];
 
+const STATIC_PROGRESS_PROPS = [
+  {
+    key: "progress_dirty_planter_west",
+    type: "dirty",
+    texture: "dirty_trash_bags",
+    fallback: { x: 500, y: 616 },
+    width: 132,
+    height: 79,
+    showUntilLevel: 2,
+  },
+  {
+    key: "progress_dirty_planter_east",
+    type: "dirty",
+    texture: "dirty_cardboard_pile",
+    fallback: { x: 1110, y: 402 },
+    width: 128,
+    height: 77,
+    showUntilLevel: 3,
+  },
+  {
+    key: "progress_dirty_bench_spot",
+    type: "dirty",
+    texture: "dirty_spilled_bin",
+    fallback: { x: 790, y: 682 },
+    width: 138,
+    height: 83,
+    showUntilLevel: 4,
+  },
+  {
+    key: "progress_dirty_tree_spot",
+    type: "dirty",
+    texture: "dirty_soil_rubble",
+    fallback: { x: 1280, y: 640 },
+    width: 126,
+    height: 76,
+    showUntilLevel: 5,
+  },
+  {
+    key: "progress_dirty_concrete_scrap",
+    type: "dirty",
+    texture: "dirty_concrete_scrap",
+    fallback: { x: 612, y: 472 },
+    width: 134,
+    height: 80,
+    showUntilLevel: 3,
+  },
+  {
+    key: "progress_dirty_paper_rubble",
+    type: "dirty",
+    texture: "dirty_paper_rubble",
+    fallback: { x: 1440, y: 500 },
+    width: 132,
+    height: 79,
+    showUntilLevel: 4,
+  },
+  {
+    key: "progress_bench_recovered",
+    texture: "sunisuni_bench",
+    fallback: { x: 790, y: 670 },
+    width: 116,
+    height: 76,
+    showFromLevel: 5,
+  },
+  {
+    key: "progress_tree_recovered",
+    texture: "sunisuni_tree",
+    fallback: { x: 1280, y: 640 },
+    width: 148,
+    height: 126,
+    showFromLevel: 6,
+    depthOffset: -0.12,
+  },
+  {
+    key: "progress_lamp_recovered",
+    texture: "street_lamp",
+    fallback: { x: 965, y: 500 },
+    width: 42,
+    height: 104,
+    showFromLevel: 7,
+  },
+];
+
 const STAGE_FRAMES = [
   [0, 0, 0, 0],
   [1, 0, 0, 0],
@@ -48,7 +130,9 @@ export default class NeighborhoodProgressSystem {
     this.scene = scene;
     this.flowerbeds = [];
     this.butterflies = [];
+    this.progressProps = [];
     this.lastEvaluatedStage = -1;
+    this.lastVisualLevel = -1;
   }
 
   static createDefaultState() {
@@ -76,12 +160,20 @@ export default class NeighborhoodProgressSystem {
   create() {
     this.scene.neighborhoodBloom = NeighborhoodProgressSystem.normalizeState(this.scene.neighborhoodBloom);
     this.createFlowerbeds();
+    this.createProgressProps();
     this.refresh({ silent: true });
   }
 
   update() {
     const nextStage = this.getEligibleStage();
-    if (nextStage === this.lastEvaluatedStage && nextStage === this.scene.neighborhoodBloom?.stage) return;
+    const nextVisualLevel = this.getVisualLevel();
+    if (
+      nextStage === this.lastEvaluatedStage
+      && nextStage === this.scene.neighborhoodBloom?.stage
+      && nextVisualLevel === this.lastVisualLevel
+    ) {
+      return;
+    }
     this.refresh();
   }
 
@@ -97,7 +189,9 @@ export default class NeighborhoodProgressSystem {
 
     this.scene.neighborhoodBloom = bloom;
     this.lastEvaluatedStage = nextStage;
+    this.lastVisualLevel = this.getVisualLevel();
     this.applyFlowerbedFrames(nextStage);
+    this.applyProgressPropVisibility(this.lastVisualLevel);
     this.syncButterflies(nextStage);
 
     if (didAdvance && !silent) {
@@ -119,6 +213,13 @@ export default class NeighborhoodProgressSystem {
     if (cleaned >= STAGE_REQUIREMENTS.stage2Cleaned && isRecycleCompleted) return 2;
     if (cleaned >= STAGE_REQUIREMENTS.stage1Cleaned) return 1;
     return 0;
+  }
+
+  getVisualLevel() {
+    const fromSystem = this.scene.samgakjiProgressSystem?.getCurrentLevel?.();
+    const fromState = this.scene.samgakjiProgress?.currentLevel;
+    const level = Number(fromSystem || fromState || 1);
+    return Phaser.Math.Clamp(Number.isFinite(level) ? level : 1, 1, 8);
   }
 
   createFlowerbeds() {
@@ -169,6 +270,67 @@ export default class NeighborhoodProgressSystem {
       setFrame: () => {},
       destroy: () => group.destroy(true),
     };
+  }
+
+  createProgressProps() {
+    this.destroyProgressProps();
+
+    STATIC_PROGRESS_PROPS.forEach((config) => {
+      const point = this.getProgressPropPoint(config);
+      const prop = config.type === "dirty"
+        ? this.createDirtyProgressProp(point.x, point.y, config)
+        : this.createTextureProgressProp(point.x, point.y, config);
+
+      if (!prop) return;
+      const depthY = point.y + (config.depthSortOffsetY ?? 0);
+      prop.setData?.("depthSortY", depthY);
+      prop.setData?.("neighborhoodDecoration", true);
+      prop.setData?.("progressConfig", config);
+      prop.setDepth?.(this.scene.getWorldDepth(depthY, config.depthOffset ?? -0.2));
+      prop.setName?.(config.key);
+      this.progressProps.push(prop);
+    });
+  }
+
+  getProgressPropPoint(config) {
+    return this.scene.getMapPoint?.(config.key, config.fallback) || config.fallback;
+  }
+
+  createTextureProgressProp(x, y, config) {
+    if (!config.texture || !this.scene.textures.exists(config.texture)) return null;
+    const prop = this.scene.add.image(x, y, config.texture);
+    prop.setOrigin(config.originX ?? 0.5, config.originY ?? 1);
+    prop.setDisplaySize(config.width, config.height);
+    return prop;
+  }
+
+  createDirtyProgressProp(x, y, config) {
+    return this.createTextureProgressProp(x, y, config)
+      || this.createFallbackDirtyProp(x, y, config);
+  }
+
+  createFallbackDirtyProp(x, y, config) {
+    const container = this.scene.add.container(x, y);
+    const width = config.width ?? 128;
+    const height = config.height ?? 44;
+    const base = this.scene.add.ellipse(0, -height * 0.35, width, height, 0x5f5547, 0.78);
+    const soil = this.scene.add.ellipse(-width * 0.18, -height * 0.42, width * 0.55, height * 0.52, 0x3e342c, 0.68);
+    const scrap = this.scene.add.rectangle(width * 0.18, -height * 0.58, width * 0.34, height * 0.18, 0x8a8274, 0.8);
+    const weed = this.scene.add.ellipse(width * 0.03, -height * 0.76, width * 0.18, height * 0.42, 0x4e6d3b, 0.75);
+    scrap.setAngle(-8);
+    weed.setAngle(18);
+    container.add([base, soil, scrap, weed]);
+    container.setSize(width, height);
+    return container;
+  }
+
+  applyProgressPropVisibility(level) {
+    this.progressProps.forEach((prop) => {
+      const config = prop.getData?.("progressConfig") || {};
+      const showFromLevel = config.showFromLevel ?? 1;
+      const showUntilLevel = config.showUntilLevel ?? 8;
+      prop.setVisible?.(level >= showFromLevel && level <= showUntilLevel);
+    });
   }
 
   applyFlowerbedFrames(stage) {
@@ -242,8 +404,14 @@ export default class NeighborhoodProgressSystem {
     this.flowerbeds = [];
   }
 
+  destroyProgressProps() {
+    this.progressProps.forEach((prop) => prop?.destroy?.());
+    this.progressProps = [];
+  }
+
   destroy() {
     this.destroyFlowerbeds();
+    this.destroyProgressProps();
     this.butterflies.forEach((butterfly) => {
       butterfly?.tween?.remove?.();
       butterfly?.sprite?.destroy?.();
