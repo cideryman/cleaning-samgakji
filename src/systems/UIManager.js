@@ -215,56 +215,6 @@ export default class UIManager {
     if (scene.samgakjiProgressFillEl) scene.samgakjiProgressFillEl.style.width = `${Math.round(levelInfo.progressRatio * 100)}%`;
   }
 
-  updateNextQuestHint() {
-    if (!this.nextQuestHintEl) return;
-
-    const hint = this.getNextQuestHint();
-    if (!hint) {
-      this.nextQuestHintEl.classList.add("is-hidden");
-      this.nextQuestHintEl.setAttribute("aria-hidden", "true");
-      this.nextQuestHintEl.textContent = "";
-      return;
-    }
-
-    this.nextQuestHintEl.textContent = hint;
-    this.nextQuestHintEl.classList.remove("is-hidden");
-    this.nextQuestHintEl.setAttribute("aria-hidden", "false");
-  }
-
-  getNextQuestHint() {
-    const scene = this.scene;
-    const money = scene.moneySystem?.money ?? 0;
-    const yebiQuestSystem = scene.yebiQuestSystem;
-    if (!yebiQuestSystem) return "";
-
-    const recycleState = yebiQuestSystem.getRecycleQuestState?.() ?? RecycleQuestState.LOCKED;
-    if (recycleState === RecycleQuestState.LOCKED && !scene.hasAnnouncedRecycleQuest) {
-      return this.formatQuestHint("분리수거", GAME_CONFIG.recycleQuestUnlockMoney, money);
-    }
-
-    if (recycleState === RecycleQuestState.COMPLETED && scene.jjookQuestState === JjookQuestState.LOCKED && !scene.hasAnnouncedJjookQuest) {
-      return this.formatQuestHint("쭉쭉이", GAME_CONFIG.jjookQuestUnlockMoney, money);
-    }
-
-    if (scene.jjookQuestState === JjookQuestState.COMPLETED && scene.sunisuniQuestState === SunisuniQuestState.LOCKED && !scene.hasAnnouncedSunisuniQuest) {
-      return this.formatQuestHint("병원", GAME_CONFIG.sunisuniQuestUnlockMoney, money);
-    }
-
-    if (scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE && scene.clothesQuestState === ClothesQuestState.LOCKED && !scene.hasAnnouncedClothesQuest) {
-      return this.formatQuestHint("여행 준비", GAME_CONFIG.clothesQuestUnlockMoney, money);
-    }
-
-    return "";
-  }
-
-  formatQuestHint(label, targetMoney, currentMoney) {
-    const remaining = Math.max(0, targetMoney - currentMoney);
-    if (remaining <= 0) {
-      return `다음: ${label} 가능`;
-    }
-    return `다음: ${label} ${targetMoney.toLocaleString()}원`;
-  }
-
   // --- 1️⃣ 캐릭터 머리 위 Floating Pop Text 렌더링 엔진 ---
   showFloatingPopText(target, text, isSpecial = false) {
     if (!target || !text) return;

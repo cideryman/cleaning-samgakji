@@ -188,3 +188,13 @@
   - `pharmacist_collision` for the pharmacist foot/body space
 - Interior map rule: every walkable-map NPC should have a nearby collision rectangle or a deliberate no-overlap zone in Tiled. Visual sprite placement alone does not block movement.
 - Keep dialogue interaction separate from collision: click/touch on the pharmacist still routes through `PharmacyMapSystem.startCounterDialogueFromPharmacistTap()`.
+
+
+## 2026-06-10 Top HUD And Next Goal Cleanup
+
+- Removed the fixed top HUD next-quest capsule because it looked like an action button and competed with the new Samgakji level system.
+- Deleted `src/systems/NextGoalSystem.js` and removed its PlayScene wiring.
+- Removed the old `#nextQuestHint` DOM node and stale `UIManager.updateNextQuestHint()` path.
+- Samgakji level/progress HUD now lives inside the main top money/trash HUD as a compact status block.
+- Design rule going forward: top HUD should show persistent state only (money, carried trash, Samgakji level/progress). Quest prompts should use contextual tools such as NPC question marks, route arrows, and short toasts only when needed.
+- Recheck mobile landscape after HUD changes, especially overlap with can quest/recycle quest gauges and right-side buttons.

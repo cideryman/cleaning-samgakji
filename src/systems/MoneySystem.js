@@ -26,7 +26,6 @@ export default class MoneySystem {
     if (this.uiElements.totalMoney) {
       this.uiElements.totalMoney.textContent = `${this.money.toLocaleString()}원`;
     }
-    this.scene.uiManager?.updateNextQuestHint?.();
   }
 
   processCanBonus(isCan) {

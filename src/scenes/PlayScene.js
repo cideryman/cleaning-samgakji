@@ -23,7 +23,6 @@ import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
-import NextGoalSystem from "../systems/NextGoalSystem.js";
 import NpcMemorySystem from "../systems/NpcMemorySystem.js";
 import NeighborhoodProgressSystem from "../systems/NeighborhoodProgressSystem.js";
 import SamgakjiProgressSystem from "../systems/SamgakjiProgressSystem.js";
@@ -103,7 +102,6 @@ export default class PlayScene extends Phaser.Scene {
     this.pharmacyMapSystem = null;
     this.consumableSystem = null;
     this.objectVisibilitySystem = null;
-    this.nextGoalSystem = null;
     this.npcMemorySystem = null;
     this.neighborhoodProgressSystem = null;
     this.samgakjiProgressSystem = null;
@@ -152,7 +150,6 @@ export default class PlayScene extends Phaser.Scene {
     this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
     this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
-    this.nextGoalSystem = new NextGoalSystem(this);
     this.npcMemorySystem = new NpcMemorySystem(this);
     this.neighborhoodProgressSystem = new NeighborhoodProgressSystem(this);
     this.samgakjiProgressSystem = new SamgakjiProgressSystem(this);
@@ -179,7 +176,6 @@ export default class PlayScene extends Phaser.Scene {
     this.slimeSystem = new SlimeSystem(this);
     this.cleaningSystem = new CleaningSystem(this);
     this.uiManager = new UIManager(this);
-    this.nextGoalSystem?.create();
     this.educationalGuideSystem = new EducationalGuideSystem(this);
     this.educationalGuideSystem.create();
     this.tutorialSystem = new TutorialSystem(this);
@@ -197,7 +193,6 @@ export default class PlayScene extends Phaser.Scene {
       this.educationalGuideSystem?.destroy();
       this.tutorialSystem?.destroy?.();
       this.pathfindingSystem?.destroy();
-      this.nextGoalSystem?.destroy();
       this.neighborhoodProgressSystem?.destroy();
       this.portraitManager?.destroy();
       this.closeClothingShopMenu();
