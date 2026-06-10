@@ -24,6 +24,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 132,
     height: 79,
     showUntilLevel: 2,
+    blocksMovement: true,
   },
   {
     key: "progress_dirty_planter_east",
@@ -33,6 +34,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 128,
     height: 77,
     showUntilLevel: 3,
+    blocksMovement: true,
   },
   {
     key: "progress_dirty_bench_spot",
@@ -42,6 +44,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 138,
     height: 83,
     showUntilLevel: 4,
+    blocksMovement: true,
   },
   {
     key: "progress_dirty_tree_spot",
@@ -51,6 +54,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 126,
     height: 76,
     showUntilLevel: 5,
+    blocksMovement: true,
   },
   {
     key: "progress_dirty_concrete_scrap",
@@ -60,6 +64,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 134,
     height: 80,
     showUntilLevel: 3,
+    blocksMovement: true,
   },
   {
     key: "progress_dirty_paper_rubble",
@@ -69,6 +74,7 @@ const STATIC_PROGRESS_PROPS = [
     width: 132,
     height: 79,
     showUntilLevel: 4,
+    blocksMovement: true,
   },
   {
     key: "progress_bench_recovered",
@@ -120,6 +126,7 @@ export default class NeighborhoodProgressSystem {
     this.progressProps = [];
     this.lastEvaluatedStage = -1;
     this.lastVisualLevel = -1;
+    this.progressColliders = [];
   }
 
   static createDefaultState() {
@@ -200,7 +207,7 @@ export default class NeighborhoodProgressSystem {
     const fromSystem = this.scene.samgakjiProgressSystem?.getCurrentLevel?.();
     const fromState = this.scene.samgakjiProgress?.currentLevel;
     const level = Number(fromSystem || fromState || 1);
-    return Phaser.Math.Clamp(Number.isFinite(level) ? level : 1, 1, 8);
+    return Phaser.Math.Clamp(Number.isFinite(level) ? level : 1, 1, 16);
   }
 
   createFlowerbeds() {
@@ -269,8 +276,29 @@ export default class NeighborhoodProgressSystem {
       prop.setData?.("progressConfig", config);
       prop.setDepth?.(this.scene.getWorldDepth(depthY, config.depthOffset ?? -0.2));
       prop.setName?.(config.key);
+      if (config.blocksMovement) {
+        prop.setData?.("progressCollider", this.createProgressPropCollider(point.x, point.y, config));
+      }
       this.progressProps.push(prop);
     });
+  }
+
+  createProgressPropCollider(x, y, config) {
+    if (!this.scene.objectWalls) {
+      this.scene.objectWalls = this.scene.physics.add.staticGroup();
+    }
+
+    const width = config.collisionWidth ?? Math.max(42, (config.width ?? 96) * 0.62);
+    const height = config.collisionHeight ?? Math.max(24, (config.height ?? 64) * 0.38);
+    const centerX = x + (config.collisionOffsetX ?? 0);
+    const centerY = y - height / 2 + (config.collisionOffsetY ?? 0);
+    const zone = this.scene.add.zone(centerX, centerY, width, height);
+    this.scene.physics.add.existing(zone, true);
+    zone.setName(`${config.key}_collider`);
+    zone.setData("progressColliderKey", config.key);
+    this.scene.objectWalls.add(zone);
+    this.progressColliders.push(zone);
+    return zone;
   }
 
   getProgressPropPoint(config) {
@@ -306,12 +334,47 @@ export default class NeighborhoodProgressSystem {
   }
 
   applyProgressPropVisibility(level) {
+    let didCollisionStateChange = false;
     this.progressProps.forEach((prop) => {
       const config = prop.getData?.("progressConfig") || {};
       const showFromLevel = config.showFromLevel ?? 1;
-      const showUntilLevel = config.showUntilLevel ?? 8;
-      prop.setVisible?.(level >= showFromLevel && level <= showUntilLevel);
+      const showUntilLevel = config.showUntilLevel ?? 16;
+      const isVisible = level >= showFromLevel && level <= showUntilLevel;
+      const wasVisible = prop.getData?.("progressWasVisible");
+      prop.setVisible?.(isVisible);
+      prop.setData?.("progressWasVisible", isVisible);
+      if (wasVisible !== isVisible && prop.getData?.("progressCollider")) {
+        didCollisionStateChange = true;
+      }
+      this.syncProgressCollider(prop.getData?.("progressCollider"), isVisible);
     });
+
+    if (didCollisionStateChange) {
+      this.scene.pathfindingSystem?.initializeGrid?.();
+    }
+  }
+
+  syncProgressCollider(collider, isActive) {
+    if (!collider?.body) return;
+    collider.body.enable = Boolean(isActive);
+    this.removeProgressCollisionRect(collider);
+    if (!isActive) return;
+
+    this.scene.objectCollisionRects = this.scene.objectCollisionRects || [];
+    const rect = new Phaser.Geom.Rectangle(
+      collider.x - collider.width / 2,
+      collider.y - collider.height / 2,
+      collider.width,
+      collider.height,
+    );
+    rect.progressColliderKey = collider.getData?.("progressColliderKey");
+    this.scene.objectCollisionRects.push(rect);
+  }
+
+  removeProgressCollisionRect(collider) {
+    const key = collider?.getData?.("progressColliderKey");
+    if (!key || !Array.isArray(this.scene.objectCollisionRects)) return;
+    this.scene.objectCollisionRects = this.scene.objectCollisionRects.filter((rect) => rect.progressColliderKey !== key);
   }
 
   applyFlowerbedFrames(stage) {
@@ -386,6 +449,11 @@ export default class NeighborhoodProgressSystem {
   }
 
   destroyProgressProps() {
+    this.progressColliders.forEach((collider) => {
+      this.removeProgressCollisionRect(collider);
+      collider?.destroy?.();
+    });
+    this.progressColliders = [];
     this.progressProps.forEach((prop) => prop?.destroy?.());
     this.progressProps = [];
   }

@@ -104,6 +104,7 @@ export default class PathfindingSystem {
   getStaticColliderBounds(child) {
     if (!child) return null;
     if (child.body) {
+      if (child.body.enable === false) return null;
       return new Phaser.Geom.Rectangle(child.body.x, child.body.y, child.body.width, child.body.height);
     }
     if (typeof child.getBounds === "function") {

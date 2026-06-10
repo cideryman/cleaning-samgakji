@@ -6,6 +6,7 @@
 
 - 기술: Phaser.js, Vite, Vanilla JS, HTML/CSS DOM UI.
 - 실행/검증: `npm.cmd run build`.
+- 발전도/동네 변화 설계는 `SAMGAKJI_PROGRESS_PLAN.md`를 함께 봅니다. 이 파일은 실행 핸드오프이고, progress plan은 삼각지 레벨/화단/나비/미래 BGM/동물 아이디어의 설계 기준입니다.
 - 주요 파일:
   - `src/scenes/PlayScene.js`: 아직 큰 파일입니다. 새 기능 본문을 길게 추가하지 말고 시스템 파일로 분리합니다.
   - `src/config/AssetsData.js`: 이미지, 스프라이트시트, 오디오, Tiled 맵 로딩 등록.
@@ -41,7 +42,7 @@
 - 돈 HUD를 `[만원 아이콘] 71,500원` 형태로 단순화했습니다.
 - `NpcMemorySystem.js`를 추가해 여비/쭉쭉이/수니수니의 기억 대사를 기존 랜덤 말풍선 fallback 앞에 연결했습니다. 엄마, 프롤로그, 에필로그 전화 시퀀스는 건드리지 않았습니다.
 - 배움 노트 등 DOM 오버레이가 게임 화면 뒤로 가거나, 오버레이 터치가 월드 입력으로 새는 문제를 막는 원칙을 적용했습니다.
-- `NeighborhoodProgressSystem.js`를 추가했습니다. 청소 누적/퀘스트 진행도에 따라 화단이 자라고 Stage 3부터 나비가 등장합니다. 화단 위치는 Tiled object로 조정 가능합니다.
+- `NeighborhoodProgressSystem.js`는 이제 `SamgakjiProgressSystem`의 삼각지 레벨을 기준으로 화단, 나비, 지저분한 오브젝트를 표시합니다. 화단과 진행 오브젝트 위치는 Tiled object로 조정 가능합니다.
 - 클릭/터치 이동 목표 지점에 반투명 초록 원을 표시합니다. 원 크기는 현재 빗자루 범위 기준으로 바뀝니다.
 - 편의점 문 point와 학습 도우미를 추가했습니다. 편의점은 아직 입장 불가이며, 최초 1회만 "아직 준비중이구나?" 대사를 표시합니다.
 - 수니수니 시작 위치를 편의점 앞 쪽으로 바꾸는 흐름을 준비했고, 수니수니 퀘스트 시작 기준은 90,000원입니다.
@@ -130,6 +131,8 @@
    - 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍 동기화.
    - 상점별 내부 맵 전환 확대.
    - 터치/클릭 이동 목표 표시 색상과 크기 조정.
+   - Lv.10 이후 일반 야외 삼각지 BGM만 조금 더 밝은 곡으로 바꾸는 아이디어가 있습니다. 세부 규칙과 추천 에셋명은 `SAMGAKJI_PROGRESS_PLAN.md`의 Future Ideas를 따릅니다.
+   - 동물 방문 시스템은 보류입니다. 나중에 하더라도 고양이/참새 정도의 작은 범위로 시작합니다.
 
 ## Deferred Visual TODO
 
@@ -202,12 +205,12 @@
 ## 2026-06-10 Samgakji Progress Visual Phase 3A
 
 - Implemented the first no-new-sprite pass in `src/systems/NeighborhoodProgressSystem.js`.
-- The existing flowerbed/butterfly system remains intact and still uses its quest-gated bloom stages.
+- Superseded by the 2026-06-11 update: flowerbeds and butterflies now follow Samgakji level, not old quest-gated bloom stages.
 - New static progress props now read the current Samgakji level from `SamgakjiProgressSystem`.
 - Temporary dirty/neglect spots are generated from Phaser shapes, so no new image assets are required yet.
 - Existing assets are reused for recovered props: `sunisuni_bench`, `sunisuni_tree`, and `street_lamp`.
 - Progress prop keys such as `progress_dirty_planter_west`, `progress_bench_recovered`, and `progress_tree_recovered` can be added as Tiled anchors later; Tiled positions will override fallback coordinates.
-- No collision was added to these visual props. Keep progress dirt visual-only unless a later design deliberately needs blocking.
+- Superseded by the 2026-06-11 collision update: visible dirty progress props now block movement with small collision areas.
 - Documented the asset replacement path in `SAMGAKJI_PROGRESS_PLAN.md`: replace generated dirt with `assets/progress/dirty/*.png`, then replace full-grown tree fallback with a tree-growth spritesheet when ready.
 
 ## 2026-06-10 Dirty Prop Asset Integration
@@ -223,4 +226,25 @@
   - `dirty_spilled_bin`
   - `dirty_paper_rubble`
 - Updated `NeighborhoodProgressSystem.js` so Samgakji progress dirty spots use these real PNGs first, falling back to generated Phaser shapes only if a texture is missing.
-- Current dirty progress props remain visual-only and collision-free.
+- Superseded by the 2026-06-11 collision update: dirty progress props are no longer visual-only while visible.
+
+## 2026-06-11 Samgakji Progress Plan Cleanup
+
+- `SAMGAKJI_PROGRESS_PLAN.md` was rewritten as the single planning reference for the Samgakji level/progress system.
+- It now connects the company-side work and home-side work into one current-state document:
+  - Lv.1-16 level table.
+  - Implemented Phase 1-3 status.
+  - Phase 4 level-up popup asset requirements.
+  - Future BGM idea after Lv.10.
+  - Deferred animal visit idea.
+  - Implementation history for no-new-sprite pass, dirty asset integration, level expansion, and dirty prop collision.
+- For future work, update the progress plan when changing Samgakji level rules, visual progression, level-up popup assets, progress BGM, or animal visit design.
+- Keep this handoff focused on broader project status, bugs, and next engineering priorities.
+
+## 2026-06-11 Samgakji Progress Dirty Collision Update
+
+- Visible dirty progress props now block player movement with intentionally small collision rectangles.
+- Hidden dirty props disable their collision bodies and are removed from pathfinding collision bounds.
+- `PathfindingSystem.getStaticColliderBounds()` now ignores disabled Arcade bodies.
+- `NeighborhoodProgressSystem` recalculates the pathfinding grid after progress visibility/collision changes.
+- Current rule: dirty progress objects may block movement while visible; flowerbeds, butterflies, and recovered decorative props should remain non-blocking unless deliberately changed later.
