@@ -307,6 +307,7 @@ export default class JjookQuestSystem {
       // Return to player if Jjook goes too far or has no current plogging target
       const returnDistance = 64;
       if (distance <= returnDistance) {
+        scene.npcFollowRouteSystem?.clear("jjook_follow");
         scene.stopNpcWalk(scene.jjookNpc, "jjook");
         return;
       }
@@ -317,6 +318,7 @@ export default class JjookQuestSystem {
 
     const followDistance = scene.isJjookBusEscortActive ? 76 : 88;
     if (distance <= followDistance) {
+      scene.npcFollowRouteSystem?.clear("jjook_follow");
       scene.stopNpcWalk(scene.jjookNpc, "jjook");
       return;
     }
@@ -420,6 +422,7 @@ export default class JjookQuestSystem {
 
     const adjusted = this.adjustTargetForTrafficRules(scene.jjookNpc, targetX, targetY);
     if (adjusted.waitAtRedLight) {
+      scene.npcFollowRouteSystem?.clear("jjook_follow");
       scene.stopNpcWalk(scene.jjookNpc, "jjook");
       return;
     }
@@ -444,6 +447,23 @@ export default class JjookQuestSystem {
     const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
     const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
     const step = (scene.game.loop.delta / 1000) * followSpeed;
+
+    if (scene.npcFollowRouteSystem?.follow("jjook_follow", scene.jjookNpc, "jjook", {
+      x: activeTargetX,
+      y: activeTargetY,
+    }, {
+      speed: followSpeed,
+      stopDistance: effectiveStopDistance,
+      repathMs: scene.isJjookBusEscortActive ? 500 : 700,
+      targetMoveTolerance: scene.isJjookBusEscortActive ? 24 : 36,
+    })) {
+      return;
+    }
+
+    if (scene.npcFollowRouteSystem && activeDistance <= effectiveStopDistance + 2) {
+      scene.stopNpcWalk(scene.jjookNpc, "jjook");
+      return;
+    }
 
     const dx = activeTargetX - scene.jjookNpc.x;
     const dy = activeTargetY - scene.jjookNpc.y;

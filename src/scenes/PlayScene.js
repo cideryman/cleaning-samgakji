@@ -23,6 +23,7 @@ import RouteGuideSystem from "../systems/RouteGuideSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
+import NpcFollowRouteSystem from "../systems/NpcFollowRouteSystem.js";
 import NpcMemorySystem from "../systems/NpcMemorySystem.js";
 import NeighborhoodProgressSystem from "../systems/NeighborhoodProgressSystem.js";
 import SamgakjiProgressSystem from "../systems/SamgakjiProgressSystem.js";
@@ -150,6 +151,7 @@ export default class PlayScene extends Phaser.Scene {
     this.consumableSystem = new ConsumableSystem(this);
     this.sceneControlSystem = new SceneControlSystem(this);
     this.objectVisibilitySystem = new ObjectVisibilitySystem(this);
+    this.npcFollowRouteSystem = new NpcFollowRouteSystem(this);
     this.npcMemorySystem = new NpcMemorySystem(this);
     this.neighborhoodProgressSystem = new NeighborhoodProgressSystem(this);
     this.samgakjiProgressSystem = new SamgakjiProgressSystem(this);
@@ -192,6 +194,7 @@ export default class PlayScene extends Phaser.Scene {
       this.htmlUiBindingSystem?.unbind();
       this.educationalGuideSystem?.destroy();
       this.tutorialSystem?.destroy?.();
+      this.npcFollowRouteSystem?.clearAll?.();
       this.pathfindingSystem?.destroy();
       this.neighborhoodProgressSystem?.destroy();
       this.portraitManager?.destroy();

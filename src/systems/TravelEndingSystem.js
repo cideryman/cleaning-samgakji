@@ -213,8 +213,12 @@ export default class TravelEndingSystem {
     const scene = this.scene;
     scene.dialogueSystem.close?.();
     scene.cameras.main.fadeOut(850, 0, 0, 0);
-    
+    let isSettled = false;
+    let fallbackTimer = null;
     const onFadeOutComplete = () => {
+      if (isSettled) return;
+      isSettled = true;
+      fallbackTimer?.remove(false);
       scene.cameras.main.off(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, onFadeOutComplete);
       nextSequenceCallback();
       scene.time.delayedCall(150, () => {
@@ -223,6 +227,7 @@ export default class TravelEndingSystem {
     };
     
     scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, onFadeOutComplete);
+    fallbackTimer = scene.time.delayedCall(1200, onFadeOutComplete);
   }
 
   startTravelHomeSequence() {

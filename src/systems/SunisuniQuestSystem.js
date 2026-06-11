@@ -67,6 +67,7 @@ export default class SunisuniQuestSystem {
       scene.showSpeechBubble(scene.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
     }
     if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
+      scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
     }
@@ -74,17 +75,36 @@ export default class SunisuniQuestSystem {
     const adjusted = this.adjustTargetForTrafficRules(scene.sunisuniNpc, scene.player.x, scene.player.y);
 
     if (adjusted.waitAtRedLight) {
+      scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
     }
 
     const adjustedDistance = Phaser.Math.Distance.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, adjusted.x, adjusted.y);
     if (adjustedDistance <= 4) {
+      scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
     }
 
     const step = (scene.game.loop.delta / 1000) * GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
+    const isIntermediateTarget = Math.abs(adjusted.x - scene.player.x) > 2 || Math.abs(adjusted.y - scene.player.y) > 2;
+    const stopDistance = isIntermediateTarget ? 4 : GAME_CONFIG.sunisuniFollowDistance;
+    const followSpeed = GAME_CONFIG.playerSpeed * GAME_CONFIG.sunisuniSpeedMultiplier;
+    if (scene.npcFollowRouteSystem?.follow("sunisuni_follow", scene.sunisuniNpc, "sunisuni", adjusted, {
+      speed: followSpeed,
+      stopDistance,
+      repathMs: 800,
+      targetMoveTolerance: 34,
+    })) {
+      return;
+    }
+
+    if (scene.npcFollowRouteSystem && adjustedDistance <= stopDistance + 2) {
+      scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
+      return;
+    }
+
     const angle = Phaser.Math.Angle.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, adjusted.x, adjusted.y);
     const moveX = Math.cos(angle) * Math.min(step, adjustedDistance);
     const moveY = Math.sin(angle) * Math.min(step, adjustedDistance);

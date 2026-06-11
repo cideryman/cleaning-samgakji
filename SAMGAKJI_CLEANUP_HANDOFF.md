@@ -74,6 +74,12 @@
   - This affects existing scripted NPC movement that already uses the shared helper, including Yebi recycle demonstrations, Jjook returning home, and Sunisuni returning to her bench/start point.
   - The route is simplified before tweening so NPCs do not receive every grid cell as a separate visual stop.
   - Remaining work is to migrate any custom per-frame follower/escort logic that still moves directly toward targets without using this shared route.
+- NPC follow movement naturalization phase 2:
+  - Added `src/systems/NpcFollowRouteSystem.js` as a small route-follow helper instead of adding more movement code to `PlayScene.js`.
+  - Jjook and Sunisuni follower movement now tries A* path-following first, then falls back to the old direct movement when a path cannot be found.
+  - Red-light waiting and existing crosswalk target adjustment remain in each quest system before route-following is called.
+  - This specifically improves Jjook plogging/follow/bus escort movement and Sunisuni hospital/pharmacy escort movement without changing quest dialogue or rewards.
+  - Next check: manually test Jjook following Haenaem around benches/vending machine/recycling bins and Sunisuni crossing toward hospital/pharmacy. If route jitter appears, increase `repathMs` or target tolerance in `JjookQuestSystem` / `SunisuniQuestSystem`.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.
@@ -106,6 +112,7 @@
 1. 에필로그 엄마 전화 후 검은 화면 유지 - mitigation applied, needs manual verification
    - Camera fade reset and UTF-8 fallback text were added in `TravelEndingSystem.showChapterOneEndingScene()`.
    - Final ending return input is now click/touch-only.
+   - `TravelEndingSystem.transitionWithFade()` now has a fallback timer so the next sequence still starts if the Phaser fade-out complete event is missed.
    - Verify the full mother-phone-to-ending flow on PC and mobile before marking fully resolved.
 
 ### P1: 플레이 감각에 직접 영향
