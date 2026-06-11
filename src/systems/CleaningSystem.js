@@ -154,7 +154,7 @@ export default class CleaningSystem {
 
     this.showSlimePop(slime);
     this.showCleanFeedback(slimeX, slimeY, isCanTrash || isSpecial);
-    scene.samgakjiProgressSystem?.refresh({ silent: true });
+    scene.samgakjiProgressSystem?.refresh();
     scene.updateHud();
 
     scene.time.delayedCall(GAME_CONFIG.slimeRespawnDelayMs, () => {
@@ -301,7 +301,7 @@ export default class CleaningSystem {
 
     this.showCleanFeedback(trash.x, trash.y, isCanTrash || isSpecial);
     this.showSlimePop(trash);
-    scene.samgakjiProgressSystem?.refresh({ silent: true });
+    scene.samgakjiProgressSystem?.refresh();
     scene.updateHud();
 
     if (shouldRespawn) {

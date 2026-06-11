@@ -35,6 +35,7 @@ export default class SceneControlSystem {
       ".name-tag-modal",
       ".clothing-shop-modal",
       ".packing-modal",
+      ".samgakji-levelup-modal.is-visible",
     ].some((selector) => this.isVisibleElement(document.querySelector(selector)));
   }
 

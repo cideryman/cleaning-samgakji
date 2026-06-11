@@ -83,6 +83,11 @@
 - Convenience store learning icon fix:
   - The convenience store educational guide icon now follows the Tiled `convenience_store_door` point with a small upward offset.
   - Educational guide icons render at higher depth so they do not disappear behind building sprites.
+- Samgakji level-up popup fallback:
+  - Phase 4 of `SAMGAKJI_PROGRESS_PLAN.md` is now implemented without new image assets.
+  - `SamgakjiProgressSystem` shows a centered HTML popup when a new Samgakji level is reached.
+  - The popup blocks world input while visible and saves `lastAnnouncedLevel` after confirmation.
+  - Later level-up badge/ribbon/sparkle PNG assets can replace the current emoji/text fallback.
 
 ## Tiled 편집 규칙
 
@@ -93,9 +98,39 @@
 - 새 타일셋을 쓸 때는 Tiled에서 추가하는 것만으로 끝나지 않습니다. 게임 preload 쪽에서도 tileset source/name/key가 맞아야 합니다.
 - 약국 내부처럼 별도 Tiled 맵을 만들 때는 `AssetsData.js`의 `INTERIOR_TILED_MAPS`에 등록하세요.
 
-## 현재 남은 문제
+## 현재 남은 문제와 우선순위
 
-0. Neighborhood/NPC memory dialogue expansion
+### P0: 진행 차단 또는 엔딩 확인 필요
+
+1. 에필로그 엄마 전화 후 검은 화면 유지 - mitigation applied, needs manual verification
+   - Camera fade reset and UTF-8 fallback text were added in `TravelEndingSystem.showChapterOneEndingScene()`.
+   - Final ending return input is now click/touch-only.
+   - Verify the full mother-phone-to-ending flow on PC and mobile before marking fully resolved.
+
+### P1: 플레이 감각에 직접 영향
+
+1. NPC event movement naturalization
+   - Phase 1 is applied for movement that already uses `PlayScene.walkNpcToTarget()`.
+   - Some follower/escort movement may still appear to slide, jaywalk, or ignore obstacles because it uses direct per-frame movement instead of the shared route helper.
+   - Next safe step: inspect Jjook/Sunisuni follower and bus-stop escort movement, then move only the scripted destination-based parts onto `walkNpcToTarget()` or a small NPC route system.
+   - Do not solve this by teleporting NPCs unless the event explicitly needs a scene cut.
+
+2. 모바일 로딩 속도
+   - 이미지/BGM 에셋이 많아졌습니다.
+   - 챕터 시작 필수 preload, 상점/엔딩 진입 직전 lazy load, 사용하지 않는 임시 에셋 정리가 필요합니다.
+
+3. Store interior map conversion
+   - Hospital/pharmacy/clothing shop are not all full interior movement maps yet.
+   - Pharmacy is the first reference implementation.
+   - Long-term recommendation: use separate interior maps with object points like `player_start`, `exit`, `counter`, and `npc_chemist`.
+
+### P2: 구조 개선과 확장 준비
+
+1. PlayScene 리팩토링
+   - 다음 우선순위는 작은 이벤트 함수 묶음을 시스템으로 옮기는 것입니다.
+   - 이동 후 `node --check`와 `npm.cmd run build`를 반드시 실행합니다.
+
+2. Neighborhood/NPC memory dialogue expansion
    - User requested this as a later task, not for immediate implementation.
    - Current random speech can already prefer `NpcMemorySystem`.
    - Next step: when the player directly taps/clicks Yebi, Jjook, or Sunisuni during a neighborhood progress/memory moment, show the same memory line in the main dialogue window with a fitting portrait.
@@ -103,36 +138,14 @@
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.
 
-1. 에필로그 엄마 전화 후 검은 화면 유지 - mitigation applied, needs manual verification
-   - Camera fade reset and UTF-8 fallback text were added in `TravelEndingSystem.showChapterOneEndingScene()`.
-   - Final ending return input is now click/touch-only.
-   - Verify the full mother-phone-to-ending flow on PC and mobile before marking fully resolved.
+### P3: 기능 아이디어 백로그
 
-2. NPC event movement naturalization
-   - Phase 1 is applied for movement that already uses `PlayScene.walkNpcToTarget()`.
-   - Some follower/escort movement may still appear to slide, jaywalk, or ignore obstacles because it uses direct per-frame movement instead of the shared route helper.
-   - Next safe step: inspect Jjook/Sunisuni follower and bus-stop escort movement, then move only the scripted destination-based parts onto `walkNpcToTarget()` or a small NPC route system.
-   - Do not solve this by teleporting NPCs unless the event explicitly needs a scene cut.
-
-3. Store interior map conversion
-   - Hospital/pharmacy/clothing shop are not all full interior movement maps yet.
-   - Pharmacy is the first reference implementation.
-   - Long-term recommendation: use separate interior maps with object points like `player_start`, `exit`, `counter`, and `npc_chemist`.
-
-3. 모바일 로딩 속도
-   - 이미지/BGM 에셋이 많아졌습니다.
-   - 챕터 시작 필수 preload, 상점/엔딩 진입 직전 lazy load, 사용하지 않는 임시 에셋 정리가 필요합니다.
-
-4. PlayScene 리팩토링
-   - 다음 우선순위는 작은 이벤트 함수 묶음을 시스템으로 옮기는 것입니다.
-   - 이동 후 `node --check`와 `npm.cmd run build`를 반드시 실행합니다.
-
-5. 기능 아이디어 백로그
-   - 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍 동기화.
-   - 상점별 내부 맵 전환 확대.
-   - 터치/클릭 이동 목표 표시 색상과 크기 조정.
-   - Lv.10 이후 일반 야외 삼각지 BGM만 조금 더 밝은 곡으로 바꾸는 아이디어가 있습니다. 세부 규칙과 추천 에셋명은 `SAMGAKJI_PROGRESS_PLAN.md`의 Future Ideas를 따릅니다.
-   - 동물 방문 시스템은 보류입니다. 나중에 하더라도 고양이/참새 정도의 작은 범위로 시작합니다.
+- 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍 동기화.
+- 상점별 내부 맵 전환 확대.
+- 터치/클릭 이동 목표 표시 색상과 크기 조정.
+- Lv.10 이후 일반 야외 삼각지 BGM만 조금 더 밝은 곡으로 바꾸는 아이디어가 있습니다. 세부 규칙과 추천 에셋명은 `SAMGAKJI_PROGRESS_PLAN.md`의 Future Ideas를 따릅니다.
+- 동물 방문 시스템은 보류입니다. 나중에 하더라도 고양이/참새 정도의 작은 범위로 시작합니다.
+- 레벨업 팝업용 전용 이미지 에셋이 준비되면 `assets/progress/level-up/` 아래에 넣고, 현재 HTML fallback에 배지/리본/스파클을 연결합니다.
 
 ## Deferred Visual TODO
 

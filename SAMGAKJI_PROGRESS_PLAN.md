@@ -1,6 +1,6 @@
 # Samgakji Progress System
 
-Status: planning confirmed, Phase 1-3 implemented.
+Status: planning confirmed, Phase 1-4 implemented with text fallback.
 
 Core rule:
 Haenaem does not level up. Samgakji levels up.
@@ -92,7 +92,7 @@ Status: implemented.
 
 ## Phase 4: Level-Up Popup
 
-Status: not implemented.
+Status: implemented with text/emoji fallback.
 
 Goal:
 Show a level-up popup once per newly reached Samgakji level.
@@ -105,8 +105,15 @@ Rules:
   - `삼각지 Lv.N`
   - level name, such as `꽃피는 삼각지`
   - one short message, such as `삼각지가 조금 더 밝아졌어요.`
-- Use text/emoji fallback if no image assets exist.
+- Uses text/emoji fallback while dedicated image assets are not ready.
 - Save `lastAnnouncedLevel` so the popup does not repeat after reload.
+
+Current implementation:
+- `SamgakjiProgressSystem` detects newly reached levels during cleaning.
+- The popup is an HTML overlay appended to `.game-stage`.
+- The popup blocks world input while visible.
+- Confirmation button, Enter, or Space updates `lastAnnouncedLevel` and saves a checkpoint.
+- No new image asset is required yet.
 
 ### Phase 4 Asset Prep
 
@@ -228,6 +235,16 @@ Design caution:
 - Collision is intentionally small so the objects feel present without making navigation frustrating.
 - Hidden dirty props disable their collision.
 - Pathfinding grid is recalculated after dirty prop collision changes.
+
+### 2026-06-11 Level-Up Popup Fallback
+
+- Implemented Phase 4 without new assets.
+- `SamgakjiProgressSystem` now shows a centered HTML level-up popup when Samgakji reaches a new level.
+- The popup uses a text/emoji house badge until proper level-up assets are prepared.
+- `SceneControlSystem` treats `.samgakji-levelup-modal.is-visible` as an open overlay, so world input is blocked.
+- `CleaningSystem` now refreshes Samgakji progress in announce mode after trash cleanup.
+- The popup confirmation button receives focus and can also be confirmed with Enter or Space on PC.
+- Future badge/ribbon/sparkle assets can replace the fallback visuals without changing level logic.
 
 ## Current Notes For Future Codex Work
 
