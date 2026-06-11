@@ -87,6 +87,7 @@
   - Phase 4 of `SAMGAKJI_PROGRESS_PLAN.md` is now implemented without new image assets.
   - `SamgakjiProgressSystem` shows a centered HTML popup when a new Samgakji level is reached.
   - The popup blocks world input while visible and saves `lastAnnouncedLevel` after confirmation.
+  - Scene shutdown removes any remaining level-up popup DOM and keydown listener.
   - Later level-up badge/ribbon/sparkle PNG assets can replace the current emoji/text fallback.
 
 ## Tiled 편집 규칙

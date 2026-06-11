@@ -15,6 +15,7 @@ export default class SamgakjiProgressSystem {
 
   create() {
     this.refresh({ silent: true });
+    this.scene.events.once("shutdown", () => this.destroy());
   }
 
   refresh({ silent = false, save = false } = {}) {
@@ -111,16 +112,26 @@ export default class SamgakjiProgressSystem {
   closeLevelUpPopup(level) {
     if (!this.levelUpModal) return;
     this.acknowledgeLevel(level);
+    this.removeLevelUpPopup();
+    this.scene.sceneControlSystem?.blockWorldInput?.(false);
+    this.scene.stateManager?.set(this.previousSceneState || SceneState.PLAYING);
+    this.previousSceneState = null;
+    this.scene.saveCheckpoint?.(`samgakji_level_${level}`);
+  }
+
+  removeLevelUpPopup() {
     this.levelUpModal?.remove();
     this.levelUpModal = null;
     if (this.levelUpKeyHandler) {
       window.removeEventListener("keydown", this.levelUpKeyHandler);
       this.levelUpKeyHandler = null;
     }
+  }
+
+  destroy() {
+    this.removeLevelUpPopup();
     this.scene.sceneControlSystem?.blockWorldInput?.(false);
-    this.scene.stateManager?.set(this.previousSceneState || SceneState.PLAYING);
     this.previousSceneState = null;
-    this.scene.saveCheckpoint?.(`samgakji_level_${level}`);
   }
 
   acknowledgeLevel(level) {

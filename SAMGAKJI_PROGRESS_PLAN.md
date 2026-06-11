@@ -113,6 +113,7 @@ Current implementation:
 - The popup is an HTML overlay appended to `.game-stage`.
 - The popup blocks world input while visible.
 - Confirmation button, Enter, or Space updates `lastAnnouncedLevel` and saves a checkpoint.
+- Scene shutdown removes any remaining popup DOM and key listener.
 - No new image asset is required yet.
 
 ### Phase 4 Asset Prep
@@ -244,6 +245,7 @@ Design caution:
 - `SceneControlSystem` treats `.samgakji-levelup-modal.is-visible` as an open overlay, so world input is blocked.
 - `CleaningSystem` now refreshes Samgakji progress in announce mode after trash cleanup.
 - The popup confirmation button receives focus and can also be confirmed with Enter or Space on PC.
+- Scene shutdown cleanup prevents stale popup DOM or keydown listeners after restart/scene changes.
 - Future badge/ribbon/sparkle assets can replace the fallback visuals without changing level logic.
 
 ## Current Notes For Future Codex Work
