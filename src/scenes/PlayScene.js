@@ -791,6 +791,7 @@ export default class PlayScene extends Phaser.Scene {
       pointer.event?.preventDefault();
       pointer.event?.stopPropagation();
       if (this.sceneControlSystem?.isWorldInputBlocked()) return;
+      if (this.npcMemorySystem?.showDirectMemoryDialogue?.("yebi")) return;
       this.showYebiQuestDialogue();
     });
     this.tweens.add({
@@ -1255,6 +1256,7 @@ export default class PlayScene extends Phaser.Scene {
 
   handleJjookInteraction() {
     if (this.sceneControlSystem?.isWorldInputBlocked()) return;
+    if (this.npcMemorySystem?.showDirectMemoryDialogue?.("jjook")) return;
     this.jjookQuestSystem?.handleInteraction();
   }
 
@@ -1414,6 +1416,7 @@ export default class PlayScene extends Phaser.Scene {
 
   handleSunisuniInteraction() {
     if (this.sceneControlSystem?.isWorldInputBlocked()) return;
+    if (this.npcMemorySystem?.showDirectMemoryDialogue?.("sunisuni")) return;
     this.sunisuniQuestSystem?.handleInteraction();
   }
 

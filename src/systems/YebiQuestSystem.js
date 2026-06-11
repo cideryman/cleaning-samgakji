@@ -510,14 +510,18 @@ export default class YebiQuestSystem {
 
     if (recycleState === RecycleQuestState.ACTIVE) {
       const quest = this.recycleQuest;
+      const memoryLine = scene.npcMemorySystem?.getQuestSafeMemoryDialogueLine?.("yebi");
       scene.dialogueSystem.start([
+        ...(memoryLine ? [memoryLine] : []),
         { name: "여비", portraitKey: "yeobi", text: "좋아! 일반 " + quest.current.normal + "/" + quest.target.normal + ", 캔 " + quest.current.can + "/" + quest.target.can + ", 플라스틱 " + quest.current.plastic + "/" + quest.target.plastic + "이야." },
       ]);
       return;
     }
 
     if (recycleState === RecycleQuestState.COMPLETED) {
+      const memoryLine = scene.npcMemorySystem?.getQuestSafeMemoryDialogueLine?.("yebi");
       scene.dialogueSystem.start([
+        ...(memoryLine ? [memoryLine] : []),
         { name: "여비", portraitKey: "yeobi", text: "모은 쓰레기를 맞는 통에 넣어보자. 하나 넣을 때마다 분리수거 보상을 받을 수 있어!" },
       ]);
       return;

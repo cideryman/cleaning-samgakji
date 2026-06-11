@@ -80,6 +80,27 @@
   - Red-light waiting and existing crosswalk target adjustment remain in each quest system before route-following is called.
   - This specifically improves Jjook plogging/follow/bus escort movement and Sunisuni hospital/pharmacy escort movement without changing quest dialogue or rewards.
   - Next check: manually test Jjook following Haenaem around benches/vending machine/recycling bins and Sunisuni crossing toward hospital/pharmacy. If route jitter appears, increase `repathMs` or target tolerance in `JjookQuestSystem` / `SunisuniQuestSystem`.
+- NPC memory direct-dialogue phase 1:
+  - `NpcMemorySystem` was already used by ambient/random NPC speech bubbles.
+  - Direct click/touch dialogue now also checks memory lines for Yebi, Jjook, and Sunisuni, but only in conservative non-quest states.
+  - Yebi memory dialogue is allowed only after can quest and recycle quest are completed.
+  - Sunisuni memory dialogue is allowed only after the hospital/pharmacy quest is complete and she is not returning to her bench/start point.
+  - Jjook memory dialogue is allowed only after wallet/clothing/packing flow is complete and no follow/escort state is active.
+  - If a memory line is shown, Haenaem replies with a short acknowledgement line. If no safe memory line is available, the original quest/dialogue handler runs unchanged.
+  - Mother/prologue/epilogue phone sequences were not touched.
+- NPC memory direct-dialogue phase 2:
+  - Direct memory dialogue gating and Haenaem reply text now live in `src/systems/NpcMemorySystem.js`.
+  - `PlayScene.js` only calls `npcMemorySystem.showDirectMemoryDialogue(npcKey)` from each NPC click/touch entry point.
+  - Future expansion of memory dialogue conditions should be done inside `NpcMemorySystem`, not in `PlayScene.js`.
+- NPC memory direct-dialogue phase 3A:
+  - Added `NpcMemorySystem.getQuestSafeMemoryDialogueLine(npcKey)` for memory lines that can be inserted into existing quest-safe dialogue without replacing choices.
+  - Jjook's generic post-wallet dialogue can now prepend a memory line while keeping the existing plogging-help choice intact.
+  - This does not run during Jjook follow/escort, clothes quest offers, packing offers, or bus boarding states.
+  - Use this pattern for future middle-state memory dialogue: insert a memory line into an existing safe dialogue array rather than intercepting the whole interaction.
+- NPC memory direct-dialogue phase 3B:
+  - Yebi's recycle active/completed dialogue can now prepend a memory line while keeping recycle progress/reward guidance intact.
+  - The Yebi memory line only appears after the can quest is complete, during or after the recycle quest, and not during the recycle demonstration.
+  - `PlayScene.js` was not changed for this step.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.
@@ -119,8 +140,13 @@
 
 1. NPC event movement naturalization
    - Phase 1 is applied for movement that already uses `PlayScene.walkNpcToTarget()`.
-   - Some follower/escort movement may still appear to slide, jaywalk, or ignore obstacles because it uses direct per-frame movement instead of the shared route helper.
-   - Next safe step: inspect Jjook/Sunisuni follower and bus-stop escort movement, then move only the scripted destination-based parts onto `walkNpcToTarget()` or a small NPC route system.
+   - Phase 2 is applied for Jjook and Sunisuni follower movement through `NpcFollowRouteSystem`.
+   - Remaining movement cleanup should be done in small units:
+     1. Test and tune Jjook follow jitter around dense objects. If jitter appears, increase route `repathMs` or `targetMoveTolerance`.
+     2. Test Sunisuni hospital/pharmacy escort crossing roads. If she waits or detours awkwardly, tune the road/crosswalk adjustment before changing pathfinding.
+     3. Move any remaining bespoke event tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()` only when they represent destination travel, not short cutscene item-transfer motion.
+     4. Review `separateNpcSprites()` so collision separation does not push NPCs through trees, bins, or the road.
+     5. Longer term: centralize route-follow state keys and NPC movement tuning values into config once behavior is stable.
    - Do not solve this by teleporting NPCs unless the event explicitly needs a scene cut.
 
 2. 모바일 로딩 속도
@@ -139,10 +165,13 @@
    - 이동 후 `node --check`와 `npm.cmd run build`를 반드시 실행합니다.
 
 2. Neighborhood/NPC memory dialogue expansion
-   - User requested this as a later task, not for immediate implementation.
-   - Current random speech can already prefer `NpcMemorySystem`.
-   - Next step: when the player directly taps/clicks Yebi, Jjook, or Sunisuni during a neighborhood progress/memory moment, show the same memory line in the main dialogue window with a fitting portrait.
-   - Haenaem should answer with a short thanks or acknowledgement line.
+   - Phase 1 is complete for conservative completed/non-quest states.
+   - Phase 2 is complete: direct-memory dialogue logic moved into `NpcMemorySystem` so `PlayScene.js` stays thin.
+   - Phase 3A is complete: Jjook's generic dialogue can include a memory line without stealing the plogging-help choice.
+   - Phase 3B is complete: Yebi's recycle progress/completed dialogue can include a memory line without changing recycle mechanics.
+   - Current random speech can already prefer `NpcMemorySystem`, and direct click/touch dialogue can now reuse the same memory line.
+   - Next step: decide whether Sunisuni needs quest-safe insertion, or leave her as direct-memory only because most Sunisuni interactions are story-critical.
+   - Keep the priority rule: active quest dialogue > direct memory line > generic NPC dialogue.
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.
 

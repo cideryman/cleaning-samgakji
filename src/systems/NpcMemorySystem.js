@@ -1,9 +1,10 @@
 import {
+  CanQuestState,
   ClothesQuestState,
   JjookQuestState,
   PackingQuestState,
-  SunisuniQuestState,
   RecycleQuestState,
+  SunisuniQuestState,
 } from "../config/QuestStates.js";
 
 const NPC_KEYS = new Set(["yebi", "jjook", "sunisuni"]);
@@ -21,6 +22,114 @@ export default class NpcMemorySystem {
     if (npcKey === "jjook") return this.getJjookMemorySpeech();
     if (npcKey === "sunisuni") return this.getSunisuniMemorySpeech();
     return null;
+  }
+
+  showDirectMemoryDialogue(npcKey) {
+    const scene = this.scene;
+    if (!this.canShowDirectMemory(npcKey)) return false;
+
+    const memoryText = this.getMemorySpeech(npcKey);
+    if (!memoryText) return false;
+
+    const npcMeta = this.getNpcMeta(npcKey);
+    if (!npcMeta) return false;
+
+    scene.dialogueSystem?.start([
+      {
+        name: npcMeta.name,
+        portraitKey: npcMeta.portraitKey,
+        portraitSingle: npcMeta.portraitSingle,
+        text: memoryText,
+      },
+      {
+        name: "해냄이",
+        portraitKey: "haenaem_touched",
+        text: this.getHaenaemReply(npcKey),
+      },
+    ]);
+    return true;
+  }
+
+  getQuestSafeMemoryDialogueLine(npcKey) {
+    if (!this.canShowQuestSafeMemory(npcKey)) return null;
+
+    const npcMeta = this.getNpcMeta(npcKey);
+    const memoryText = this.getMemorySpeech(npcKey);
+    if (!npcMeta || !memoryText) return null;
+
+    return {
+      name: npcMeta.name,
+      portraitKey: npcMeta.portraitKey,
+      portraitSingle: npcMeta.portraitSingle,
+      text: memoryText,
+    };
+  }
+
+  canShowQuestSafeMemory(npcKey) {
+    const scene = this.scene;
+    if (scene.isInDialogue || !scene.dialogueSystem) return false;
+    if (!this.canShowAmbientMemory()) return false;
+
+    if (npcKey === "jjook") {
+      if (scene.jjookQuestState !== JjookQuestState.COMPLETED) return false;
+      if (scene.isJjookFollowActive || scene.isJjookClothesEscortActive || scene.isJjookBusEscortActive) return false;
+      if ([ClothesQuestState.READY, ClothesQuestState.DECLINED, ClothesQuestState.SHOPPING].includes(scene.clothesQuestState)) return false;
+      if ([PackingQuestState.OFFERED, PackingQuestState.DECLINED, PackingQuestState.GOING_BUS_STOP, PackingQuestState.BOARDING_BUS].includes(scene.packingQuestState)) return false;
+      return true;
+    }
+
+    if (npcKey === "yebi") {
+      const canState = scene.yebiQuestSystem?.getQuestState?.();
+      const recycleState = scene.yebiQuestSystem?.getRecycleQuestState?.();
+      return canState === CanQuestState.COMPLETED
+        && [RecycleQuestState.ACTIVE, RecycleQuestState.COMPLETED].includes(recycleState)
+        && !scene.yebiQuestSystem?.isRecycleDemoActive;
+    }
+
+    return false;
+  }
+
+  canShowDirectMemory(npcKey) {
+    const scene = this.scene;
+    if (scene.isInDialogue || !scene.dialogueSystem) return false;
+    if (!this.canShowAmbientMemory()) return false;
+
+    if (npcKey === "yebi") {
+      const canState = scene.yebiQuestSystem?.getQuestState?.();
+      const recycleState = scene.yebiQuestSystem?.getRecycleQuestState?.();
+      return canState === CanQuestState.COMPLETED
+        && recycleState === RecycleQuestState.COMPLETED
+        && !scene.yebiQuestSystem?.isRecycleDemoActive;
+    }
+
+    if (npcKey === "jjook") {
+      if (scene.jjookQuestState !== JjookQuestState.COMPLETED) return false;
+      if (scene.isJjookFollowActive || scene.isJjookClothesEscortActive || scene.isJjookBusEscortActive) return false;
+      if (scene.clothesQuestState !== ClothesQuestState.COMPLETED) return false;
+      return [PackingQuestState.COMPLETED, PackingQuestState.ENDING_COMPLETE].includes(scene.packingQuestState);
+    }
+
+    if (npcKey === "sunisuni") {
+      return scene.sunisuniQuestState === SunisuniQuestState.QUEST_COMPLETE
+        && !scene.sunisuniReturningToBench;
+    }
+
+    return false;
+  }
+
+  getNpcMeta(npcKey) {
+    return {
+      yebi: { name: "여비", portraitKey: "yeobi" },
+      jjook: { name: "쭉쭉이", portraitKey: "jjook_smile" },
+      sunisuni: { name: "수니수니", portraitKey: "sunisuni-portrait-smile", portraitSingle: true },
+    }[npcKey] || null;
+  }
+
+  getHaenaemReply(npcKey) {
+    if (npcKey === "yebi") return "여비가 알려준 덕분에 분리수거가 더 쉬워졌어요.";
+    if (npcKey === "jjook") return "같이 도와줘서 나도 더 힘이 났어.";
+    if (npcKey === "sunisuni") return "괜찮아지셔서 정말 다행이에요.";
+    return "기억해줘서 고마워요.";
   }
 
   getYebiMemorySpeech() {

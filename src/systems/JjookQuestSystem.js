@@ -106,7 +106,9 @@ export default class JjookQuestSystem {
       return;
     }
 
+    const memoryLine = scene.npcMemorySystem?.getQuestSafeMemoryDialogueLine?.("jjook");
     scene.dialogueSystem.start([
+      ...(memoryLine ? [memoryLine] : []),
       { name: "쭉쭉이", portraitKey: "jjook_smile", text: "나랑 같이 걷자! 음료수가 필요하면 자판기 앞에서 골라줘." },
       {
         name: "해냄이",
