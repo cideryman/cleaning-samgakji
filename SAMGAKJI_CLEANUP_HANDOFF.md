@@ -106,6 +106,18 @@
   - This prevents repeated click/touch interactions from showing the same memory line too often.
   - The cooldown is intentionally local to memory dialogue, so existing quest dialogue, random speech fallback, and main story flow are not changed.
   - `PlayScene.js` was not changed for this step.
+- NPC memory ambient speech phase 3D:
+  - Random NPC speech now asks `NpcMemorySystem.getAmbientSpeech(npcKey, fallbackSpeech)` instead of directly preferring memory text every time.
+  - Memory speech still appears before ordinary random fallback when available, but each NPC has a short ambient cooldown so fallback lines continue to appear.
+  - This keeps the neighborhood feeling varied without adding UI, assets, or new quest state.
+- NPC memory expansion final decision:
+  - Sunisuni stays direct-memory only. Do not insert memory lines into her hospital/pharmacy quest dialogue unless a new clearly non-story daily interaction is added later.
+  - Reason: most Sunisuni interactions are story-critical, and inserting extra lines risks slowing or confusing the hospital/pharmacy sequence.
+  - NPC memory phase is complete for now: ambient memory, direct memory, Jjook quest-safe insertion, Yebi quest-safe insertion, and cooldowns are all in place.
+- Sunisuni daily dialogue polish phase 1:
+  - After the hospital/pharmacy quest is complete, Sunisuni's direct-memory dialogue now includes a few calmer daily check-in lines.
+  - Haenaem's reply can now adjust slightly to the Sunisuni line, for example reminding her to take medicine as explained or rest slowly.
+  - This does not insert extra lines into the active hospital/pharmacy story flow.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.
@@ -175,8 +187,8 @@
    - Phase 3A is complete: Jjook's generic dialogue can include a memory line without stealing the plogging-help choice.
    - Phase 3B is complete: Yebi's recycle progress/completed dialogue can include a memory line without changing recycle mechanics.
    - Phase 3C is complete: direct/quest-safe memory lines have a short per-NPC cooldown to avoid repeated memory dialogue spam.
-   - Current random speech can already prefer `NpcMemorySystem`, and direct click/touch dialogue can now reuse the same memory line.
-   - Next step: leave Sunisuni as direct-memory only unless a clearly safe non-story interaction point is added; most Sunisuni interactions are story-critical.
+   - Phase 3D is complete: ambient/random speech now uses memory lines with a per-NPC cooldown before falling back to existing random lines.
+   - Memory work is complete for now. Sunisuni remains direct-memory only by design; revisit only if a new non-story daily interaction is added later.
    - Keep the priority rule: active quest dialogue > direct memory line > generic NPC dialogue.
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.

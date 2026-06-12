@@ -1945,7 +1945,8 @@ export default class PlayScene extends Phaser.Scene {
     if (Phaser.Math.Between(0, 99) >= config.messageChance) return;
     if (this.time.now < this.nextNpcAmbientBubbleAt) return;
 
-    const message = this.npcMemorySystem?.getMemorySpeech(key) || Phaser.Utils.Array.GetRandom(config.messages);
+    const fallbackMessage = Phaser.Utils.Array.GetRandom(config.messages);
+    const message = this.npcMemorySystem?.getAmbientSpeech?.(key, fallbackMessage) || fallbackMessage;
     this.showSpeechBubble(sprite, message, 4200);
     this.nextNpcAmbientBubbleAt = this.time.now + Phaser.Math.Between(3400, 6200);
   }
@@ -2708,7 +2709,7 @@ export default class PlayScene extends Phaser.Scene {
     const npc = Phaser.Utils.Array.GetRandom(npcs);
     const config = NPC_ROAM_CONFIG[npc.key];
     const fallbackSpeech = config?.messages?.length ? Phaser.Utils.Array.GetRandom(config.messages) : "오늘 하루도 씩씩하게 보내자!";
-    const speech = this.npcMemorySystem.getMemorySpeech(npc.key) || fallbackSpeech;
+    const speech = this.npcMemorySystem.getAmbientSpeech?.(npc.key, fallbackSpeech) || fallbackSpeech;
 
     this.uiManager.showSpeechBubble(npc.sprite, speech, 4600);
   }

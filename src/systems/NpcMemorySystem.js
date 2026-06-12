@@ -9,12 +9,14 @@ import {
 
 const NPC_KEYS = new Set(["yebi", "jjook", "sunisuni"]);
 const DIRECT_MEMORY_COOLDOWN_MS = 12000;
+const AMBIENT_MEMORY_COOLDOWN_MS = 22000;
 
 export default class NpcMemorySystem {
   constructor(scene) {
     this.scene = scene;
     this.lastSpeechByNpc = new Map();
     this.nextDirectMemoryAtByNpc = new Map();
+    this.nextAmbientMemoryAtByNpc = new Map();
   }
 
   getMemorySpeech(npcKey) {
@@ -24,6 +26,17 @@ export default class NpcMemorySystem {
     if (npcKey === "jjook") return this.getJjookMemorySpeech();
     if (npcKey === "sunisuni") return this.getSunisuniMemorySpeech();
     return null;
+  }
+
+  getAmbientSpeech(npcKey, fallbackSpeech) {
+    if (!NPC_KEYS.has(npcKey) || !this.canShowAmbientMemory()) return fallbackSpeech;
+    if (this.isAmbientMemoryCoolingDown(npcKey)) return fallbackSpeech;
+
+    const memoryText = this.getMemorySpeech(npcKey);
+    if (!memoryText) return fallbackSpeech;
+
+    this.markAmbientMemoryShown(npcKey);
+    return memoryText;
   }
 
   showDirectMemoryDialogue(npcKey) {
@@ -47,7 +60,7 @@ export default class NpcMemorySystem {
       {
         name: "해냄이",
         portraitKey: "haenaem_touched",
-        text: this.getHaenaemReply(npcKey),
+        text: this.getHaenaemReply(npcKey, memoryText),
       },
     ]);
     this.markDirectMemoryShown(npcKey);
@@ -93,6 +106,7 @@ export default class NpcMemorySystem {
         && !scene.yebiQuestSystem?.isRecycleDemoActive;
     }
 
+    // Sunisuni's hospital/pharmacy flow is story-critical, so memory dialogue stays direct-only.
     return false;
   }
 
@@ -132,6 +146,14 @@ export default class NpcMemorySystem {
     this.nextDirectMemoryAtByNpc.set(npcKey, (this.scene.time?.now ?? 0) + DIRECT_MEMORY_COOLDOWN_MS);
   }
 
+  isAmbientMemoryCoolingDown(npcKey) {
+    return (this.scene.time?.now ?? 0) < (this.nextAmbientMemoryAtByNpc.get(npcKey) || 0);
+  }
+
+  markAmbientMemoryShown(npcKey) {
+    this.nextAmbientMemoryAtByNpc.set(npcKey, (this.scene.time?.now ?? 0) + AMBIENT_MEMORY_COOLDOWN_MS);
+  }
+
   getNpcMeta(npcKey) {
     return {
       yebi: { name: "여비", portraitKey: "yeobi" },
@@ -140,10 +162,14 @@ export default class NpcMemorySystem {
     }[npcKey] || null;
   }
 
-  getHaenaemReply(npcKey) {
+  getHaenaemReply(npcKey, memoryText = "") {
     if (npcKey === "yebi") return "여비가 알려준 덕분에 분리수거가 더 쉬워졌어요.";
     if (npcKey === "jjook") return "같이 도와줘서 나도 더 힘이 났어.";
-    if (npcKey === "sunisuni") return "괜찮아지셔서 정말 다행이에요.";
+    if (npcKey === "sunisuni") {
+      if (memoryText.includes("약")) return "약은 꼭 설명대로 드셔야 해요.";
+      if (memoryText.includes("쉬")) return "무리하지 말고 천천히 쉬세요.";
+      return "괜찮아지셔서 정말 다행이에요.";
+    }
     return "기억해줘서 고마워요.";
   }
 
@@ -206,6 +232,8 @@ export default class NpcMemorySystem {
         "병원 같이 가줘서 아직도 고마워.",
         "그때 약국까지 같이 가줘서 마음이 놓였어.",
         "요즘은 천천히 쉬면서 지내고 있어.",
+        "오늘은 배가 많이 괜찮아졌어.",
+        "약은 설명해준 대로 잘 챙겨 먹고 있어.",
       );
     } else if ([SunisuniQuestState.GOING_PHARMACY, SunisuniQuestState.MEDICINE_PAID].includes(scene.sunisuniQuestState)) {
       candidates.push("처방전 들고 약국까지 같이 가줘서 마음이 놓여.");
