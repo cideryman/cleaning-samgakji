@@ -8,11 +8,13 @@ import {
 } from "../config/QuestStates.js";
 
 const NPC_KEYS = new Set(["yebi", "jjook", "sunisuni"]);
+const DIRECT_MEMORY_COOLDOWN_MS = 12000;
 
 export default class NpcMemorySystem {
   constructor(scene) {
     this.scene = scene;
     this.lastSpeechByNpc = new Map();
+    this.nextDirectMemoryAtByNpc = new Map();
   }
 
   getMemorySpeech(npcKey) {
@@ -27,6 +29,7 @@ export default class NpcMemorySystem {
   showDirectMemoryDialogue(npcKey) {
     const scene = this.scene;
     if (!this.canShowDirectMemory(npcKey)) return false;
+    if (this.isDirectMemoryCoolingDown(npcKey)) return false;
 
     const memoryText = this.getMemorySpeech(npcKey);
     if (!memoryText) return false;
@@ -47,15 +50,19 @@ export default class NpcMemorySystem {
         text: this.getHaenaemReply(npcKey),
       },
     ]);
+    this.markDirectMemoryShown(npcKey);
     return true;
   }
 
   getQuestSafeMemoryDialogueLine(npcKey) {
     if (!this.canShowQuestSafeMemory(npcKey)) return null;
+    if (this.isDirectMemoryCoolingDown(npcKey)) return null;
 
     const npcMeta = this.getNpcMeta(npcKey);
     const memoryText = this.getMemorySpeech(npcKey);
     if (!npcMeta || !memoryText) return null;
+
+    this.markDirectMemoryShown(npcKey);
 
     return {
       name: npcMeta.name,
@@ -115,6 +122,14 @@ export default class NpcMemorySystem {
     }
 
     return false;
+  }
+
+  isDirectMemoryCoolingDown(npcKey) {
+    return (this.scene.time?.now ?? 0) < (this.nextDirectMemoryAtByNpc.get(npcKey) || 0);
+  }
+
+  markDirectMemoryShown(npcKey) {
+    this.nextDirectMemoryAtByNpc.set(npcKey, (this.scene.time?.now ?? 0) + DIRECT_MEMORY_COOLDOWN_MS);
   }
 
   getNpcMeta(npcKey) {

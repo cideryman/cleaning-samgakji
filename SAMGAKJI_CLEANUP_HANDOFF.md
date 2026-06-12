@@ -101,6 +101,11 @@
   - Yebi's recycle active/completed dialogue can now prepend a memory line while keeping recycle progress/reward guidance intact.
   - The Yebi memory line only appears after the can quest is complete, during or after the recycle quest, and not during the recycle demonstration.
   - `PlayScene.js` was not changed for this step.
+- NPC memory direct-dialogue phase 3C:
+  - `NpcMemorySystem` now keeps a short per-NPC cooldown for direct/quest-safe memory lines.
+  - This prevents repeated click/touch interactions from showing the same memory line too often.
+  - The cooldown is intentionally local to memory dialogue, so existing quest dialogue, random speech fallback, and main story flow are not changed.
+  - `PlayScene.js` was not changed for this step.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.
@@ -169,8 +174,9 @@
    - Phase 2 is complete: direct-memory dialogue logic moved into `NpcMemorySystem` so `PlayScene.js` stays thin.
    - Phase 3A is complete: Jjook's generic dialogue can include a memory line without stealing the plogging-help choice.
    - Phase 3B is complete: Yebi's recycle progress/completed dialogue can include a memory line without changing recycle mechanics.
+   - Phase 3C is complete: direct/quest-safe memory lines have a short per-NPC cooldown to avoid repeated memory dialogue spam.
    - Current random speech can already prefer `NpcMemorySystem`, and direct click/touch dialogue can now reuse the same memory line.
-   - Next step: decide whether Sunisuni needs quest-safe insertion, or leave her as direct-memory only because most Sunisuni interactions are story-critical.
+   - Next step: leave Sunisuni as direct-memory only unless a clearly safe non-story interaction point is added; most Sunisuni interactions are story-critical.
    - Keep the priority rule: active quest dialogue > direct memory line > generic NPC dialogue.
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.
