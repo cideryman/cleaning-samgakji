@@ -22,7 +22,11 @@ export default class DialogueSystem {
   }
 
   setupEventListeners() {
-    this.dialogModal?.addEventListener("click", () => this.nextLine());
+    this.dialogModal?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.nextLine();
+    });
     this.scene.input.keyboard.on("keydown-SPACE", () => this.confirm());
     this.scene.input.keyboard.on("keydown-ENTER", () => this.confirm());
     this.scene.input.keyboard.on("keydown-LEFT", () => this.moveChoice(-1));
@@ -50,7 +54,11 @@ export default class DialogueSystem {
     this.scene.stateManager?.set(SceneState.TALKING);
     if (this.scene.player) this.scene.player.setVelocity(0, 0);
 
+    this.dialogModal.classList.remove("is-visible");
     this.dialogModal.style.display = "flex";
+    window.requestAnimationFrame(() => {
+      if (this.isInDialogue) this.dialogModal?.classList.add("is-visible");
+    });
     this.showLine();
     return true;
   }
@@ -180,6 +188,7 @@ export default class DialogueSystem {
     if (this.typingInterval) clearInterval(this.typingInterval);
     this.typingInterval = null;
     this.clearChoices();
+    this.dialogModal?.classList.remove("is-visible");
     this.dialogModal.style.display = "none";
     this.dialogModal?.classList.remove("has-scene-overlay");
     this.dialogModal?.style.removeProperty("--dialog-scene-left");

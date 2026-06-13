@@ -1585,8 +1585,14 @@ body.app-fit-mode #game canvas {
   justify-content: center;
   align-items: flex-end;
   padding-bottom: max(20px, env(safe-area-inset-bottom));
+  opacity: 0;
   transform: translateZ(0);
+  transition: opacity 140ms ease;
   will-change: transform;
+}
+
+.dialog-modal.is-visible {
+  opacity: 1;
 }
 
 .dialog-modal.has-scene-overlay {
@@ -1622,6 +1628,12 @@ body.app-fit-mode #game canvas {
   position: relative;
   margin-bottom: 20px;
   z-index: 242;
+  transform: translateY(8px);
+  transition: transform 160ms ease;
+}
+
+.dialog-modal.is-visible .dialog-panel {
+  transform: translateY(0);
 }
 
 .dialog-modal.has-scene-overlay .dialog-panel {

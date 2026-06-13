@@ -168,7 +168,8 @@ export default class NpcMemorySystem {
     if (npcKey === "sunisuni") {
       if (memoryText.includes("약")) return "약은 꼭 설명대로 드셔야 해요.";
       if (memoryText.includes("쉬")) return "무리하지 말고 천천히 쉬세요.";
-      return "괜찮아지셔서 정말 다행이에요.";
+      if (memoryText.includes("배")) return "배가 괜찮아져서 정말 다행이에요.";
+      return "수니수니가 편해 보여서 좋아요.";
     }
     return "기억해줘서 고마워요.";
   }
@@ -182,11 +183,11 @@ export default class NpcMemorySystem {
     const hasSeenSpecialResource = Object.values(scene.shownSpecialOverlays ?? {}).some(Boolean);
 
     if (canQuest?.isCompleted) {
-      candidates.push("해냄아, 캔을 모으는 실력이 정말 좋아졌네!");
+      candidates.push("해냄아, 캔 모으는 솜씨가 좋아졌네!");
     }
 
     if (recycleState === RecycleQuestState.COMPLETED) {
-      candidates.push("이제 분리수거장도 제법 잘 쓰는구나.");
+      candidates.push("이제 분리수거장도 잘 쓰는구나.");
     }
 
     if (totalRecycledCount >= 6) {
@@ -194,7 +195,7 @@ export default class NpcMemorySystem {
     }
 
     if (hasSeenSpecialResource) {
-      candidates.push("깨끗한 재활용품을 알아보는 눈이 생겼구나!");
+      candidates.push("좋은 재활용품을 알아보는 눈이 생겼구나!");
     }
 
     return this.pickForNpc("yebi", candidates);
@@ -205,7 +206,7 @@ export default class NpcMemorySystem {
     const candidates = [];
 
     if (scene.jjookQuestState === JjookQuestState.COMPLETED) {
-      candidates.push("지난번에 지갑 찾아줘서 정말 고마웠어!");
+      candidates.push("지난번 지갑 찾아줘서 정말 고마웠어!");
     }
 
     if (scene.isJjookFollowActive) {
@@ -213,11 +214,11 @@ export default class NpcMemorySystem {
     }
 
     if ([ClothesQuestState.READY, ClothesQuestState.SHOPPING, ClothesQuestState.COMPLETED].includes(scene.clothesQuestState)) {
-      candidates.push("서울 여행 준비하니까 두근두근하지 않아?");
+      candidates.push("서울 여행 준비하니까 두근두근하다!");
     }
 
     if ([PackingQuestState.GOING_BUS_STOP, PackingQuestState.BOARDING_BUS, PackingQuestState.TRAVELING_HOME, PackingQuestState.COMPLETED, PackingQuestState.ENDING_COMPLETE].includes(scene.packingQuestState)) {
-      candidates.push("이제 진짜 여행 가는 느낌이 난다!");
+      candidates.push("이제 정말 여행 가는 느낌이 난다!");
     }
 
     return this.pickForNpc("jjook", candidates);
@@ -233,7 +234,7 @@ export default class NpcMemorySystem {
         "그때 약국까지 같이 가줘서 마음이 놓였어.",
         "요즘은 천천히 쉬면서 지내고 있어.",
         "오늘은 배가 많이 괜찮아졌어.",
-        "약은 설명해준 대로 잘 챙겨 먹고 있어.",
+        "약은 설명대로 잘 챙겨 먹고 있어.",
       );
     } else if ([SunisuniQuestState.GOING_PHARMACY, SunisuniQuestState.MEDICINE_PAID].includes(scene.sunisuniQuestState)) {
       candidates.push("처방전 들고 약국까지 같이 가줘서 마음이 놓여.");

@@ -118,6 +118,14 @@
   - After the hospital/pharmacy quest is complete, Sunisuni's direct-memory dialogue now includes a few calmer daily check-in lines.
   - Haenaem's reply can now adjust slightly to the Sunisuni line, for example reminding her to take medicine as explained or rest slowly.
   - This does not insert extra lines into the active hospital/pharmacy story flow.
+- Dialogue text polish phase 1:
+  - NPC memory/direct daily lines were lightly shortened and made more consistent.
+  - Question-style ambient lines that did not expect player input were changed into simple statement-style lines.
+  - No quest choices, rewards, or story-state conditions were changed.
+- Dialogue presentation polish phase 1:
+  - Dialogue modal now uses a small class-based fade/slide-in when opening.
+  - Dialogue modal click handling now explicitly prevents default behavior and stops propagation before advancing text, reducing the chance of clicks leaking to the game world.
+  - No dialogue content, quest state, or selection behavior was changed.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.
