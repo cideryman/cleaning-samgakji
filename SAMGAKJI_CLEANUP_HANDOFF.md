@@ -126,6 +126,26 @@
   - Dialogue modal now uses a small class-based fade/slide-in when opening.
   - Dialogue modal click handling now explicitly prevents default behavior and stops propagation before advancing text, reducing the chance of clicks leaking to the game world.
   - No dialogue content, quest state, or selection behavior was changed.
+- Samgakji progress nature asset phase 1:
+  - User-provided 4-frame nature sprites were moved from the root `assets/` folder into `assets/progress/nature/` with English names:
+    - `broad-tree-growth-a.png`
+    - `broad-tree-growth-b.png`
+    - `broad-tree-growth-c.png`
+    - `pine-tree-growth.png`
+    - `small-tree-growth.png`
+    - `rose-bush-growth.png`
+  - They are registered as 128x128 spritesheets in `AssetsData.js`.
+  - Existing Tiled `sunisuni_tree` map objects now render through the new broad-tree/pine sprites at frame 3 while preserving their original map coordinates, display sizes, depth sorting, and collision settings.
+  - `NeighborhoodProgressSystem` now uses the new assets for recovered tree/small-tree/rose/pine progress props.
+- Samgakji progress dirty-object placement phase 1:
+  - Four dirty progress props now use existing bench/tree map points instead of unrelated new fallback positions:
+    - `west_rest_bench`
+    - `park_tree_center_01`
+    - `park_bench_south`
+    - `west_tree_rest`
+  - The matching original map objects are hidden until the dirty prop's reveal level, then shown again when the dirty prop disappears.
+  - Existing map object collision is intentionally preserved. At low levels the visible dirty prop sits on the same place, so the blocker is not invisible; at higher levels the recovered bench/tree is visible again.
+  - Remaining design task: manually review these four spots in-game and tune their Tiled coordinates or fallback sizes if any dirty prop feels too large or visually overlaps nearby paths.
 - Sunisuni quest dialogue polish:
   - Hospital doctor scene no longer repeats Sunisuni asking Haenaem to speak for her after the reception scene.
   - Haenaem now directly explains the stomach pain to the doctor.

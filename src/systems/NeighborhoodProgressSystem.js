@@ -20,7 +20,9 @@ const STATIC_PROGRESS_PROPS = [
     key: "progress_dirty_planter_west",
     type: "dirty",
     texture: "dirty_trash_bags",
-    fallback: { x: 500, y: 616 },
+    pointKey: "west_rest_bench",
+    replacedMapObjectKey: "west_rest_bench",
+    fallback: { x: 827, y: 546 },
     width: 132,
     height: 79,
     showUntilLevel: 2,
@@ -30,7 +32,9 @@ const STATIC_PROGRESS_PROPS = [
     key: "progress_dirty_planter_east",
     type: "dirty",
     texture: "dirty_cardboard_pile",
-    fallback: { x: 1110, y: 402 },
+    pointKey: "park_tree_center_01",
+    replacedMapObjectKey: "park_tree_center_01",
+    fallback: { x: 1610, y: 734 },
     width: 128,
     height: 77,
     showUntilLevel: 3,
@@ -40,7 +44,9 @@ const STATIC_PROGRESS_PROPS = [
     key: "progress_dirty_bench_spot",
     type: "dirty",
     texture: "dirty_spilled_bin",
-    fallback: { x: 790, y: 682 },
+    pointKey: "park_bench_south",
+    replacedMapObjectKey: "park_bench_south",
+    fallback: { x: 864, y: 904 },
     width: 138,
     height: 83,
     showUntilLevel: 4,
@@ -50,7 +56,9 @@ const STATIC_PROGRESS_PROPS = [
     key: "progress_dirty_tree_spot",
     type: "dirty",
     texture: "dirty_soil_rubble",
-    fallback: { x: 1280, y: 640 },
+    pointKey: "west_tree_rest",
+    replacedMapObjectKey: "west_tree_rest",
+    fallback: { x: 928, y: 770 },
     width: 126,
     height: 76,
     showUntilLevel: 5,
@@ -86,12 +94,43 @@ const STATIC_PROGRESS_PROPS = [
   },
   {
     key: "progress_tree_recovered",
-    texture: "sunisuni_tree",
+    texture: "progress_broad_tree_a",
+    frame: 3,
     fallback: { x: 1280, y: 640 },
-    width: 148,
-    height: 126,
+    width: 156,
+    height: 156,
     showFromLevel: 6,
     depthOffset: -0.12,
+  },
+  {
+    key: "progress_small_tree_recovered",
+    texture: "progress_small_tree",
+    frame: 3,
+    fallback: { x: 500, y: 616 },
+    width: 120,
+    height: 120,
+    showFromLevel: 3,
+    depthOffset: -0.16,
+  },
+  {
+    key: "progress_rose_recovered",
+    texture: "progress_rose_bush",
+    frame: 3,
+    fallback: { x: 612, y: 472 },
+    width: 120,
+    height: 120,
+    showFromLevel: 4,
+    depthOffset: -0.16,
+  },
+  {
+    key: "progress_pine_recovered",
+    texture: "progress_pine_tree",
+    frame: 3,
+    fallback: { x: 1440, y: 500 },
+    width: 142,
+    height: 142,
+    showFromLevel: 5,
+    depthOffset: -0.16,
   },
   {
     key: "progress_lamp_recovered",
@@ -302,12 +341,14 @@ export default class NeighborhoodProgressSystem {
   }
 
   getProgressPropPoint(config) {
-    return this.scene.getMapPoint?.(config.key, config.fallback) || config.fallback;
+    return this.scene.getMapPoint?.(config.pointKey || config.key, config.fallback) || config.fallback;
   }
 
   createTextureProgressProp(x, y, config) {
     if (!config.texture || !this.scene.textures.exists(config.texture)) return null;
-    const prop = this.scene.add.image(x, y, config.texture);
+    const prop = Number.isInteger(config.frame)
+      ? this.scene.add.sprite(x, y, config.texture, config.frame)
+      : this.scene.add.image(x, y, config.texture);
     prop.setOrigin(config.originX ?? 0.5, config.originY ?? 1);
     prop.setDisplaySize(config.width, config.height);
     return prop;
@@ -335,6 +376,7 @@ export default class NeighborhoodProgressSystem {
 
   applyProgressPropVisibility(level) {
     let didCollisionStateChange = false;
+    this.applyReplacedMapObjectVisibility(level);
     this.progressProps.forEach((prop) => {
       const config = prop.getData?.("progressConfig") || {};
       const showFromLevel = config.showFromLevel ?? 1;
@@ -352,6 +394,19 @@ export default class NeighborhoodProgressSystem {
     if (didCollisionStateChange) {
       this.scene.pathfindingSystem?.initializeGrid?.();
     }
+  }
+
+  applyReplacedMapObjectVisibility(level) {
+    STATIC_PROGRESS_PROPS.forEach((config) => {
+      if (!config.replacedMapObjectKey) return;
+      const mapObject = this.scene.mapObjects?.[config.replacedMapObjectKey];
+      if (!mapObject) return;
+
+      const revealLevel = config.revealMapObjectFromLevel ?? ((config.showUntilLevel ?? 0) + 1);
+      const isVisible = level >= revealLevel;
+      mapObject.setVisible?.(isVisible);
+      mapObject.setActive?.(isVisible);
+    });
   }
 
   syncProgressCollider(collider, isActive) {

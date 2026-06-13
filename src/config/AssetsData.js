@@ -181,6 +181,12 @@ export const SPRITESHEET_ASSETS = [
   { key: "flowerbed_growth", path: "assets/sprites/flowerbed_growth.png", frameWidth: 160, frameHeight: 96 },
   { key: "flowerbed_growth2", path: "assets/sprites/flowerbed_growth2.png", frameWidth: 160, frameHeight: 96 },
   { key: "butterfly_idle", path: "assets/sprites/butterfly_idle.png", frameWidth: 64, frameHeight: 64 },
+  { key: "progress_broad_tree_a", path: "assets/progress/nature/broad-tree-growth-a.png", frameWidth: 128, frameHeight: 128 },
+  { key: "progress_broad_tree_b", path: "assets/progress/nature/broad-tree-growth-b.png", frameWidth: 128, frameHeight: 128 },
+  { key: "progress_broad_tree_c", path: "assets/progress/nature/broad-tree-growth-c.png", frameWidth: 128, frameHeight: 128 },
+  { key: "progress_pine_tree", path: "assets/progress/nature/pine-tree-growth.png", frameWidth: 128, frameHeight: 128 },
+  { key: "progress_small_tree", path: "assets/progress/nature/small-tree-growth.png", frameWidth: 128, frameHeight: 128 },
+  { key: "progress_rose_bush", path: "assets/progress/nature/rose-bush-growth.png", frameWidth: 128, frameHeight: 128 },
 ];
 
 export const TILED_MAP = {

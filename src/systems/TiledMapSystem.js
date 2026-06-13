@@ -208,9 +208,10 @@ export default class TiledMapSystem {
       const displayHeight = Number(props.displayHeight || object.height || 96);
       const x = object.x + (object.width || displayWidth) * originX;
       const y = object.y + (object.height || displayHeight) * originY;
-      const image = props.animation
-        ? scene.add.sprite(x, y, textureKey, Number(props.frame || 0))
-        : scene.add.image(x, y, textureKey);
+      const resolvedTexture = this.resolveMapObjectTexture(textureKey, object, props);
+      const image = props.animation || Number.isInteger(resolvedTexture.frame)
+        ? scene.add.sprite(x, y, resolvedTexture.key, Number(props.frame ?? resolvedTexture.frame ?? 0))
+        : scene.add.image(x, y, resolvedTexture.key);
 
       image.setOrigin(originX, originY);
       image.setDisplaySize(displayWidth, displayHeight);
@@ -234,6 +235,35 @@ export default class TiledMapSystem {
         this.addMapObjectCollider(object, props, x, y, displayWidth, displayHeight, textureKey);
       }
     });
+  }
+
+  resolveMapObjectTexture(textureKey, object, props = {}) {
+    if (props.textureOverride && this.scene.textures.exists(props.textureOverride)) {
+      return {
+        key: props.textureOverride,
+        frame: Number.isFinite(Number(props.frame)) ? Number(props.frame) : undefined,
+      };
+    }
+
+    if (textureKey === "sunisuni_tree") {
+      const treeTextures = [
+        "progress_broad_tree_a",
+        "progress_broad_tree_b",
+        "progress_broad_tree_c",
+        "progress_pine_tree",
+      ].filter((key) => this.scene.textures.exists(key));
+
+      if (treeTextures.length > 0) {
+        const name = object.name || "";
+        const hash = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+        return {
+          key: treeTextures[hash % treeTextures.length],
+          frame: 3,
+        };
+      }
+    }
+
+    return { key: textureKey };
   }
 
   shouldMapObjectCollide(object, props, textureKey) {
