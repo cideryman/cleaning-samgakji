@@ -500,7 +500,12 @@ export default class PlayScene extends Phaser.Scene {
       this.playSunisuniEffect("sweat_drop", this.sunisuniNpc.x + 28, this.sunisuniNpc.y - 42);
       this.showSpeechBubble(this.sunisuniNpc, "아우... 배야...", 10000);
     }
-    this.showQuestToast("수니수니가 배를 잡고 앉아 있어요!", 10000);
+    this.uiManager?.showNoticePopup({
+      badge: "!",
+      kicker: "도움이 필요해요",
+      title: "수니수니가 기다리고 있어요",
+      message: "편의점 앞에서 수니수니가 배를 잡고 앉아 있어요.",
+    });
     this.saveCheckpoint("sunisuni_found");
   }
 

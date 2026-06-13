@@ -95,7 +95,7 @@ Status: implemented.
 Status: implemented with text/emoji fallback.
 
 Goal:
-Show a level-up popup once per newly reached Samgakji level.
+Show a progress popup only when the Samgakji neighborhood name changes.
 
 Rules:
 - Popup must be HTML overlay above the game stage.
@@ -107,14 +107,46 @@ Rules:
   - one short message, such as `삼각지가 조금 더 밝아졌어요.`
 - Uses text/emoji fallback while dedicated image assets are not ready.
 - Save `lastAnnouncedLevel` so the popup does not repeat after reload.
+- Because level names change every 2 levels, intermediate levels with the same name are acknowledged silently.
+- Current design decision: keep the assetless HTML popup. No dedicated popup image asset is required for now.
 
 Current implementation:
 - `SamgakjiProgressSystem` detects newly reached levels during cleaning.
+- If the newly reached level has the same neighborhood name as the last announced level, it updates save state without showing a popup.
+- If the neighborhood name changes, it shows the centered popup.
 - The popup is an HTML overlay appended to `.game-stage`.
 - The popup blocks world input while visible.
 - Confirmation button, Enter, or Space updates `lastAnnouncedLevel` and saves a checkpoint.
 - Scene shutdown removes any remaining popup DOM and key listener.
 - No new image asset is required yet.
+
+## Quest Notice Popup Pattern
+
+Status: initial implementation.
+
+- Quest unlock notices can reuse the same assetless popup style as the Samgakji progress popup.
+- This keeps important events more visible than a short toast without adding new assets.
+- Current first use: Sunisuni unlock notice, `수니수니가 기다리고 있어요`.
+- The popup uses `.samgakji-levelup-modal.is-visible`, so `SceneControlSystem` already blocks world input while it is open.
+- Future quest unlocks can use the same pattern when a toast is too easy to miss.
+
+## Progress Object Placement And Tiled Editing
+
+Status: partially implemented, future cleanup recommended.
+
+- Some dirty/recovered progress props now follow existing Tiled map object points such as bench/tree positions.
+- This is good for natural placement because dirty objects can replace places where a bench or tree will later appear.
+- Currently Tiled can adjust those positions indirectly by moving the original map object point/object.
+- Future recommendation: add a dedicated Tiled object layer or object property set for progress props.
+- Suggested properties:
+  - `progressKey`
+  - `dirtyTexture`
+  - `recoveredTexture`
+  - `showUntilLevel`
+  - `revealAtLevel`
+  - `collisionWidth`
+  - `collisionHeight`
+- That would let the designer move dirty spots directly in Tiled without editing JS.
 
 ### Phase 4 Asset Prep
 

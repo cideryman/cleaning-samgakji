@@ -1,5 +1,6 @@
 import {
   getSamgakjiLevelInfo,
+  getSamgakjiLevelNameByLevel,
   normalizeSamgakjiProgressState,
 } from "../config/SamgakjiProgressData.js";
 import { SceneState } from "../config/SceneState.js";
@@ -50,7 +51,14 @@ export default class SamgakjiProgressSystem {
     const levelInfo = this.getLevelInfo();
     if (!progress || !levelInfo) return;
     if (this.levelUpModal) return;
-    if (levelInfo.level <= (progress.lastAnnouncedLevel ?? 1)) return;
+    const lastAnnouncedLevel = progress.lastAnnouncedLevel ?? 1;
+    if (levelInfo.level <= lastAnnouncedLevel) return;
+
+    const lastAnnouncedName = getSamgakjiLevelNameByLevel(lastAnnouncedLevel);
+    if (levelInfo.name === lastAnnouncedName) {
+      this.acknowledgeLevel(levelInfo.level);
+      return;
+    }
 
     this.showLevelUpPopup(levelInfo);
   }

@@ -59,6 +59,57 @@ export default class UIManager {
     }, duration + 120);
   }
 
+  showNoticePopup({
+    badge = "!",
+    kicker = "새로운 알림",
+    title = "",
+    message = "",
+    confirmText = "확인",
+    onClose = null,
+  } = {}) {
+    const stage = document.querySelector(".game-stage");
+    if (!stage || !title) {
+      onClose?.();
+      return;
+    }
+
+    document.querySelectorAll(".quest-notice-modal").forEach((el) => el.remove());
+    this.scene.sceneControlSystem?.blockWorldInput?.(true);
+
+    const modal = document.createElement("div");
+    modal.className = "samgakji-levelup-modal quest-notice-modal is-visible";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", title);
+    modal.innerHTML = `
+      <div class="samgakji-levelup-panel">
+        <div class="samgakji-levelup-badge" aria-hidden="true">${badge}</div>
+        <div class="samgakji-levelup-kicker">${kicker}</div>
+        <h2>${title}</h2>
+        ${message ? `<p>${message}</p>` : ""}
+        <button type="button" class="samgakji-levelup-confirm">${confirmText}</button>
+      </div>
+    `;
+
+    const stopInput = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const close = (event) => {
+      stopInput(event);
+      modal.remove();
+      this.scene.sceneControlSystem?.blockWorldInput?.(false);
+      onClose?.();
+    };
+
+    modal.addEventListener("pointerdown", stopInput);
+    modal.addEventListener("touchstart", stopInput, { passive: false });
+    modal.querySelector(".samgakji-levelup-confirm")?.addEventListener("click", close);
+    modal.querySelector(".samgakji-levelup-confirm")?.addEventListener("pointerdown", close);
+    stage.appendChild(modal);
+    modal.querySelector(".samgakji-levelup-confirm")?.focus?.();
+  }
+
   showSpeechBubble(target, message, duration = 2400) {
     if (!target || !message) return;
 

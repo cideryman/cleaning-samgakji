@@ -49,6 +49,12 @@ export function getSamgakjiLevelInfo(totalCleanedCount = 0) {
   };
 }
 
+export function getSamgakjiLevelNameByLevel(level = 1) {
+  const safeLevel = Math.max(1, Number(level) || 1);
+  return SAMGAKJI_PROGRESS_LEVELS.find((entry) => entry.level === safeLevel)?.name
+    || SAMGAKJI_PROGRESS_LEVELS[0].name;
+}
+
 export function normalizeSamgakjiProgressState(value = {}, totalCleanedCount = 0) {
   const safeValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const levelInfo = getSamgakjiLevelInfo(totalCleanedCount);

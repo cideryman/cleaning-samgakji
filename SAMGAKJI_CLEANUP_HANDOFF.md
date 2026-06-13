@@ -157,10 +157,19 @@
   - Educational guide icons render at higher depth so they do not disappear behind building sprites.
 - Samgakji level-up popup fallback:
   - Phase 4 of `SAMGAKJI_PROGRESS_PLAN.md` is now implemented without new image assets.
-  - `SamgakjiProgressSystem` shows a centered HTML popup when a new Samgakji level is reached.
+  - `SamgakjiProgressSystem` shows a centered HTML popup only when the Samgakji neighborhood name changes.
+  - Because level names change every 2 levels, levels with the same name are acknowledged silently and do not show a popup.
   - The popup blocks world input while visible and saves `lastAnnouncedLevel` after confirmation.
   - Scene shutdown removes any remaining level-up popup DOM and keydown listener.
-  - Later level-up badge/ribbon/sparkle PNG assets can replace the current emoji/text fallback.
+  - User decision: keep the current assetless HTML popup for now. Later badge/ribbon/sparkle PNG assets are optional, not required.
+- Quest notice popup fallback:
+  - `UIManager.showNoticePopup()` reuses the Samgakji popup style for important quest unlock notices.
+  - Current first use: Sunisuni unlock now shows `수니수니가 기다리고 있어요` as a centered popup instead of a short toast.
+  - It uses the same `.samgakji-levelup-modal.is-visible` overlay class, so world touch/click input is blocked while visible.
+- Progress object/Tiled placement note:
+  - Current dirty progress props can follow existing Tiled bench/tree object points, so moving those source objects in Tiled moves the dirty/recovered spot indirectly.
+  - This is useful for replacing existing bench/tree spots with dirty objects at low levels, then restoring clean props at higher Samgakji levels.
+  - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 
 ## Tiled 편집 규칙
 
@@ -218,6 +227,14 @@
    - Phase 3D is complete: ambient/random speech now uses memory lines with a per-NPC cooldown before falling back to existing random lines.
    - Memory work is complete for now. Sunisuni remains direct-memory only by design; revisit only if a new non-story daily interaction is added later.
    - Keep the priority rule: active quest dialogue > direct memory line > generic NPC dialogue.
+
+3. Dialogue polish continuation
+   - Continue small, conservative dialogue passes only when a specific awkward line is found.
+   - Good candidates:
+     1. Quest unlock notices that are too easy to miss can become `UIManager.showNoticePopup()` popups.
+     2. Interior scene dialogue should wait for fade/dissolve completion before appearing.
+     3. NPC memory lines should remain short and should not interrupt active quest choices.
+     4. Keep mom/prologue/epilogue phone dialogue separate from map NPC memory logic unless a dedicated story-memory system is created.
    - Do not add gauge UI or new assets for this step.
    - Do not touch mother/prologue/epilogue phone events.
 
