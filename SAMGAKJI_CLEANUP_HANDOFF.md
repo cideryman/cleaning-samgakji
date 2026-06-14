@@ -205,6 +205,10 @@
   - 2026-06-15 static recovered decoration cleanup:
     - Removed leftover dedicated-point-only recovered decoration entries from `STATIC_PROGRESS_PROPS`.
     - Future bench/tree/lamp/rose/pine recovery decorations should be authored as Tiled `logic_point` objects with `progressObject=true` instead of adding more static JS entries.
+  - 2026-06-15 dirty progress point cleanup:
+    - `progress_dirty_concrete_scrap` and `progress_dirty_paper_rubble` were moved from static JS config to Tiled `logic_point` objects.
+    - They use `progressObject=true`, `progressType=dirty`, `texture`, size, `showUntilLevel`, and `blocksMovement=true`.
+    - Future one-off dirty spots should be authored the same way so placement and collision can be tuned from Tiled.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
   - A recovered bench currently appears awkwardly between Jjook and a flowerbed.

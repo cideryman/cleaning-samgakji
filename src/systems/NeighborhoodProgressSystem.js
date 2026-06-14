@@ -64,26 +64,6 @@ const STATIC_PROGRESS_PROPS = [
     showUntilLevel: 5,
     blocksMovement: true,
   },
-  {
-    key: "progress_dirty_concrete_scrap",
-    type: "dirty",
-    texture: "dirty_concrete_scrap",
-    fallback: { x: 612, y: 472 },
-    width: 134,
-    height: 80,
-    showUntilLevel: 3,
-    blocksMovement: true,
-  },
-  {
-    key: "progress_dirty_paper_rubble",
-    type: "dirty",
-    texture: "dirty_paper_rubble",
-    fallback: { x: 1440, y: 500 },
-    width: 132,
-    height: 79,
-    showUntilLevel: 4,
-    blocksMovement: true,
-  },
 ];
 
 const STAGE_FRAMES = [
