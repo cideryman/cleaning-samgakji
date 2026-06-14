@@ -172,7 +172,7 @@
   - 2026-06-14 update: progress props now prefer a dedicated Tiled point named exactly like the prop key, for example `progress_tree_recovered`, before falling back to `pointKey`, `replacedMapObjectKey`, or code fallback coordinates.
   - This means future map edits can add lightweight `logic_point` objects named after progress prop keys without changing code.
   - Nature progress props now start from frame 0 and advance through frames 0-3 as Samgakji level rises instead of appearing immediately as fully grown frame 3 sprites.
-  - 2026-06-14 update 2: supplemental recovered decorations such as `progress_bench_recovered`, `progress_tree_recovered`, `progress_small_tree_recovered`, `progress_rose_recovered`, and `progress_pine_recovered` now require a dedicated Tiled point. They no longer appear from old code fallback coordinates, which avoids awkward benches/trees showing up in NPC activity zones or recycling spaces.
+  - 2026-06-14 update 2: supplemental recovered decorations such as `progress_bench_recovered`, `progress_tree_recovered`, `progress_small_tree_recovered`, `progress_rose_recovered`, and `progress_pine_recovered` were moved away from fallback coordinates so they no longer appear in awkward NPC activity zones or recycling spaces.
   - Dirty props and replaced original map objects still work through existing `pointKey`/`replacedMapObjectKey` fallbacks, so low-level blocked/dirty spots remain visible.
   - 2026-06-15 region progress slice 1:
     - Added dedicated Tiled `logic_point` anchors in `assets/maps/chapter1-samgakji-map.json`:
@@ -196,6 +196,15 @@
     - Optional property: `progressType=dirty`, if the object should use the dirty/fallback visual path.
     - Optional visual properties include `originX` and `originY` in addition to the existing size, level, frame, depth, collision, and growth properties.
     - This path is intentionally opt-in. Existing Tiled points are ignored unless `progressObject=true` is set.
+  - 2026-06-15 paired Tiled progress objects:
+    - A single Tiled progress point can now describe both the low-level dirty object and the later recovered landscaping object.
+    - Use `progressObject=true`, `dirtyTexture`, `recoveredTexture`, and `revealAtLevel`.
+    - Optional paired properties include `dirtyWidth`, `dirtyHeight`, `dirtyShowUntilLevel`, `dirtyBlocksMovement`, `recoveredWidth`, `recoveredHeight`, `recoveredShowFromLevel`, `recoveredDepthOffset`, and `recoveredGrowthFrames`.
+    - Existing region progress anchors (`progress_rose_01`, `progress_rose_02`, `progress_small_tree_01`-`04`, `progress_tree_01`, `progress_pine_01`) were migrated to this paired Tiled-property model.
+    - The matching hard-coded `progress_old_trash_*` and recovered regional entries were removed from `STATIC_PROGRESS_PROPS`, reducing future PlayScene/system growth pressure.
+  - 2026-06-15 static recovered decoration cleanup:
+    - Removed leftover dedicated-point-only recovered decoration entries from `STATIC_PROGRESS_PROPS`.
+    - Future bench/tree/lamp/rose/pine recovery decorations should be authored as Tiled `logic_point` objects with `progressObject=true` instead of adding more static JS entries.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
   - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
@@ -287,6 +296,12 @@ Progress landscaping plan:
 Future Tiled-friendly progress object model:
 - Add object anchors such as `progress_rose_01`, `progress_pine_01`, `progress_tree_01`, `progress_small_tree_01`, `progress_old_trash_01`.
 - For new no-code progress decorations, prefer adding a `logic_point` object with `progressObject=true` and a `texture` property.
+- For dirty-to-recovered spots, prefer the paired object form:
+  - `progressObject=true`
+  - `dirtyTexture`
+  - `recoveredTexture`
+  - `revealAtLevel`
+  - optional size/depth/growth properties
 - Suggested properties:
   - `progressObject`: `true`
   - `progressKey`
@@ -497,7 +512,7 @@ Use this as the single task list. Work from the top, in small verified units.
 - New static progress props now read the current Samgakji level from `SamgakjiProgressSystem`.
 - Temporary dirty/neglect spots are generated from Phaser shapes, so no new image assets are required yet.
 - Existing assets are reused for recovered props: `sunisuni_bench`, `sunisuni_tree`, and `street_lamp`.
-- Progress prop keys such as `progress_dirty_planter_west`, `progress_bench_recovered`, and `progress_tree_recovered` can be added as Tiled anchors later; Tiled positions will override fallback coordinates.
+- Progress prop keys such as `progress_dirty_planter_west`, `progress_bench_recovered`, and `progress_tree_recovered` can be added as Tiled anchors later. For new recovered decorations, prefer `progressObject=true` on the Tiled point instead of adding static JS entries.
 - Superseded by the 2026-06-11 collision update: visible dirty progress props now block movement with small collision areas.
 - Documented the asset replacement path in this handoff: replace generated dirt with `assets/progress/dirty/*.png`, then replace full-grown tree fallback with a tree-growth spritesheet when ready.
 
