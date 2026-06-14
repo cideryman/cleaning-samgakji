@@ -10,6 +10,8 @@ export default class TiledMapSystem {
     scene.objectWalls = scene.physics.add.staticGroup();
     scene.objectCollisionRects = [];
     scene.mapObjects = {};
+    scene.mapPoints = scene.mapPoints || {};
+    scene.mapPointMeta = {};
 
     if (this.createTiledMap()) {
       return;
@@ -159,9 +161,9 @@ export default class TiledMapSystem {
       const objectType = object.type || object.name;
       const x = object.x + (object.width || 0) / 2;
       const y = object.y + (object.height || 0) / 2;
-      this.setMapPoint(object.name, x, y);
+      this.setMapPoint(object.name, x, y, object);
       if (objectType !== "logic_point") {
-        this.setMapPoint(objectType, x, y);
+        this.setMapPoint(objectType, x, y, object);
       }
 
       if (objectType === "player_start") {
@@ -179,9 +181,19 @@ export default class TiledMapSystem {
     scene.finalFlowerPositions = flowerPositions.length > 0 ? flowerPositions : null;
   }
 
-  setMapPoint(key, x, y) {
+  setMapPoint(key, x, y, object = null) {
     if (!key || key === "slime_spawn" || key === "flower") return;
     this.scene.mapPoints[key] = { x, y };
+    if (object) {
+      this.scene.mapPointMeta = this.scene.mapPointMeta || {};
+      this.scene.mapPointMeta[key] = {
+        name: object.name || "",
+        type: object.type || "",
+        width: object.width || 0,
+        height: object.height || 0,
+        properties: this.getTiledObjectProperties(object),
+      };
+    }
   }
 
   getMapPoint(key, fallback) {

@@ -174,6 +174,28 @@
   - Nature progress props now start from frame 0 and advance through frames 0-3 as Samgakji level rises instead of appearing immediately as fully grown frame 3 sprites.
   - 2026-06-14 update 2: supplemental recovered decorations such as `progress_bench_recovered`, `progress_tree_recovered`, `progress_small_tree_recovered`, `progress_rose_recovered`, and `progress_pine_recovered` now require a dedicated Tiled point. They no longer appear from old code fallback coordinates, which avoids awkward benches/trees showing up in NPC activity zones or recycling spaces.
   - Dirty props and replaced original map objects still work through existing `pointKey`/`replacedMapObjectKey` fallbacks, so low-level blocked/dirty spots remain visible.
+  - 2026-06-15 region progress slice 1:
+    - Added dedicated Tiled `logic_point` anchors in `assets/maps/chapter1-samgakji-map.json`:
+      - `progress_rose_01`, `progress_rose_02`
+      - `progress_small_tree_01` through `progress_small_tree_04`
+      - `progress_tree_01`, `progress_pine_01`
+    - Added paired low-level old-trash visuals and later recovered landscaping visuals for those anchors.
+    - These new regional old-trash/landscaping props are currently non-blocking to avoid creating surprise movement problems.
+    - The small tree anchors form the first path-edge row/group. Their exact placement should be adjusted in Tiled after visual review.
+    - The paired visuals use the same anchor point: old trash appears first, then the rose/tree/small-tree/pine grows from frame 0 as Samgakji level rises.
+  - 2026-06-15 Tiled metadata support:
+    - `TiledMapSystem` now stores object-layer point metadata in `scene.mapPointMeta`.
+    - `NeighborhoodProgressSystem` can read Tiled properties from progress anchors to override selected config values without code edits.
+    - Supported progress-anchor properties include `texture`, `width`, `height`, `displayWidth`, `displayHeight`, `frame`, `showFromLevel`, `showUntilLevel`, `growthStartLevel`, `maxFrame`, `depthOffset`, `depthSortOffsetY`, `collisionWidth`, `collisionHeight`, `collisionOffsetX`, `collisionOffsetY`, `blocksMovement`, and `growthFrames`.
+    - If a progress anchor is a rectangle object rather than a zero-size point, its object `width`/`height` can be used as the display size unless overridden by properties.
+  - 2026-06-15 Tiled-authored progress objects:
+    - A new progress decoration can now be added from Tiled without adding another hard-coded JS config entry.
+    - Add a `logic_point` object and set property `progressObject=true`.
+    - Required property: `texture`, matching a preloaded texture key.
+    - Optional property: `progressKey`, if the object name should differ from the internal progress key.
+    - Optional property: `progressType=dirty`, if the object should use the dirty/fallback visual path.
+    - Optional visual properties include `originX` and `originY` in addition to the existing size, level, frame, depth, collision, and growth properties.
+    - This path is intentionally opt-in. Existing Tiled points are ignored unless `progressObject=true` is set.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
   - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
@@ -264,7 +286,9 @@ Progress landscaping plan:
 
 Future Tiled-friendly progress object model:
 - Add object anchors such as `progress_rose_01`, `progress_pine_01`, `progress_tree_01`, `progress_small_tree_01`, `progress_old_trash_01`.
+- For new no-code progress decorations, prefer adding a `logic_point` object with `progressObject=true` and a `texture` property.
 - Suggested properties:
+  - `progressObject`: `true`
   - `progressKey`
   - `progressType`: `rose`, `pine`, `tree`, `small_tree`, `old_trash`
   - `region`: `orange`, `purple`, `blue`

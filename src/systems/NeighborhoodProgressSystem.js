@@ -85,6 +85,174 @@ const STATIC_PROGRESS_PROPS = [
     blocksMovement: true,
   },
   {
+    key: "progress_old_trash_rose_01",
+    type: "dirty",
+    texture: "dirty_paper_rubble",
+    dedicatedPointKey: "progress_rose_01",
+    requiresDedicatedPoint: true,
+    width: 92,
+    height: 55,
+    showUntilLevel: 4,
+  },
+  {
+    key: "progress_rose_01",
+    texture: "progress_rose_bush",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 96,
+    height: 96,
+    showFromLevel: 5,
+    depthOffset: -0.16,
+  },
+  {
+    key: "progress_old_trash_rose_02",
+    type: "dirty",
+    texture: "dirty_soil_rubble",
+    dedicatedPointKey: "progress_rose_02",
+    requiresDedicatedPoint: true,
+    width: 88,
+    height: 53,
+    showUntilLevel: 5,
+  },
+  {
+    key: "progress_rose_02",
+    texture: "progress_rose_bush",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 96,
+    height: 96,
+    showFromLevel: 6,
+    depthOffset: -0.16,
+  },
+  {
+    key: "progress_old_trash_small_tree_01",
+    type: "dirty",
+    texture: "dirty_cardboard_pile",
+    dedicatedPointKey: "progress_small_tree_01",
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 46,
+    showUntilLevel: 3,
+  },
+  {
+    key: "progress_small_tree_01",
+    texture: "progress_small_tree",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 76,
+    showFromLevel: 4,
+    depthOffset: -0.18,
+  },
+  {
+    key: "progress_old_trash_small_tree_02",
+    type: "dirty",
+    texture: "dirty_concrete_scrap",
+    dedicatedPointKey: "progress_small_tree_02",
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 46,
+    showUntilLevel: 4,
+  },
+  {
+    key: "progress_small_tree_02",
+    texture: "progress_small_tree",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 76,
+    showFromLevel: 5,
+    depthOffset: -0.18,
+  },
+  {
+    key: "progress_old_trash_small_tree_03",
+    type: "dirty",
+    texture: "dirty_paper_rubble",
+    dedicatedPointKey: "progress_small_tree_03",
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 46,
+    showUntilLevel: 5,
+  },
+  {
+    key: "progress_small_tree_03",
+    texture: "progress_small_tree",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 76,
+    showFromLevel: 6,
+    depthOffset: -0.18,
+  },
+  {
+    key: "progress_old_trash_small_tree_04",
+    type: "dirty",
+    texture: "dirty_spilled_bin",
+    dedicatedPointKey: "progress_small_tree_04",
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 46,
+    showUntilLevel: 6,
+  },
+  {
+    key: "progress_small_tree_04",
+    texture: "progress_small_tree",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 76,
+    height: 76,
+    showFromLevel: 7,
+    depthOffset: -0.18,
+  },
+  {
+    key: "progress_old_trash_tree_01",
+    type: "dirty",
+    texture: "dirty_trash_bags",
+    dedicatedPointKey: "progress_tree_01",
+    requiresDedicatedPoint: true,
+    width: 98,
+    height: 59,
+    showUntilLevel: 5,
+  },
+  {
+    key: "progress_tree_01",
+    texture: "progress_broad_tree_b",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 132,
+    height: 132,
+    showFromLevel: 6,
+    depthOffset: -0.14,
+  },
+  {
+    key: "progress_old_trash_pine_01",
+    type: "dirty",
+    texture: "dirty_soil_rubble",
+    dedicatedPointKey: "progress_pine_01",
+    requiresDedicatedPoint: true,
+    width: 96,
+    height: 58,
+    showUntilLevel: 6,
+  },
+  {
+    key: "progress_pine_01",
+    texture: "progress_pine_tree",
+    frame: 0,
+    growthFrames: true,
+    requiresDedicatedPoint: true,
+    width: 124,
+    height: 124,
+    showFromLevel: 7,
+    depthOffset: -0.14,
+  },
+  {
     key: "progress_bench_recovered",
     texture: "sunisuni_bench",
     requiresDedicatedPoint: true,
@@ -312,25 +480,137 @@ export default class NeighborhoodProgressSystem {
   createProgressProps() {
     this.destroyProgressProps();
 
-    STATIC_PROGRESS_PROPS.forEach((config) => {
+    this.getProgressPropConfigs().forEach((config) => {
       const point = this.getProgressPropPoint(config);
       if (!point) return;
-      const prop = config.type === "dirty"
-        ? this.createDirtyProgressProp(point.x, point.y, config)
-        : this.createTextureProgressProp(point.x, point.y, config);
+      const resolvedConfig = this.getProgressPropConfig(config);
+      const prop = resolvedConfig.type === "dirty"
+        ? this.createDirtyProgressProp(point.x, point.y, resolvedConfig)
+        : this.createTextureProgressProp(point.x, point.y, resolvedConfig);
 
       if (!prop) return;
-      const depthY = point.y + (config.depthSortOffsetY ?? 0);
+      const depthY = point.y + (resolvedConfig.depthSortOffsetY ?? 0);
       prop.setData?.("depthSortY", depthY);
       prop.setData?.("neighborhoodDecoration", true);
-      prop.setData?.("progressConfig", config);
-      prop.setDepth?.(this.scene.getWorldDepth(depthY, config.depthOffset ?? -0.2));
-      prop.setName?.(config.key);
-      if (config.blocksMovement) {
-        prop.setData?.("progressCollider", this.createProgressPropCollider(point.x, point.y, config));
+      prop.setData?.("progressConfig", resolvedConfig);
+      prop.setDepth?.(this.scene.getWorldDepth(depthY, resolvedConfig.depthOffset ?? -0.2));
+      prop.setName?.(resolvedConfig.key);
+      if (resolvedConfig.blocksMovement) {
+        prop.setData?.("progressCollider", this.createProgressPropCollider(point.x, point.y, resolvedConfig));
       }
       this.progressProps.push(prop);
     });
+  }
+
+  getProgressPropConfigs() {
+    return [
+      ...STATIC_PROGRESS_PROPS,
+      ...this.getTiledProgressPropConfigs(),
+    ];
+  }
+
+  getTiledProgressPropConfigs() {
+    const metaEntries = Object.entries(this.scene.mapPointMeta || {});
+    const staticKeys = new Set(STATIC_PROGRESS_PROPS.flatMap((config) => [
+      config.key,
+      config.dedicatedPointKey,
+    ]).filter(Boolean));
+
+    return metaEntries
+      .filter(([anchorKey, meta]) => {
+        if (staticKeys.has(anchorKey)) return false;
+        return this.isTruthy(meta?.properties?.progressObject);
+      })
+      .map(([anchorKey, meta]) => this.createTiledProgressPropConfig(anchorKey, meta))
+      .filter(Boolean);
+  }
+
+  createTiledProgressPropConfig(anchorKey, meta) {
+    const props = meta?.properties || {};
+    const texture = typeof props.texture === "string" ? props.texture.trim() : "";
+    if (!texture) return null;
+
+    const key = typeof props.progressKey === "string" && props.progressKey.trim()
+      ? props.progressKey.trim()
+      : anchorKey;
+    const progressType = typeof props.progressType === "string" ? props.progressType.trim() : "";
+    const width = Number(meta?.width) > 0 ? Number(meta.width) : 96;
+    const height = Number(meta?.height) > 0 ? Number(meta.height) : 96;
+
+    return {
+      key,
+      dedicatedPointKey: anchorKey,
+      requiresDedicatedPoint: true,
+      texture,
+      type: progressType === "dirty" ? "dirty" : undefined,
+      width,
+      height,
+      showFromLevel: 1,
+      showUntilLevel: 16,
+    };
+  }
+
+  getProgressPropConfig(config) {
+    const meta = this.getProgressPropMeta(config);
+    const props = meta?.properties || {};
+    const resolved = { ...config };
+
+    this.assignStringProp(resolved, props, "texture");
+    this.assignNumberProp(resolved, props, "width");
+    this.assignNumberProp(resolved, props, "height");
+    this.assignNumberProp(resolved, props, "displayWidth", "width");
+    this.assignNumberProp(resolved, props, "displayHeight", "height");
+    this.assignNumberProp(resolved, props, "frame");
+    this.assignNumberProp(resolved, props, "showFromLevel");
+    this.assignNumberProp(resolved, props, "showUntilLevel");
+    this.assignNumberProp(resolved, props, "growthStartLevel");
+    this.assignNumberProp(resolved, props, "maxFrame");
+    this.assignNumberProp(resolved, props, "originX");
+    this.assignNumberProp(resolved, props, "originY");
+    this.assignNumberProp(resolved, props, "depthOffset");
+    this.assignNumberProp(resolved, props, "depthSortOffsetY");
+    this.assignNumberProp(resolved, props, "collisionWidth");
+    this.assignNumberProp(resolved, props, "collisionHeight");
+    this.assignNumberProp(resolved, props, "collisionOffsetX");
+    this.assignNumberProp(resolved, props, "collisionOffsetY");
+    this.assignBooleanProp(resolved, props, "blocksMovement");
+    this.assignBooleanProp(resolved, props, "growthFrames");
+
+    if (Number(meta?.width) > 0 && props.width === undefined && props.displayWidth === undefined) {
+      resolved.width = Number(meta.width);
+    }
+    if (Number(meta?.height) > 0 && props.height === undefined && props.displayHeight === undefined) {
+      resolved.height = Number(meta.height);
+    }
+
+    return resolved;
+  }
+
+  getProgressPropMeta(config) {
+    const meta = this.scene.mapPointMeta || {};
+    return meta[config.key] || meta[config.dedicatedPointKey] || null;
+  }
+
+  assignStringProp(target, props, propName, targetName = propName) {
+    if (typeof props[propName] === "string" && props[propName].trim()) {
+      target[targetName] = props[propName].trim();
+    }
+  }
+
+  assignNumberProp(target, props, propName, targetName = propName) {
+    if (props[propName] === undefined || props[propName] === null || props[propName] === "") return;
+    const value = Number(props[propName]);
+    if (Number.isFinite(value)) target[targetName] = value;
+  }
+
+  assignBooleanProp(target, props, propName, targetName = propName) {
+    if (props[propName] === undefined || props[propName] === null || props[propName] === "") return;
+    const value = props[propName];
+    target[targetName] = this.isTruthy(value);
+  }
+
+  isTruthy(value) {
+    return value === true || value === "true" || value === 1 || value === "1";
   }
 
   createProgressPropCollider(x, y, config) {
@@ -352,7 +632,8 @@ export default class NeighborhoodProgressSystem {
   }
 
   getProgressPropPoint(config) {
-    const dedicatedPoint = this.scene.mapPoints?.[config.key];
+    const dedicatedPoint = this.scene.mapPoints?.[config.key]
+      || this.scene.mapPoints?.[config.dedicatedPointKey];
     if (dedicatedPoint) return dedicatedPoint;
 
     if (config.requiresDedicatedPoint) return null;
@@ -432,7 +713,7 @@ export default class NeighborhoodProgressSystem {
   }
 
   applyReplacedMapObjectVisibility(level) {
-    STATIC_PROGRESS_PROPS.forEach((config) => {
+    this.getProgressPropConfigs().forEach((config) => {
       if (!config.replacedMapObjectKey) return;
       const mapObject = this.scene.mapObjects?.[config.replacedMapObjectKey];
       if (!mapObject) return;
