@@ -94,8 +94,8 @@ export default class SunisuniQuestSystem {
     if (scene.npcFollowRouteSystem?.follow("sunisuni_follow", scene.sunisuniNpc, "sunisuni", adjusted, {
       speed: followSpeed,
       stopDistance,
-      repathMs: 800,
-      targetMoveTolerance: 34,
+      repathMs: GAME_CONFIG.sunisuniFollowRepathMs,
+      targetMoveTolerance: GAME_CONFIG.sunisuniFollowTargetMoveTolerance,
     })) {
       return;
     }

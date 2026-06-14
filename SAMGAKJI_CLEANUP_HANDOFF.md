@@ -169,6 +169,9 @@
 - Progress object/Tiled placement note:
   - Current dirty progress props can follow existing Tiled bench/tree object points, so moving those source objects in Tiled moves the dirty/recovered spot indirectly.
   - This is useful for replacing existing bench/tree spots with dirty objects at low levels, then restoring clean props at higher Samgakji levels.
+  - 2026-06-14 update: progress props now prefer a dedicated Tiled point named exactly like the prop key, for example `progress_tree_recovered`, before falling back to `pointKey`, `replacedMapObjectKey`, or code fallback coordinates.
+  - This means future map edits can add lightweight `logic_point` objects named after progress prop keys without changing code.
+  - Nature progress props now start from frame 0 and advance through frames 0-3 as Samgakji level rises instead of appearing immediately as fully grown frame 3 sprites.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
   - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
@@ -327,12 +330,13 @@ Use this as the single task list. Work from the top, in small verified units.
    - 2026-06-14 Jjook follow cleanup: Jjook's plogging/follow/clothes/bus escort movement also stops instead of falling back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists.
    - 2026-06-14 Yebi recycle intro cleanup: Yebi's approach to Haenaem before the recycling intro now uses shared `walkNpcToTarget()` instead of custom X-then-Y tweens. This keeps her approach path consistent with object/crosswalk routing while leaving the recycling demo item-transfer sequence unchanged.
    - 2026-06-14 Yebi recycling-stand travel cleanup: Yebi's travel to the recycling stand now uses shared `walkNpcToTarget()` instead of the old hand-built waypoint tween path. Immediate placement for checkpoint/restore remains in `moveYebiToRecyclingCenter()`.
+   - 2026-06-14 follow tuning cleanup: Jjook/Sunisuni route-follow speed, repath, and target-tolerance values now live in `GAME_CONFIG` instead of being hard-coded inside quest systems. This makes future jitter tuning safer and keeps behavior values centralized.
    - Remaining work:
      - Test/tune Jjook follow jitter around dense objects.
      - Test Sunisuni hospital/pharmacy escort across roads/crosswalks.
      - Move any remaining destination travel tweens in Jjook/Sunisuni systems to `walkNpcToTarget()`.
      - Review remaining `separateNpcSprites()` edge cases after manual playtesting, especially near crosswalks and recycling bins.
-     - Centralize route-follow tuning values into config once stable.
+     - If manual testing shows jitter, tune the new follow config values rather than editing quest logic.
 
 3. Mobile loading speed.
    - Asset count has grown.

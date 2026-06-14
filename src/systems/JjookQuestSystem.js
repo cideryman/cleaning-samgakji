@@ -431,8 +431,6 @@ export default class JjookQuestSystem {
 
     const activeTargetX = adjusted.x;
     const activeTargetY = adjusted.y;
-    const activeDistance = Phaser.Math.Distance.Between(scene.jjookNpc.x, scene.jjookNpc.y, activeTargetX, activeTargetY);
-
     const roadTop = 192;
     const roadBottom = 270;
     const isNpcNorth = scene.jjookNpc.y < roadTop;
@@ -445,9 +443,13 @@ export default class JjookQuestSystem {
     const isIntermediate = (activeTargetX !== targetX || activeTargetY !== targetY) || isCrossingRoad;
     const effectiveStopDistance = isIntermediate ? 0 : stopDistance;
 
-    const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
+    const baseFollowSpeed = scene.isJjookClothesEscortActive
+      ? GAME_CONFIG.playerSpeed * GAME_CONFIG.jjookClothesEscortSpeedMultiplier
+      : GAME_CONFIG.jjookFollowBaseSpeed;
     const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
-    const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
+    const followSpeed = distance > GAME_CONFIG.jjookFarDistance
+      ? boostedFollowSpeed * GAME_CONFIG.jjookFarSpeedMultiplier
+      : boostedFollowSpeed;
 
     if (scene.npcFollowRouteSystem?.follow("jjook_follow", scene.jjookNpc, "jjook", {
       x: activeTargetX,
@@ -455,8 +457,12 @@ export default class JjookQuestSystem {
     }, {
       speed: followSpeed,
       stopDistance: effectiveStopDistance,
-      repathMs: scene.isJjookBusEscortActive ? 500 : 700,
-      targetMoveTolerance: scene.isJjookBusEscortActive ? 24 : 36,
+      repathMs: scene.isJjookBusEscortActive
+        ? GAME_CONFIG.jjookBusEscortRepathMs
+        : GAME_CONFIG.jjookFollowRepathMs,
+      targetMoveTolerance: scene.isJjookBusEscortActive
+        ? GAME_CONFIG.jjookBusEscortTargetMoveTolerance
+        : GAME_CONFIG.jjookFollowTargetMoveTolerance,
     })) {
       return;
     }

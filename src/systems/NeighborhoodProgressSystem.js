@@ -95,7 +95,8 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_tree_recovered",
     texture: "progress_broad_tree_a",
-    frame: 3,
+    frame: 0,
+    growthFrames: true,
     fallback: { x: 1280, y: 640 },
     width: 156,
     height: 156,
@@ -105,7 +106,8 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_small_tree_recovered",
     texture: "progress_small_tree",
-    frame: 3,
+    frame: 0,
+    growthFrames: true,
     fallback: { x: 500, y: 616 },
     width: 120,
     height: 120,
@@ -115,7 +117,8 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_rose_recovered",
     texture: "progress_rose_bush",
-    frame: 3,
+    frame: 0,
+    growthFrames: true,
     fallback: { x: 612, y: 472 },
     width: 120,
     height: 120,
@@ -125,7 +128,8 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_pine_recovered",
     texture: "progress_pine_tree",
-    frame: 3,
+    frame: 0,
+    growthFrames: true,
     fallback: { x: 1440, y: 500 },
     width: 142,
     height: 142,
@@ -341,7 +345,17 @@ export default class NeighborhoodProgressSystem {
   }
 
   getProgressPropPoint(config) {
-    return this.scene.getMapPoint?.(config.pointKey || config.key, config.fallback) || config.fallback;
+    const pointKeys = [
+      config.key,
+      config.pointKey,
+      config.replacedMapObjectKey,
+    ].filter(Boolean);
+
+    const mapPoints = this.scene.mapPoints || {};
+    const explicitKey = pointKeys.find((key) => mapPoints[key]);
+    if (explicitKey) return mapPoints[explicitKey];
+
+    return config.fallback;
   }
 
   createTextureProgressProp(x, y, config) {
@@ -385,6 +399,7 @@ export default class NeighborhoodProgressSystem {
       const wasVisible = prop.getData?.("progressWasVisible");
       prop.setVisible?.(isVisible);
       prop.setData?.("progressWasVisible", isVisible);
+      this.applyProgressPropFrame(prop, config, level);
       if (wasVisible !== isVisible && prop.getData?.("progressCollider")) {
         didCollisionStateChange = true;
       }
@@ -394,6 +409,15 @@ export default class NeighborhoodProgressSystem {
     if (didCollisionStateChange) {
       this.scene.pathfindingSystem?.initializeGrid?.();
     }
+  }
+
+  applyProgressPropFrame(prop, config, level) {
+    if (!config.growthFrames || !prop?.setFrame) return;
+
+    const startLevel = config.growthStartLevel ?? config.showFromLevel ?? 1;
+    const maxFrame = config.maxFrame ?? 3;
+    const frame = Phaser.Math.Clamp(level - startLevel, 0, maxFrame);
+    prop.setFrame(frame);
   }
 
   applyReplacedMapObjectVisibility(level) {
