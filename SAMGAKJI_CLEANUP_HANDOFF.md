@@ -324,10 +324,12 @@ Use this as the single task list. Work from the top, in small verified units.
    - 2026-06-14 small safety step: NPC separation movement now checks both object collision rectangles and the pathfinding walkable grid before moving an NPC. This reduces cases where NPCs are pushed into blocked tiles, roads, trees, or props while avoiding broad AI changes.
    - 2026-06-14 follow-route safety step: `NpcFollowRouteSystem` now checks `scene.canNpcStandAt()` before applying each movement step. If diagonal movement is blocked, it tries a safe X-only or Y-only step; if no safe step exists, it stops the NPC walk and returns handled so old direct-movement fallback does not push the NPC through props.
    - 2026-06-14 Sunisuni follow cleanup: Sunisuni's hospital/pharmacy escort no longer falls back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists. If route-follow cannot move safely, she stops instead of sliding through blocked objects.
+   - 2026-06-14 Jjook follow cleanup: Jjook's plogging/follow/clothes/bus escort movement also stops instead of falling back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists.
+   - 2026-06-14 Yebi recycle intro cleanup: Yebi's approach to Haenaem before the recycling intro now uses shared `walkNpcToTarget()` instead of custom X-then-Y tweens. This keeps her approach path consistent with object/crosswalk routing while leaving the recycling demo item-transfer sequence unchanged.
    - Remaining work:
      - Test/tune Jjook follow jitter around dense objects.
      - Test Sunisuni hospital/pharmacy escort across roads/crosswalks.
-     - Move remaining destination travel tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()`.
+     - Move any remaining destination travel tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()`.
      - Review remaining `separateNpcSprites()` edge cases after manual playtesting, especially near crosswalks and recycling bins.
      - Centralize route-follow tuning values into config once stable.
 

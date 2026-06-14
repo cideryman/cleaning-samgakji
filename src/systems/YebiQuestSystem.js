@@ -279,62 +279,11 @@ export default class YebiQuestSystem {
     scene.stateManager?.set(SceneState.CUTSCENE);
 
     const target = this.getRecycleIntroTalkPosition();
-    const startX = scene.yebiNpc.x;
-    const startY = scene.yebiNpc.y;
-
     const walkingSpeed = GAME_CONFIG.playerSpeed * 0.82;
-
-    // Helper to start the second axis (Y-axis) motion
-    const startYMotion = () => {
-      const distY = Math.abs(target.y - scene.yebiNpc.y);
-      if (distY > 8) {
-        let previousY = scene.yebiNpc.y;
-        scene.tweens.add({
-          targets: scene.yebiNpc,
-          y: target.y,
-          duration: Math.max(280, (distY / walkingSpeed) * 1000),
-          ease: "Linear",
-          onUpdate: () => {
-            const currentDy = scene.yebiNpc.y - previousY;
-            if (Math.abs(currentDy) > 0.1) {
-              const directionKey = currentDy < 0 ? "up" : "down";
-              scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, true);
-            }
-            previousY = scene.yebiNpc.y;
-          },
-          onComplete: () => {
-            this.finishRecycleIntroApproach();
-          }
-        });
-      } else {
-        this.finishRecycleIntroApproach();
-      }
-    };
-
-    // 1. First move along the X-axis (Orthogonal horizontal step)
-    const distX = Math.abs(target.x - startX);
-    if (distX > 8) {
-      let previousX = scene.yebiNpc.x;
-      scene.tweens.add({
-        targets: scene.yebiNpc,
-        x: target.x,
-        duration: Math.max(280, (distX / walkingSpeed) * 1000),
-        ease: "Linear",
-        onUpdate: () => {
-          const currentDx = scene.yebiNpc.x - previousX;
-          if (Math.abs(currentDx) > 0.1) {
-            const directionKey = currentDx < 0 ? "left" : "right";
-            scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, true);
-          }
-          previousX = scene.yebiNpc.x;
-        },
-        onComplete: () => {
-          startYMotion();
-        }
-      });
-    } else {
-      startYMotion();
-    }
+    scene.walkNpcToTarget?.(scene.yebiNpc, "yeobi", target, {
+      speed: walkingSpeed,
+      onComplete: () => this.finishRecycleIntroApproach(),
+    });
   }
 
   getRecycleIntroTalkPosition() {

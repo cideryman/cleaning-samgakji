@@ -448,7 +448,6 @@ export default class JjookQuestSystem {
     const baseFollowSpeed = scene.isJjookClothesEscortActive ? GAME_CONFIG.playerSpeed * 1.55 : 118;
     const boostedFollowSpeed = scene.isSpeedBuffActive ? baseFollowSpeed * GAME_CONFIG.speedBuffMultiplier : baseFollowSpeed;
     const followSpeed = distance > 220 ? boostedFollowSpeed * 1.35 : boostedFollowSpeed;
-    const step = (scene.game.loop.delta / 1000) * followSpeed;
 
     if (scene.npcFollowRouteSystem?.follow("jjook_follow", scene.jjookNpc, "jjook", {
       x: activeTargetX,
@@ -462,11 +461,12 @@ export default class JjookQuestSystem {
       return;
     }
 
-    if (scene.npcFollowRouteSystem && activeDistance <= effectiveStopDistance + 2) {
+    if (scene.npcFollowRouteSystem) {
       scene.stopNpcWalk(scene.jjookNpc, "jjook");
       return;
     }
 
+    const step = (scene.game.loop.delta / 1000) * followSpeed;
     const dx = activeTargetX - scene.jjookNpc.x;
     const dy = activeTargetY - scene.jjookNpc.y;
 
