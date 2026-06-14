@@ -1,12 +1,12 @@
 # 삼각지 대청소 핸드오프
 
-이 문서는 다음 Codex 세션이 바로 이어서 작업할 수 있도록 현재 구조, 원칙, 남은 일을 정리한 문서입니다. 작업 로그를 길게 누적하지 말고, 최신 상태 중심으로 갱신하세요.
+이 문서는 다음 Codex 세션이 바로 이어서 작업할 수 있도록 현재 구조, 원칙, 남은 일, 삼각지 발전도 계획을 모두 정리한 단일 기준 문서입니다. 작업 로그를 길게 누적하지 말고, 최신 상태 중심으로 갱신하세요.
 
 ## 현재 프로젝트
 
 - 기술: Phaser.js, Vite, Vanilla JS, HTML/CSS DOM UI.
 - 실행/검증: `npm.cmd run build`.
-- 발전도/동네 변화 설계는 `SAMGAKJI_PROGRESS_PLAN.md`를 함께 봅니다. 이 파일은 실행 핸드오프이고, progress plan은 삼각지 레벨/화단/나비/미래 BGM/동물 아이디어의 설계 기준입니다.
+- 삼각지 발전도/동네 변화 설계도 이 문서 안에 통합되어 있습니다. 별도 계획 문서를 새로 만들지 말고 이 파일을 갱신합니다.
 - 주요 파일:
   - `src/scenes/PlayScene.js`: 아직 큰 파일입니다. 새 기능 본문을 길게 추가하지 말고 시스템 파일로 분리합니다.
   - `src/config/AssetsData.js`: 이미지, 스프라이트시트, 오디오, Tiled 맵 로딩 등록.
@@ -156,7 +156,7 @@
   - The convenience store educational guide icon now follows the Tiled `convenience_store_door` point with a small upward offset.
   - Educational guide icons render at higher depth so they do not disappear behind building sprites.
 - Samgakji level-up popup fallback:
-  - Phase 4 of `SAMGAKJI_PROGRESS_PLAN.md` is now implemented without new image assets.
+  - Samgakji progress popup phase is implemented without new image assets.
   - `SamgakjiProgressSystem` shows a centered HTML popup only when the Samgakji neighborhood name changes.
   - Because level names change every 2 levels, levels with the same name are acknowledged silently and do not show a popup.
   - The popup blocks world input while visible and saves `lastAnnouncedLevel` after confirmation.
@@ -170,6 +170,124 @@
   - Current dirty progress props can follow existing Tiled bench/tree object points, so moving those source objects in Tiled moves the dirty/recovered spot indirectly.
   - This is useful for replacing existing bench/tree spots with dirty objects at low levels, then restoring clean props at higher Samgakji levels.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
+- Progress object placement visual issues to fix:
+  - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
+  - A recovered tree appears awkwardly between the right-side recycling bins.
+  - A rose bush placement needs review; it should not crowd the path or feel pasted over the walking route.
+  - A tree growing on the path should move slightly downward so it sits on the grass/path boundary instead of the middle of the path.
+  - Instead of a single tree on that boundary, create a natural row/group of about 4 small trees or shrubs along the same path edge.
+  - Preferred direction: progress props should replace or enhance existing natural resting spots, not appear in narrow NPC activity zones, recycling interaction spaces, or the center of walking paths.
+  - See this document's `Samgakji Progress System` section for the newer region-based plan:
+    - orange regions: roses,
+    - purple regions: pine/broad trees,
+    - blue regions: small trees,
+    - old trash gradually disappears and is replaced by region-appropriate landscaping.
+
+## Samgakji Progress System
+
+Core rule:
+- Haenaem does not level up. Samgakji levels up.
+- Cleaning should make the neighborhood feel cleaner, brighter, and more alive beyond money rewards.
+
+Current level table:
+
+| Level | Name | Total cleaned |
+|---|---|---:|
+| Lv.1 | 잠든 삼각지 | 0 |
+| Lv.2 | 잠든 삼각지 | 50 |
+| Lv.3 | 새싹 돋는 삼각지 | 120 |
+| Lv.4 | 새싹 돋는 삼각지 | 220 |
+| Lv.5 | 꽃피는 삼각지 | 350 |
+| Lv.6 | 꽃피는 삼각지 | 520 |
+| Lv.7 | 향기로운 삼각지 | 700 |
+| Lv.8 | 향기로운 삼각지 | 950 |
+| Lv.9 | 빛나는 삼각지 | 1200 |
+| Lv.10 | 빛나는 삼각지 | 1500 |
+| Lv.11 | 쉬어가는 삼각지 | 1800 |
+| Lv.12 | 쉬어가는 삼각지 | 2200 |
+| Lv.13 | 사람들이 찾는 삼각지 | 2600 |
+| Lv.14 | 사람들이 찾는 삼각지 | 3100 |
+| Lv.15 | 사랑받는 삼각지 | 3700 |
+| Lv.16 | 사랑받는 삼각지 | 4500 |
+
+Implemented:
+- `totalCleanedCount` is the source of Samgakji progress.
+- `src/config/SamgakjiProgressData.js` defines level data and calculation helpers.
+- `src/systems/SamgakjiProgressSystem.js` manages current progress state.
+- Save/load uses `samgakjiProgress` with safe normalization.
+- HUD shows `삼각지 Lv.N`, level name, and progress to next level.
+- `NeighborhoodProgressSystem` uses Samgakji level for flowerbeds, butterflies, dirty props, and recovered props.
+- Level/name popup uses an assetless HTML overlay. It appears only when the neighborhood name changes, not every level.
+- `neighborhoodBloom` remains for save compatibility. Do not remove it yet.
+
+Visual mapping:
+- Lv.1-2: flowerbed Stage 0.
+- Lv.3-4: flowerbed Stage 1.
+- Lv.5-6: flowerbed Stage 2.
+- Lv.7-8: flowerbed Stage 3 and butterfly appears.
+- Lv.9+: flowerbed Stage 4 and butterflies increase.
+
+Current progress assets:
+- `assets/sprites/flowerbed_growth.png`, frame size 160 x 96.
+- `assets/sprites/flowerbed_growth2.png`, frame size 160 x 96.
+- `assets/sprites/butterfly_idle.png`, frame size 64 x 64.
+- `assets/progress/dirty/dirty-trash-bags.png`.
+- `assets/progress/dirty/dirty-cardboard-pile.png`.
+- `assets/progress/dirty/dirty-soil-rubble.png`.
+- `assets/progress/dirty/dirty-concrete-scrap.png`.
+- `assets/progress/dirty/dirty-spilled-bin.png`.
+- `assets/progress/dirty/dirty-paper-rubble.png`.
+- `assets/progress/nature/broad-tree-growth-a.png`.
+- `assets/progress/nature/broad-tree-growth-b.png`.
+- `assets/progress/nature/broad-tree-growth-c.png`.
+- `assets/progress/nature/pine-tree-growth.png`.
+- `assets/progress/nature/small-tree-growth.png`.
+- `assets/progress/nature/rose-bush-growth.png`.
+
+Progress landscaping plan:
+- Orange regions: rose bushes.
+- Purple regions: pine trees and broad trees.
+- Blue regions: small trees.
+- Trees and roses should not appear immediately as full-grown frame 3 sprites.
+- New landscaping starts from frame 0.
+- As Samgakji level rises, more landscaping objects appear.
+- Older placed landscaping objects advance frame 0 -> 1 -> 2 -> 3.
+- Old trash/neglect objects should sit along roadsides, grass edges, or empty lawn spots.
+- Some old trash objects should initially occupy orange/purple/blue landscaping regions.
+- When those old trash objects disappear, the correct landscaping object appears in that same region.
+- Use ordered reveal/growth so newer objects stay younger while older objects become fuller.
+
+Future Tiled-friendly progress object model:
+- Add object anchors such as `progress_rose_01`, `progress_pine_01`, `progress_tree_01`, `progress_small_tree_01`, `progress_old_trash_01`.
+- Suggested properties:
+  - `progressKey`
+  - `progressType`: `rose`, `pine`, `tree`, `small_tree`, `old_trash`
+  - `region`: `orange`, `purple`, `blue`
+  - `dirtyTexture`
+  - `recoveredTexture`
+  - `unlockLevel`
+  - `growStartLevel`
+  - `growFullLevel`
+  - `showUntilLevel`
+  - `revealAtLevel`
+  - `replacedBy`
+  - `collisionWidth`
+  - `collisionHeight`
+  - `collisionOffsetX`
+  - `collisionOffsetY`
+- Tiled object positions should always override JS fallback coordinates.
+
+Progress collision policy:
+- Old trash can block small areas if it visually communicates neglect.
+- Small roses/shrubs should normally not block movement.
+- Large trees may block only their trunk/base area, not the canopy.
+- Collision should be editable in Tiled with `collisionWidth`, `collisionHeight`, `collisionOffsetX`, and `collisionOffsetY`.
+
+Future progress ideas:
+- Lv.10+ can use one brighter outdoor Samgakji BGM only. Do not change music every level.
+- Future BGM asset recommendation: `assets/audio/bgm/samgakji-bright.mp3`.
+- Animal visit system is deferred. If implemented later, start small with cat and sparrow only.
+- Progress album, visitor increase, bench improvement, signs/banners/posters, and rest-window progress record are deferred.
 
 ## Tiled 편집 규칙
 
@@ -180,76 +298,100 @@
 - 새 타일셋을 쓸 때는 Tiled에서 추가하는 것만으로 끝나지 않습니다. 게임 preload 쪽에서도 tileset source/name/key가 맞아야 합니다.
 - 약국 내부처럼 별도 Tiled 맵을 만들 때는 `AssetsData.js`의 `INTERIOR_TILED_MAPS`에 등록하세요.
 
-## 현재 남은 문제와 우선순위
+## Unified Priority Backlog
 
-### P0: 진행 차단 또는 엔딩 확인 필요
+Use this as the single task list. Work from the top, in small verified units.
 
-1. 에필로그 엄마 전화 후 검은 화면 유지 - mitigation applied, needs manual verification
-   - Camera fade reset and UTF-8 fallback text were added in `TravelEndingSystem.showChapterOneEndingScene()`.
-   - Final ending return input is now click/touch-only.
-   - `TravelEndingSystem.transitionWithFade()` now has a fallback timer so the next sequence still starts if the Phaser fade-out complete event is missed.
-   - Verify the full mother-phone-to-ending flow on PC and mobile before marking fully resolved.
+### P0: Progression Blockers
 
-### P1: 플레이 감각에 직접 영향
+1. Final ending does not proceed after the last ending screen.
+   - Status: mitigation applied; needs manual in-game check.
+   - Symptom: ending image remains very dark and the flow does not continue/respond as expected.
+   - 2026-06-14 update: final ending now avoids the camera fade-out transition, resets camera FX before showing the ending image, removes the interior dim overlay for `type === "ending"`, and accepts click/touch/Space/Enter to return to StartScene.
+   - Manual check: finish the mother phone ending, confirm the final ending image is not dark/blocked, then click/touch or press Space to return to the title screen.
 
-1. NPC event movement naturalization
-   - Phase 1 is applied for movement that already uses `PlayScene.walkNpcToTarget()`.
-   - Phase 2 is applied for Jjook and Sunisuni follower movement through `NpcFollowRouteSystem`.
-   - Remaining movement cleanup should be done in small units:
-     1. Test and tune Jjook follow jitter around dense objects. If jitter appears, increase route `repathMs` or `targetMoveTolerance`.
-     2. Test Sunisuni hospital/pharmacy escort crossing roads. If she waits or detours awkwardly, tune the road/crosswalk adjustment before changing pathfinding.
-     3. Move any remaining bespoke event tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()` only when they represent destination travel, not short cutscene item-transfer motion.
-     4. Review `separateNpcSprites()` so collision separation does not push NPCs through trees, bins, or the road.
-     5. Longer term: centralize route-follow state keys and NPC movement tuning values into config once behavior is stable.
-   - Do not solve this by teleporting NPCs unless the event explicitly needs a scene cut.
+### P1: Player-Facing Bugs And Feel
 
-2. 모바일 로딩 속도
-   - 이미지/BGM 에셋이 많아졌습니다.
-   - 챕터 시작 필수 preload, 상점/엔딩 진입 직전 lazy load, 사용하지 않는 임시 에셋 정리가 필요합니다.
+1. Hide educational guide icons during cutscenes/interior/story scenes.
+   - Status: mitigation applied; needs visual check in cutscenes and pharmacy.
+   - Yellow learning question-mark icons can leak into cutscenes, pharmacy/interior scenes, and story illustration scenes.
+   - Rule: educational guide icons are world-map helpers only.
+   - 2026-06-14 update: `EducationalGuideSystem` now updates icon visibility every frame and hides/disables icon input whenever world input is blocked, an interior scene is active, dialogue/cutscene/menu state is active, or the guide modal itself is open.
+   - Manual check: enter pharmacy/interior scenes and prologue/ending-style story scenes; no yellow question-mark icons should be visible or clickable.
 
-3. Store interior map conversion
-   - Hospital/pharmacy/clothing shop are not all full interior movement maps yet.
+2. NPC movement naturalization.
+   - Phase 1 and 2 are implemented through `walkNpcToTarget()` and `NpcFollowRouteSystem`.
+   - 2026-06-14 small safety step: NPC separation movement now checks both object collision rectangles and the pathfinding walkable grid before moving an NPC. This reduces cases where NPCs are pushed into blocked tiles, roads, trees, or props while avoiding broad AI changes.
+   - 2026-06-14 follow-route safety step: `NpcFollowRouteSystem` now checks `scene.canNpcStandAt()` before applying each movement step. If diagonal movement is blocked, it tries a safe X-only or Y-only step; if no safe step exists, it stops the NPC walk and returns handled so old direct-movement fallback does not push the NPC through props.
+   - 2026-06-14 Sunisuni follow cleanup: Sunisuni's hospital/pharmacy escort no longer falls back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists. If route-follow cannot move safely, she stops instead of sliding through blocked objects.
+   - Remaining work:
+     - Test/tune Jjook follow jitter around dense objects.
+     - Test Sunisuni hospital/pharmacy escort across roads/crosswalks.
+     - Move remaining destination travel tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()`.
+     - Review remaining `separateNpcSprites()` edge cases after manual playtesting, especially near crosswalks and recycling bins.
+     - Centralize route-follow tuning values into config once stable.
+
+3. Mobile loading speed.
+   - Asset count has grown.
+   - Plan: preload only chapter-critical assets, lazy-load shop/interior/ending assets, and remove unused temporary assets.
+
+4. Store/interior map consistency.
    - Pharmacy is the first reference implementation.
-   - Long-term recommendation: use separate interior maps with object points like `player_start`, `exit`, `counter`, and `npc_chemist`.
+   - Hospital and clothing shop are not full interior movement maps yet.
+   - Future interiors should use object points such as `player_start`, `exit`, `counter`, and `npc_*`.
 
-### P2: 구조 개선과 확장 준비
+### P2: Samgakji Progress And Map Visuals
 
-1. PlayScene 리팩토링
-   - 다음 우선순위는 작은 이벤트 함수 묶음을 시스템으로 옮기는 것입니다.
-   - 이동 후 `node --check`와 `npm.cmd run build`를 반드시 실행합니다.
+1. Progress landscaping placement cleanup.
+   - Fix awkward bench between Jjook and flowerbed.
+   - Remove/relocate tree between right-side recycling bins.
+   - Review rose bush placement.
+   - Move path-grown tree down to the grass/path boundary.
+   - Prefer a row/group of about 4 small trees or shrubs along the path edge.
 
-2. Neighborhood/NPC memory dialogue expansion
-   - Phase 1 is complete for conservative completed/non-quest states.
-   - Phase 2 is complete: direct-memory dialogue logic moved into `NpcMemorySystem` so `PlayScene.js` stays thin.
-   - Phase 3A is complete: Jjook's generic dialogue can include a memory line without stealing the plogging-help choice.
-   - Phase 3B is complete: Yebi's recycle progress/completed dialogue can include a memory line without changing recycle mechanics.
-   - Phase 3C is complete: direct/quest-safe memory lines have a short per-NPC cooldown to avoid repeated memory dialogue spam.
-   - Phase 3D is complete: ambient/random speech now uses memory lines with a per-NPC cooldown before falling back to existing random lines.
-   - Memory work is complete for now. Sunisuni remains direct-memory only by design; revisit only if a new non-story daily interaction is added later.
-   - Keep the priority rule: active quest dialogue > direct memory line > generic NPC dialogue.
+2. Progress object Tiled authoring.
+   - Current dirty/recovered props can follow existing bench/tree objects indirectly.
+   - Future improvement: add dedicated Tiled progress anchors with `progressKey`, `progressType`, `unlockLevel`, growth levels, and collision properties.
+   - Tiled object position should override JS fallback.
 
-3. Dialogue polish continuation
-   - Continue small, conservative dialogue passes only when a specific awkward line is found.
-   - Good candidates:
-     1. Quest unlock notices that are too easy to miss can become `UIManager.showNoticePopup()` popups.
-     2. Interior scene dialogue should wait for fade/dissolve completion before appearing.
-     3. NPC memory lines should remain short and should not interrupt active quest choices.
-     4. Keep mom/prologue/epilogue phone dialogue separate from map NPC memory logic unless a dedicated story-memory system is created.
-   - Do not add gauge UI or new assets for this step.
-   - Do not touch mother/prologue/epilogue phone events.
+3. Region-based landscaping implementation.
+   - Orange regions: roses.
+   - Purple regions: pine/broad trees.
+   - Blue regions: small trees.
+   - Old trash should gradually disappear and be replaced by region-appropriate landscaping.
+   - Implement first as a tiny slice: one rose, one tree, one small-tree row, one old-trash replacement.
 
-### P3: 기능 아이디어 백로그
+4. Samgakji progress polish.
+   - Current assetless popup is accepted and should stay.
+   - Popup appears only when the neighborhood name changes.
+   - Optional future: Lv.10+ brighter outdoor BGM only.
 
-- 병원/약국/옷가게 진입 시 화면 fade와 대화창 fade 타이밍 동기화.
-- 상점별 내부 맵 전환 확대.
-- 터치/클릭 이동 목표 표시 색상과 크기 조정.
-- Lv.10 이후 일반 야외 삼각지 BGM만 조금 더 밝은 곡으로 바꾸는 아이디어가 있습니다. 세부 규칙과 추천 에셋명은 `SAMGAKJI_PROGRESS_PLAN.md`의 Future Ideas를 따릅니다.
-- 동물 방문 시스템은 보류입니다. 나중에 하더라도 고양이/참새 정도의 작은 범위로 시작합니다.
-- 레벨업 팝업용 전용 이미지 에셋이 준비되면 `assets/progress/level-up/` 아래에 넣고, 현재 HTML fallback에 배지/리본/스파클을 연결합니다.
+### P3: Structure And Maintainability
 
-## Deferred Visual TODO
+1. Continue reducing `PlayScene.js`.
+   - Move small event groups into systems.
+   - Do not add long new features directly to PlayScene.
+   - Always run `node --check` on changed JS files and `npm.cmd run build`.
 
-- Pharmacy interior aspect ratio cleanup: keep the interior map's original visual ratio instead of stretching it to fill the viewport. Use black side bars/letterboxing for leftover space, like classic RPG interiors. This is intentionally deferred.
+2. Dialogue polish continuation.
+   - Quest unlock notices that are easy to miss can use `UIManager.showNoticePopup()`.
+   - Interior dialogue should wait for fade/dissolve completion before appearing.
+   - NPC memory lines must remain short and must not interrupt active quest choices.
+   - Keep mom/prologue/epilogue phone dialogue separate from map NPC memory logic unless a dedicated story-memory system is created.
+
+3. NPC memory system.
+   - Current scope is complete: Yebi/Jjook/Sunisuni ambient/direct/quest-safe memory lines and cooldowns.
+   - Sunisuni remains direct-memory only for now.
+   - Priority rule remains: active quest dialogue > direct memory line > generic NPC dialogue.
+
+### P4: Deferred Ideas
+
+- Pharmacy interior aspect ratio cleanup with black side bars/letterboxing.
+- Hospital/clothing shop interior maps.
+- Touch/click destination marker color/size tuning.
+- Cat/sparrow visit system after progress visuals are stable.
+- Progress album/rest-window progress record.
+- Optional level-up image assets under `assets/progress/level-up/`.
 
 ## 검증 체크리스트
 
@@ -324,7 +466,7 @@
 - Existing assets are reused for recovered props: `sunisuni_bench`, `sunisuni_tree`, and `street_lamp`.
 - Progress prop keys such as `progress_dirty_planter_west`, `progress_bench_recovered`, and `progress_tree_recovered` can be added as Tiled anchors later; Tiled positions will override fallback coordinates.
 - Superseded by the 2026-06-11 collision update: visible dirty progress props now block movement with small collision areas.
-- Documented the asset replacement path in `SAMGAKJI_PROGRESS_PLAN.md`: replace generated dirt with `assets/progress/dirty/*.png`, then replace full-grown tree fallback with a tree-growth spritesheet when ready.
+- Documented the asset replacement path in this handoff: replace generated dirt with `assets/progress/dirty/*.png`, then replace full-grown tree fallback with a tree-growth spritesheet when ready.
 
 ## 2026-06-10 Dirty Prop Asset Integration
 
@@ -341,18 +483,18 @@
 - Updated `NeighborhoodProgressSystem.js` so Samgakji progress dirty spots use these real PNGs first, falling back to generated Phaser shapes only if a texture is missing.
 - Superseded by the 2026-06-11 collision update: dirty progress props are no longer visual-only while visible.
 
-## 2026-06-11 Samgakji Progress Plan Cleanup
+## 2026-06-11 Samgakji Progress Planning Cleanup
 
-- `SAMGAKJI_PROGRESS_PLAN.md` was rewritten as the single planning reference for the Samgakji level/progress system.
-- It now connects the company-side work and home-side work into one current-state document:
+- Samgakji progress planning was rewritten as a single planning reference for the Samgakji level/progress system.
+- Later, that planning content was merged into this handoff so this file is now the only required reference.
+- It connects the company-side work and home-side work into one current-state document:
   - Lv.1-16 level table.
   - Implemented Phase 1-3 status.
   - Phase 4 level-up popup asset requirements.
   - Future BGM idea after Lv.10.
   - Deferred animal visit idea.
   - Implementation history for no-new-sprite pass, dirty asset integration, level expansion, and dirty prop collision.
-- For future work, update the progress plan when changing Samgakji level rules, visual progression, level-up popup assets, progress BGM, or animal visit design.
-- Keep this handoff focused on broader project status, bugs, and next engineering priorities.
+- For future work, update this handoff when changing Samgakji level rules, visual progression, level-up popup assets, progress BGM, or animal visit design.
 
 ## 2026-06-11 Samgakji Progress Dirty Collision Update
 

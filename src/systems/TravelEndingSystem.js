@@ -10,6 +10,7 @@ export default class TravelEndingSystem {
     this.isFinalEndingStarting = false;
     this.isFinalEndingTransitioning = false;
     this.finalEndingLoadTimer = null;
+    this.finalEndingReturnHandler = null;
   }
 
   getBusStopPoint() {
@@ -403,26 +404,12 @@ export default class TravelEndingSystem {
 
     const scene = this.scene;
     this.isFinalEndingTransitioning = true;
-
-    let isSettled = false;
-    let fallbackTimer = null;
-    const finish = () => {
-      if (isSettled) return;
-      isSettled = true;
+    scene.dialogueSystem?.close?.();
+    this.resetFinalEndingCameraFx();
+    scene.time.delayedCall(80, () => {
       this.isFinalEndingTransitioning = false;
-      fallbackTimer?.remove(false);
-      scene.cameras.main.off(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, finish);
       this.finishChapterOneEnding();
-    };
-
-    scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, finish);
-    fallbackTimer = scene.time.delayedCall(1200, finish);
-
-    try {
-      scene.cameras.main.fadeOut(850, 0, 0, 0);
-    } catch {
-      finish();
-    }
+    });
   }
 
   finishChapterOneEnding() {
@@ -446,8 +433,7 @@ export default class TravelEndingSystem {
     scene.playerController?.stopWalkAnimation?.();
 
     const showEnding = (isReady = true) => {
-      scene.cameras.main.fadeEffect?.reset?.();
-      scene.cameras.main.setAlpha?.(1);
+      this.resetFinalEndingCameraFx();
 
       if (isReady && scene.textures.exists("ending_chapter1_final")) {
         scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
@@ -480,7 +466,7 @@ export default class TravelEndingSystem {
           prompt.setDepth(75);
           scene.interiorSceneGroup.addMultiple([promptBack, prompt]);
 
-          scene.input.once("pointerdown", () => this.returnToStartScreenFromEnding());
+          this.registerFinalEndingReturnInput();
         } else {
           scene.time.delayedCall(100, addPromptWhenReady);
         }
@@ -498,6 +484,34 @@ export default class TravelEndingSystem {
 
     scene.time.delayedCall(4200, () => showEndingOnce(false));
     this.loadFinalEndingTexture(showEndingOnce);
+  }
+
+  resetFinalEndingCameraFx() {
+    const camera = this.scene.cameras.main;
+    camera.fadeEffect?.reset?.();
+    camera.resetFX?.();
+    camera.setAlpha?.(1);
+  }
+
+  registerFinalEndingReturnInput() {
+    const scene = this.scene;
+    if (this.finalEndingReturnHandler) return;
+
+    let didReturn = false;
+    const returnOnce = () => {
+      if (didReturn) return;
+      didReturn = true;
+      this.finalEndingReturnHandler = null;
+      scene.input.off("pointerdown", returnOnce);
+      scene.input.keyboard?.off("keydown-SPACE", returnOnce);
+      scene.input.keyboard?.off("keydown-ENTER", returnOnce);
+      this.returnToStartScreenFromEnding();
+    };
+
+    this.finalEndingReturnHandler = returnOnce;
+    scene.input.once("pointerdown", returnOnce);
+    scene.input.keyboard?.once("keydown-SPACE", returnOnce);
+    scene.input.keyboard?.once("keydown-ENTER", returnOnce);
   }
 
   loadFinalEndingTexture(onReady) {
@@ -599,6 +613,11 @@ export default class TravelEndingSystem {
   returnToStartScreenFromEnding() {
     const scene = this.scene;
     if (scene.packingQuestState !== "ending_complete") return;
+    this.finalEndingReturnHandler = null;
+    this.isFinalEndingStarting = false;
+    this.isFinalEndingTransitioning = false;
+    this.finalEndingLoadTimer?.remove(false);
+    this.finalEndingLoadTimer = null;
     scene.stopSceneMusic();
     scene.stopChapterMusic();
     scene.clearInteriorScene();

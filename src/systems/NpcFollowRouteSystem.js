@@ -102,9 +102,29 @@ export default class NpcFollowRouteSystem {
     const angle = Phaser.Math.Angle.Between(sprite.x, sprite.y, target.x, target.y);
     const moveX = Math.cos(angle) * step;
     const moveY = Math.sin(angle) * step;
+    const nextX = sprite.x + moveX;
+    const nextY = sprite.y + moveY;
 
-    sprite.x += moveX;
-    sprite.y += moveY;
+    if (!this.canStandAt(nextX, nextY)) {
+      const axisMove = this.getSafeAxisMove(sprite, moveX, moveY);
+      if (!axisMove) {
+        scene.stopNpcWalk?.(sprite, npcTextureKey);
+        return true;
+      }
+
+      const actualMoveX = axisMove.x - sprite.x;
+      const actualMoveY = axisMove.y - sprite.y;
+      const axisDirectionKey = scene.getDirectionKeyFromVector?.(
+        actualMoveX,
+        actualMoveY,
+        sprite.getData("directionKey") || "down"
+      ) || "down";
+      sprite.setPosition(axisMove.x, axisMove.y);
+      scene.setNpcDirectionTexture?.(sprite, npcTextureKey, axisDirectionKey, true);
+      return true;
+    }
+
+    sprite.setPosition(nextX, nextY);
 
     const directionKey = scene.getDirectionKeyFromVector?.(
       moveX,
@@ -113,5 +133,23 @@ export default class NpcFollowRouteSystem {
     ) || "down";
     scene.setNpcDirectionTexture?.(sprite, npcTextureKey, directionKey, true);
     return true;
+  }
+
+  canStandAt(x, y) {
+    return this.scene.canNpcStandAt?.(x, y) !== false;
+  }
+
+  getSafeAxisMove(sprite, moveX, moveY) {
+    const candidates = Math.abs(moveX) >= Math.abs(moveY)
+      ? [
+          { x: sprite.x + moveX, y: sprite.y },
+          { x: sprite.x, y: sprite.y + moveY },
+        ]
+      : [
+          { x: sprite.x, y: sprite.y + moveY },
+          { x: sprite.x + moveX, y: sprite.y },
+        ];
+
+    return candidates.find((point) => this.canStandAt(point.x, point.y)) || null;
   }
 }

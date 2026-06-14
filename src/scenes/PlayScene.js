@@ -329,6 +329,7 @@ export default class PlayScene extends Phaser.Scene {
     this.roadTrafficSystem?.update(delta);
     this.routeGuideSystem?.update();
     this.neighborhoodProgressSystem?.update();
+    this.educationalGuideSystem?.update?.();
     this.travelEndingSystem?.checkBusStopArrival();
     this.updateNpcRoaming();
     this.separateNpcSprites();
@@ -2022,11 +2023,24 @@ export default class PlayScene extends Phaser.Scene {
     const worldHeight = bounds?.height || GAME_CONFIG.worldHeight;
     const nextX = Phaser.Math.Clamp(sprite.x + dx, 82, worldWidth - 82);
     const nextY = Phaser.Math.Clamp(sprite.y + dy, 110, worldHeight - 70);
-    if ((this.objectCollisionRects || []).some((rect) => Phaser.Geom.Rectangle.Contains(rect, nextX, nextY))) {
+    if (!this.canNpcStandAt(nextX, nextY)) {
       return false;
     }
     sprite.setPosition(nextX, nextY);
     return true;
+  }
+
+  canNpcStandAt(x, y) {
+    if ((this.objectCollisionRects || []).some((rect) => Phaser.Geom.Rectangle.Contains(rect, x, y))) {
+      return false;
+    }
+
+    const pathfinding = this.pathfindingSystem;
+    if (!pathfinding?.isWalkable || !pathfinding.gridSize) return true;
+
+    const c = Math.floor(x / pathfinding.gridSize);
+    const r = Math.floor(y / pathfinding.gridSize);
+    return pathfinding.isWalkable(c, r);
   }
 
   stopJjookIdleTween() {

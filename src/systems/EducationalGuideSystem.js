@@ -40,6 +40,7 @@ export default class EducationalGuideSystem {
     this.lookupElements();
     this.bindEvents();
     this.spawnGuideIcons();
+    this.updateIconVisibility();
   }
 
   lookupElements() {
@@ -133,6 +134,29 @@ export default class EducationalGuideSystem {
 
       this.icons.push(container);
       this.applyIconStyle(container, seen);
+    });
+  }
+
+  update() {
+    this.updateIconVisibility();
+  }
+
+  shouldShowWorldGuideIcons() {
+    const scene = this.scene;
+    if (this.isOpen || this.openedFromNotes) return false;
+    if (scene.interiorSceneGroup || scene.interiorSceneType) return false;
+    if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return false;
+    return scene.stateManager?.canInteract?.() !== false;
+  }
+
+  updateIconVisibility() {
+    const isVisible = this.shouldShowWorldGuideIcons();
+    this.icons.forEach((icon) => {
+      icon.setVisible(isVisible);
+      icon.setActive(isVisible);
+      if (icon.circleObj?.input) {
+        icon.circleObj.input.enabled = isVisible;
+      }
     });
   }
 

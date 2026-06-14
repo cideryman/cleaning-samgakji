@@ -22,7 +22,8 @@ export default class InteriorSceneSystem {
     const centerX = viewportWidth / 2;
     const centerY = viewportHeight / 2;
     const overscan = 1.18;
-    const fillColor = type === "pharmacy" ? 0xe9ded2 : 0xded2c4;
+    const fillColor = type === "ending" ? 0x000000 : type === "pharmacy" ? 0xe9ded2 : 0xded2c4;
+    const dimAlpha = type === "ending" ? 0 : 0.35;
 
     const solidBack = scene.add.rectangle(
       centerX,
@@ -36,10 +37,12 @@ export default class InteriorSceneSystem {
     solidBack.setDepth(58);
     scene.interiorSceneGroup.add(solidBack);
 
-    const dim = scene.add.rectangle(centerX, centerY, viewportWidth * 2, viewportHeight * 2, 0x000000, 0.35);
-    dim.setScrollFactor(0);
-    dim.setDepth(59);
-    scene.interiorSceneGroup.add(dim);
+    if (dimAlpha > 0) {
+      const dim = scene.add.rectangle(centerX, centerY, viewportWidth * 2, viewportHeight * 2, 0x000000, dimAlpha);
+      dim.setScrollFactor(0);
+      dim.setDepth(59);
+      scene.interiorSceneGroup.add(dim);
+    }
 
     const bg = scene.add.image(centerX, centerY, textureKey);
     bg.setScrollFactor(0);

@@ -100,7 +100,7 @@ export default class SunisuniQuestSystem {
       return;
     }
 
-    if (scene.npcFollowRouteSystem && adjustedDistance <= stopDistance + 2) {
+    if (scene.npcFollowRouteSystem) {
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
     }
