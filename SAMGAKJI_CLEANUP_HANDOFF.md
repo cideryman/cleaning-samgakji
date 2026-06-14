@@ -209,6 +209,10 @@
     - `progress_dirty_concrete_scrap` and `progress_dirty_paper_rubble` were moved from static JS config to Tiled `logic_point` objects.
     - They use `progressObject=true`, `progressType=dirty`, `texture`, size, `showUntilLevel`, and `blocksMovement=true`.
     - Future one-off dirty spots should be authored the same way so placement and collision can be tuned from Tiled.
+  - 2026-06-15 static progress config removal:
+    - Remaining replacement dirty spots (`progress_dirty_planter_west`, `progress_dirty_planter_east`, `progress_dirty_bench_spot`, `progress_dirty_tree_spot`) were migrated to Tiled `logic_point` objects.
+    - They use `replacedMapObjectKey` to hide the original bench/tree while the dirty object is visible, then reveal it again after `showUntilLevel`.
+    - `STATIC_PROGRESS_PROPS` was removed from `NeighborhoodProgressSystem`; progress props are now authored through Tiled metadata.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
   - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
@@ -402,9 +406,10 @@ Use this as the single task list. Work from the top, in small verified units.
    - Prefer a row/group of about 4 small trees or shrubs along the path edge.
 
 2. Progress object Tiled authoring.
-   - Current dirty/recovered props can follow existing bench/tree objects indirectly.
-   - Future improvement: add dedicated Tiled progress anchors with `progressKey`, `progressType`, `unlockLevel`, growth levels, and collision properties.
-   - Tiled object position should override JS fallback.
+   - Status: implemented for current progress props.
+   - Current dirty/recovered props are authored through Tiled `logic_point` objects with `progressObject=true`.
+   - Use `texture` for one-off props, or `dirtyTexture`/`recoveredTexture`/`revealAtLevel` for paired dirty-to-recovered props.
+   - Use `replacedMapObjectKey` when a dirty prop should temporarily hide an existing bench/tree object.
 
 3. Region-based landscaping implementation.
    - Orange regions: roses.

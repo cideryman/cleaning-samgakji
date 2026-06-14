@@ -15,57 +15,6 @@ const FLOWERBED_ANCHORS = [
   { key: "flowerbed_4", fallback: { x: 1340, y: 720 }, texture: "flowerbed_growth2" },
 ];
 
-const STATIC_PROGRESS_PROPS = [
-  {
-    key: "progress_dirty_planter_west",
-    type: "dirty",
-    texture: "dirty_trash_bags",
-    pointKey: "west_rest_bench",
-    replacedMapObjectKey: "west_rest_bench",
-    fallback: { x: 827, y: 546 },
-    width: 132,
-    height: 79,
-    showUntilLevel: 2,
-    blocksMovement: true,
-  },
-  {
-    key: "progress_dirty_planter_east",
-    type: "dirty",
-    texture: "dirty_cardboard_pile",
-    pointKey: "park_tree_center_01",
-    replacedMapObjectKey: "park_tree_center_01",
-    fallback: { x: 1610, y: 734 },
-    width: 128,
-    height: 77,
-    showUntilLevel: 3,
-    blocksMovement: true,
-  },
-  {
-    key: "progress_dirty_bench_spot",
-    type: "dirty",
-    texture: "dirty_spilled_bin",
-    pointKey: "park_bench_south",
-    replacedMapObjectKey: "park_bench_south",
-    fallback: { x: 864, y: 904 },
-    width: 138,
-    height: 83,
-    showUntilLevel: 4,
-    blocksMovement: true,
-  },
-  {
-    key: "progress_dirty_tree_spot",
-    type: "dirty",
-    texture: "dirty_soil_rubble",
-    pointKey: "west_tree_rest",
-    replacedMapObjectKey: "west_tree_rest",
-    fallback: { x: 928, y: 770 },
-    width: 126,
-    height: 76,
-    showUntilLevel: 5,
-    blocksMovement: true,
-  },
-];
-
 const STAGE_FRAMES = [
   [0, 0, 0, 0],
   [1, 0, 0, 0],
@@ -249,22 +198,13 @@ export default class NeighborhoodProgressSystem {
   }
 
   getProgressPropConfigs() {
-    return [
-      ...STATIC_PROGRESS_PROPS,
-      ...this.getTiledProgressPropConfigs(),
-    ];
+    return this.getTiledProgressPropConfigs();
   }
 
   getTiledProgressPropConfigs() {
     const metaEntries = Object.entries(this.scene.mapPointMeta || {});
-    const staticKeys = new Set(STATIC_PROGRESS_PROPS.flatMap((config) => [
-      config.key,
-      config.dedicatedPointKey,
-    ]).filter(Boolean));
-
     return metaEntries
       .filter(([anchorKey, meta]) => {
-        if (staticKeys.has(anchorKey)) return false;
         return this.isTruthy(meta?.properties?.progressObject);
       })
       .flatMap(([anchorKey, meta]) => this.createTiledProgressPropConfigs(anchorKey, meta))
@@ -303,6 +243,8 @@ export default class NeighborhoodProgressSystem {
       height,
       showFromLevel: 1,
       showUntilLevel: 16,
+      replacedMapObjectKey: this.getStringProp(props, "replacedMapObjectKey"),
+      revealMapObjectFromLevel: this.getNumberProp(props, "revealMapObjectFromLevel"),
     };
   }
 
@@ -336,6 +278,8 @@ export default class NeighborhoodProgressSystem {
         depthOffset: this.getNumberProp(props, "dirtyDepthOffset") ?? this.getNumberProp(props, "depthOffset"),
         depthSortOffsetY: this.getNumberProp(props, "dirtyDepthSortOffsetY") ?? this.getNumberProp(props, "depthSortOffsetY"),
         blocksMovement: this.getBooleanProp(props, "dirtyBlocksMovement") ?? this.getBooleanProp(props, "blocksMovement") ?? false,
+        replacedMapObjectKey: this.getStringProp(props, "replacedMapObjectKey"),
+        revealMapObjectFromLevel: this.getNumberProp(props, "revealMapObjectFromLevel"),
       });
     }
 
