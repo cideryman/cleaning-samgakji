@@ -818,14 +818,6 @@ export default class PlayScene extends Phaser.Scene {
     this.yebiQuestSystem?.walkYebiToRecyclingCenter();
   }
 
-  getYebiPathToRecyclingCenter(target) {
-    return this.yebiQuestSystem?.getPathToRecyclingCenter(target) || [];
-  }
-
-  walkYebiAlongPath(path, index) {
-    this.yebiQuestSystem?.walkAlongPath(path, index);
-  }
-
   startYebiIdleBob() {
     this.yebiQuestSystem?.startIdleBob();
   }

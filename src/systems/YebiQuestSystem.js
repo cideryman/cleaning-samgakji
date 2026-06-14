@@ -360,66 +360,17 @@ export default class YebiQuestSystem {
     const position = this.getRecyclePosition();
     scene.tweens.killTweensOf(scene.yebiNpc);
     scene.yebiNpc.setDepth(3.6);
-    const path = this.getPathToRecyclingCenter(position);
-    this.walkAlongPath(path, 0);
-  }
-
-  getPathToRecyclingCenter(target) {
-    const scene = this.scene;
-    const startX = scene.yebiNpc?.x ?? scene.playerStart.x;
-    const startY = scene.yebiNpc?.y ?? scene.playerStart.y;
-    const vendingPoint = scene.getMapPoint("vending_machine", GAME_CONFIG.vendingMachine);
-    const upperLaneY = Math.min(startY - 70, vendingPoint.y - 118);
-
-    return [
-      { x: startX, y: upperLaneY },
-      { x: startX + 130, y: upperLaneY },
-      { x: vendingPoint.x - 145, y: upperLaneY },
-      { x: vendingPoint.x + 155, y: upperLaneY },
-      { x: target.x, y: upperLaneY },
-      { x: target.x, y: target.y },
-    ];
-  }
-
-  walkAlongPath(path, index) {
-    const scene = this.scene;
-    if (!scene.yebiNpc || index >= path.length) {
-      this.startIdleBob();
+    if (scene.walkNpcToTarget) {
+      scene.walkNpcToTarget(scene.yebiNpc, "yeobi", position, {
+        speed: GAME_CONFIG.playerSpeed * 0.62,
+        onComplete: () => this.startIdleBob(),
+      });
       return;
     }
 
-    const target = path[index];
-    const distance = Phaser.Math.Distance.Between(scene.yebiNpc.x, scene.yebiNpc.y, target.x, target.y);
-    if (distance < 4) {
-      this.walkAlongPath(path, index + 1);
-      return;
-    }
-
-    let previousX = scene.yebiNpc.x;
-    let previousY = scene.yebiNpc.y;
-    const walkingSpeed = GAME_CONFIG.playerSpeed * 0.72;
-    scene.tweens.add({
-      targets: scene.yebiNpc,
-      x: target.x,
-      y: target.y,
-      duration: Math.max(420, (distance / walkingSpeed) * 1000),
-      ease: "Linear",
-      onUpdate: () => {
-        const dx = scene.yebiNpc.x - previousX;
-        const dy = scene.yebiNpc.y - previousY;
-        if (Math.abs(dx) + Math.abs(dy) > 0.1) {
-          const directionKey = scene.getDirectionKeyFromVector(
-            dx,
-            dy,
-            scene.yebiNpc.getData("directionKey") || "down",
-          );
-          scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", directionKey, true);
-        }
-        previousX = scene.yebiNpc.x;
-        previousY = scene.yebiNpc.y;
-      },
-      onComplete: () => this.walkAlongPath(path, index + 1),
-    });
+    scene.yebiNpc.setPosition(position.x, position.y);
+    scene.setNpcDirectionTexture(scene.yebiNpc, "yeobi", "down", false);
+    this.startIdleBob();
   }
 
   startIdleBob() {

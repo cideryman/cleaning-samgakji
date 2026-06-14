@@ -326,10 +326,11 @@ Use this as the single task list. Work from the top, in small verified units.
    - 2026-06-14 Sunisuni follow cleanup: Sunisuni's hospital/pharmacy escort no longer falls back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists. If route-follow cannot move safely, she stops instead of sliding through blocked objects.
    - 2026-06-14 Jjook follow cleanup: Jjook's plogging/follow/clothes/bus escort movement also stops instead of falling back to raw direct `x/y` movement when `NpcFollowRouteSystem` exists.
    - 2026-06-14 Yebi recycle intro cleanup: Yebi's approach to Haenaem before the recycling intro now uses shared `walkNpcToTarget()` instead of custom X-then-Y tweens. This keeps her approach path consistent with object/crosswalk routing while leaving the recycling demo item-transfer sequence unchanged.
+   - 2026-06-14 Yebi recycling-stand travel cleanup: Yebi's travel to the recycling stand now uses shared `walkNpcToTarget()` instead of the old hand-built waypoint tween path. Immediate placement for checkpoint/restore remains in `moveYebiToRecyclingCenter()`.
    - Remaining work:
      - Test/tune Jjook follow jitter around dense objects.
      - Test Sunisuni hospital/pharmacy escort across roads/crosswalks.
-     - Move any remaining destination travel tweens in Yebi/Jjook/Sunisuni systems to `walkNpcToTarget()`.
+     - Move any remaining destination travel tweens in Jjook/Sunisuni systems to `walkNpcToTarget()`.
      - Review remaining `separateNpcSprites()` edge cases after manual playtesting, especially near crosswalks and recycling bins.
      - Centralize route-follow tuning values into config once stable.
 
