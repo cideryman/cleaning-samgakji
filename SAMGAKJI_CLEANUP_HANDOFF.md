@@ -215,11 +215,12 @@
     - `STATIC_PROGRESS_PROPS` was removed from `NeighborhoodProgressSystem`; progress props are now authored through Tiled metadata.
   - Future improvement: create dedicated Tiled progress objects with properties like `progressKey`, `dirtyTexture`, `recoveredTexture`, `showUntilLevel`, `revealAtLevel`, and collision size so dirty spots can be edited directly.
 - Progress object placement visual issues to fix:
-  - A recovered bench currently appears awkwardly between Jjook and a flowerbed.
-  - A recovered tree appears awkwardly between the right-side recycling bins.
-  - A rose bush placement needs review; it should not crowd the path or feel pasted over the walking route.
-  - A tree growing on the path should move slightly downward so it sits on the grass/path boundary instead of the middle of the path.
-  - Instead of a single tree on that boundary, create a natural row/group of about 4 small trees or shrubs along the same path edge.
+  - 2026-06-15 placement pass 1:
+    - `progress_small_tree_01`-`04` were moved into a tighter path-edge row at y=608.
+    - `progress_tree_01` and `progress_pine_01` were moved slightly downward toward the lower grass/path edge.
+    - `progress_rose_01` and `progress_rose_02` were lightly adjusted inward/upward to reduce path crowding.
+  - Remaining manual check: review these positions in-game at several Samgakji levels.
+  - If a recovered bench/tree still appears awkwardly near Jjook, flowerbeds, or recycling bins, tune the Tiled point directly rather than editing JS.
   - Preferred direction: progress props should replace or enhance existing natural resting spots, not appear in narrow NPC activity zones, recycling interaction spaces, or the center of walking paths.
   - See this document's `Samgakji Progress System` section for the newer region-based plan:
     - orange regions: roses,

@@ -3926,8 +3926,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":240,
-                 "y":332
+                 "x":256,
+                 "y":320
                 }, 
                 {
                  "height":0,
@@ -3950,8 +3950,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":920,
-                 "y":330
+                 "x":896,
+                 "y":320
                 }, 
                 {
                  "height":0,
@@ -3974,8 +3974,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":150,
-                 "y":560
+                 "x":160,
+                 "y":608
                 }, 
                 {
                  "height":0,
@@ -3998,8 +3998,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":270,
-                 "y":560
+                 "x":260,
+                 "y":608
                 }, 
                 {
                  "height":0,
@@ -4022,8 +4022,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":390,
-                 "y":560
+                 "x":360,
+                 "y":608
                 }, 
                 {
                  "height":0,
@@ -4046,8 +4046,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":510,
-                 "y":560
+                 "x":460,
+                 "y":608
                 }, 
                 {
                  "height":0,
@@ -4070,8 +4070,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":1100,
-                 "y":1044
+                 "x":1120,
+                 "y":1072
                 }, 
                 {
                  "height":0,
@@ -4094,8 +4094,8 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":1510,
-                 "y":1044
+                 "x":1460,
+                 "y":1072
                 }, 
                 {
                  "height":0,
