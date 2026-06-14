@@ -87,6 +87,7 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_bench_recovered",
     texture: "sunisuni_bench",
+    requiresDedicatedPoint: true,
     fallback: { x: 790, y: 670 },
     width: 116,
     height: 76,
@@ -97,6 +98,7 @@ const STATIC_PROGRESS_PROPS = [
     texture: "progress_broad_tree_a",
     frame: 0,
     growthFrames: true,
+    requiresDedicatedPoint: true,
     fallback: { x: 1280, y: 640 },
     width: 156,
     height: 156,
@@ -108,6 +110,7 @@ const STATIC_PROGRESS_PROPS = [
     texture: "progress_small_tree",
     frame: 0,
     growthFrames: true,
+    requiresDedicatedPoint: true,
     fallback: { x: 500, y: 616 },
     width: 120,
     height: 120,
@@ -119,6 +122,7 @@ const STATIC_PROGRESS_PROPS = [
     texture: "progress_rose_bush",
     frame: 0,
     growthFrames: true,
+    requiresDedicatedPoint: true,
     fallback: { x: 612, y: 472 },
     width: 120,
     height: 120,
@@ -130,6 +134,7 @@ const STATIC_PROGRESS_PROPS = [
     texture: "progress_pine_tree",
     frame: 0,
     growthFrames: true,
+    requiresDedicatedPoint: true,
     fallback: { x: 1440, y: 500 },
     width: 142,
     height: 142,
@@ -139,6 +144,7 @@ const STATIC_PROGRESS_PROPS = [
   {
     key: "progress_lamp_recovered",
     texture: "street_lamp",
+    requiresDedicatedPoint: true,
     fallback: { x: 965, y: 500 },
     width: 42,
     height: 104,
@@ -308,6 +314,7 @@ export default class NeighborhoodProgressSystem {
 
     STATIC_PROGRESS_PROPS.forEach((config) => {
       const point = this.getProgressPropPoint(config);
+      if (!point) return;
       const prop = config.type === "dirty"
         ? this.createDirtyProgressProp(point.x, point.y, config)
         : this.createTextureProgressProp(point.x, point.y, config);
@@ -345,8 +352,12 @@ export default class NeighborhoodProgressSystem {
   }
 
   getProgressPropPoint(config) {
+    const dedicatedPoint = this.scene.mapPoints?.[config.key];
+    if (dedicatedPoint) return dedicatedPoint;
+
+    if (config.requiresDedicatedPoint) return null;
+
     const pointKeys = [
-      config.key,
       config.pointKey,
       config.replacedMapObjectKey,
     ].filter(Boolean);
