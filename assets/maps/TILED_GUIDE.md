@@ -89,6 +89,16 @@ Recommended object naming rules:
 - Use multiple `flower` objects to control exactly where the clear flowers appear.
 - Keep the `collision` layer simple; only place blockers where the player must not walk.
 
+Samgakji progress objects:
+
+- Place progress anchors on the `spawn` object layer as `logic_point` objects.
+- Add `progressObject=true` to opt in. Ordinary points are ignored by the progress system.
+- For a single object, add `texture=<Phaser texture key>`.
+- For dirty-to-recovered progression, add `dirtyTexture`, `recoveredTexture`, and `revealAtLevel`.
+- Use `replacedMapObjectKey` when a dirty prop should temporarily hide an existing `map_objects` item, such as a bench or tree.
+- Use `blocksMovement=true` only when the visible progress object should block the player.
+- After exporting the map, run `npm.cmd run validate:map-progress` to catch texture-name mistakes, duplicate progress keys, and missing replacement map objects.
+
 Large map objects:
 
 For buildings and large props, place an object on the `map_objects` layer and add these custom properties:

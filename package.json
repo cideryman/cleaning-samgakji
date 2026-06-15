@@ -6,7 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite --host 0.0.0.0",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "validate:map-progress": "node scripts/validate-map-progress.mjs"
   },
   "devDependencies": {
     "vite": "^5.4.21"

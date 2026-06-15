@@ -219,6 +219,12 @@
     - `progress_small_tree_01`-`04` were moved into a tighter path-edge row at y=608.
     - `progress_tree_01` and `progress_pine_01` were moved slightly downward toward the lower grass/path edge.
     - `progress_rose_01` and `progress_rose_02` were lightly adjusted inward/upward to reduce path crowding.
+  - 2026-06-15 map validation safety step:
+    - Added `scripts/validate-map-progress.mjs`.
+    - Added `npm.cmd run validate:map-progress`.
+    - This checks Tiled-authored progress objects for unknown texture keys, duplicate progress keys, missing `replacedMapObjectKey` targets, and invalid level values.
+    - Run it after exporting `assets/maps/chapter1-samgakji-map.json` from Tiled, before build/manual testing.
+    - `assets/maps/TILED_GUIDE.md` now documents the progress-object properties and validation command.
   - Remaining manual check: review these positions in-game at several Samgakji levels.
   - If a recovered bench/tree still appears awkwardly near Jjook, flowerbeds, or recycling bins, tune the Tiled point directly rather than editing JS.
   - Preferred direction: progress props should replace or enhance existing natural resting spots, not appear in narrow NPC activity zones, recycling interaction spaces, or the center of walking paths.
