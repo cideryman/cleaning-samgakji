@@ -96,6 +96,7 @@ Samgakji progress objects:
 - For a single object, add `texture=<Phaser texture key>`.
 - For dirty-to-recovered progression, add `dirtyTexture`, `recoveredTexture`, and `revealAtLevel`.
 - Use `replacedMapObjectKey` when a dirty prop should temporarily hide an existing `map_objects` item, such as a bench or tree.
+- If you use `replacedMapObjectKey`, keep the progress point aligned with the rendered center/bottom anchor of the replaced object. The validator warns when the two drift apart.
 - Use `blocksMovement=true` only when the visible progress object should block the player.
 - After exporting the map, run `npm.cmd run validate:map-progress` to catch texture-name mistakes, duplicate progress keys, and missing replacement map objects.
 - The validation command also prints a small summary table with each progress object's key, position, texture flow, reveal level, blocking flag, and replacement target.
@@ -104,6 +105,7 @@ Large map objects:
 
 For buildings and large props, place an object on the `map_objects` layer and add these custom properties:
 
+- Every `map_objects` entry should have a unique object name. Duplicate names can make `scene.mapObjects` overwrite earlier references.
 - `texture`: Phaser texture key, such as `hospital_building`, `pharmacy_building`, `clothing_store`, `sunisuni_tree`, `sunisuni_bench`, `pedestrian_light`, `pedestrian_light_back`, `pedestrian_stop_sign`, or `crosswalk_sign`
 - `displayWidth`: rendered width in pixels
 - `displayHeight`: rendered height in pixels

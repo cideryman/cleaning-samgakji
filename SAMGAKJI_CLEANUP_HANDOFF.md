@@ -238,6 +238,15 @@
     - `npm.cmd run validate:map-progress` now also prints a compact progress-object summary table.
     - Use the table to compare Tiled placement between home/company workspaces before doing visual placement passes.
     - The table includes key, x/y, single vs paired mode, texture flow, reveal/show level, blocking flag, and replacement target.
+  - 2026-06-15 replacement alignment validation:
+    - `npm.cmd run validate:map-progress` now checks whether a progress point with `replacedMapObjectKey` stays aligned with the rendered center/bottom anchor of the replaced map object.
+    - This is useful after moving benches/trees in Tiled because the matching low-level dirty prop should usually move with the recovered object.
+    - Current replacement pairs are aligned.
+  - 2026-06-15 map object name cleanup:
+    - Removed duplicate `map_objects` names for repeated trees and street lamps.
+    - Kept one canonical `street_lamp_recycling` and one canonical `street_lamp_vending` key so code fallback decoration checks still have a stable reference.
+    - Renamed extra trees/lamps with location-specific names such as `park_tree_northeast_edge`, `street_lamp_vending_south`, and `street_lamp_vending_west`.
+    - `npm.cmd run validate:map-progress` now warns if future `map_objects` entries reuse the same name.
   - Remaining manual check: review these positions in-game at several Samgakji levels.
   - If a recovered bench/tree still appears awkwardly near Jjook, flowerbeds, or recycling bins, tune the Tiled point directly rather than editing JS.
   - Preferred direction: progress props should replace or enhance existing natural resting spots, not appear in narrow NPC activity zones, recycling interaction spaces, or the center of walking paths.

@@ -694,7 +694,7 @@
                 {
                  "height":146,
                  "id":41,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_northeast_edge",
                  "opacity":1,
                  "properties":[
                         {
@@ -1606,7 +1606,7 @@
                 {
                  "height":146,
                  "id":118,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_west_mid",
                  "opacity":1,
                  "properties":[
                         {
@@ -1674,7 +1674,7 @@
                 {
                  "height":146,
                  "id":119,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_southwest_edge_01",
                  "opacity":1,
                  "properties":[
                         {
@@ -1742,7 +1742,7 @@
                 {
                  "height":146,
                  "id":120,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_southwest_edge_02",
                  "opacity":1,
                  "properties":[
                         {
@@ -2188,7 +2188,7 @@
                 {
                  "height":104,
                  "id":127,
-                 "name":"street_lamp_recycling",
+                 "name":"street_lamp_recycling_south",
                  "opacity":1,
                  "properties":[
                         {
@@ -2503,7 +2503,7 @@
                 {
                  "height":104,
                  "id":132,
-                 "name":"street_lamp_vending",
+                 "name":"street_lamp_vending_south",
                  "opacity":1,
                  "properties":[
                         {
@@ -2566,7 +2566,7 @@
                 {
                  "height":104,
                  "id":133,
-                 "name":"street_lamp_vending",
+                 "name":"street_lamp_vending_west",
                  "opacity":1,
                  "properties":[
                         {
@@ -2629,7 +2629,7 @@
                 {
                  "height":146,
                  "id":134,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_northwest_edge",
                  "opacity":1,
                  "properties":[
                         {
@@ -2697,7 +2697,7 @@
                 {
                  "height":146,
                  "id":135,
-                 "name":"park_tree_north_02",
+                 "name":"park_tree_northwest_mid",
                  "opacity":1,
                  "properties":[
                         {

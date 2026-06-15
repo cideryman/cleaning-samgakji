@@ -22,6 +22,8 @@ const errors = [];
 const warnings = [];
 const progressObjects = [];
 const mapObjectKeys = new Set();
+const mapObjectCenters = new Map();
+const mapObjectNameCounts = new Map();
 const seenProgressKeys = new Set();
 
 if (mapPixelWidth > 0 && mapPixelWidth !== GAME_CONFIG.worldWidth) {
@@ -77,8 +79,28 @@ for (const layer of map.layers || []) {
   for (const object of layer.objects || []) {
     const props = getProps(object);
     if (layer.name === "map_objects") {
-      mapObjectKeys.add(props.name || object.name);
+      const objectKey = props.name || object.name;
+      mapObjectKeys.add(objectKey);
+      if (objectKey) {
+        mapObjectNameCounts.set(objectKey, (mapObjectNameCounts.get(objectKey) || 0) + 1);
+      }
+      if (objectKey) {
+        const originX = Number(props.originX ?? 0.5);
+        const originY = Number(props.originY ?? 1);
+        const displayWidth = numberProp(props, "displayWidth") ?? (Number(object.width) || 96);
+        const displayHeight = numberProp(props, "displayHeight") ?? (Number(object.height) || 96);
+        mapObjectCenters.set(objectKey, {
+          x: object.x + (Number(object.width) || displayWidth) * originX,
+          y: object.y + (Number(object.height) || displayHeight) * originY,
+        });
+      }
     }
+  }
+}
+
+for (const [objectKey, count] of mapObjectNameCounts.entries()) {
+  if (count > 1) {
+    addIssue(warnings, `map_objects contains ${count} objects named "${objectKey}". Use unique names so scene.mapObjects does not overwrite references.`);
   }
 }
 
@@ -146,6 +168,15 @@ for (const layer of map.layers || []) {
 
     if (props.replacedMapObjectKey && !mapObjectKeys.has(props.replacedMapObjectKey)) {
       addIssue(errors, `${label}: replacedMapObjectKey "${props.replacedMapObjectKey}" does not match a map_objects key.`);
+    }
+
+    if (props.replacedMapObjectKey && mapObjectCenters.has(props.replacedMapObjectKey)) {
+      const target = mapObjectCenters.get(props.replacedMapObjectKey);
+      const dx = Math.abs(object.x - target.x);
+      const dy = Math.abs(object.y - target.y);
+      if (dx > 2 || dy > 2) {
+        addIssue(warnings, `${label}: progress point is not aligned with replaced map object "${props.replacedMapObjectKey}" (dx=${Math.round(dx)}, dy=${Math.round(dy)}).`);
+      }
     }
 
     ["showFromLevel", "showUntilLevel", "dirtyShowFromLevel", "dirtyShowUntilLevel", "recoveredShowFromLevel", "recoveredShowUntilLevel", "revealAtLevel"].forEach((propName) => {
