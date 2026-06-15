@@ -219,12 +219,25 @@
     - `progress_small_tree_01`-`04` were moved into a tighter path-edge row at y=608.
     - `progress_tree_01` and `progress_pine_01` were moved slightly downward toward the lower grass/path edge.
     - `progress_rose_01` and `progress_rose_02` were lightly adjusted inward/upward to reduce path crowding.
+  - 2026-06-15 placement pass 2:
+    - Moved `west_rest_bench` left so its rendered center changed from about `(827, 546)` to `(704, 546)`.
+    - Moved matching `progress_dirty_planter_west` to `(704, 546)`.
+    - Goal: reduce crowding between Jjook's start/activity area and nearby flowerbed/progress props while keeping the dirty-to-clean replacement pair aligned.
+  - 2026-06-15 map bounds alignment:
+    - Current Tiled chapter map is `56 x 38` tiles, 32px each, so the pixel size is `1792 x 1216`.
+    - Updated `GAME_CONFIG.worldWidth/worldHeight` to `1792 x 1216` so older helper systems that still read GAME_CONFIG match the Tiled map bounds.
+    - Updated `assets/maps/TILED_GUIDE.md` to the current map size.
+    - `npm.cmd run validate:map-progress` now warns if Tiled map pixel dimensions and `GAME_CONFIG` world dimensions drift apart again.
   - 2026-06-15 map validation safety step:
     - Added `scripts/validate-map-progress.mjs`.
     - Added `npm.cmd run validate:map-progress`.
     - This checks Tiled-authored progress objects for unknown texture keys, duplicate progress keys, missing `replacedMapObjectKey` targets, and invalid level values.
     - Run it after exporting `assets/maps/chapter1-samgakji-map.json` from Tiled, before build/manual testing.
     - `assets/maps/TILED_GUIDE.md` now documents the progress-object properties and validation command.
+  - 2026-06-15 map validation summary step:
+    - `npm.cmd run validate:map-progress` now also prints a compact progress-object summary table.
+    - Use the table to compare Tiled placement between home/company workspaces before doing visual placement passes.
+    - The table includes key, x/y, single vs paired mode, texture flow, reveal/show level, blocking flag, and replacement target.
   - Remaining manual check: review these positions in-game at several Samgakji levels.
   - If a recovered bench/tree still appears awkwardly near Jjook, flowerbeds, or recycling bins, tune the Tiled point directly rather than editing JS.
   - Preferred direction: progress props should replace or enhance existing natural resting spots, not appear in narrow NPC activity zones, recycling interaction spaces, or the center of walking paths.

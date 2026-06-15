@@ -2,9 +2,9 @@
 
 Use these settings when making the Samgakji map in Tiled.
 
-- Map size: `48 x 30` tiles
+- Map size: `56 x 38` tiles
 - Tile size: `32 x 32 px`
-- Final pixel size: `1536 x 960`
+- Final pixel size: `1792 x 1216`
 - Main tileset image: `assets/tilesets/samgakji-tiles.png`
 - Main tileset name in Tiled: `samgakji_tiles`
 - Extra tilesets are allowed. Keep their PNG files under `assets/tilesets/`.
@@ -98,6 +98,7 @@ Samgakji progress objects:
 - Use `replacedMapObjectKey` when a dirty prop should temporarily hide an existing `map_objects` item, such as a bench or tree.
 - Use `blocksMovement=true` only when the visible progress object should block the player.
 - After exporting the map, run `npm.cmd run validate:map-progress` to catch texture-name mistakes, duplicate progress keys, and missing replacement map objects.
+- The validation command also prints a small summary table with each progress object's key, position, texture flow, reveal level, blocking flag, and replacement target.
 
 Large map objects:
 

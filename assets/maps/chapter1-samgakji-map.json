@@ -552,7 +552,7 @@
                  "type":"map_object",
                  "visible":true,
                  "width":118,
-                 "x":768,
+                 "x":645,
                  "y":480
                 }, 
                 {
@@ -4158,7 +4158,7 @@
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":827,
+                 "x":704,
                  "y":546
                 }, 
                 {

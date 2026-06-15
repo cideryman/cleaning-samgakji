@@ -5,10 +5,13 @@ import {
   SPRITESHEET_ASSETS,
   TILED_MAP,
 } from "../src/config/AssetsData.js";
+import { GAME_CONFIG } from "../src/config/GameConstants.js";
 
 const projectRoot = process.cwd();
 const mapPath = path.join(projectRoot, TILED_MAP.path);
 const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
+const mapPixelWidth = (map.width || 0) * (map.tilewidth || 0);
+const mapPixelHeight = (map.height || 0) * (map.tileheight || 0);
 
 const knownTextures = new Set([
   ...EXTERNAL_ASSETS.map((asset) => asset.key),
@@ -21,6 +24,14 @@ const progressObjects = [];
 const mapObjectKeys = new Set();
 const seenProgressKeys = new Set();
 
+if (mapPixelWidth > 0 && mapPixelWidth !== GAME_CONFIG.worldWidth) {
+  addIssue(warnings, `Tiled map width is ${mapPixelWidth}px, but GAME_CONFIG.worldWidth is ${GAME_CONFIG.worldWidth}px.`);
+}
+
+if (mapPixelHeight > 0 && mapPixelHeight !== GAME_CONFIG.worldHeight) {
+  addIssue(warnings, `Tiled map height is ${mapPixelHeight}px, but GAME_CONFIG.worldHeight is ${GAME_CONFIG.worldHeight}px.`);
+}
+
 function getProps(object) {
   return Object.fromEntries((object.properties || []).map((property) => [property.name, property.value]));
 }
@@ -31,6 +42,34 @@ function isTruthy(value) {
 
 function addIssue(collection, message) {
   collection.push(message);
+}
+
+function numberProp(props, propName) {
+  if (props[propName] === undefined || props[propName] === null || props[propName] === "") return null;
+  const value = Number(props[propName]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function estimateProgressDisplaySize(object, props) {
+  const widthCandidates = [
+    numberProp(props, "width"),
+    numberProp(props, "displayWidth"),
+    numberProp(props, "dirtyWidth"),
+    numberProp(props, "recoveredWidth"),
+    Number(object.width) || null,
+  ].filter((value) => Number.isFinite(value) && value > 0);
+  const heightCandidates = [
+    numberProp(props, "height"),
+    numberProp(props, "displayHeight"),
+    numberProp(props, "dirtyHeight"),
+    numberProp(props, "recoveredHeight"),
+    Number(object.height) || null,
+  ].filter((value) => Number.isFinite(value) && value > 0);
+
+  return {
+    width: widthCandidates.length ? Math.max(...widthCandidates) : 96,
+    height: heightCandidates.length ? Math.max(...heightCandidates) : 96,
+  };
 }
 
 for (const layer of map.layers || []) {
@@ -52,7 +91,31 @@ for (const layer of map.layers || []) {
 
     const label = `${layer.name}/${object.name || "(unnamed)"}`;
     const progressKey = props.progressKey || object.name;
-    progressObjects.push(label);
+    const displaySize = estimateProgressDisplaySize(object, props);
+    progressObjects.push({
+      label,
+      key: progressKey || "",
+      x: Math.round(object.x),
+      y: Math.round(object.y),
+      width: Math.round(displaySize.width),
+      height: Math.round(displaySize.height),
+      mode: props.dirtyTexture || props.recoveredTexture ? "paired" : "single",
+      dirtyTexture: props.dirtyTexture || "",
+      recoveredTexture: props.recoveredTexture || "",
+      texture: props.texture || "",
+      revealAtLevel: props.revealAtLevel || "",
+      showUntilLevel: props.showUntilLevel || "",
+      blocksMovement: isTruthy(props.blocksMovement) || isTruthy(props.dirtyBlocksMovement),
+      replacedMapObjectKey: props.replacedMapObjectKey || "",
+    });
+
+    const left = object.x - displaySize.width / 2;
+    const right = object.x + displaySize.width / 2;
+    const top = object.y - displaySize.height;
+    const bottom = object.y;
+    if (mapPixelWidth > 0 && (left < 0 || right > mapPixelWidth || top < 0 || bottom > mapPixelHeight)) {
+      addIssue(warnings, `${label}: estimated display footprint extends outside the map (${Math.round(left)}, ${Math.round(top)}) - (${Math.round(right)}, ${Math.round(bottom)}).`);
+    }
 
     if (!object.name && !props.progressKey) {
       addIssue(errors, `${label}: progress object needs either an object name or progressKey.`);
@@ -87,7 +150,7 @@ for (const layer of map.layers || []) {
 
     ["showFromLevel", "showUntilLevel", "dirtyShowFromLevel", "dirtyShowUntilLevel", "recoveredShowFromLevel", "recoveredShowUntilLevel", "revealAtLevel"].forEach((propName) => {
       if (props[propName] === undefined || props[propName] === "") return;
-      const value = Number(props[propName]);
+      const value = numberProp(props, propName);
       if (!Number.isFinite(value) || value < 1) {
         addIssue(errors, `${label}: ${propName} must be a positive number.`);
       }
@@ -96,6 +159,21 @@ for (const layer of map.layers || []) {
 }
 
 console.log(`Validated ${progressObjects.length} progress object(s) in ${TILED_MAP.path}.`);
+
+if (progressObjects.length) {
+  console.log("\nProgress object summary:");
+  console.table(progressObjects.map((entry) => ({
+    key: entry.key,
+    x: entry.x,
+    y: entry.y,
+    size: `${entry.width}x${entry.height}`,
+    mode: entry.mode,
+    texture: entry.texture || `${entry.dirtyTexture} -> ${entry.recoveredTexture}`,
+    reveal: entry.revealAtLevel || entry.showUntilLevel || "",
+    blocks: entry.blocksMovement ? "yes" : "no",
+    replaces: entry.replacedMapObjectKey,
+  })));
+}
 
 if (warnings.length) {
   console.warn("\nWarnings:");

@@ -1,6 +1,6 @@
 export const GAME_CONFIG = {
-  worldWidth: 1664,
-  worldHeight: 1088,
+  worldWidth: 1792,
+  worldHeight: 1216,
   playerSpeed: 135,
   waveSize: 34,
   totalGoal: 30,
