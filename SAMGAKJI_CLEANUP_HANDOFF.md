@@ -479,6 +479,44 @@ Use this as the single task list. Work from the top, in small verified units.
 - Progress album/rest-window progress record.
 - Optional level-up image assets under `assets/progress/level-up/`.
 
+### Future Asset Plan: Samgakji Progress Expansion
+
+This is a future asset/design note, not an active implementation task.
+
+Goal:
+- Extend Samgakji progress beyond the current nature/dirty-object pass only when enough visible assets exist.
+- Current assets are strongest for Lv.1-12. Lv.13-16 can work with text/popup support, but Lv.17-20 should wait for more visible changes.
+
+Planned people/NPC assets:
+- Garden expert NPC
+  - 4-direction walking spritesheets.
+  - Standard frame size: 64 x 96.
+  - Direction sheet size: 192 x 96, 3 frames.
+  - Frame order: left foot, neutral, right foot.
+  - Optional portrait: 400 x 400 transparent PNG.
+- Tree expert NPC
+  - Same sprite and portrait standard as the garden expert.
+
+Recommended prop assets:
+- Flower icon sign, no readable text.
+  - Use a simple flower pictogram instead of Korean/English writing because small text is hard to read in-game.
+  - Recommended sizes: 64 x 64 for small path signs, 96 x 96 for larger flowerbed signs.
+  - Transparent PNG, bottom anchor touching the bottom edge.
+- Garden tools/props.
+  - Watering can, small shovel, small flowerpot, seed bag, or garden gloves.
+  - Recommended size: 96 x 96 or 128 x 96 transparent PNG.
+- Clean bench-area props.
+  - Small potted plant, picnic mat, or resting bag.
+  - Recommended size: 128 x 96 transparent PNG.
+- Extra complete-tree variants.
+  - Recommended size: 128 x 128 or 160 x 160 transparent PNG/spritesheet.
+
+Design rules:
+- Prefer pictograms over text for tiny signs.
+- Keep new progress props visual-first and non-blocking unless there is a clear gameplay reason.
+- Add new progress placement through Tiled `logic_point` objects with `progressObject=true`, not hard-coded JS config.
+- Run `npm.cmd run validate:map-progress` after adding new Tiled progress props.
+
 ## 검증 체크리스트
 
 - `node --check src/scenes/PlayScene.js`
