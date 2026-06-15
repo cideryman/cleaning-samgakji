@@ -8,10 +8,13 @@ import {
 import { GAME_CONFIG } from "../src/config/GameConstants.js";
 
 const projectRoot = process.cwd();
-const mapPath = path.join(projectRoot, TILED_MAP.path);
+const requestedMapPath = process.argv.find((arg, index) => index > 1 && !arg.startsWith("--")) || TILED_MAP.path;
+const mapPath = path.resolve(projectRoot, requestedMapPath);
+const mapLabel = path.relative(projectRoot, mapPath).replaceAll(path.sep, "/");
 const map = JSON.parse(fs.readFileSync(mapPath, "utf8"));
 const mapPixelWidth = (map.width || 0) * (map.tilewidth || 0);
 const mapPixelHeight = (map.height || 0) * (map.tileheight || 0);
+const shouldMatchGameWorld = mapLabel === TILED_MAP.path;
 
 const knownTextures = new Set([
   ...EXTERNAL_ASSETS.map((asset) => asset.key),
@@ -26,11 +29,11 @@ const mapObjectCenters = new Map();
 const mapObjectNameCounts = new Map();
 const seenProgressKeys = new Set();
 
-if (mapPixelWidth > 0 && mapPixelWidth !== GAME_CONFIG.worldWidth) {
+if (shouldMatchGameWorld && mapPixelWidth > 0 && mapPixelWidth !== GAME_CONFIG.worldWidth) {
   addIssue(warnings, `Tiled map width is ${mapPixelWidth}px, but GAME_CONFIG.worldWidth is ${GAME_CONFIG.worldWidth}px.`);
 }
 
-if (mapPixelHeight > 0 && mapPixelHeight !== GAME_CONFIG.worldHeight) {
+if (shouldMatchGameWorld && mapPixelHeight > 0 && mapPixelHeight !== GAME_CONFIG.worldHeight) {
   addIssue(warnings, `Tiled map height is ${mapPixelHeight}px, but GAME_CONFIG.worldHeight is ${GAME_CONFIG.worldHeight}px.`);
 }
 
@@ -75,6 +78,14 @@ function estimateProgressDisplaySize(object, props) {
 }
 
 for (const layer of map.layers || []) {
+  if (layer.type === "tilelayer") {
+    const expectedTileCount = (Number(layer.width) || 0) * (Number(layer.height) || 0);
+    const actualTileCount = Array.isArray(layer.data) ? layer.data.length : 0;
+    if (expectedTileCount > 0 && actualTileCount !== expectedTileCount) {
+      addIssue(errors, `${layer.name}: tile data length is ${actualTileCount}, expected ${expectedTileCount}.`);
+    }
+  }
+
   if (layer.type !== "objectgroup") continue;
   for (const object of layer.objects || []) {
     const props = getProps(object);
@@ -189,7 +200,7 @@ for (const layer of map.layers || []) {
   }
 }
 
-console.log(`Validated ${progressObjects.length} progress object(s) in ${TILED_MAP.path}.`);
+console.log(`Validated ${progressObjects.length} progress object(s) in ${mapLabel}.`);
 
 if (progressObjects.length) {
   console.log("\nProgress object summary:");

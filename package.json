@@ -7,7 +7,8 @@
     "build": "vite build",
     "dev": "vite --host 0.0.0.0",
     "preview": "vite preview --host 0.0.0.0",
-    "validate:map-progress": "node scripts/validate-map-progress.mjs"
+    "validate:map-progress": "node scripts/validate-map-progress.mjs",
+    "validate:map-progress:south-park": "node scripts/validate-map-progress.mjs assets/maps/chapter1-south-park-map.json"
   },
   "devDependencies": {
     "vite": "^5.4.21"

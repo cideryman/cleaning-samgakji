@@ -10,9 +10,12 @@ Use these settings when making the Samgakji map in Tiled.
 - Extra tilesets are allowed. Keep their PNG files under `assets/tilesets/`.
 - Park tileset: `assets/tilesets/park_tiles.tsx` / `assets/tilesets/park_tiles.png`
 - Chapter 1 export path: `assets/maps/chapter1-samgakji-map.json`
+- Chapter 1 south park extension draft: `assets/maps/chapter1-south-park-map.json`
 - Future chapter export path pattern: `assets/maps/chapter2-<short-name>-map.json`, `assets/maps/chapter3-<short-name>-map.json`, and so on
 
 The game currently loads `assets/maps/chapter1-samgakji-map.json` for Chapter 1. Edit that file in Tiled and export over the same path when you want Chapter 1 to change.
+
+The south park extension map is a draft map for a future lower-area unlock. It is not connected to runtime map switching yet. Keep it on the same `samgakji_tiles` tileset so it can later connect cleanly to the current map's lower edge.
 
 Multiple tilesets:
 
@@ -98,7 +101,9 @@ Samgakji progress objects:
 - Use `replacedMapObjectKey` when a dirty prop should temporarily hide an existing `map_objects` item, such as a bench or tree.
 - If you use `replacedMapObjectKey`, keep the progress point aligned with the rendered center/bottom anchor of the replaced object. The validator warns when the two drift apart.
 - Use `blocksMovement=true` only when the visible progress object should block the player.
-- After exporting the map, run `npm.cmd run validate:map-progress` to catch texture-name mistakes, duplicate progress keys, and missing replacement map objects.
+- After exporting the main map, run `npm.cmd run validate:map-progress` to catch texture-name mistakes, duplicate progress keys, and missing replacement map objects.
+- For the south park extension draft, run `npm.cmd run validate:map-progress:south-park`.
+- You can also validate any compatible Tiled map with `npm.cmd run validate:map-progress -- assets/maps/your-map.json`.
 - The validation command also prints a small summary table with each progress object's key, position, texture flow, reveal level, blocking flag, and replacement target.
 
 Large map objects:

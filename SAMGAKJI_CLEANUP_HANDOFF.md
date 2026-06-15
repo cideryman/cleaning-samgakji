@@ -479,6 +479,32 @@ Use this as the single task list. Work from the top, in small verified units.
 - Progress album/rest-window progress record.
 - Optional level-up image assets under `assets/progress/level-up/`.
 
+### Draft Map: Chapter 1 South Park Extension
+
+Status: draft map asset only. Runtime map switching is not implemented yet.
+
+- New draft map file: `assets/maps/chapter1-south-park-map.json`.
+- Size: 56 x 32 tiles, 32px tiles, 1792 x 1024 pixels.
+- Tileset: existing `samgakji_tiles` only.
+- Intended connection: below the current Samgakji map through a future south gate/park entrance.
+- Intended unlock: around Samgakji Lv.9 or later, after the neighborhood visibly improves.
+- Design: clean lower park extension with a central promenade, side garden islands, benches, trees, flowerbeds, and quiet lower garden area.
+- Included future map points:
+  - `samgakji_return`
+  - `south_park_entry` with `unlockLevel=9`
+  - `south_park_expert_garden`
+  - `south_park_expert_tree`
+  - four `slime_spawn` points
+- Included future progress points:
+  - `south_park_progress_rose_01`, revealAtLevel 10
+  - `south_park_progress_rose_02`, revealAtLevel 11
+  - `south_park_progress_tree_01`, revealAtLevel 12
+- Validation:
+  - Run `npm.cmd run validate:map-progress:south-park` after editing this draft map.
+  - `scripts/validate-map-progress.mjs` now accepts an optional map path, so draft maps can be checked before they are connected to runtime.
+- Do not wire this into gameplay until a small external map transition system exists.
+- When implementing transition later, prefer a separate system instead of adding long logic to `PlayScene.js`.
+
 ### Future Asset Plan: Samgakji Progress Expansion
 
 This is a future asset/design note, not an active implementation task.
