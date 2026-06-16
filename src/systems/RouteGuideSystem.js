@@ -15,7 +15,7 @@ export default class RouteGuideSystem {
 
   update() {
     const scene = this.scene;
-    if (!scene.player?.active) {
+    if (!scene.player?.active || scene.currentWorldMapId === "chapter1_south_park") {
       this.clear();
       return;
     }

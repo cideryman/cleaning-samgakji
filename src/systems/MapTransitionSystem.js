@@ -134,6 +134,7 @@ export default class MapTransitionSystem {
       beforeSwitch?.();
       const switched = scene.tiledMapSystem?.switchMap?.(mapId, spawnKey, fallbackSpawn);
       if (switched) {
+        scene.neighborhoodProgressSystem?.rebuildForCurrentMap?.({ silent: true });
         this.resetTrashForCurrentMap();
         afterSwitch?.();
       } else {

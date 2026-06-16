@@ -144,6 +144,7 @@ export default class EducationalGuideSystem {
   shouldShowWorldGuideIcons() {
     const scene = this.scene;
     if (this.isOpen || this.openedFromNotes) return false;
+    if (scene.currentWorldMapId && scene.currentWorldMapId !== "main") return false;
     if (scene.interiorSceneGroup || scene.interiorSceneType) return false;
     if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return false;
     return scene.stateManager?.canInteract?.() !== false;

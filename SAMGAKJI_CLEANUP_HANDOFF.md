@@ -69,11 +69,17 @@ This is the single practical work order for the next Codex sessions. Use the det
      - Walking to `samgakji_return` returns the player to the main map near `south_park_gate`.
      - Main-map utility objects such as vending/recycling bins are removed before switching and recreated when returning to the main map.
      - Main-map NPCs and quest markers are hidden while inside the south park map and restored on return.
+   - 2026-06-16 third safe connection pass:
+     - `NeighborhoodProgressSystem.rebuildForCurrentMap()` rebuilds flowerbeds, progress props, colliders, and butterflies after a world map switch.
+     - This prevents main-map progress decorations from leaking into the south park map and lets south park progress objects use south park Tiled points.
+     - `RouteGuideSystem` now clears route arrows while inside the south park map.
+     - `EducationalGuideSystem` now hides main-map learning question icons when `currentWorldMapId !== "main"`.
    - Needs manual check:
      - Reach Lv.9 or temporarily use dev/testing progress, walk to the bottom gate, confirm transition to south park.
      - Confirm trash spawns use south park spawn points.
      - Walk to the north return point, confirm return to main map.
      - Confirm vending machine/recycling bins/NPCs appear again after returning.
+     - Confirm main-map learning icons and quest guide arrows do not appear inside south park.
    - Keep future map swapping inside `MapTransitionSystem` / `TiledMapSystem`; do not add transition bodies directly to `PlayScene.js`.
 
 2. Chapter 2 direction note.
@@ -232,6 +238,8 @@ Recommended refactor order:
   - The gate blocks entry below Lv.9 and transitions to `chapter1_south_park_map` at/after Lv.9.
   - `TiledMapSystem` now supports runtime map switching between world map configs.
   - Returning through `samgakji_return` switches back to the main map and rebuilds the main utility objects.
+  - `NeighborhoodProgressSystem` now rebuilds map-based progress visuals after each world map switch.
+  - Main-map route guides and learning question icons are suppressed while inside south park.
 - Samgakji progress nature asset phase 1:
   - User-provided 4-frame nature sprites were moved from the root `assets/` folder into `assets/progress/nature/` with English names:
     - `broad-tree-growth-a.png`

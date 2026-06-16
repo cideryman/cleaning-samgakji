@@ -70,6 +70,22 @@ export default class NeighborhoodProgressSystem {
     this.refresh({ silent: true });
   }
 
+  rebuildForCurrentMap({ silent = true } = {}) {
+    this.destroyFlowerbeds();
+    this.destroyProgressProps();
+    this.butterflies.forEach((butterfly) => {
+      butterfly?.tween?.remove?.();
+      butterfly?.sprite?.destroy?.();
+    });
+    this.butterflies = [];
+    this.lastEvaluatedStage = -1;
+    this.lastVisualLevel = -1;
+    this.createFlowerbeds();
+    this.createProgressProps();
+    this.refresh({ silent });
+    this.scene.pathfindingSystem?.create?.();
+  }
+
   update() {
     const nextStage = this.getEligibleStage();
     const nextVisualLevel = this.getVisualLevel();
