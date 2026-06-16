@@ -165,6 +165,10 @@ body.interior-scene-active[data-interior-scene="pharmacy"] #game {
   background: #e9ded2;
 }
 
+body.interior-scene-active[data-interior-scene="ending"] #game {
+  background: #000;
+}
+
 body.prologue-scene-active #game {
   background: var(--prologue-bg, #2b2b2e);
 }

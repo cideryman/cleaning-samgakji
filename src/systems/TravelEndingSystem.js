@@ -9,6 +9,7 @@ export default class TravelEndingSystem {
     this.scene = scene;
     this.isFinalEndingStarting = false;
     this.isFinalEndingTransitioning = false;
+    this.isReturningFromFinalEnding = false;
     this.finalEndingLoadTimer = null;
     this.finalEndingReturnHandler = null;
   }
@@ -425,6 +426,8 @@ export default class TravelEndingSystem {
   showChapterOneEndingScene() {
     const scene = this.scene;
     scene.clearInteriorScene();
+    document.body.classList.remove("start-screen");
+    document.body.classList.add("epilogue-scene-active");
     scene.stopSceneMusic();
     scene.stopChapterMusic();
     scene.playSceneMusic("chapter1_ending_bgm", 0.34);
@@ -434,6 +437,7 @@ export default class TravelEndingSystem {
 
     const showEnding = (isReady = true) => {
       this.resetFinalEndingCameraFx();
+      this.keepFinalEndingCameraClear();
 
       if (isReady && scene.textures.exists("ending_chapter1_final")) {
         scene.interiorSceneSystem?.show("ending_chapter1_final", "ending");
@@ -467,6 +471,7 @@ export default class TravelEndingSystem {
           scene.interiorSceneGroup.addMultiple([promptBack, prompt]);
 
           this.registerFinalEndingReturnInput();
+          this.addFinalEndingReturnHitArea();
         } else {
           scene.time.delayedCall(100, addPromptWhenReady);
         }
@@ -491,6 +496,31 @@ export default class TravelEndingSystem {
     camera.fadeEffect?.reset?.();
     camera.resetFX?.();
     camera.setAlpha?.(1);
+  }
+
+  keepFinalEndingCameraClear() {
+    const scene = this.scene;
+    [0, 120, 360].forEach((delay) => {
+      scene.time.delayedCall(delay, () => this.resetFinalEndingCameraFx());
+    });
+  }
+
+  addFinalEndingReturnHitArea() {
+    const scene = this.scene;
+    if (!scene.interiorSceneGroup || scene.interiorSceneType !== "ending") return;
+
+    const viewportWidth = Math.max(768, scene.scale.width || 768);
+    const viewportHeight = Math.max(480, scene.scale.height || 480);
+    const hitArea = scene.add.zone(viewportWidth / 2, viewportHeight / 2, viewportWidth, viewportHeight);
+    hitArea.setScrollFactor(0);
+    hitArea.setDepth(76);
+    hitArea.setInteractive({ useHandCursor: true });
+    hitArea.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault?.();
+      pointer.event?.stopPropagation?.();
+      this.returnToStartScreenFromEnding();
+    });
+    scene.interiorSceneGroup.add(hitArea);
   }
 
   registerFinalEndingReturnInput() {
@@ -613,6 +643,8 @@ export default class TravelEndingSystem {
   returnToStartScreenFromEnding() {
     const scene = this.scene;
     if (scene.packingQuestState !== "ending_complete") return;
+    if (this.isReturningFromFinalEnding) return;
+    this.isReturningFromFinalEnding = true;
     this.finalEndingReturnHandler = null;
     this.isFinalEndingStarting = false;
     this.isFinalEndingTransitioning = false;

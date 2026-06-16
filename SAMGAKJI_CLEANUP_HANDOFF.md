@@ -29,6 +29,96 @@
 - If Korean looks garbled only in PowerShell output, first check the file encoding/editor display before rewriting text; the terminal code page may be the problem, not the file.
 - When editing Korean-heavy files, prefer a UTF-8 aware editor or script and verify with `node --check` plus an in-game/browser check when possible.
 
+## Current Priority Roadmap
+
+This is the single practical work order for the next Codex sessions. Use the detailed notes below only as supporting context.
+
+### P0: Progression Blockers
+
+1. Sunisuni escort/follow bug.
+   - Reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem.
+   - Check `SunisuniQuestSystem.startEscort()`, checkpoint restore, blocked start/target tiles, and `NpcFollowRouteSystem` rejection behavior.
+   - Keep the fix inside `SunisuniQuestSystem` or shared NPC movement systems; do not grow `PlayScene.js`.
+   - 2026-06-16 safety fix:
+     - `NpcFollowRouteSystem` now relocates a follower that starts inside a blocked tile/object to the nearest walkable cell before rebuilding the route.
+     - `SunisuniQuestSystem.startEscort()` now explicitly activates/shows Sunisuni and clears stale `sunisuni_follow` route state when escort starts.
+   - Needs manual check: start Sunisuni quest, accept help, walk toward hospital, confirm Sunisuni follows without sliding through props.
+
+2. Final ending black/dark screen / no progress after mom phone ending.
+   - Lower practical urgency because it occurs at the very end, but it is still a progression blocker.
+   - Current mitigation exists, but manual testing still reported failure.
+   - Suspect fade/dim state or ending image transition state. If revisiting, test a no-fade final ending path first.
+   - 2026-06-16 safety pass:
+     - Final ending now repeatedly resets camera fade/FX shortly after the ending scene is shown.
+     - A full-screen transparent Phaser hit area is added above the final ending scene so click/touch reliably returns to `StartScene`.
+     - CSS sets the ending interior background to black so letterboxed side areas do not stay green.
+   - Needs manual check: complete the mom phone ending and confirm the final ending image is visible, not dimmed, and click/touch returns to the title.
+
+### P1: Map Connection And World Expansion
+
+1. South park map connection.
+   - Current status: `chapter1-south-park-map.json` is loaded by Preload but not connected to gameplay.
+   - Next implementation should be a small `MapTransitionSystem`.
+   - Minimal first target:
+     - Main map south entrance click/touch or collision zone.
+     - Swap to `chapter1_south_park_map`.
+     - Place player at `south_park_entry`.
+     - Return through `samgakji_return`.
+   - Do not add this logic directly to `PlayScene.js` except system creation/update.
+
+2. Chapter 2 direction note.
+   - Samgakji Park becomes an intermediate hub.
+   - Future flow: `Samgakji center -> Samgakji Park -> Sosu Seowon entrance -> Stone-wall / seowon path`.
+   - Do not implement new Chapter 2 maps yet.
+
+### P2: Player-Facing Polish And Bugs
+
+1. Educational guide icons leaking into cutscenes/interiors.
+   - Mitigation exists but needs visual check.
+   - Rule: yellow question-mark learning icons are world-map helpers only.
+
+2. Progress landscaping placement cleanup.
+   - Fix awkward bench/tree/rose placements near Jjook, recycling bins, and paths.
+   - Prefer Tiled `logic_point` edits over JS config.
+
+3. NPC movement naturalization.
+   - Existing path-follow work is partially complete.
+   - Remaining: tune Jjook/Sunisuni follow jitter, test roads/crosswalks, and migrate any remaining custom direct movement.
+
+4. Mobile loading speed.
+   - Asset count has grown.
+   - Plan later: preload only chapter-critical assets, lazy-load shop/interior/ending assets, and remove unused temporary assets.
+
+### P3: Refactor Roadmap
+
+Current large files from the latest rough line count:
+
+- `PlayScene.js`: about 2300 lines. Still the main long-term reduction target.
+- `YebiQuestSystem.js`: about 1000 lines. Next quest-system refactor candidate.
+- `PharmacyMapSystem.js`: about 750 lines. Watch carefully as more interiors are added.
+- `TravelEndingSystem.js`: about 620 lines.
+- `JjookQuestSystem.js`, `ClothingShopSystem.js`, `PackingSystem.js`, `SunisuniQuestSystem.js`: about 580-600 lines each.
+- `UIManager.js`, `NeighborhoodProgressSystem.js`, `AudioManager.js`: about 520-550 lines each.
+- `Preload.js`: about 520 lines. Not an emergency, but it is growing.
+
+Recommended refactor order:
+
+1. Continue reducing `PlayScene.js` by moving feature bodies into systems.
+2. Split `YebiQuestSystem.js` when touching Yebi/recycling logic again.
+3. Before adding many more maps, split Preload responsibilities:
+   - `src/loaders/TiledAssetLoader.js`: Tiled JSON, external `.tsx`, tileset image queue, map normalization.
+   - `src/loaders/AnimationRegistry.js`: player/NPC/trash/vehicle/light animation creation.
+   - `src/loaders/FallbackTextureFactory.js`: generated fallback textures.
+   - Keep `Preload.js` as scene lifecycle orchestration only.
+4. Watch `PharmacyMapSystem.js` before using it as a template for hospital/clothing interiors. Shared interior behavior should become a reusable helper/system, not copy-pasted.
+
+### P4: Deferred Ideas
+
+- Cat/sparrow visit system after progress visuals are stable.
+- Progress album/rest-window progress record.
+- Optional level-up image assets under `assets/progress/level-up/`.
+- Hospital/clothing shop full interior movement maps.
+
 ## NPC Interaction Guide
 
 - NPC dialogue should start by direct click/touch on the NPC, not by Space.
@@ -379,9 +469,9 @@ Future progress ideas:
 - 새 타일셋을 쓸 때는 Tiled에서 추가하는 것만으로 끝나지 않습니다. 게임 preload 쪽에서도 tileset source/name/key가 맞아야 합니다.
 - 약국 내부처럼 별도 Tiled 맵을 만들 때는 `AssetsData.js`의 `INTERIOR_TILED_MAPS`에 등록하세요.
 
-## Unified Priority Backlog
+## Detailed Backlog Notes
 
-Use this as the single task list. Work from the top, in small verified units.
+Supporting details for the current priority roadmap above. The roadmap near the top is the practical task order; this section keeps deeper context and older notes.
 
 ### P0: Progression Blockers
 
@@ -389,9 +479,16 @@ Use this as the single task list. Work from the top, in small verified units.
    - Status: mitigation applied; needs manual in-game check.
    - Symptom: ending image remains very dark and the flow does not continue/respond as expected.
    - 2026-06-14 update: final ending now avoids the camera fade-out transition, resets camera FX before showing the ending image, removes the interior dim overlay for `type === "ending"`, and accepts click/touch/Space/Enter to return to StartScene.
+   - 2026-06-16 update: final ending now repeats camera FX reset after showing, adds a full-screen transparent click/touch return zone, and uses a black CSS background for ending letterbox areas.
    - Manual check: finish the mother phone ending, confirm the final ending image is not dark/blocked, then click/touch or press Space to return to the title screen.
 
 ### P1: Player-Facing Bugs And Feel
+
+0. Sunisuni does not follow during her quest.
+   - Priority: high.
+   - Symptom reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem as expected.
+   - Start by checking escort state transitions in `SunisuniQuestSystem.startEscort()`, restore/checkpoint state, and whether `NpcFollowRouteSystem` rejects all movement because the target or starting tile is blocked.
+   - Keep the fix inside `SunisuniQuestSystem` or shared NPC movement systems; avoid adding long follow logic back into `PlayScene.js`.
 
 1. Hide educational guide icons during cutscenes/interior/story scenes.
    - Status: mitigation applied; needs visual check in cutscenes and pharmacy.
@@ -481,7 +578,7 @@ Use this as the single task list. Work from the top, in small verified units.
 
 ### Draft Map: Chapter 1 South Park Extension
 
-Status: draft map asset only. Runtime map switching is not implemented yet.
+Status: draft map asset loaded, runtime map switching is not implemented yet.
 
 - New draft map file: `assets/maps/chapter1-south-park-map.json`.
 - Size: 56 x 32 tiles, 32px tiles, 1792 x 1024 pixels.
@@ -502,8 +599,32 @@ Status: draft map asset only. Runtime map switching is not implemented yet.
 - Validation:
   - Run `npm.cmd run validate:map-progress:south-park` after editing this draft map.
   - `scripts/validate-map-progress.mjs` now accepts an optional map path, so draft maps can be checked before they are connected to runtime.
-- Do not wire this into gameplay until a small external map transition system exists.
+- 2026-06-16 update:
+  - `AssetsData.js` now registers `SOUTH_PARK_TILED_MAP` and `WORLD_TILED_MAPS`.
+  - `Preload.js` now loads/normalizes all world Tiled maps in `WORLD_TILED_MAPS`, not only the main chapter map.
+  - This is preparation only: the player still cannot enter the south park map.
+- Next connection step:
+  - Add a small external map transition system that can swap between `chapter1_map` and `chapter1_south_park_map`.
+  - Keep map switching out of `PlayScene.js` except for system creation/update calls.
 - When implementing transition later, prefer a separate system instead of adding long logic to `PlayScene.js`.
+
+### Chapter 2 Map Direction Note
+
+This is a planning note only. Do not create new maps, assets, collisions, or transition code yet.
+
+- Chapter 2 map expansion direction:
+  - Consider a route where the player moves from Samgakji center down into Samgakji Park.
+  - From Samgakji Park, the route can extend right toward the Sosu Seowon entrance.
+  - From the Sosu Seowon entrance, the route can continue downward into a stone-wall road / path toward the seowon.
+- Intended map flow:
+  - `Samgakji center -> Samgakji Park -> Sosu Seowon entrance -> Stone-wall / seowon path`
+- Design intent:
+  - Samgakji Park should act as an intermediate hub, not just a side map.
+  - Sosu Seowon should carry the Chapter 2 cultural, historical, and walking-atmosphere expansion.
+  - The stone-wall / seowon path should serve as a mood-transition area before entering deeper seowon content.
+- Implementation status:
+  - Not implemented.
+  - Keep this as a future direction note until the south park transition system is stable.
 
 ### Future Asset Plan: Samgakji Progress Expansion
 

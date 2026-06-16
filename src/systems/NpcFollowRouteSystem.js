@@ -21,6 +21,10 @@ export default class NpcFollowRouteSystem {
     if (!sprite?.active || !target) return false;
 
     const scene = this.scene;
+    if (this.relocateBlockedStart(sprite)) {
+      this.clear(key);
+    }
+
     const distanceToTarget = Phaser.Math.Distance.Between(sprite.x, sprite.y, target.x, target.y);
     if (distanceToTarget <= stopDistance) {
       this.clear(key);
@@ -137,6 +141,27 @@ export default class NpcFollowRouteSystem {
 
   canStandAt(x, y) {
     return this.scene.canNpcStandAt?.(x, y) !== false;
+  }
+
+  relocateBlockedStart(sprite) {
+    if (this.canStandAt(sprite.x, sprite.y)) return false;
+
+    const pathfinding = this.scene.pathfindingSystem;
+    if (!pathfinding?.gridSize || typeof pathfinding.findNearestWalkableCell !== "function") {
+      return false;
+    }
+
+    const c = Math.floor(sprite.x / pathfinding.gridSize);
+    const r = Math.floor(sprite.y / pathfinding.gridSize);
+    const nearest = pathfinding.findNearestWalkableCell(c, r, 6);
+    if (!nearest) return false;
+
+    const x = nearest.c * pathfinding.gridSize + pathfinding.gridSize / 2;
+    const y = nearest.r * pathfinding.gridSize + pathfinding.gridSize / 2;
+    if (!this.canStandAt(x, y)) return false;
+
+    sprite.setPosition(x, y);
+    return true;
   }
 
   getSafeAxisMove(sprite, moveX, moveY) {

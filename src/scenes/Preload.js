@@ -5,7 +5,7 @@ import {
   LAZY_AUDIO_KEYS,
   LAZY_IMAGE_KEYS,
   SPRITESHEET_ASSETS,
-  TILED_MAP,
+  WORLD_TILED_MAPS,
 } from "../config/AssetsData.js";
 
 const TILED_TILESET_TEXT_KEY_PREFIX = "tiled_tileset_source:";
@@ -33,8 +33,10 @@ export default class Preload extends Phaser.Scene {
       }
     });
     this.load.json("dialogues", "src/data/dialogues.json");
-    this.load.json(TILED_MAP.jsonKey, TILED_MAP.path);
-    this.load.tilemapTiledJSON(TILED_MAP.key, TILED_MAP.path);
+    WORLD_TILED_MAPS.forEach((map) => {
+      this.load.json(map.jsonKey, map.path);
+      this.load.tilemapTiledJSON(map.key, map.path);
+    });
     INTERIOR_TILED_MAPS.forEach((map) => {
       this.load.json(map.jsonKey, map.path);
       this.load.tilemapTiledJSON(map.key, map.path);
@@ -83,53 +85,61 @@ export default class Preload extends Phaser.Scene {
   }
 
   queueTiledTilesetImages() {
-    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
-    if (!mapJson?.tilesets?.length) return false;
-
     let queued = false;
     const queuedKeys = new Set();
-    mapJson.tilesets.forEach((tileset) => {
-      if (!tileset?.name || !tileset?.image) return;
-      const textureKey = tileset.name;
-      if (this.textures.exists(textureKey) || queuedKeys.has(textureKey)) return;
+    WORLD_TILED_MAPS.forEach((mapConfig) => {
+      const mapJson = this.cache.json.get(mapConfig.jsonKey);
+      if (!mapJson?.tilesets?.length) return;
 
-      this.load.image(textureKey, this.resolveTiledAssetPath(TILED_MAP.path, tileset.image));
-      queuedKeys.add(textureKey);
-      queued = true;
+      mapJson.tilesets.forEach((tileset) => {
+        if (!tileset?.name || !tileset?.image) return;
+        const textureKey = tileset.name;
+        if (this.textures.exists(textureKey) || queuedKeys.has(textureKey)) return;
+
+        this.load.image(textureKey, this.resolveTiledAssetPath(mapConfig.path, tileset.image));
+        queuedKeys.add(textureKey);
+        queued = true;
+      });
     });
 
     return queued;
   }
 
   queueExternalTiledTilesetSources() {
-    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
-    if (!mapJson?.tilesets?.length) return false;
-
     let queued = false;
     const queuedKeys = new Set();
-    mapJson.tilesets.forEach((tileset) => {
-      if (!tileset?.source || tileset.image) return;
-      const sourcePath = this.resolveTiledAssetPath(TILED_MAP.path, tileset.source);
-      const textKey = this.getTiledTilesetTextKey(sourcePath);
-      if (this.cache.text.exists(textKey) || queuedKeys.has(textKey)) return;
+    WORLD_TILED_MAPS.forEach((mapConfig) => {
+      const mapJson = this.cache.json.get(mapConfig.jsonKey);
+      if (!mapJson?.tilesets?.length) return;
 
-      this.load.text(textKey, sourcePath);
-      queuedKeys.add(textKey);
-      queued = true;
+      mapJson.tilesets.forEach((tileset) => {
+        if (!tileset?.source || tileset.image) return;
+        const sourcePath = this.resolveTiledAssetPath(mapConfig.path, tileset.source);
+        const textKey = this.getTiledTilesetTextKey(sourcePath);
+        if (this.cache.text.exists(textKey) || queuedKeys.has(textKey)) return;
+
+        this.load.text(textKey, sourcePath);
+        queuedKeys.add(textKey);
+        queued = true;
+      });
     });
 
     return queued;
   }
 
   normalizeExternalTiledTilesets() {
-    const mapJson = this.cache.json.get(TILED_MAP.jsonKey);
+    WORLD_TILED_MAPS.forEach((mapConfig) => this.normalizeExternalTiledTilesetMap(mapConfig));
+  }
+
+  normalizeExternalTiledTilesetMap(mapConfig) {
+    const mapJson = this.cache.json.get(mapConfig.jsonKey);
     if (!mapJson?.tilesets?.length) return;
 
     let didChange = false;
     const normalizedTilesets = mapJson.tilesets.map((tileset) => {
       if (!tileset?.source || tileset.image) return tileset;
 
-      const sourcePath = this.resolveTiledAssetPath(TILED_MAP.path, tileset.source);
+      const sourcePath = this.resolveTiledAssetPath(mapConfig.path, tileset.source);
       const textKey = this.getTiledTilesetTextKey(sourcePath);
       const tilesetText = this.cache.text.get(textKey);
       const externalTileset = this.parseTiledTilesetSource(tilesetText, sourcePath);
@@ -148,7 +158,7 @@ export default class Preload extends Phaser.Scene {
     if (!didChange) return;
 
     mapJson.tilesets = normalizedTilesets;
-    const tilemapCacheEntry = this.cache.tilemap.get(TILED_MAP.key);
+    const tilemapCacheEntry = this.cache.tilemap.get(mapConfig.key);
     const tilemapData = tilemapCacheEntry?.data || tilemapCacheEntry;
     if (tilemapData?.tilesets) {
       tilemapData.tilesets = normalizedTilesets.map((tileset) => ({ ...tileset }));

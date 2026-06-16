@@ -195,6 +195,17 @@ export const TILED_MAP = {
   path: "assets/maps/chapter1-samgakji-map.json",
 };
 
+export const SOUTH_PARK_TILED_MAP = {
+  key: "chapter1_south_park_map",
+  jsonKey: "chapter1_south_park_map_json",
+  path: "assets/maps/chapter1-south-park-map.json",
+};
+
+export const WORLD_TILED_MAPS = [
+  TILED_MAP,
+  SOUTH_PARK_TILED_MAP,
+];
+
 export const INTERIOR_TILED_MAPS = [
   {
     key: "pharmacy_map",

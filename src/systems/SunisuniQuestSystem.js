@@ -243,6 +243,9 @@ export default class SunisuniQuestSystem {
       { name: "해냄이", portraitKey: "haenaem_determined", text: "같이 가요. 천천히 병원까지 같이 걸어갈게요." },
     ], () => {
       scene.pauseNpcRoaming("sunisuni");
+      scene.sunisuniNpc?.setVisible(true);
+      scene.sunisuniNpc?.setActive(true);
+      scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.sunisuniQuestState = SunisuniQuestState.GOING_HOSPITAL;
       scene.clearQuestMarker("sunisuniQuest");
       scene.setQuestMarker("sunisuniHospital", scene.sunisuniNpc, "!");
