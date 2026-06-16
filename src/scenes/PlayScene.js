@@ -20,6 +20,7 @@ import MoneySystem from "../systems/MoneySystem.js";
 import PortraitManager from "../systems/PortraitManager.js";
 import RoadTrafficSystem from "../systems/RoadTrafficSystem.js";
 import RouteGuideSystem from "../systems/RouteGuideSystem.js";
+import MapTransitionSystem from "../systems/MapTransitionSystem.js";
 import SceneControlSystem from "../systems/SceneControlSystem.js";
 import SlimeSystem from "../systems/SlimeSystem.js";
 import ObjectVisibilitySystem from "../systems/ObjectVisibilitySystem.js";
@@ -87,6 +88,7 @@ export default class PlayScene extends Phaser.Scene {
     Object.assign(this, createInitialGameState());
     this.roadTrafficSystem = null;
     this.routeGuideSystem = null;
+    this.mapTransitionSystem = null;
     this.vendingMachineSystem = null;
     this.packingSystem = null;
     this.clothingShopSystem = null;
@@ -163,6 +165,7 @@ export default class PlayScene extends Phaser.Scene {
     this.moneySystem = new MoneySystem(this);
     this.roadTrafficSystem = new RoadTrafficSystem(this);
     this.routeGuideSystem = new RouteGuideSystem(this);
+    this.mapTransitionSystem = new MapTransitionSystem(this);
     this.tiledMapSystem = new TiledMapSystem(this);
     this.pathfindingSystem = new PathfindingSystem(this);
     this.vendingMachineSystem = new VendingMachineSystem(this);
@@ -205,6 +208,7 @@ export default class PlayScene extends Phaser.Scene {
       this.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
       this.roadTrafficSystem?.cleanup();
       this.routeGuideSystem?.destroy();
+      this.mapTransitionSystem?.destroy();
     });
 
     this.createMap();
@@ -328,6 +332,7 @@ export default class PlayScene extends Phaser.Scene {
     this.updateJjookAutoPlogging();
     this.roadTrafficSystem?.update(delta);
     this.routeGuideSystem?.update();
+    this.mapTransitionSystem?.update(time);
     this.neighborhoodProgressSystem?.update();
     this.educationalGuideSystem?.update?.();
     this.travelEndingSystem?.checkBusStopArrival();

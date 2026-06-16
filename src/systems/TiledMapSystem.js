@@ -1,4 +1,4 @@
-import { GAME_CONFIG, TILED_MAP_CONFIG } from "../config/GameConstants.js";
+import { GAME_CONFIG, TILED_MAP_CONFIG, WORLD_TILED_MAP_CONFIGS } from "../config/GameConstants.js";
 
 export default class TiledMapSystem {
   constructor(scene) {
@@ -12,6 +12,7 @@ export default class TiledMapSystem {
     scene.mapObjects = {};
     scene.mapPoints = scene.mapPoints || {};
     scene.mapPointMeta = {};
+    scene.currentWorldMapId = scene.currentWorldMapId || TILED_MAP_CONFIG.id;
 
     if (this.createTiledMap()) {
       return;
@@ -83,73 +84,139 @@ export default class TiledMapSystem {
 
   createTiledMap() {
     const scene = this.scene;
-    if (!scene.cache.tilemap.exists(TILED_MAP_CONFIG.key)) {
+    const mapConfig = this.getActiveMapConfig();
+    if (!scene.cache.tilemap.exists(mapConfig.key)) {
       return false;
     }
 
-    const map = scene.make.tilemap({ key: TILED_MAP_CONFIG.key });
-    const tilesets = this.createTiledTilesets(map);
+    const map = scene.make.tilemap({ key: mapConfig.key });
+    const tilesets = this.createTiledTilesets(map, mapConfig);
     if (!tilesets.length) {
       return false;
     }
 
+    scene.activeTilemap = map;
+    scene.tiledMapLayers = [];
     const worldWidth = map.widthInPixels || GAME_CONFIG.worldWidth;
     const worldHeight = map.heightInPixels || GAME_CONFIG.worldHeight;
     scene.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     scene.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
-    TILED_MAP_CONFIG.visibleLayers.forEach((layerName, index) => {
+    mapConfig.visibleLayers.forEach((layerName, index) => {
       const layer = map.getLayer(layerName);
       if (layer) {
-        map.createLayer(layerName, tilesets, 0, 0).setDepth(index);
+        const createdLayer = map.createLayer(layerName, tilesets, 0, 0).setDepth(index);
+        scene.tiledMapLayers.push(createdLayer);
       }
     });
 
-    const collisionSource = map.getLayer(TILED_MAP_CONFIG.collisionLayer);
+    const collisionSource = map.getLayer(mapConfig.collisionLayer);
     if (collisionSource) {
-      scene.walls = map.createLayer(TILED_MAP_CONFIG.collisionLayer, tilesets, 0, 0);
+      scene.walls = map.createLayer(mapConfig.collisionLayer, tilesets, 0, 0);
       scene.walls.setVisible(false);
       scene.walls.setCollisionByExclusion([-1]);
+      scene.tiledMapLayers.push(scene.walls);
     } else {
       scene.walls = scene.physics.add.staticGroup();
     }
 
-    this.applyTiledObjects(map);
-    this.createTiledMapObjects(map);
-    this.createCodeMapDecorations();
+    this.applyTiledObjects(map, mapConfig);
+    this.createTiledMapObjects(map, mapConfig);
+    if (mapConfig.enableCodeDecorations !== false) {
+      this.createCodeMapDecorations();
+    }
     return true;
   }
 
-  createTiledTilesets(map) {
+  getActiveMapConfig() {
+    return WORLD_TILED_MAP_CONFIGS[this.scene.currentWorldMapId] || TILED_MAP_CONFIG;
+  }
+
+  switchMap(mapId, spawnKey, fallbackSpawn = null) {
+    const scene = this.scene;
+    const nextConfig = WORLD_TILED_MAP_CONFIGS[mapId];
+    if (!nextConfig) return false;
+
+    this.destroyCurrentTiledMap();
+    scene.currentWorldMapId = nextConfig.id;
+    scene.objectWalls = scene.physics.add.staticGroup();
+    scene.objectCollisionRects = [];
+    scene.mapObjects = {};
+    scene.mapPoints = {};
+    scene.mapPointMeta = {};
+
+    if (!this.createTiledMap()) {
+      return false;
+    }
+
+    const spawn = this.getMapPoint(spawnKey, fallbackSpawn || scene.playerStart || { x: 320, y: 544 });
+    if (spawn) {
+      scene.playerStart = { x: spawn.x, y: spawn.y };
+      if (scene.player) {
+        scene.player.setPosition(spawn.x, spawn.y);
+        scene.player.body?.reset?.(spawn.x, spawn.y);
+        scene.playerController?.cancelMoveTarget?.();
+        scene.mouseMoveTarget = null;
+      }
+    }
+
+    if (scene.player && scene.walls) {
+      scene.physics.add.collider(scene.player, scene.walls);
+    }
+    if (scene.player && scene.objectWalls) {
+      scene.physics.add.collider(scene.player, scene.objectWalls);
+    }
+    scene.pathfindingSystem?.create?.();
+    scene.updateCameraZoom?.();
+    return true;
+  }
+
+  destroyCurrentTiledMap() {
+    const scene = this.scene;
+
+    scene.tiledMapLayers?.forEach((layer) => layer?.destroy?.());
+    scene.tiledMapLayers = [];
+
+    Object.values(scene.mapObjects || {}).forEach((object) => object?.destroy?.());
+    scene.mapObjects = {};
+
+    scene.walls?.destroy?.();
+    scene.objectWalls?.clear?.(true, true);
+    scene.objectWalls?.destroy?.();
+    scene.objectCollisionRects = [];
+    scene.activeTilemap = null;
+  }
+
+  createTiledTilesets(map, mapConfig = this.getActiveMapConfig()) {
     return map.tilesets
       .map((sourceTileset) => {
-        const textureKey = this.getTiledTilesetTextureKey(sourceTileset);
+        const textureKey = this.getTiledTilesetTextureKey(sourceTileset, mapConfig);
         if (!textureKey) return null;
         return map.addTilesetImage(sourceTileset.name, textureKey);
       })
       .filter(Boolean);
   }
 
-  getTiledTilesetTextureKey(sourceTileset) {
+  getTiledTilesetTextureKey(sourceTileset, mapConfig = this.getActiveMapConfig()) {
     const scene = this.scene;
     if (scene.textures.exists(sourceTileset.name)) {
       return sourceTileset.name;
     }
 
     if (
-      sourceTileset.name === TILED_MAP_CONFIG.tilesetName
-      && scene.textures.exists(TILED_MAP_CONFIG.tilesetImageKey)
+      sourceTileset.name === mapConfig.tilesetName
+      && scene.textures.exists(mapConfig.tilesetImageKey)
     ) {
-      return TILED_MAP_CONFIG.tilesetImageKey;
+      return mapConfig.tilesetImageKey;
     }
 
     console.warn(`Missing tileset texture: ${sourceTileset.name}`);
     return null;
   }
 
-  applyTiledObjects(map) {
+  applyTiledObjects(map, mapConfig = this.getActiveMapConfig()) {
     const scene = this.scene;
-    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.objectLayer);
+    const objectLayer = map.getObjectLayer(mapConfig.objectLayer);
     if (!objectLayer) {
       return;
     }
@@ -204,9 +271,9 @@ export default class TiledMapSystem {
     return Object.fromEntries((object.properties || []).map((property) => [property.name, property.value]));
   }
 
-  createTiledMapObjects(map) {
+  createTiledMapObjects(map, mapConfig = this.getActiveMapConfig()) {
     const scene = this.scene;
-    const objectLayer = map.getObjectLayer(TILED_MAP_CONFIG.mapObjectsLayer);
+    const objectLayer = map.getObjectLayer(mapConfig.mapObjectsLayer);
     if (!objectLayer) return;
 
     objectLayer.objects.forEach((object) => {

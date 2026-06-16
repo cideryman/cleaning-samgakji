@@ -4221,11 +4221,28 @@
                         {"name":"blocksMovement","type":"bool","value":true},
                         {"name":"replacedMapObjectKey","type":"string","value":"west_tree_rest"}],
                  "rotation":0,
-                 "type":"logic_point",
+                "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":928,
                  "y":770
+                }, 
+                {
+                 "height":0,
+                 "id":151,
+                 "name":"south_park_gate",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {"name":"targetMap","type":"string","value":"chapter1_south_park"},
+                        {"name":"unlockLevel","type":"int","value":9},
+                        {"name":"status","type":"string","value":"preview"}],
+                 "rotation":0,
+                 "type":"logic_point",
+                 "visible":true,
+                 "width":0,
+                 "x":896,
+                 "y":1184
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -4234,7 +4251,7 @@
          "y":0
         }],
  "nextlayerid":9,
- "nextobjectid":151,
+ "nextobjectid":152,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

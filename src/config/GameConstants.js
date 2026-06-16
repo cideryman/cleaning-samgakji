@@ -81,6 +81,7 @@ export const DRINK_OPTIONS = [
 ];
 
 export const TILED_MAP_CONFIG = {
+  id: "main",
   key: "chapter1_map",
   chapter: 1,
   title: "\uCC55\uD130 1",
@@ -91,6 +92,22 @@ export const TILED_MAP_CONFIG = {
   collisionLayer: "collision",
   objectLayer: "spawn",
   mapObjectsLayer: "map_objects",
+  enableCodeDecorations: true,
+};
+
+export const SOUTH_PARK_TILED_MAP_CONFIG = {
+  ...TILED_MAP_CONFIG,
+  id: "chapter1_south_park",
+  key: "chapter1_south_park_map",
+  mapName: "\uC0BC\uAC01\uC9C0 \uACF5\uC6D0",
+  enableCodeDecorations: false,
+};
+
+export const WORLD_TILED_MAP_CONFIGS = {
+  main: TILED_MAP_CONFIG,
+  chapter1_map: TILED_MAP_CONFIG,
+  chapter1_south_park: SOUTH_PARK_TILED_MAP_CONFIG,
+  chapter1_south_park_map: SOUTH_PARK_TILED_MAP_CONFIG,
 };
 
 export const PLAYER_TEXTURES = {

@@ -57,14 +57,24 @@ This is the single practical work order for the next Codex sessions. Use the det
 ### P1: Map Connection And World Expansion
 
 1. South park map connection.
-   - Current status: `chapter1-south-park-map.json` is loaded by Preload but not connected to gameplay.
-   - Next implementation should be a small `MapTransitionSystem`.
-   - Minimal first target:
-     - Main map south entrance click/touch or collision zone.
-     - Swap to `chapter1_south_park_map`.
-     - Place player at `south_park_entry`.
-     - Return through `samgakji_return`.
-   - Do not add this logic directly to `PlayScene.js` except system creation/update.
+   - Current status: `chapter1-south-park-map.json` is loaded by Preload, and the main map has a Tiled-adjustable `south_park_gate` logic point.
+   - 2026-06-16 first safe connection pass:
+     - Added `src/systems/MapTransitionSystem.js`.
+     - `MapTransitionSystem` detects when Haenaem reaches `south_park_gate`.
+     - The gate is level-gated by the Tiled object property `unlockLevel` (currently 9).
+   - 2026-06-16 second safe connection pass:
+     - `TiledMapSystem` can now switch between registered world map configs at runtime.
+     - `MapTransitionSystem` now enters `chapter1_south_park_map` through `south_park_gate` when the player reaches the unlock level.
+     - The player is placed at `south_park_entry`.
+     - Walking to `samgakji_return` returns the player to the main map near `south_park_gate`.
+     - Main-map utility objects such as vending/recycling bins are removed before switching and recreated when returning to the main map.
+     - Main-map NPCs and quest markers are hidden while inside the south park map and restored on return.
+   - Needs manual check:
+     - Reach Lv.9 or temporarily use dev/testing progress, walk to the bottom gate, confirm transition to south park.
+     - Confirm trash spawns use south park spawn points.
+     - Walk to the north return point, confirm return to main map.
+     - Confirm vending machine/recycling bins/NPCs appear again after returning.
+   - Keep future map swapping inside `MapTransitionSystem` / `TiledMapSystem`; do not add transition bodies directly to `PlayScene.js`.
 
 2. Chapter 2 direction note.
    - Samgakji Park becomes an intermediate hub.
@@ -216,6 +226,12 @@ Recommended refactor order:
   - Dialogue modal now uses a small class-based fade/slide-in when opening.
   - Dialogue modal click handling now explicitly prevents default behavior and stops propagation before advancing text, reducing the chance of clicks leaking to the game world.
   - No dialogue content, quest state, or selection behavior was changed.
+- South park connection phase 1:
+  - Added `south_park_gate` to `assets/maps/chapter1-samgakji-map.json` as a `logic_point`, so the entrance can be moved in Tiled later.
+  - Added `src/systems/MapTransitionSystem.js` and connected it from `PlayScene.js`.
+  - The gate blocks entry below Lv.9 and transitions to `chapter1_south_park_map` at/after Lv.9.
+  - `TiledMapSystem` now supports runtime map switching between world map configs.
+  - Returning through `samgakji_return` switches back to the main map and rebuilds the main utility objects.
 - Samgakji progress nature asset phase 1:
   - User-provided 4-frame nature sprites were moved from the root `assets/` folder into `assets/progress/nature/` with English names:
     - `broad-tree-growth-a.png`
