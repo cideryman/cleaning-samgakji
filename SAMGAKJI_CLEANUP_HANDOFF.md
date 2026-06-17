@@ -35,7 +35,29 @@ This is the single practical work order for the next Codex sessions. Use the det
 
 ### P0: Progression Blockers
 
-1. Sunisuni escort/follow bug.
+1. Shared cutscene/fade/transition lock blockers.
+   - Reported 2026-06-18:
+     - Even after hard refresh and cache clear, entering Samgakji Park can still leave the gameplay canvas black while HUD remains visible.
+     - This now looks similar to the existing ending lock issue rather than a simple stale-cache issue.
+     - Chapter 1 ending still stops around the amusement-park/roller-coaster image and does not progress to the final ending/return flow.
+     - If Haenaem refuses Mom's phone call, the game can become stuck; the phone icon that should appear is not visible.
+   - Treat these as one likely family of bugs until proven otherwise:
+     - Phaser camera fade/dim FX not clearing
+     - story/interior/world overlay state not being released
+     - input blocker or state manager remaining in `CUTSCENE`/blocked state
+     - expected clickable/continue object hidden behind another layer or never created
+   - First debug target:
+     - Add temporary debug logging/status display for `currentWorldMapId`, camera fade/FX state, `sceneControlSystem.isWorldInputBlocked()`, `stateManager.current`, active interior/ending groups, and the current ending step.
+     - Reproduce three cases: south park entry, amusement-park ending image, Mom phone refusal.
+   - Do not keep stacking one-off fade fixes until the shared state/overlay cause is identified.
+   - Candidate files:
+     - `src/systems/MapTransitionSystem.js`
+     - `src/systems/TravelEndingSystem.js`
+     - `src/systems/SceneControlSystem.js`
+     - `src/config/SceneState.js`
+     - any phone-call flow inside packing/ending systems.
+
+2. Sunisuni escort/follow bug.
    - Reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem.
    - Check `SunisuniQuestSystem.startEscort()`, checkpoint restore, blocked start/target tiles, and `NpcFollowRouteSystem` rejection behavior.
    - Keep the fix inside `SunisuniQuestSystem` or shared NPC movement systems; do not grow `PlayScene.js`.
@@ -44,7 +66,7 @@ This is the single practical work order for the next Codex sessions. Use the det
      - `SunisuniQuestSystem.startEscort()` now explicitly activates/shows Sunisuni and clears stale `sunisuni_follow` route state when escort starts.
    - Needs manual check: start Sunisuni quest, accept help, walk toward hospital, confirm Sunisuni follows without sliding through props.
 
-2. Final ending black/dark screen / no progress after mom phone ending.
+3. Final ending black/dark screen / no progress after mom phone ending.
    - Lower practical urgency because it occurs at the very end, but it is still a progression blocker.
    - Current mitigation exists, but manual testing still reported failure.
    - Suspect fade/dim state or ending image transition state. If revisiting, test a no-fade final ending path first.
@@ -74,8 +96,26 @@ This is the single practical work order for the next Codex sessions. Use the det
      - This prevents main-map progress decorations from leaking into the south park map and lets south park progress objects use south park Tiled points.
      - `RouteGuideSystem` now clears route arrows while inside the south park map.
      - `EducationalGuideSystem` now hides main-map learning question icons when `currentWorldMapId !== "main"`.
+   - 2026-06-18 mobile black-screen safety pass:
+     - Report: on mobile, entering Samgakji Park could leave the gameplay area black while HUD remained visible.
+     - Likely causes: stale PWA cache mixing old JS with the new south-park map, or a map/tileset creation failure after the previous map had already been destroyed.
+     - `TiledMapSystem.switchMap()` now snapshots the previous map/player position and restores the previous map if the target map cannot be created.
+     - `MapTransitionSystem` now restores main-world actors/recycling utilities when a transition fails, instead of leaving the world half-hidden.
+     - `sw.js` cache version was bumped and the south-park map plus map-transition related system files were added to precache.
+     - Principle: every future world-map transition must have a rollback/fallback path before destroying user-visible state permanently.
+   - 2026-06-18 transition-loop safety pass:
+     - Stronger suspected cause: `south_park_entry` was only about 64px from `samgakji_return`, while the transition trigger radius was 72px.
+     - This could immediately trigger the return transition after entering the park. Returning to the main map could also place Haenaem close enough to `south_park_gate` to trigger another transition, leaving the canvas visually stuck in repeated fade states.
+     - `MapTransitionSystem` now suppresses the opposite gate after a transition until the player leaves a larger release radius.
+     - `MapTransitionSystem` also resets camera FX before fade out/in to reduce stuck fade overlays.
+     - Principle: map entry spawn points and return points should not overlap trigger radii; when they must be close, suppress the just-used/opposite gate until the player exits the area.
+   - 2026-06-18 unresolved mobile report:
+     - User confirmed the south-park black screen still occurs even after hard refresh and cache clear.
+     - Therefore do not assume the remaining issue is only service-worker cache or only trigger-radius overlap.
+     - The symptom resembles the ending/amusement-park lock and Mom-phone-refusal lock, so prioritize a shared cutscene/fade/input-blocker diagnosis before adding more south-park-specific patches.
    - Needs manual check:
      - Reach Lv.9 or temporarily use dev/testing progress, walk to the bottom gate, confirm transition to south park.
+     - On mobile/PWA, reopen after deploy so the service worker updates, then verify the park does not show a black gameplay area.
      - Confirm trash spawns use south park spawn points.
      - Walk to the north return point, confirm return to main map.
      - Confirm vending machine/recycling bins/NPCs appear again after returning.

@@ -983,7 +983,7 @@ export default class PlayScene extends Phaser.Scene {
 
   handleDevKeydown(event) {
     if (!this.isDevMode()) return;
-    if (event.code !== "F2" && event.code !== "F3" && event.code !== "F4") return;
+    if (!["F2", "F3", "F4", "F6"].includes(event.code)) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -991,6 +991,8 @@ export default class PlayScene extends Phaser.Scene {
       this.addDevMoney();
     } else if (event.code === "F3") {
       this.addDevTrashInventory();
+    } else if (event.code === "F6") {
+      this.samgakjiProgressSystem?.advanceDevLevel();
     } else {
       this.advanceDevQuest();
     }

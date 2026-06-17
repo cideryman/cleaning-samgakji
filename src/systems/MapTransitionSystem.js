@@ -4,8 +4,10 @@ export default class MapTransitionSystem {
     this.lastPromptAt = 0;
     this.promptCooldown = 3500;
     this.gateRadius = 72;
+    this.gateReleaseRadius = 96;
     this.transitioning = false;
     this.hiddenMainNpcState = null;
+    this.suppressedGate = null;
   }
 
   update(time = 0) {
@@ -26,6 +28,7 @@ export default class MapTransitionSystem {
     if (!gate || !scene.player?.active || this.transitioning) return;
 
     const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, gate.x, gate.y);
+    if (this.isSuppressedGate("main", "south_park_gate", distance)) return;
     if (distance > this.gateRadius) return;
 
     const unlockLevel = this.getSouthParkUnlockLevel();
@@ -44,12 +47,21 @@ export default class MapTransitionSystem {
     if (!gate || !scene.player?.active || this.transitioning) return;
 
     const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, gate.x, gate.y);
+    if (this.isSuppressedGate("chapter1_south_park", "samgakji_return", distance)) return;
     if (distance > this.gateRadius) {
       this.showThrottledToast(time, "위쪽 길로 돌아가면 삼각지 중심으로 갈 수 있어요.", 5200);
       return;
     }
 
     this.returnToMainMap();
+  }
+
+  isSuppressedGate(mapId, gateKey, distance) {
+    if (!this.suppressedGate) return false;
+    if (this.suppressedGate.mapId !== mapId || this.suppressedGate.gateKey !== gateKey) return false;
+    if (distance <= this.gateReleaseRadius) return true;
+    this.suppressedGate = null;
+    return false;
   }
 
   isBlocked() {
@@ -97,6 +109,7 @@ export default class MapTransitionSystem {
         this.destroyMainWorldUtilityObjects();
       },
       afterSwitch: () => {
+        this.suppressedGate = { mapId: "chapter1_south_park", gateKey: "samgakji_return" };
         this.scene.showQuestToast?.("삼각지 공원으로 왔어요.", 2600);
       },
     });
@@ -114,6 +127,7 @@ export default class MapTransitionSystem {
         const gate = this.scene.getMapPoint?.("south_park_gate", { x: 896, y: 1184 });
         this.scene.player?.setPosition(gate.x, Math.max(96, gate.y - 72));
         this.scene.player?.body?.reset?.(gate.x, Math.max(96, gate.y - 72));
+        this.suppressedGate = { mapId: "main", gateKey: "south_park_gate" };
         this.scene.createRecyclingCenter?.();
         this.restoreMainWorldActors();
         this.scene.showQuestToast?.("삼각지 중심으로 돌아왔어요.", 2600);
@@ -129,6 +143,7 @@ export default class MapTransitionSystem {
     scene.playerController?.cancelMoveTarget?.();
     scene.npcFollowRouteSystem?.clearAll?.();
 
+    scene.cameras.main.resetFX?.();
     scene.cameras.main.fadeOut(180, 20, 28, 22);
     scene.time.delayedCall(190, () => {
       beforeSwitch?.();
@@ -138,9 +153,12 @@ export default class MapTransitionSystem {
         this.resetTrashForCurrentMap();
         afterSwitch?.();
       } else {
+        this.restoreMainWorldActors();
+        scene.createRecyclingCenter?.();
         scene.showQuestToast?.("아직 이어지는 길을 찾지 못했어요.", 2600);
       }
 
+      scene.cameras.main.resetFX?.();
       scene.cameras.main.fadeIn(220, 20, 28, 22);
       scene.time.delayedCall(240, () => {
         this.transitioning = false;
@@ -218,5 +236,6 @@ export default class MapTransitionSystem {
   destroy() {
     this.lastPromptAt = 0;
     this.transitioning = false;
+    this.suppressedGate = null;
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-samgakji-v20260601-01";
+const CACHE_NAME = "cleaning-samgakji-v20260618-01";
 
 const PRECACHE_URLS = [
   "./",
@@ -7,7 +7,7 @@ const PRECACHE_URLS = [
   "./manifest.webmanifest",
   "./vendor/phaser.min.js",
   "./src/pwa.js?v=3",
-  "./src/main.js?v=37",
+  "./src/main.js?v=38",
   "./src/main.js",
   "./src/scenes/Preload.js",
   "./src/scenes/StartScene.js",
@@ -16,6 +16,7 @@ const PRECACHE_URLS = [
   "./src/scenes/PlayScene.js",
   "./src/controllers/PlayerController.js",
   "./src/config/GameConstants.js",
+  "./src/config/AssetsData.js",
   "./src/config/SceneState.js",
   "./src/systems/DialogueSystem.js",
   "./src/systems/CleaningSystem.js",
@@ -27,9 +28,15 @@ const PRECACHE_URLS = [
   "./src/systems/QuestManager.js",
   "./src/systems/SlimeSystem.js",
   "./src/systems/UIManager.js",
+  "./src/systems/TiledMapSystem.js",
+  "./src/systems/MapTransitionSystem.js",
+  "./src/systems/NeighborhoodProgressSystem.js",
+  "./src/systems/RouteGuideSystem.js",
+  "./src/systems/EducationalGuideSystem.js",
   "./src/utils/distance.js",
   "./src/data/dialogues.json",
   "./assets/maps/chapter1-samgakji-map.json",
+  "./assets/maps/chapter1-south-park-map.json",
   "./assets/tilesets/samgakji-tiles.png",
   "./assets/sprites/haenaem-walk-down-new.png",
   "./assets/sprites/haenaem-walk-up-new.png",

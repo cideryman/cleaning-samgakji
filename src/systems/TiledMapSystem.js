@@ -137,6 +137,11 @@ export default class TiledMapSystem {
     const nextConfig = WORLD_TILED_MAP_CONFIGS[mapId];
     if (!nextConfig) return false;
 
+    const previousMapId = scene.currentWorldMapId || TILED_MAP_CONFIG.id;
+    const previousSpawn = scene.player?.active
+      ? { x: scene.player.x, y: scene.player.y }
+      : scene.playerStart;
+
     this.destroyCurrentTiledMap();
     scene.currentWorldMapId = nextConfig.id;
     scene.objectWalls = scene.physics.add.staticGroup();
@@ -146,6 +151,7 @@ export default class TiledMapSystem {
     scene.mapPointMeta = {};
 
     if (!this.createTiledMap()) {
+      this.restorePreviousMap(previousMapId, previousSpawn);
       return false;
     }
 
@@ -169,6 +175,40 @@ export default class TiledMapSystem {
     scene.pathfindingSystem?.create?.();
     scene.updateCameraZoom?.();
     return true;
+  }
+
+  restorePreviousMap(previousMapId, previousSpawn = null) {
+    const scene = this.scene;
+
+    this.destroyCurrentTiledMap();
+    scene.currentWorldMapId = previousMapId || TILED_MAP_CONFIG.id;
+    scene.objectWalls = scene.physics.add.staticGroup();
+    scene.objectCollisionRects = [];
+    scene.mapObjects = {};
+    scene.mapPoints = {};
+    scene.mapPointMeta = {};
+
+    if (!this.createTiledMap()) {
+      this.createFallbackMap();
+    }
+
+    const spawn = previousSpawn || scene.playerStart || { x: 320, y: 544 };
+    scene.playerStart = { x: spawn.x, y: spawn.y };
+    if (scene.player) {
+      scene.player.setPosition(spawn.x, spawn.y);
+      scene.player.body?.reset?.(spawn.x, spawn.y);
+      scene.playerController?.cancelMoveTarget?.();
+      scene.mouseMoveTarget = null;
+    }
+
+    if (scene.player && scene.walls) {
+      scene.physics.add.collider(scene.player, scene.walls);
+    }
+    if (scene.player && scene.objectWalls) {
+      scene.physics.add.collider(scene.player, scene.objectWalls);
+    }
+    scene.pathfindingSystem?.create?.();
+    scene.updateCameraZoom?.();
   }
 
   destroyCurrentTiledMap() {

@@ -46,6 +46,23 @@ export default class SamgakjiProgressSystem {
     return this.getLevelInfo().level;
   }
 
+  advanceDevLevel() {
+    const levelInfo = this.getLevelInfo();
+    if (!levelInfo?.next) {
+      this.scene.showQuestToast?.("개발 치트: 삼각지가 이미 최고 레벨이에요.");
+      return;
+    }
+
+    this.scene.totalCleanedCount = Math.max(
+      this.scene.totalCleanedCount ?? 0,
+      levelInfo.next.requiredCleaned,
+    );
+    const nextInfo = this.refresh({ silent: false, save: true });
+    this.scene.neighborhoodProgressSystem?.refresh?.();
+    this.scene.updateHud?.();
+    this.scene.showQuestToast?.(`개발 치트: 삼각지 Lv.${nextInfo.level} 달성`);
+  }
+
   maybeShowLevelUpPopup() {
     const progress = this.scene.samgakjiProgress;
     const levelInfo = this.getLevelInfo();
