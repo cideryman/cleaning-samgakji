@@ -8,6 +8,8 @@ export default class MapTransitionSystem {
     this.transitioning = false;
     this.hiddenMainNpcState = null;
     this.suppressedGate = null;
+    this.transitionSafetyTimer = null;
+    this.pendingSpawn = null;
   }
 
   update(time = 0) {
@@ -107,9 +109,12 @@ export default class MapTransitionSystem {
       beforeSwitch: () => {
         this.hideMainWorldActors();
         this.destroyMainWorldUtilityObjects();
+        this.scene.roadTrafficSystem?.cleanup?.();
       },
       afterSwitch: () => {
         this.suppressedGate = { mapId: "chapter1_south_park", gateKey: "samgakji_return" };
+        this.setMainWorldActorsVisible(false);
+        this.setQuestMarkersVisible(false);
         this.scene.showQuestToast?.("삼각지 공원으로 왔어요.", 2600);
       },
     });
@@ -129,6 +134,7 @@ export default class MapTransitionSystem {
         this.scene.player?.body?.reset?.(gate.x, Math.max(96, gate.y - 72));
         this.suppressedGate = { mapId: "main", gateKey: "south_park_gate" };
         this.scene.createRecyclingCenter?.();
+        this.scene.roadTrafficSystem?.create?.();
         this.restoreMainWorldActors();
         this.scene.showQuestToast?.("삼각지 중심으로 돌아왔어요.", 2600);
       },
@@ -142,31 +148,108 @@ export default class MapTransitionSystem {
     scene.sceneControlSystem?.blockWorldInput?.(true);
     scene.playerController?.cancelMoveTarget?.();
     scene.npcFollowRouteSystem?.clearAll?.();
+    scene.clearInteriorScene?.();
+    this.armTransitionSafetyTimer();
+    this.pendingSpawn = { spawnKey, fallbackSpawn };
 
     scene.cameras.main.resetFX?.();
-    scene.cameras.main.fadeOut(180, 20, 28, 22);
-    scene.time.delayedCall(190, () => {
-      beforeSwitch?.();
-      const switched = scene.tiledMapSystem?.switchMap?.(mapId, spawnKey, fallbackSpawn);
-      if (switched) {
-        scene.neighborhoodProgressSystem?.rebuildForCurrentMap?.({ silent: true });
-        this.resetTrashForCurrentMap();
-        afterSwitch?.();
-      } else {
-        this.restoreMainWorldActors();
-        scene.createRecyclingCenter?.();
-        scene.showQuestToast?.("아직 이어지는 길을 찾지 못했어요.", 2600);
+    // World-map transitions must not rely on camera fade. A stuck fade overlay
+    // can hide the whole map while the green game frame remains visible.
+    scene.time.delayedCall(30, () => {
+      let switched = false;
+
+      try {
+        beforeSwitch?.();
+        switched = Boolean(scene.tiledMapSystem?.switchMap?.(mapId, spawnKey, fallbackSpawn))
+          && scene.currentWorldMapId === mapId;
+        if (switched) {
+          this.forcePlayerToSpawn(spawnKey, fallbackSpawn);
+          scene.neighborhoodProgressSystem?.rebuildForCurrentMap?.({ silent: true });
+          this.resetTrashForCurrentMap();
+          this.recoverWorldView();
+          afterSwitch?.();
+        } else {
+          this.restoreMainWorldActors();
+          scene.createRecyclingCenter?.();
+          scene.showQuestToast?.("아직 이어지는 길을 찾지 못했어요.", 2600);
+        }
+      } catch (error) {
+        console.error("Map transition failed:", error);
+        if (!switched) {
+          this.restoreMainWorldActors();
+          scene.createRecyclingCenter?.();
+        }
+        scene.showQuestToast?.("화면 전환을 복구했어요. 다시 한 번 시도해 주세요.", 3200);
       }
 
       scene.cameras.main.resetFX?.();
-      scene.cameras.main.fadeIn(220, 20, 28, 22);
-      scene.time.delayedCall(240, () => {
-        this.transitioning = false;
-        scene.sceneControlSystem?.blockWorldInput?.(false);
+      scene.time.delayedCall(60, () => {
+        this.finishTransition();
       });
     });
 
     return true;
+  }
+
+  forcePlayerToSpawn(spawnKey, fallbackSpawn = null) {
+    const scene = this.scene;
+    if (!scene.player?.active) return;
+
+    const spawn = scene.getMapPoint?.(spawnKey, fallbackSpawn) || fallbackSpawn;
+    if (!spawn) return;
+
+    scene.player.setPosition(spawn.x, spawn.y);
+    scene.player.body?.reset?.(spawn.x, spawn.y);
+    scene.playerController?.cancelMoveTarget?.();
+    scene.mouseMoveTarget = null;
+  }
+
+  armTransitionSafetyTimer() {
+    this.clearTransitionSafetyTimer();
+    this.transitionSafetyTimer = this.scene.time.delayedCall(1800, () => {
+      if (!this.transitioning) return;
+      console.warn("Map transition safety timer released a stuck transition.");
+      this.scene.showQuestToast?.("화면 전환을 복구했어요.", 2200);
+      this.finishTransition();
+    });
+  }
+
+  clearTransitionSafetyTimer() {
+    this.transitionSafetyTimer?.remove?.(false);
+    this.transitionSafetyTimer = null;
+  }
+
+  finishTransition() {
+    const scene = this.scene;
+    this.clearTransitionSafetyTimer();
+    if (this.pendingSpawn) {
+      this.forcePlayerToSpawn(this.pendingSpawn.spawnKey, this.pendingSpawn.fallbackSpawn);
+      this.pendingSpawn = null;
+    }
+    this.recoverWorldView();
+    scene.cameras.main.resetFX?.();
+    this.transitioning = false;
+    scene.sceneControlSystem?.blockWorldInput?.(false);
+  }
+
+  recoverWorldView() {
+    const scene = this.scene;
+    document.body.classList.remove("interior-scene-active");
+    delete document.body.dataset.interiorScene;
+    scene.interiorSceneType = null;
+    scene.cameras.main.resetFX?.();
+    scene.cameras.main.setAlpha?.(1);
+    if (scene.player?.active) {
+      scene.cameras.main.startFollow(scene.player, true, 1, 1);
+      scene.cameras.main.centerOn(scene.player.x, scene.player.y);
+    }
+    document.body.classList.remove("start-screen", "prologue-scene-active", "epilogue-scene-active");
+    scene.tiledMapLayers?.forEach((layer) => {
+      layer?.setAlpha?.(1);
+      if (layer !== scene.walls) {
+        layer?.setVisible?.(true);
+      }
+    });
   }
 
   resetTrashForCurrentMap() {
@@ -184,8 +267,7 @@ export default class MapTransitionSystem {
       sunisuni: this.captureVisibleState(scene.sunisuniNpc),
     };
     [scene.yebiNpc, scene.jjookNpc, scene.sunisuniNpc].forEach((sprite) => {
-      sprite?.setVisible?.(false);
-      sprite?.setActive?.(false);
+      this.setActorVisible(sprite, false);
     });
     this.setQuestMarkersVisible(false);
   }
@@ -215,6 +297,18 @@ export default class MapTransitionSystem {
     sprite.setActive(Boolean(active));
   }
 
+  setMainWorldActorsVisible(visible) {
+    const scene = this.scene;
+    [scene.yebiNpc, scene.jjookNpc, scene.sunisuniNpc].forEach((sprite) => {
+      this.setActorVisible(sprite, visible);
+    });
+  }
+
+  setActorVisible(sprite, visible) {
+    sprite?.setVisible?.(Boolean(visible));
+    sprite?.setActive?.(Boolean(visible));
+  }
+
   setQuestMarkersVisible(visible) {
     Object.values(this.scene.questMarkers || {}).forEach((marker) => {
       marker.text?.setVisible?.(Boolean(visible && marker.target?.active !== false));
@@ -237,5 +331,7 @@ export default class MapTransitionSystem {
     this.lastPromptAt = 0;
     this.transitioning = false;
     this.suppressedGate = null;
+    this.pendingSpawn = null;
+    this.clearTransitionSafetyTimer();
   }
 }

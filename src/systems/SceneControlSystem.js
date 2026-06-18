@@ -8,6 +8,7 @@ export default class SceneControlSystem {
     this.worldInputBlocked = Boolean(blocked);
     if (this.worldInputBlocked) {
       this.scene.playerController?.cancelMoveTarget?.();
+      this.scene.educationalGuideSystem?.hideWorldIcons?.();
     }
   }
 

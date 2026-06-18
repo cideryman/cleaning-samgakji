@@ -161,6 +161,16 @@ export default class EducationalGuideSystem {
     });
   }
 
+  hideWorldIcons() {
+    this.icons.forEach((icon) => {
+      icon.setVisible(false);
+      icon.setActive(false);
+      if (icon.circleObj?.input) {
+        icon.circleObj.input.enabled = false;
+      }
+    });
+  }
+
   getFacilityIconPosition(facility) {
     const scene = this.scene;
     if (facility.key === "convenience_store") {

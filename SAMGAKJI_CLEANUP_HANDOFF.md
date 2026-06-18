@@ -56,6 +56,66 @@ This is the single practical work order for the next Codex sessions. Use the det
      - `src/systems/SceneControlSystem.js`
      - `src/config/SceneState.js`
      - any phone-call flow inside packing/ending systems.
+   - 2026-06-18 first one-by-one fix:
+     - `MapTransitionSystem.transitionToMap()` now wraps the delayed map switch body in `try/catch`.
+     - A transition safety timer releases stuck `transitioning` and world-input lock after 1.8s if something goes wrong mid-transition.
+     - `finishTransition()` always resets camera FX and unblocks world input.
+     - This is a guardrail, not a final root-cause diagnosis. If south-park black screen remains, inspect whether the target map actually renders layers/tilesets after `switchMap()` succeeds.
+   - 2026-06-18 second one-by-one fix:
+     - World-map transitions now clear any leftover interior scene before switching maps.
+     - After a successful switch, `MapTransitionSystem.recoverWorldView()` removes interior-scene DOM flags, resets camera FX/alpha, re-centers the camera on the player, and makes non-collision Tiled layers visible.
+     - This targets the case where the map data exists but the camera/interior/cutscene state keeps the world visually hidden.
+   - Manual check after this fix:
+     - Enter Samgakji Park on PC/mobile.
+     - If the map appears, confirm player movement and return gate still work.
+     - If it still goes black, wait 2 seconds and check whether the screen recovers or shows "화면 전환을 복구했어요."
+     - If the message appears or the butterfly toast appears but the park is still not visible, next target is target-map render/tileset/layer creation, not input lock.
+   - 2026-06-18 south-park tilemap static check:
+     - `assets/maps/chapter1-south-park-map.json` references `../tilesets/samgakji-tiles.png`, and that file exists.
+     - The south-park `ground` tile layer is full (`56 x 32`, non-empty, max tile id 59), so the black screen is not explained by an empty map or a missing tileset image alone.
+     - The `objects` tile layer is hidden in the Tiled file, but `ground` is visible, so that hidden layer alone should not make the whole map black.
+   - 2026-06-18 runtime guard:
+     - `TiledMapSystem.createTiledMap()` now treats failed visible-layer creation as a map-creation failure instead of leaving a half-created black map.
+     - Tileset binding failures now log the tileset name, texture key, and map id to the browser console.
+     - Game-visible Tiled layers from `visibleLayers` are explicitly set visible after creation.
+     - If the south-park screen still goes black, open the browser console and check for `Failed to create Tiled layer`, `Failed to bind tileset`, or camera/fade/input-state logs. If no tile/layer warning appears, prioritize shared fade/interior/overlay state rather than tileset data.
+   - 2026-06-18 fade-free south-park transition:
+     - User confirmed the black screen still occurred after DevTools hard refresh and cache clear.
+     - The visible symptom showed the green game frame while the whole Phaser area stayed in the dark fade color, so the likely cause is a stuck camera fade overlay rather than a missing tileset.
+     - `MapTransitionSystem.transitionToMap()` no longer uses camera `fadeOut/fadeIn` for world-map transitions.
+     - World-map transitions now reset camera FX and switch maps directly. This trades a small visual polish effect for safer navigation.
+     - Manual check: enter Samgakji Park again. If the park appears, the south-park blocker was camera fade. If it is still black, next inspect whether a full-screen dark overlay/game object remains above the map.
+  - 2026-06-18 spawn correction:
+    - Important correction: the player has never actually completed entry into the south-park map. Earlier wording that implied a successful render/entry was wrong.
+    - The success toast and console stats can appear, but the runtime then freezes/crashes before the player sees a completed south-park entry.
+    - `MapTransitionSystem` calls `forcePlayerToSpawn(spawnKey, fallbackSpawn)` after a successful map switch attempt.
+    - This re-applies the target map's spawn point after all old movement targets/follow routes are cleared, then camera recovery centers on the corrected player position.
+    - Manual check: entering south park should place Haenaem near the `south_park_entry` point at the top-center entrance of the south-park map. This has not yet been visually confirmed.
+  - 2026-06-18 map-switch validation pass:
+    - User clarified that the success toast alone is not enough; the newly created south map still feels like it did not actually enter.
+    - `TiledMapSystem.createTiledMap()` now records `activeTilemapId`, `activeTilemapKey`, and tilemap size stats whenever a Tiled map is created.
+    - `TiledMapSystem.switchMap()` now validates the active map key/id and compares the runtime tilemap size against the preloaded JSON cache (`${mapKey}_json`) before returning success.
+    - `MapTransitionSystem.transitionToMap()` now treats a switch as successful only if `currentWorldMapId` matches the requested target map after `switchMap()`.
+    - Browser console now logs `World map switched:` with the active map id/key/size. For south park, expected stats are `mapId: "chapter1_south_park"`, `key: "chapter1_south_park_map"`, `width: 56`, `height: 32`.
+    - `npm.cmd run validate:map-progress:south-park` passed, so the current south-park progress-object metadata is valid.
+    - Manual check: enter the south gate, then open DevTools console. If the toast appears but the console does not show the south-park stats above, the transition success path is still wrong. If the stats are correct but the visible screen still looks wrong, investigate camera/HUD/body-class state rather than Tiled data.
+  - 2026-06-19 stale physics collider fix:
+    - User console showed `Cannot read properties of undefined (reading 'tileWidth')` from Phaser collision after `World map switched` logged south-park stats.
+    - Likely cause: player-wall physics colliders still referenced destroyed/old tilemap layers after `destroyCurrentTiledMap()`.
+    - `TiledMapSystem` now owns `addPlayerMapColliders()` and `clearPlayerMapColliders()`.
+    - `PlayScene.create()` no longer creates unmanaged player-wall colliders directly; it delegates to `TiledMapSystem.addPlayerMapColliders()`.
+    - `TiledMapSystem.destroyCurrentTiledMap()` clears tracked player-wall/object-wall colliders before destroying old map layers.
+    - Manual check: enter south gate again. Expected result: no `tileWidth` TypeError, no freeze, and the south-park map becomes visibly playable.
+  - 2026-06-19 south-park entry confirmed, main-map leakage fix:
+    - User confirmed south-park entry now succeeds after the stale collider fix.
+    - New issue found: main-map-only systems leaked into the south park map. Cars still drove there, and invisible shop/building interaction zones could still trigger clothing-store or other main-map interactions.
+    - `RoadTrafficSystem` now creates/updates only on the main world map and cleans itself up outside the main map.
+    - `MapTransitionSystem` explicitly cleans road traffic before entering south park and recreates it after returning to the main map.
+    - `InteractionSystem` now ignores door zones and direct hospital/pharmacy/clothing/convenience checks outside the main map.
+    - `TiledMapSystem.setupBuildingInteractive()` now ignores main-map building hover/click interactions outside the main map.
+    - Principle: every system that owns main-map objects, invisible interaction zones, or live update loops must check `currentWorldMapId` before acting on alternate maps.
+    - Manual check result: user confirmed south park no longer shows cars and old shop/building interactions no longer open there.
+    - Remaining manual check: return to the main map and confirm cars and shops work again.
 
 2. Sunisuni escort/follow bug.
    - Reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem.
@@ -64,7 +124,12 @@ This is the single practical work order for the next Codex sessions. Use the det
    - 2026-06-16 safety fix:
      - `NpcFollowRouteSystem` now relocates a follower that starts inside a blocked tile/object to the nearest walkable cell before rebuilding the route.
      - `SunisuniQuestSystem.startEscort()` now explicitly activates/shows Sunisuni and clears stale `sunisuni_follow` route state when escort starts.
+   - 2026-06-18 checkpoint/far-distance recovery:
+     - `CheckpointStorage.applyNpcState()` now restores Sunisuni near Haenaem when loading a checkpoint in `GOING_HOSPITAL` or `GOING_PHARMACY`, instead of forcing the waiting pose.
+     - `SunisuniQuestSystem.updateFollower()` now recovers Sunisuni near Haenaem if she becomes more than twice the normal max follow distance away.
+     - This keeps the escort from appearing lost after 이어하기 or after path-follow failure, without adding follow logic back into `PlayScene.js`.
    - Needs manual check: start Sunisuni quest, accept help, walk toward hospital, confirm Sunisuni follows without sliding through props.
+   - Also check: save/reload during `GOING_HOSPITAL` or `GOING_PHARMACY`, then confirm Sunisuni appears near Haenaem and resumes following.
 
 3. Final ending black/dark screen / no progress after mom phone ending.
    - Lower practical urgency because it occurs at the very end, but it is still a progression blocker.
@@ -74,6 +139,15 @@ This is the single practical work order for the next Codex sessions. Use the det
      - Final ending now repeatedly resets camera fade/FX shortly after the ending scene is shown.
      - A full-screen transparent Phaser hit area is added above the final ending scene so click/touch reliably returns to `StartScene`.
      - CSS sets the ending interior background to black so letterboxed side areas do not stay green.
+   - 2026-06-19 debugging method learned from south-park fix:
+     - Do not assume the ending image asset is the root cause just because the screen is dark.
+     - South park looked like a black-screen/fade issue, but the final blocker was stale Phaser physics colliders referencing destroyed map layers, plus main-map systems leaking into the alternate map.
+     - Apply the same state-cleanup method to ending:
+       - Verify the current ending step and image key actually advance.
+       - Log camera fade/dim/FX state, world-input blocker state, active DOM body classes, active interior/ending groups, and the topmost click/continue object.
+       - Check whether previous cutscene/interior/world systems remain active after the ending scene is shown.
+       - Explicitly destroy or hide stale systems before creating the final ending image, then add a safety timer that reports the stuck state instead of silently freezing.
+     - Principle: for cutscene black screens, inspect leftover state, hidden blockers, and stale references before repeatedly changing assets or adding more fade calls.
    - Needs manual check: complete the mom phone ending and confirm the final ending image is visible, not dimmed, and click/touch returns to the title.
 
 ### P1: Map Connection And World Expansion
@@ -109,10 +183,15 @@ This is the single practical work order for the next Codex sessions. Use the det
      - `MapTransitionSystem` now suppresses the opposite gate after a transition until the player leaves a larger release radius.
      - `MapTransitionSystem` also resets camera FX before fade out/in to reduce stuck fade overlays.
      - Principle: map entry spawn points and return points should not overlap trigger radii; when they must be close, suppress the just-used/opposite gate until the player exits the area.
-   - 2026-06-18 unresolved mobile report:
-     - User confirmed the south-park black screen still occurs even after hard refresh and cache clear.
-     - Therefore do not assume the remaining issue is only service-worker cache or only trigger-radius overlap.
-     - The symptom resembles the ending/amusement-park lock and Mom-phone-refusal lock, so prioritize a shared cutscene/fade/input-blocker diagnosis before adding more south-park-specific patches.
+  - 2026-06-18 unresolved mobile report:
+    - User confirmed the south-park black screen still occurs even after hard refresh and cache clear.
+    - Therefore do not assume the remaining issue is only service-worker cache or only trigger-radius overlap.
+    - The symptom resembles the ending/amusement-park lock and Mom-phone-refusal lock, so prioritize a shared cutscene/fade/input-blocker diagnosis before adding more south-park-specific patches.
+   - 2026-06-19 latest status:
+     - South-park entry is now visually confirmed after the stale player-map-collider fix.
+     - The previous black/freeze symptom was caused by stale Phaser physics colliders referencing destroyed tilemap layers, not by the south-park tileset alone.
+     - Follow-up leakage fix prevents main-map traffic and main-map building/door interactions from running while `currentWorldMapId !== "main"`.
+     - Remaining checks are now gameplay-polish checks inside south park, not the original hard entry blocker.
    - Needs manual check:
      - Reach Lv.9 or temporarily use dev/testing progress, walk to the bottom gate, confirm transition to south park.
      - On mobile/PWA, reopen after deploy so the service worker updates, then verify the park does not show a black gameplay area.
@@ -129,19 +208,38 @@ This is the single practical work order for the next Codex sessions. Use the det
 
 ### P2: Player-Facing Polish And Bugs
 
-1. Educational guide icons leaking into cutscenes/interiors.
-   - Mitigation exists but needs visual check.
-   - Rule: yellow question-mark learning icons are world-map helpers only.
+1. Continue-game HUD disappearing.
+   - Reported 2026-06-18: after using 이어하기, HUD can disappear even though gameplay loads.
+   - Cause found: HUD is hidden by CSS when body has scene-mode classes such as `start-screen`, `prologue-scene-active`, `epilogue-scene-active`, or `interior-scene-active`.
+   - Fix:
+     - `PlayScene.create()` now removes `start-screen`, `prologue-scene-active`, `epilogue-scene-active`, and `interior-scene-active` at scene entry.
+     - It also clears `document.body.dataset.interiorScene`.
+     - If a restored checkpoint is actually in epilogue/travel-ending state, the existing code can still add `epilogue-scene-active` intentionally.
+   - Principle:
+     - Any scene that owns normal gameplay HUD must clear previous scene/body classes before creating or restoring HUD state.
+     - Future cutscene/interior systems should remove their body classes on shutdown/exit and not rely only on the next scene to clean up.
+   - Manual check:
+     - Start from title -> 이어하기.
+     - Confirm money HUD, Samgakji progress HUD, right buttons, and broom button appear.
+     - Also confirm epilogue checkpoint still hides HUD intentionally.
 
-2. Progress landscaping placement cleanup.
+2. Educational guide icons leaking into cutscenes/interiors.
+   - 2026-06-18 fix:
+     - `EducationalGuideSystem.hideWorldIcons()` was added.
+     - `SceneControlSystem.blockWorldInput(true)` now immediately hides guide icons.
+     - `InteriorSceneSystem.show()` and `PharmacyMapSystem.show()` also hide guide icons on entry.
+   - Rule: yellow question-mark learning icons are world-map helpers only.
+   - Needs manual check: cutscene, pharmacy map, and ending/interior scenes should not show yellow question-mark guide icons.
+
+3. Progress landscaping placement cleanup.
    - Fix awkward bench/tree/rose placements near Jjook, recycling bins, and paths.
    - Prefer Tiled `logic_point` edits over JS config.
 
-3. NPC movement naturalization.
+4. NPC movement naturalization.
    - Existing path-follow work is partially complete.
    - Remaining: tune Jjook/Sunisuni follow jitter, test roads/crosswalks, and migrate any remaining custom direct movement.
 
-4. Mobile loading speed.
+5. Mobile loading speed.
    - Asset count has grown.
    - Plan later: preload only chapter-critical assets, lazy-load shop/interior/ending assets, and remove unused temporary assets.
 
@@ -553,6 +651,7 @@ Supporting details for the current priority roadmap above. The roadmap near the 
    - Symptom reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem as expected.
    - Start by checking escort state transitions in `SunisuniQuestSystem.startEscort()`, restore/checkpoint state, and whether `NpcFollowRouteSystem` rejects all movement because the target or starting tile is blocked.
    - Keep the fix inside `SunisuniQuestSystem` or shared NPC movement systems; avoid adding long follow logic back into `PlayScene.js`.
+   - 2026-06-18 update: checkpoint restore now places Sunisuni near Haenaem during active escort states, and very large follow gaps are corrected near the player.
 
 1. Hide educational guide icons during cutscenes/interior/story scenes.
    - Status: mitigation applied; needs visual check in cutscenes and pharmacy.

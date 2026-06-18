@@ -440,7 +440,11 @@ export default class CheckpointStorage {
     if (scene.sunisuniQuestState !== SunisuniQuestState.LOCKED && scene.sunisuniNpc) {
       scene.sunisuniNpc.setVisible(true);
       scene.sunisuniNpc.setActive(true);
-      scene.setSunisuniWaitingPose?.();
+      if ([SunisuniQuestState.GOING_HOSPITAL, SunisuniQuestState.GOING_PHARMACY].includes(scene.sunisuniQuestState)) {
+        this.restoreSunisuniEscortPosition(scene);
+      } else {
+        scene.setSunisuniWaitingPose?.();
+      }
       scene.clearQuestMarker?.("sunisuniQuest");
       scene.clearQuestMarker?.("sunisuniHospital");
     }
@@ -486,6 +490,24 @@ export default class CheckpointStorage {
       scene.isJjookBusEscortActive = true;
       scene.travelEndingSystem?.updateBusRouteGuide?.();
     }
+  }
+
+  static restoreSunisuniEscortPosition(scene) {
+    if (!scene.sunisuniNpc || !scene.player) return;
+
+    const candidates = [
+      { x: scene.player.x - 56, y: scene.player.y + 24 },
+      { x: scene.player.x + 56, y: scene.player.y + 24 },
+      { x: scene.player.x, y: scene.player.y + 72 },
+      { x: scene.player.x - 72, y: scene.player.y },
+      { x: scene.player.x + 72, y: scene.player.y },
+    ];
+    const position = candidates.find((point) => scene.canNpcStandAt?.(point.x, point.y) !== false)
+      || { x: scene.player.x - 56, y: scene.player.y + 24 };
+
+    scene.sunisuniNpc.setPosition(position.x, position.y);
+    scene.setNpcDirectionTexture?.(scene.sunisuniNpc, "sunisuni", "down", false);
+    scene.npcFollowRouteSystem?.clear?.("sunisuni_follow");
   }
 
   static hideCompletedQuestHud(scene) {

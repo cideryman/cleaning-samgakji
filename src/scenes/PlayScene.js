@@ -124,8 +124,13 @@ export default class PlayScene extends Phaser.Scene {
   create(data = {}) {
     this.htmlUiBindingSystem = new HtmlUiBindingSystem(this);
     this.resetRunState();
-    document.body.classList.remove("start-screen");
-    document.body.classList.remove("epilogue-scene-active");
+    document.body.classList.remove(
+      "start-screen",
+      "prologue-scene-active",
+      "epilogue-scene-active",
+      "interior-scene-active",
+    );
+    delete document.body.dataset.interiorScene;
 
     const isLargeText = this.registry.get("textSizeLarge") === true || window.localStorage?.getItem("samgakji_text_size_large") === "true";
     document.body.classList.toggle("ui-large-text", isLargeText);
@@ -241,7 +246,7 @@ export default class PlayScene extends Phaser.Scene {
     const restoredCheckpoint = this.restoreCheckpointIfRequested(data);
     this.samgakjiProgressSystem?.refresh({ silent: true });
     this.neighborhoodProgressSystem?.refresh({ silent: true });
-    if (this.packingQuestState === "traveling_home" || this.packingQuestState === "ending_complete") {
+    if (this.packingQuestState === "traveling_home") {
       document.body.classList.add("epilogue-scene-active");
     }
     this.updateNpcRoaming(true);
@@ -258,10 +263,7 @@ export default class PlayScene extends Phaser.Scene {
       callback: () => this.triggerRandomNpcBubble(),
     });
 
-    this.physics.add.collider(this.player, this.walls);
-    if (this.objectWalls) {
-      this.physics.add.collider(this.player, this.objectWalls);
-    }
+    this.tiledMapSystem?.addPlayerMapColliders?.();
     this.startChapterMusic();
     if (!restoredCheckpoint || this.restoredCheckpointId === "prologue_complete") {
       this.time.delayedCall(800, () => this.showFirstGuide());

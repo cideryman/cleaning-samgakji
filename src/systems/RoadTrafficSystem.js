@@ -12,6 +12,9 @@ export default class RoadTrafficSystem {
     this.cleanup();
 
     const scene = this.scene;
+    if (!this.isMainWorldMap()) {
+      return;
+    }
     const stop = scene.travelEndingSystem?.getBusStopPoint();
     const baseY = stop?.y ?? GAME_CONFIG.busStop.y;
     const leftLanePoint = scene.getMapPoint("traffic_left_lane", null)
@@ -64,6 +67,10 @@ export default class RoadTrafficSystem {
   }
 
   update(delta = 16.67) {
+    if (!this.isMainWorldMap()) {
+      this.cleanup();
+      return;
+    }
     if (!this.vehicles.length || !this.enabled) return;
 
     const scene = this.scene;
@@ -97,6 +104,11 @@ export default class RoadTrafficSystem {
       this.wrapVehicle(vehicle, config);
       vehicle.setDepth(this.getVehicleDepth(vehicle, config));
     });
+  }
+
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
   }
 
   getCrosswalkXs() {

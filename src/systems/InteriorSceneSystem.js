@@ -16,6 +16,7 @@ export default class InteriorSceneSystem {
     document.body.dataset.interiorScene = type;
     scene.interiorSceneGroup = scene.add.group();
     scene.interiorSceneType = type;
+    scene.educationalGuideSystem?.hideWorldIcons?.();
 
     const viewportWidth = Math.max(768, scene.scale.width || 768);
     const viewportHeight = Math.max(480, scene.scale.height || 480);

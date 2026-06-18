@@ -15,9 +15,13 @@ export default class InteractionSystem {
       rect.setAlpha(0);
       rect.setDepth(15);
       rect.setInteractive({ cursor: 'pointer' });
-      rect.on("pointerover", () => rect.setAlpha(1));
+      rect.on("pointerover", () => {
+        if (!this.isMainWorldMap()) return;
+        rect.setAlpha(1);
+      });
       rect.on("pointerout", () => rect.setAlpha(0));
       rect.on("pointerdown", () => {
+        if (!this.isMainWorldMap()) return;
         if (type === "convenience_store" && scene.hasCheckedConvenienceStore) return;
         if (scene.playerController) {
           scene.playerController.setInteractionTarget(type, { x: pos.x, y: pos.y + 30 });
@@ -29,6 +33,11 @@ export default class InteractionSystem {
     createDoorZone("pharmacy", GAME_CONFIG.pharmacyDoor, 136, 108);
     createDoorZone("clothing_store", GAME_CONFIG.clothingStoreDoor, 156, 116);
     createDoorZone("convenience_store", GAME_CONFIG.convenienceStoreDoor, 150, 108);
+  }
+
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
   }
 
   handlePrimaryAction() {
@@ -51,6 +60,7 @@ export default class InteractionSystem {
   handlePriorityLocationInteraction() {
     const scene = this.scene;
     if (scene.sceneControlSystem?.isWorldInputBlocked?.()) return false;
+    if (!this.isMainWorldMap()) return false;
 
     if (this.isPlayerNearHospitalDoor()) {
       scene.handleHospitalInteraction();
@@ -106,6 +116,7 @@ export default class InteractionSystem {
 
   isPlayerNearHospitalDoor() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return false;
     if (!scene.player || !["going_hospital", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
     const door = scene.getMapPoint?.("hospital_door", GAME_CONFIG.hospitalDoor) || GAME_CONFIG.hospitalDoor;
     const dx = Math.abs(scene.player.x - door.x);
@@ -115,6 +126,7 @@ export default class InteractionSystem {
 
   isPlayerNearPharmacyDoor() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return false;
     if (!scene.player || !["going_pharmacy", "quest_complete"].includes(scene.sunisuniQuestState)) return false;
     const door = scene.getMapPoint?.("pharmacy_door", GAME_CONFIG.pharmacyDoor) || GAME_CONFIG.pharmacyDoor;
     const dx = Math.abs(scene.player.x - door.x);
@@ -124,6 +136,7 @@ export default class InteractionSystem {
 
   isPlayerNearClothingStoreDoor() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return false;
     if (!scene.player || !["shopping", "completed"].includes(scene.clothesQuestState)) return false;
     const door = scene.getMapPoint?.("clothing_store_door", GAME_CONFIG.clothingStoreDoor) || GAME_CONFIG.clothingStoreDoor;
     const dx = Math.abs(scene.player.x - door.x);
@@ -133,6 +146,7 @@ export default class InteractionSystem {
 
   isPlayerNearConvenienceStoreDoor() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return false;
     if (!scene.player) return false;
     const door = scene.getMapPoint?.("convenience_store_door", GAME_CONFIG.convenienceStoreDoor) || GAME_CONFIG.convenienceStoreDoor;
     const dx = Math.abs(scene.player.x - door.x);

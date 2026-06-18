@@ -39,6 +39,7 @@ export default class PharmacyMapSystem {
     document.body.dataset.interiorScene = "pharmacy";
     scene.interiorSceneType = "pharmacy";
     scene.interiorSceneGroup = scene.add.group();
+    scene.educationalGuideSystem?.hideWorldIcons?.();
     this.group = scene.interiorSceneGroup;
 
     const viewportWidth = Math.max(768, scene.scale.width || 768);

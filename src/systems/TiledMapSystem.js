@@ -96,19 +96,46 @@ export default class TiledMapSystem {
     }
 
     scene.activeTilemap = map;
+    scene.activeTilemapId = mapConfig.id;
+    scene.activeTilemapKey = mapConfig.key;
+    scene.activeTilemapStats = {
+      mapId: mapConfig.id,
+      key: mapConfig.key,
+      width: map.width,
+      height: map.height,
+      widthInPixels: map.widthInPixels,
+      heightInPixels: map.heightInPixels,
+    };
     scene.tiledMapLayers = [];
     const worldWidth = map.widthInPixels || GAME_CONFIG.worldWidth;
     const worldHeight = map.heightInPixels || GAME_CONFIG.worldHeight;
     scene.physics.world.setBounds(0, 0, worldWidth, worldHeight);
     scene.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
-    mapConfig.visibleLayers.forEach((layerName, index) => {
+    let createdVisibleLayerCount = 0;
+    for (const [index, layerName] of mapConfig.visibleLayers.entries()) {
       const layer = map.getLayer(layerName);
-      if (layer) {
-        const createdLayer = map.createLayer(layerName, tilesets, 0, 0).setDepth(index);
-        scene.tiledMapLayers.push(createdLayer);
+      if (!layer) {
+        console.warn(`Missing Tiled layer "${layerName}" in map "${mapConfig.id}".`);
+        continue;
       }
-    });
+
+      const createdLayer = map.createLayer(layerName, tilesets, 0, 0);
+      if (!createdLayer) {
+        console.warn(`Failed to create Tiled layer "${layerName}" in map "${mapConfig.id}".`);
+        return false;
+      }
+
+      createdLayer.setDepth(index);
+      createdLayer.setVisible(true);
+      scene.tiledMapLayers.push(createdLayer);
+      createdVisibleLayerCount += 1;
+    }
+
+    if (createdVisibleLayerCount === 0) {
+      console.warn(`No visible Tiled layers were created for map "${mapConfig.id}".`);
+      return false;
+    }
 
     const collisionSource = map.getLayer(mapConfig.collisionLayer);
     if (collisionSource) {
@@ -150,7 +177,7 @@ export default class TiledMapSystem {
     scene.mapPoints = {};
     scene.mapPointMeta = {};
 
-    if (!this.createTiledMap()) {
+    if (!this.createTiledMap() || !this.isActiveMapConsistent(nextConfig)) {
       this.restorePreviousMap(previousMapId, previousSpawn);
       return false;
     }
@@ -166,14 +193,42 @@ export default class TiledMapSystem {
       }
     }
 
-    if (scene.player && scene.walls) {
-      scene.physics.add.collider(scene.player, scene.walls);
-    }
-    if (scene.player && scene.objectWalls) {
-      scene.physics.add.collider(scene.player, scene.objectWalls);
-    }
+    this.addPlayerMapColliders();
     scene.pathfindingSystem?.create?.();
     scene.updateCameraZoom?.();
+    console.info("World map switched:", scene.activeTilemapStats);
+    return true;
+  }
+
+  isActiveMapConsistent(mapConfig) {
+    const scene = this.scene;
+    const map = scene.activeTilemap;
+    if (!map || scene.activeTilemapKey !== mapConfig.key || scene.activeTilemapId !== mapConfig.id) {
+      console.warn("World map switch produced an unexpected active map.", {
+        requested: mapConfig,
+        activeMapId: scene.activeTilemapId,
+        activeMapKey: scene.activeTilemapKey,
+      });
+      return false;
+    }
+
+    const jsonKey = `${mapConfig.key}_json`;
+    const expected = scene.cache.json.get(jsonKey);
+    if (!expected) {
+      console.warn(`World map JSON cache "${jsonKey}" was not found; skipping size validation.`);
+      return true;
+    }
+
+    if (map.width !== expected.width || map.height !== expected.height) {
+      console.warn("World map switch loaded a tilemap with mismatched dimensions.", {
+        requestedMapId: mapConfig.id,
+        requestedKey: mapConfig.key,
+        expected: { width: expected.width, height: expected.height },
+        actual: { width: map.width, height: map.height },
+      });
+      return false;
+    }
+
     return true;
   }
 
@@ -201,12 +256,7 @@ export default class TiledMapSystem {
       scene.mouseMoveTarget = null;
     }
 
-    if (scene.player && scene.walls) {
-      scene.physics.add.collider(scene.player, scene.walls);
-    }
-    if (scene.player && scene.objectWalls) {
-      scene.physics.add.collider(scene.player, scene.objectWalls);
-    }
+    this.addPlayerMapColliders();
     scene.pathfindingSystem?.create?.();
     scene.updateCameraZoom?.();
   }
@@ -214,6 +264,7 @@ export default class TiledMapSystem {
   destroyCurrentTiledMap() {
     const scene = this.scene;
 
+    this.clearPlayerMapColliders();
     scene.tiledMapLayers?.forEach((layer) => layer?.destroy?.());
     scene.tiledMapLayers = [];
 
@@ -225,6 +276,28 @@ export default class TiledMapSystem {
     scene.objectWalls?.destroy?.();
     scene.objectCollisionRects = [];
     scene.activeTilemap = null;
+    scene.activeTilemapId = null;
+    scene.activeTilemapKey = null;
+    scene.activeTilemapStats = null;
+  }
+
+  clearPlayerMapColliders() {
+    const scene = this.scene;
+    scene.playerWallCollider?.destroy?.();
+    scene.playerObjectWallCollider?.destroy?.();
+    scene.playerWallCollider = null;
+    scene.playerObjectWallCollider = null;
+  }
+
+  addPlayerMapColliders() {
+    const scene = this.scene;
+    this.clearPlayerMapColliders();
+    if (scene.player?.active && scene.walls) {
+      scene.playerWallCollider = scene.physics.add.collider(scene.player, scene.walls);
+    }
+    if (scene.player?.active && scene.objectWalls) {
+      scene.playerObjectWallCollider = scene.physics.add.collider(scene.player, scene.objectWalls);
+    }
   }
 
   createTiledTilesets(map, mapConfig = this.getActiveMapConfig()) {
@@ -232,7 +305,13 @@ export default class TiledMapSystem {
       .map((sourceTileset) => {
         const textureKey = this.getTiledTilesetTextureKey(sourceTileset, mapConfig);
         if (!textureKey) return null;
-        return map.addTilesetImage(sourceTileset.name, textureKey);
+        const tileset = map.addTilesetImage(sourceTileset.name, textureKey);
+        if (!tileset) {
+          console.warn(
+            `Failed to bind tileset "${sourceTileset.name}" to texture "${textureKey}" for map "${mapConfig.id}".`,
+          );
+        }
+        return tileset;
       })
       .filter(Boolean);
   }
@@ -596,12 +675,14 @@ export default class TiledMapSystem {
     const scene = this.scene;
     image.setInteractive({ useHandCursor: true });
     image.on("pointerover", () => {
+      if (!this.isMainWorldMap()) return;
       image.setTint(0xffeb3b);
     });
     image.on("pointerout", () => {
       image.clearTint();
     });
     image.on("pointerdown", (pointer) => {
+      if (!this.isMainWorldMap()) return;
       const button = pointer.event?.button ?? pointer.button;
       if (button !== 0) return;
       if (!scene.player?.active || scene.sceneControlSystem?.isWorldInputBlocked()) return;
@@ -653,5 +734,10 @@ export default class TiledMapSystem {
         }
       }
     });
+  }
+
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
   }
 }

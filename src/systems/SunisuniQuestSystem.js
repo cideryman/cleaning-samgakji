@@ -63,6 +63,10 @@ export default class SunisuniQuestSystem {
     if (!this.isFollowing() || !scene.sunisuniNpc?.active || !scene.player) return;
 
     const distance = Phaser.Math.Distance.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, scene.player.x, scene.player.y);
+    if (distance > GAME_CONFIG.sunisuniMaxDistance * 2) {
+      this.recoverFollowerNearPlayer();
+      return;
+    }
     if (distance > GAME_CONFIG.sunisuniMaxDistance) {
       scene.showSpeechBubble(scene.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
     }
@@ -119,6 +123,26 @@ export default class SunisuniQuestSystem {
 
     const directionKey = scene.getDirectionKeyFromVector(moveX, moveY, scene.sunisuniNpc.getData("directionKey") || "down");
     scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", directionKey, true);
+  }
+
+  recoverFollowerNearPlayer() {
+    const scene = this.scene;
+    if (!scene.sunisuniNpc?.active || !scene.player) return;
+
+    const candidates = [
+      { x: scene.player.x - 64, y: scene.player.y + 28 },
+      { x: scene.player.x + 64, y: scene.player.y + 28 },
+      { x: scene.player.x, y: scene.player.y + 78 },
+      { x: scene.player.x - 82, y: scene.player.y },
+      { x: scene.player.x + 82, y: scene.player.y },
+    ];
+    const position = candidates.find((point) => scene.canNpcStandAt?.(point.x, point.y) !== false);
+    if (!position) return;
+
+    scene.npcFollowRouteSystem?.clear("sunisuni_follow");
+    scene.sunisuniNpc.setPosition(position.x, position.y);
+    scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", "down", false);
+    scene.showSpeechBubble(scene.sunisuniNpc, "천천히 같이 가요.", 1800);
   }
 
   playEffect(animKey, x, y) {
