@@ -10,10 +10,13 @@ export default class MapTransitionSystem {
     this.suppressedGate = null;
     this.transitionSafetyTimer = null;
     this.pendingSpawn = null;
+    this.connectionMarkers = [];
+    this.connectionMarkerStateKey = null;
   }
 
   update(time = 0) {
     const scene = this.scene;
+    this.refreshConnectionMarkers();
     if (this.isBlocked()) return;
 
     if (scene.currentWorldMapId === "chapter1_south_park") {
@@ -50,10 +53,7 @@ export default class MapTransitionSystem {
 
     const distance = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, gate.x, gate.y);
     if (this.isSuppressedGate("chapter1_south_park", "samgakji_return", distance)) return;
-    if (distance > this.gateRadius) {
-      this.showThrottledToast(time, "위쪽 길로 돌아가면 삼각지 중심으로 갈 수 있어요.", 5200);
-      return;
-    }
+    if (distance > this.gateRadius) return;
 
     this.returnToMainMap();
   }
@@ -101,6 +101,71 @@ export default class MapTransitionSystem {
     return Number.isFinite(parsed) ? parsed : 9;
   }
 
+  refreshConnectionMarkers() {
+    const scene = this.scene;
+    const mapId = scene.currentWorldMapId || "main";
+    const unlockLevel = this.getSouthParkUnlockLevel();
+    const currentLevel = scene.samgakjiProgressSystem?.getCurrentLevel?.() ?? 1;
+    const isUnlocked = currentLevel >= unlockLevel;
+    const stateKey = mapId === "chapter1_south_park" ? mapId : `${mapId}:${isUnlocked ? "unlocked" : "locked"}`;
+    if (this.connectionMarkerStateKey === stateKey && this.connectionMarkers.some((marker) => marker?.active)) {
+      return;
+    }
+
+    this.clearConnectionMarkers();
+    this.connectionMarkerStateKey = stateKey;
+
+    if (mapId === "chapter1_south_park") {
+      const gate = scene.getMapPoint?.("samgakji_return", null);
+      if (gate) {
+        this.createConnectionMarker(gate, "삼각지 중심", { color: 0x79d978, signOffsetY: 42 });
+      }
+      return;
+    }
+
+    if (mapId !== "main" && mapId !== "chapter1_map") return;
+
+    const gate = scene.getMapPoint?.("south_park_gate", null);
+    if (!gate) return;
+
+    this.createConnectionMarker(gate, isUnlocked ? "남쪽 공원" : `Lv.${unlockLevel} 남쪽 공원`, {
+      color: isUnlocked ? 0xf7d96f : 0xbfc6aa,
+      alpha: isUnlocked ? 0.26 : 0.16,
+      signOffsetY: -48,
+    });
+  }
+
+  createConnectionMarker(point, label, { color = 0xf7d96f, alpha = 0.24, signOffsetY = -48 } = {}) {
+    const scene = this.scene;
+    const depth = scene.getWorldDepth?.(point.y, 0.65) ?? 100;
+    const ring = scene.add.ellipse(point.x, point.y, 104, 36, color, alpha);
+    ring.setStrokeStyle(3, 0x21352c, 0.35);
+    ring.setDepth(depth);
+
+    const signY = point.y + signOffsetY;
+    const panelWidth = Math.max(116, label.length * 15 + 32);
+    const panel = scene.add.rectangle(point.x, signY, panelWidth, 34, 0xfff8df, 0.96);
+    panel.setStrokeStyle(3, 0x21352c, 0.9);
+    panel.setDepth(depth + 0.02);
+
+    const text = scene.add.text(point.x, signY, label, {
+      fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif",
+      fontSize: "15px",
+      fontStyle: "700",
+      color: "#20342b",
+      align: "center",
+    });
+    text.setOrigin(0.5);
+    text.setDepth(depth + 0.03);
+
+    this.connectionMarkers.push(ring, panel, text);
+  }
+
+  clearConnectionMarkers() {
+    this.connectionMarkers.forEach((marker) => marker?.destroy?.());
+    this.connectionMarkers = [];
+  }
+
   enterSouthPark() {
     this.transitionToMap({
       mapId: "chapter1_south_park",
@@ -109,6 +174,7 @@ export default class MapTransitionSystem {
       beforeSwitch: () => {
         this.hideMainWorldActors();
         this.destroyMainWorldUtilityObjects();
+        this.scene.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
         this.scene.roadTrafficSystem?.cleanup?.();
       },
       afterSwitch: () => {
@@ -134,6 +200,7 @@ export default class MapTransitionSystem {
         this.scene.player?.body?.reset?.(gate.x, Math.max(96, gate.y - 72));
         this.suppressedGate = { mapId: "main", gateKey: "south_park_gate" };
         this.scene.createRecyclingCenter?.();
+        this.scene.travelEndingSystem?.createPermanentBusStopObjects?.();
         this.scene.roadTrafficSystem?.create?.();
         this.restoreMainWorldActors();
         this.scene.showQuestToast?.("삼각지 중심으로 돌아왔어요.", 2600);
@@ -149,6 +216,8 @@ export default class MapTransitionSystem {
     scene.playerController?.cancelMoveTarget?.();
     scene.npcFollowRouteSystem?.clearAll?.();
     scene.clearInteriorScene?.();
+    this.clearConnectionMarkers();
+    this.connectionMarkerStateKey = null;
     this.armTransitionSafetyTimer();
     this.pendingSpawn = { spawnKey, fallbackSpawn };
 
@@ -317,6 +386,7 @@ export default class MapTransitionSystem {
 
   destroyMainWorldUtilityObjects() {
     const scene = this.scene;
+    scene.travelEndingSystem?.cleanupPermanentBusStopObjects?.();
     scene.vendingMachine?.destroy?.();
     scene.vendingMachine = null;
     (scene.recycleBins || []).forEach((entry) => {
@@ -333,5 +403,7 @@ export default class MapTransitionSystem {
     this.suppressedGate = null;
     this.pendingSpawn = null;
     this.clearTransitionSafetyTimer();
+    this.clearConnectionMarkers();
+    this.connectionMarkerStateKey = null;
   }
 }

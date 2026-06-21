@@ -1014,6 +1014,11 @@ export default class PlayScene extends Phaser.Scene {
   }
 
   advanceDevQuest() {
+    if (!this.isMainWorldMap()) {
+      this.showQuestToast("F4 퀘스트 치트는 삼각지 중심에서만 사용할 수 있어.");
+      return;
+    }
+
     if (this.isInDialogue || this.vendingMenuGroup) {
       this.showQuestToast("대화가 끝난 뒤 F4를 눌러줘.");
       return;
@@ -1178,6 +1183,11 @@ export default class PlayScene extends Phaser.Scene {
   ensureDevMoney(amount) {
     if (!this.moneySystem || this.moneySystem.money >= amount) return;
     this.moneySystem.addMoney(amount - this.moneySystem.money);
+  }
+
+  isMainWorldMap() {
+    const mapId = this.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
   }
 
   // ---------------------------------------------------------------------------

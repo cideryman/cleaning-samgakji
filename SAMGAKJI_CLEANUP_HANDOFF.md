@@ -39,7 +39,7 @@ This is the single practical work order for the next Codex sessions. Use the det
    - Reported 2026-06-18:
      - Even after hard refresh and cache clear, entering Samgakji Park can still leave the gameplay canvas black while HUD remains visible.
      - This now looks similar to the existing ending lock issue rather than a simple stale-cache issue.
-     - Chapter 1 ending still stops around the amusement-park/roller-coaster image and does not progress to the final ending/return flow.
+     - Chapter 1 ending no longer appears as a pure black screen, but it still stops around the amusement-park/roller-coaster image and does not progress to the final ending/return flow or title return.
      - If Haenaem refuses Mom's phone call, the game can become stuck; the phone icon that should appear is not visible.
    - Treat these as one likely family of bugs until proven otherwise:
      - Phaser camera fade/dim FX not clearing
@@ -113,9 +113,10 @@ This is the single practical work order for the next Codex sessions. Use the det
     - `MapTransitionSystem` explicitly cleans road traffic before entering south park and recreates it after returning to the main map.
     - `InteractionSystem` now ignores door zones and direct hospital/pharmacy/clothing/convenience checks outside the main map.
     - `TiledMapSystem.setupBuildingInteractive()` now ignores main-map building hover/click interactions outside the main map.
+    - `TravelEndingSystem` bus-stop points and permanent waiting-spot objects are now valid only on the main map. `MapTransitionSystem` cleans the permanent bus-stop objects before entering south park and recreates them after returning to the main map.
     - Principle: every system that owns main-map objects, invisible interaction zones, or live update loops must check `currentWorldMapId` before acting on alternate maps.
     - Manual check result: user confirmed south park no longer shows cars and old shop/building interactions no longer open there.
-    - Remaining manual check: return to the main map and confirm cars and shops work again.
+    - Remaining manual check: enter south park and confirm the yellow bus-stop waiting circle is gone. Return to the main map and confirm cars, shops, and the bus-stop waiting circle work again.
 
 2. Sunisuni escort/follow bug.
    - Reported 2026-06-16: during the Sunisuni quest, Sunisuni does not follow Haenaem.
@@ -133,7 +134,8 @@ This is the single practical work order for the next Codex sessions. Use the det
 
 3. Final ending black/dark screen / no progress after mom phone ending.
    - Lower practical urgency because it occurs at the very end, but it is still a progression blocker.
-   - Current mitigation exists, but manual testing still reported failure.
+   - Current mitigation exists, and the pure black-screen symptom appears reduced.
+   - Current reported symptom: the ending reaches the amusement-park/roller-coaster image, then freezes or does not proceed to the intended final ending/title-return flow.
    - Suspect fade/dim state or ending image transition state. If revisiting, test a no-fade final ending path first.
    - 2026-06-16 safety pass:
      - Final ending now repeatedly resets camera fade/FX shortly after the ending scene is shown.
@@ -152,7 +154,70 @@ This is the single practical work order for the next Codex sessions. Use the det
 
 ### P1: Map Connection And World Expansion
 
-1. South park map connection.
+1. South park navigation markers and return prompt cleanup.
+   - New request 2026-06-21:
+     - The repeated "위쪽 길로 돌아가면 삼각지 중심으로 갈 수 있어요." toast is too noisy.
+     - Prefer showing the connection points visually on both maps instead of repeating text.
+   - Recommended behavior:
+     - Show the return/entry point with a small sign plus a subtle yellow/green circle, similar to other clear destination markers.
+     - Show the explanatory toast only once per visit, or remove it after visual markers are added.
+     - Both markers should be Tiled-adjustable if possible: main map near `south_park_gate`, south park near `samgakji_return`.
+   - Priority reason:
+     - This is the first polish pass after south-park entry became stable, and it directly improves orientation without adding a new system.
+   - 2026-06-21 implementation:
+     - `MapTransitionSystem` now creates lightweight map connection markers from Tiled points.
+     - Main map marker uses `south_park_gate` and shows `남쪽 공원` or `Lv.N 남쪽 공원` before unlock.
+     - South park marker uses `samgakji_return` and shows `삼각지 중심`.
+     - The repeated south-park return toast was removed; orientation should now come from the visible marker.
+   - Manual check:
+     - Main map: confirm the south-park gate has a subtle ring/sign and still transitions at the correct level.
+     - South park: confirm the return point has a subtle ring/sign and the old repeated "위쪽 길로..." toast no longer appears.
+     - Return to main map and confirm the marker refreshes correctly.
+
+2. South park progress should start at Lv.9, not inherit completed main-map bloom.
+   - New request 2026-06-21:
+     - South park unlocks at Lv.9, so its own flowers/butterflies should develop from Lv.9 onward.
+     - Current issue: butterflies can appear immediately when entering the south park, making the new area feel already finished.
+   - Desired rule:
+     - Lv.9: south park starts mostly plain; no butterflies.
+     - Lv.10+: south park flowerbeds/flowers begin from frame 0 and grow one frame at a time.
+     - South park flowerbed/flower sprites are 4-frame growth sprites, so use frame 0 -> 1 -> 2 -> 3 across later levels rather than jumping straight to full bloom.
+     - Butterflies should appear only after enough south-park growth, not immediately at Lv.9.
+   - Priority reason:
+     - This fixes the strongest current mismatch between map unlock timing and the Samgakji progress fantasy.
+   - 2026-06-21 implementation:
+     - `NeighborhoodProgressSystem` now calculates the visible bloom stage per current world map.
+     - Main map still keeps the saved `neighborhoodBloom.stage` behavior for backward compatibility.
+     - South park ignores the already-completed main-map bloom stage and starts visually from Lv.9:
+       - Lv.9: Stage 0, no butterflies.
+       - Lv.10: Stage 1, first growth step.
+       - Lv.11: Stage 2.
+       - Lv.12: Stage 3, first butterfly tier.
+       - Lv.13+: Stage 4.
+     - Main-map fallback flowerbed anchors are no longer spawned automatically on alternate maps. Alternate maps must use Tiled points/progress objects for their own decorations.
+     - South-park Tiled progress objects can still use global `revealAtLevel` and `recoveredGrowthFrames`, so `revealAtLevel: 10` starts at frame 0 and grows by level.
+   - Manual check:
+     - Enter south park at Lv.9: no butterflies and no fully completed main-map flowerbeds should appear.
+     - Use the level-up cheat or normal cleaning to reach Lv.10/Lv.11/Lv.12 and confirm south-park growth frames advance gradually.
+     - Confirm main-map flowerbeds and butterflies still appear as before when returning to the main map.
+   - 2026-06-21 follow-up bug fix:
+     - Report: pressing F4 while inside south park spawned main-quest NPCs in the south map.
+     - Fix: `PlayScene.advanceDevQuest()` now only runs on the main world map. F6 level cheat remains available for south-park progress testing.
+     - Report: reaching Lv.11 in south park could freeze.
+     - Defensive fix: progress-object growth frame changes now use `safeSetFrame()`. If a texture frame is missing or invalid, the game keeps/falls back to frame 0 and logs a warning instead of crashing.
+   - Manual check:
+     - In south park, press F4: no Yebi/Jjook/Sunisuni quest NPCs should spawn there; only a toast should appear.
+     - In south park, use F6 to reach Lv.11: the game should not freeze. If it still freezes, capture the browser console log; next suspect is the level-up modal/state lock rather than progress texture frames.
+   - 2026-06-21 second Lv.11 freeze mitigation:
+     - User confirmed F4 NPC spawning is fixed, but Lv.11 still freezes.
+     - Lv.11 is also the first level-name change to `쉬어가는 삼각지`, so the blocking level-up modal/state lock is now treated as the most likely cause.
+     - `SamgakjiProgressSystem` now shows the full blocking level-up popup only on the main world map.
+     - On alternate maps such as south park, level-name changes are acknowledged with a non-blocking toast and checkpoint save instead of setting `CUTSCENE`/world-input block.
+   - Manual check:
+     - In south park, use F6 from Lv.10 to Lv.11. Expected: no full-screen level-up modal, a short toast appears, and movement remains possible.
+     - If it still freezes at Lv.11 after this change, capture the browser console. Next likely target is south-park `progressObject` visibility/collider/pathfinding update rather than the level-up modal.
+
+3. South park map connection.
    - Current status: `chapter1-south-park-map.json` is loaded by Preload, and the main map has a Tiled-adjustable `south_park_gate` logic point.
    - 2026-06-16 first safe connection pass:
      - Added `src/systems/MapTransitionSystem.js`.
@@ -201,14 +266,25 @@ This is the single practical work order for the next Codex sessions. Use the det
      - Confirm main-map learning icons and quest guide arrows do not appear inside south park.
    - Keep future map swapping inside `MapTransitionSystem` / `TiledMapSystem`; do not add transition bodies directly to `PlayScene.js`.
 
-2. Chapter 2 direction note.
+4. Chapter 2 direction note.
    - Samgakji Park becomes an intermediate hub.
    - Future flow: `Samgakji center -> Samgakji Park -> Sosu Seowon entrance -> Stone-wall / seowon path`.
    - Do not implement new Chapter 2 maps yet.
 
 ### P2: Player-Facing Polish And Bugs
 
-1. Continue-game HUD disappearing.
+1. Quest unlock popup unification.
+   - New request 2026-06-21:
+     - The "수니수니가 기다리고 있어요" style popup feels good, but only Sunisuni currently uses it.
+     - Apply the same assetless important-notice popup style to other major quest unlocks, excluding the early/simple can-collect quest if it feels unnecessary.
+   - Recommended scope:
+     - Keep small/repeated progress updates as toast/gauge.
+     - Use the centered popup only when a new quest/NPC/place becomes available, such as recycling quest, Jjook wallet quest, clothes shop quest, packing/travel prep, and Sunisuni quest.
+     - Avoid overusing popups during repetitive collection loops.
+   - Priority reason:
+     - This improves consistency and player motivation, but it should come after the south-park navigation/progress fixes.
+
+2. Continue-game HUD disappearing.
    - Reported 2026-06-18: after using 이어하기, HUD can disappear even though gameplay loads.
    - Cause found: HUD is hidden by CSS when body has scene-mode classes such as `start-screen`, `prologue-scene-active`, `epilogue-scene-active`, or `interior-scene-active`.
    - Fix:
@@ -223,7 +299,7 @@ This is the single practical work order for the next Codex sessions. Use the det
      - Confirm money HUD, Samgakji progress HUD, right buttons, and broom button appear.
      - Also confirm epilogue checkpoint still hides HUD intentionally.
 
-2. Educational guide icons leaking into cutscenes/interiors.
+3. Educational guide icons leaking into cutscenes/interiors.
    - 2026-06-18 fix:
      - `EducationalGuideSystem.hideWorldIcons()` was added.
      - `SceneControlSystem.blockWorldInput(true)` now immediately hides guide icons.
@@ -231,15 +307,15 @@ This is the single practical work order for the next Codex sessions. Use the det
    - Rule: yellow question-mark learning icons are world-map helpers only.
    - Needs manual check: cutscene, pharmacy map, and ending/interior scenes should not show yellow question-mark guide icons.
 
-3. Progress landscaping placement cleanup.
+4. Progress landscaping placement cleanup.
    - Fix awkward bench/tree/rose placements near Jjook, recycling bins, and paths.
    - Prefer Tiled `logic_point` edits over JS config.
 
-4. NPC movement naturalization.
+5. NPC movement naturalization.
    - Existing path-follow work is partially complete.
    - Remaining: tune Jjook/Sunisuni follow jitter, test roads/crosswalks, and migrate any remaining custom direct movement.
 
-5. Mobile loading speed.
+6. Mobile loading speed.
    - Asset count has grown.
    - Plan later: preload only chapter-critical assets, lazy-load shop/interior/ending assets, and remove unused temporary assets.
 
@@ -546,11 +622,19 @@ Implemented:
 - `neighborhoodBloom` remains for save compatibility. Do not remove it yet.
 
 Visual mapping:
+- Main Samgakji center map:
 - Lv.1-2: flowerbed Stage 0.
 - Lv.3-4: flowerbed Stage 1.
 - Lv.5-6: flowerbed Stage 2.
 - Lv.7-8: flowerbed Stage 3 and butterfly appears.
 - Lv.9+: flowerbed Stage 4 and butterflies increase.
+- South park extension map:
+  - The south park unlocks around Lv.9, so it should not inherit a fully finished main-map bloom state.
+  - Lv.9: base south park, mostly plain, no butterflies.
+  - Lv.10+: south-park flowerbeds/flowers begin from frame 0 and grow one frame at a time.
+  - Later levels should advance south-park flowerbeds/roses/trees through frame 0 -> 1 -> 2 -> 3 in order.
+  - Butterflies should appear only after visible south-park growth, not immediately on first entry.
+  - Keep south-park progress anchors Tiled-adjustable.
 
 Current progress assets:
 - `assets/sprites/flowerbed_growth.png`, frame size 160 x 96.
@@ -638,11 +722,12 @@ Supporting details for the current priority roadmap above. The roadmap near the 
 ### P0: Progression Blockers
 
 1. Final ending does not proceed after the last ending screen.
-   - Status: mitigation applied; needs manual in-game check.
-   - Symptom: ending image remains very dark and the flow does not continue/respond as expected.
+   - Status: mitigation applied; still unresolved.
+   - Updated symptom 2026-06-21: the pure black-screen symptom appears reduced, but the ending still stops around the amusement-park/roller-coaster image and does not proceed to the intended final ending/title-return flow.
    - 2026-06-14 update: final ending now avoids the camera fade-out transition, resets camera FX before showing the ending image, removes the interior dim overlay for `type === "ending"`, and accepts click/touch/Space/Enter to return to StartScene.
    - 2026-06-16 update: final ending now repeats camera FX reset after showing, adds a full-screen transparent click/touch return zone, and uses a black CSS background for ending letterbox areas.
-   - Manual check: finish the mother phone ending, confirm the final ending image is not dark/blocked, then click/touch or press Space to return to the title screen.
+   - Next debug pass should inspect the ending step/state machine around the amusement-park scene, not only the final image visibility.
+   - Manual check: finish the mother phone ending, confirm whether the amusement-park image advances, whether the final ending scene appears, and whether click/touch or Space returns to the title screen.
 
 ### P1: Player-Facing Bugs And Feel
 

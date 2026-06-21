@@ -14,13 +14,20 @@ export default class TravelEndingSystem {
     this.finalEndingReturnHandler = null;
   }
 
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
+  }
+
   getBusStopPoint() {
+    if (!this.isMainWorldMap()) return null;
     return this.scene.getMapPoint("bus_stop", GAME_CONFIG.busStop);
   }
 
   createPermanentBusStopObjects() {
     const scene = this.scene;
     this.cleanupPermanentBusStopObjects();
+    if (!this.isMainWorldMap()) return null;
 
     const stop = this.getBusStopPoint();
     if (!stop) return null;

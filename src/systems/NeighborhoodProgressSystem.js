@@ -23,6 +23,14 @@ const STAGE_FRAMES = [
   [3, 3, 3, 3],
 ];
 
+const SOUTH_PARK_STAGE_FRAMES = [
+  [0, 0, 0, 0],
+  [0, 0, 0, 0],
+  [1, 0, 0, 0],
+  [2, 1, 0, 0],
+  [3, 2, 1, 0],
+];
+
 const STAGE_MESSAGES = {
   1: "삼각지에 작은 꽃이 피고 있어요.",
   2: "삼각지에 꽃이 더 많이 피고 있어요.",
@@ -91,7 +99,6 @@ export default class NeighborhoodProgressSystem {
     const nextVisualLevel = this.getVisualLevel();
     if (
       nextStage === this.lastEvaluatedStage
-      && nextStage === this.scene.neighborhoodBloom?.stage
       && nextVisualLevel === this.lastVisualLevel
     ) {
       return;
@@ -101,12 +108,15 @@ export default class NeighborhoodProgressSystem {
 
   refresh({ silent = false } = {}) {
     const bloom = NeighborhoodProgressSystem.normalizeState(this.scene.neighborhoodBloom);
-    const nextStage = Math.max(bloom.stage, this.getEligibleStage());
-    const didAdvance = nextStage > bloom.stage;
-    bloom.stage = nextStage;
+    const previousStage = this.lastEvaluatedStage >= 0 ? this.lastEvaluatedStage : bloom.stage;
+    const nextStage = this.getNextVisualStage(bloom);
+    const didAdvance = nextStage > previousStage;
 
-    for (let stage = 1; stage <= nextStage; stage += 1) {
-      bloom.unlockedStages[`stage${stage}`] = true;
+    if (this.isMainWorldMap()) {
+      bloom.stage = nextStage;
+      for (let stage = 1; stage <= nextStage; stage += 1) {
+        bloom.unlockedStages[`stage${stage}`] = true;
+      }
     }
 
     this.scene.neighborhoodBloom = bloom;
@@ -124,11 +134,26 @@ export default class NeighborhoodProgressSystem {
 
   getEligibleStage() {
     const level = this.getVisualLevel();
+    if (this.isSouthParkMap()) {
+      if (level >= 13) return 4;
+      if (level >= 12) return 3;
+      if (level >= 11) return 2;
+      if (level >= 10) return 1;
+      return 0;
+    }
+
     if (level >= 9) return 4;
     if (level >= 7) return 3;
     if (level >= 5) return 2;
     if (level >= 3) return 1;
     return 0;
+  }
+
+  getNextVisualStage(bloom) {
+    const eligibleStage = this.getEligibleStage();
+    return this.isMainWorldMap()
+      ? Math.max(bloom.stage, eligibleStage)
+      : eligibleStage;
   }
 
   getVisualLevel() {
@@ -138,11 +163,21 @@ export default class NeighborhoodProgressSystem {
     return Phaser.Math.Clamp(Number.isFinite(level) ? level : 1, 1, 16);
   }
 
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
+  }
+
+  isSouthParkMap() {
+    return this.scene.currentWorldMapId === "chapter1_south_park";
+  }
+
   createFlowerbeds() {
     this.destroyFlowerbeds();
 
     FLOWERBED_ANCHORS.forEach((anchor, index) => {
       const point = this.getFlowerbedPoint(anchor);
+      if (!point) return;
       const textureKey = this.getAvailableFlowerbedTexture(anchor.texture);
       const flowerbed = textureKey
         ? this.scene.add.sprite(point.x, point.y, textureKey, 0)
@@ -160,7 +195,12 @@ export default class NeighborhoodProgressSystem {
   }
 
   getFlowerbedPoint(anchor) {
-    return this.scene.getMapPoint?.(anchor.key, anchor.fallback) || anchor.fallback;
+    const point = this.scene.mapPoints?.[anchor.key];
+    if (point) return point;
+    if (this.isMainWorldMap()) {
+      return this.scene.getMapPoint?.(anchor.key, anchor.fallback) || anchor.fallback;
+    }
+    return null;
   }
 
   getAvailableFlowerbedTexture(preferredTexture) {
@@ -502,7 +542,35 @@ export default class NeighborhoodProgressSystem {
     const startLevel = config.growthStartLevel ?? config.showFromLevel ?? 1;
     const maxFrame = config.maxFrame ?? 3;
     const frame = Phaser.Math.Clamp(level - startLevel, 0, maxFrame);
-    prop.setFrame(frame);
+    this.safeSetFrame(prop, frame, config.key);
+  }
+
+  safeSetFrame(prop, frame, debugKey = "progressProp") {
+    const texture = prop?.texture;
+    const canCheckFrame = typeof texture?.has === "function";
+    const hasFrame = !canCheckFrame || texture.has(frame);
+    const fallbackFrame = canCheckFrame && texture.has(0) ? 0 : null;
+
+    if (!hasFrame) {
+      if (fallbackFrame !== null && prop.frame?.name !== fallbackFrame) {
+        prop.setFrame(fallbackFrame);
+      }
+      console.warn(`Progress prop "${debugKey}" has no frame ${frame}; using fallback frame.`);
+      return;
+    }
+
+    try {
+      prop.setFrame(frame);
+    } catch (error) {
+      console.warn(`Failed to set progress prop frame for "${debugKey}".`, error);
+      if (fallbackFrame !== null) {
+        try {
+          prop.setFrame(fallbackFrame);
+        } catch {
+          // Keep the previous frame if even the fallback frame cannot be applied.
+        }
+      }
+    }
   }
 
   applyReplacedMapObjectVisibility(level) {
@@ -542,7 +610,8 @@ export default class NeighborhoodProgressSystem {
   }
 
   applyFlowerbedFrames(stage) {
-    const frames = STAGE_FRAMES[stage] || STAGE_FRAMES[0];
+    const stageFrames = this.isSouthParkMap() ? SOUTH_PARK_STAGE_FRAMES : STAGE_FRAMES;
+    const frames = stageFrames[stage] || stageFrames[0];
     this.flowerbeds.forEach((flowerbed, index) => {
       if (!flowerbed?.setFrame) return;
       flowerbed.setFrame(frames[index] ?? 0);

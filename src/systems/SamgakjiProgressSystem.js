@@ -77,7 +77,23 @@ export default class SamgakjiProgressSystem {
       return;
     }
 
+    if (!this.isMainWorldMap()) {
+      this.showNonBlockingLevelNotice(levelInfo);
+      return;
+    }
+
     this.showLevelUpPopup(levelInfo);
+  }
+
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
+  }
+
+  showNonBlockingLevelNotice(levelInfo) {
+    this.acknowledgeLevel(levelInfo.level);
+    this.scene.showQuestToast?.(`삼각지 Lv.${levelInfo.level}: ${levelInfo.name}`, 4200);
+    this.scene.saveCheckpoint?.(`samgakji_level_${levelInfo.level}`);
   }
 
   showLevelUpPopup(levelInfo) {

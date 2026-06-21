@@ -89,7 +89,7 @@
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53, 28, 53, 28, 28, 53, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 61, 62, 61, 62, 61, 62, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 42, 42, 42, 42, 42, 42, 43, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
          "height":38,
          "id":2,
          "name":"objects",
@@ -3912,22 +3912,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_paper_rubble"},
-                        {"name":"dirtyWidth","type":"float","value":92},
-                        {"name":"dirtyHeight","type":"float","value":55},
-                        {"name":"recoveredTexture","type":"string","value":"progress_rose_bush"},
-                        {"name":"recoveredWidth","type":"float","value":96},
-                        {"name":"recoveredHeight","type":"float","value":96},
-                        {"name":"revealAtLevel","type":"int","value":5},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.16},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":55
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_paper_rubble"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":92
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.16
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":96
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_rose_bush"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":96
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":5
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":256,
-                 "y":320
+                 "x":232,
+                 "y":418
                 }, 
                 {
                  "height":0,
@@ -3936,22 +3976,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_soil_rubble"},
-                        {"name":"dirtyWidth","type":"float","value":88},
-                        {"name":"dirtyHeight","type":"float","value":53},
-                        {"name":"recoveredTexture","type":"string","value":"progress_rose_bush"},
-                        {"name":"recoveredWidth","type":"float","value":96},
-                        {"name":"recoveredHeight","type":"float","value":96},
-                        {"name":"revealAtLevel","type":"int","value":6},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.16},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":53
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_soil_rubble"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":88
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.16
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":96
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_rose_bush"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":96
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":6
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":896,
-                 "y":320
+                 "x":787,
+                 "y":418
                 }, 
                 {
                  "height":0,
@@ -3960,22 +4040,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_cardboard_pile"},
-                        {"name":"dirtyWidth","type":"float","value":76},
-                        {"name":"dirtyHeight","type":"float","value":46},
-                        {"name":"recoveredTexture","type":"string","value":"progress_small_tree"},
-                        {"name":"recoveredWidth","type":"float","value":76},
-                        {"name":"recoveredHeight","type":"float","value":76},
-                        {"name":"revealAtLevel","type":"int","value":4},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.18},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":46
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_cardboard_pile"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.18
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_small_tree"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":4
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":160,
-                 "y":608
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -3984,22 +4104,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_concrete_scrap"},
-                        {"name":"dirtyWidth","type":"float","value":76},
-                        {"name":"dirtyHeight","type":"float","value":46},
-                        {"name":"recoveredTexture","type":"string","value":"progress_small_tree"},
-                        {"name":"recoveredWidth","type":"float","value":76},
-                        {"name":"recoveredHeight","type":"float","value":76},
-                        {"name":"revealAtLevel","type":"int","value":5},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.18},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":46
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_concrete_scrap"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.18
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_small_tree"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":5
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":260,
-                 "y":608
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -4008,22 +4168,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_paper_rubble"},
-                        {"name":"dirtyWidth","type":"float","value":76},
-                        {"name":"dirtyHeight","type":"float","value":46},
-                        {"name":"recoveredTexture","type":"string","value":"progress_small_tree"},
-                        {"name":"recoveredWidth","type":"float","value":76},
-                        {"name":"recoveredHeight","type":"float","value":76},
-                        {"name":"revealAtLevel","type":"int","value":6},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.18},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":46
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_paper_rubble"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.18
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_small_tree"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":6
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":360,
-                 "y":608
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -4032,22 +4232,62 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_spilled_bin"},
-                        {"name":"dirtyWidth","type":"float","value":76},
-                        {"name":"dirtyHeight","type":"float","value":46},
-                        {"name":"recoveredTexture","type":"string","value":"progress_small_tree"},
-                        {"name":"recoveredWidth","type":"float","value":76},
-                        {"name":"recoveredHeight","type":"float","value":76},
-                        {"name":"revealAtLevel","type":"int","value":7},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.18},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":46
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_spilled_bin"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.18
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_small_tree"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":7
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":460,
-                 "y":608
+                 "y":618
                 }, 
                 {
                  "height":0,
@@ -4056,16 +4296,56 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_trash_bags"},
-                        {"name":"dirtyWidth","type":"float","value":98},
-                        {"name":"dirtyHeight","type":"float","value":59},
-                        {"name":"recoveredTexture","type":"string","value":"progress_broad_tree_b"},
-                        {"name":"recoveredWidth","type":"float","value":132},
-                        {"name":"recoveredHeight","type":"float","value":132},
-                        {"name":"revealAtLevel","type":"int","value":6},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.14},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":59
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_trash_bags"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":98
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.14
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":132
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_broad_tree_b"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":132
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":6
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4080,16 +4360,56 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"dirtyTexture","type":"string","value":"dirty_soil_rubble"},
-                        {"name":"dirtyWidth","type":"float","value":96},
-                        {"name":"dirtyHeight","type":"float","value":58},
-                        {"name":"recoveredTexture","type":"string","value":"progress_pine_tree"},
-                        {"name":"recoveredWidth","type":"float","value":124},
-                        {"name":"recoveredHeight","type":"float","value":124},
-                        {"name":"revealAtLevel","type":"int","value":7},
-                        {"name":"recoveredDepthOffset","type":"float","value":-0.14},
-                        {"name":"recoveredGrowthFrames","type":"bool","value":true}],
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":58
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_soil_rubble"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":96
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.14
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":124
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_pine_tree"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":124
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":7
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4104,13 +4424,41 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_concrete_scrap"},
-                        {"name":"width","type":"float","value":134},
-                        {"name":"height","type":"float","value":80},
-                        {"name":"showUntilLevel","type":"int","value":3},
-                        {"name":"blocksMovement","type":"bool","value":true}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":80
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":3
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_concrete_scrap"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":134
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4125,13 +4473,41 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_paper_rubble"},
-                        {"name":"width","type":"float","value":132},
-                        {"name":"height","type":"float","value":79},
-                        {"name":"showUntilLevel","type":"int","value":4},
-                        {"name":"blocksMovement","type":"bool","value":true}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":79
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_paper_rubble"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":132
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4146,14 +4522,46 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_trash_bags"},
-                        {"name":"width","type":"float","value":132},
-                        {"name":"height","type":"float","value":79},
-                        {"name":"showUntilLevel","type":"int","value":2},
-                        {"name":"blocksMovement","type":"bool","value":true},
-                        {"name":"replacedMapObjectKey","type":"string","value":"west_rest_bench"}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":79
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"replacedMapObjectKey",
+                         "type":"string",
+                         "value":"west_rest_bench"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":2
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_trash_bags"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":132
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4168,14 +4576,46 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_cardboard_pile"},
-                        {"name":"width","type":"float","value":128},
-                        {"name":"height","type":"float","value":77},
-                        {"name":"showUntilLevel","type":"int","value":3},
-                        {"name":"blocksMovement","type":"bool","value":true},
-                        {"name":"replacedMapObjectKey","type":"string","value":"park_tree_center_01"}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":77
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"replacedMapObjectKey",
+                         "type":"string",
+                         "value":"park_tree_center_01"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":3
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_cardboard_pile"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":128
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4190,14 +4630,46 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_spilled_bin"},
-                        {"name":"width","type":"float","value":138},
-                        {"name":"height","type":"float","value":83},
-                        {"name":"showUntilLevel","type":"int","value":4},
-                        {"name":"blocksMovement","type":"bool","value":true},
-                        {"name":"replacedMapObjectKey","type":"string","value":"park_bench_south"}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":83
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"replacedMapObjectKey",
+                         "type":"string",
+                         "value":"park_bench_south"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_spilled_bin"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":138
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
@@ -4212,16 +4684,48 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"progressObject","type":"bool","value":true},
-                        {"name":"progressType","type":"string","value":"dirty"},
-                        {"name":"texture","type":"string","value":"dirty_soil_rubble"},
-                        {"name":"width","type":"float","value":126},
-                        {"name":"height","type":"float","value":76},
-                        {"name":"showUntilLevel","type":"int","value":5},
-                        {"name":"blocksMovement","type":"bool","value":true},
-                        {"name":"replacedMapObjectKey","type":"string","value":"west_tree_rest"}],
+                        {
+                         "name":"blocksMovement",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"height",
+                         "type":"float",
+                         "value":76
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"progressType",
+                         "type":"string",
+                         "value":"dirty"
+                        }, 
+                        {
+                         "name":"replacedMapObjectKey",
+                         "type":"string",
+                         "value":"west_tree_rest"
+                        }, 
+                        {
+                         "name":"showUntilLevel",
+                         "type":"int",
+                         "value":5
+                        }, 
+                        {
+                         "name":"texture",
+                         "type":"string",
+                         "value":"dirty_soil_rubble"
+                        }, 
+                        {
+                         "name":"width",
+                         "type":"float",
+                         "value":126
+                        }],
                  "rotation":0,
-                "type":"logic_point",
+                 "type":"logic_point",
                  "visible":true,
                  "width":0,
                  "x":928,
@@ -4234,15 +4738,91 @@
                  "opacity":1,
                  "point":true,
                  "properties":[
-                        {"name":"targetMap","type":"string","value":"chapter1_south_park"},
-                        {"name":"unlockLevel","type":"int","value":9},
-                        {"name":"status","type":"string","value":"preview"}],
+                        {
+                         "name":"status",
+                         "type":"string",
+                         "value":"preview"
+                        }, 
+                        {
+                         "name":"targetMap",
+                         "type":"string",
+                         "value":"chapter1_south_park"
+                        }, 
+                        {
+                         "name":"unlockLevel",
+                         "type":"int",
+                         "value":9
+                        }],
                  "rotation":0,
                  "type":"logic_point",
                  "visible":true,
                  "width":0,
-                 "x":896,
-                 "y":1184
+                 "x":800,
+                 "y":1204
+                }, 
+                {
+                 "height":0,
+                 "id":152,
+                 "name":"progress_tree_01",
+                 "opacity":1,
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"dirtyHeight",
+                         "type":"float",
+                         "value":59
+                        }, 
+                        {
+                         "name":"dirtyTexture",
+                         "type":"string",
+                         "value":"dirty_trash_bags"
+                        }, 
+                        {
+                         "name":"dirtyWidth",
+                         "type":"float",
+                         "value":98
+                        }, 
+                        {
+                         "name":"progressObject",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredDepthOffset",
+                         "type":"float",
+                         "value":-0.14
+                        }, 
+                        {
+                         "name":"recoveredGrowthFrames",
+                         "type":"bool",
+                         "value":true
+                        }, 
+                        {
+                         "name":"recoveredHeight",
+                         "type":"float",
+                         "value":132
+                        }, 
+                        {
+                         "name":"recoveredTexture",
+                         "type":"string",
+                         "value":"progress_broad_tree_b"
+                        }, 
+                        {
+                         "name":"recoveredWidth",
+                         "type":"float",
+                         "value":132
+                        }, 
+                        {
+                         "name":"revealAtLevel",
+                         "type":"int",
+                         "value":6
+                        }],
+                 "rotation":0,
+                 "type":"logic_point",
+                 "visible":true,
+                 "width":0,
+                 "x":1248,
+                 "y":1072
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -4251,7 +4831,7 @@
          "y":0
         }],
  "nextlayerid":9,
- "nextobjectid":152,
+ "nextobjectid":153,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
