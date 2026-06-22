@@ -53,6 +53,7 @@ export default class TutorialSystem {
 
   start() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return;
     if (scene.tutorialState === "completed") {
       this.state = TUTORIAL_STATE.COMPLETED;
       return;
@@ -80,6 +81,11 @@ export default class TutorialSystem {
   }
 
   update(time, delta) {
+    if (!this.isMainWorldMap()) {
+      this.clearMapGuides();
+      return;
+    }
+
     if (this.state === TUTORIAL_STATE.INACTIVE || this.state === TUTORIAL_STATE.COMPLETED) {
       this.clearGraphics();
       return;
@@ -243,6 +249,7 @@ export default class TutorialSystem {
 
   transitionToNpcPhase() {
     const scene = this.scene;
+    if (!this.isMainWorldMap()) return;
     this.state = TUTORIAL_STATE.NPC;
     scene.tutorialState = TUTORIAL_STATE.NPC;
 
@@ -289,6 +296,26 @@ export default class TutorialSystem {
     scene.updateNpcRoaming(true);
   }
 
+  clearMapGuides() {
+    this.clearGraphics();
+    this.removeGuideCard();
+    this.removeRescueBox();
+    this.scene.clearQuestMarker?.("tutorialQuest");
+    if (this.tutorialSlime?.active) {
+      this.tutorialSlime.destroy();
+    }
+    this.tutorialSlime = null;
+    const sweepBtn = document.getElementById("sweepButton");
+    if (sweepBtn) {
+      sweepBtn.classList.remove("is-upgraded");
+      sweepBtn.style.outline = "";
+    }
+    if (this.bobTween) {
+      this.bobTween.stop();
+      this.bobTween = null;
+    }
+  }
+
   // --- Inactivity timer & Rescue box ---
 
   resetInactivityTimer() {
@@ -305,6 +332,7 @@ export default class TutorialSystem {
   }
 
   triggerRescueGuide() {
+    if (!this.isMainWorldMap()) return;
     let hint = "";
     if (this.state !== TUTORIAL_STATE.COMPLETED) {
       switch (this.state) {
@@ -387,6 +415,11 @@ export default class TutorialSystem {
   isTouchDevice() {
     return window.matchMedia?.("(pointer: coarse)")?.matches
       || navigator.maxTouchPoints > 0;
+  }
+
+  isMainWorldMap() {
+    const mapId = this.scene.currentWorldMapId;
+    return !mapId || mapId === "main" || mapId === "chapter1_map";
   }
 
   removeGuideCard() {

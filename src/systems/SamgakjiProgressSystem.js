@@ -91,6 +91,13 @@ export default class SamgakjiProgressSystem {
   }
 
   showNonBlockingLevelNotice(levelInfo) {
+    this.removeLevelUpPopup();
+    document.querySelectorAll(".samgakji-levelup-modal.is-visible").forEach((el) => el.remove());
+    this.scene.sceneControlSystem?.blockWorldInput?.(false);
+    if (this.scene.stateManager?.current === SceneState.CUTSCENE) {
+      this.scene.stateManager.set(SceneState.PLAYING);
+    }
+
     this.acknowledgeLevel(levelInfo.level);
     this.scene.showQuestToast?.(`삼각지 Lv.${levelInfo.level}: ${levelInfo.name}`, 4200);
     this.scene.saveCheckpoint?.(`samgakji_level_${levelInfo.level}`);

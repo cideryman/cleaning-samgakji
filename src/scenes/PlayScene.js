@@ -418,10 +418,16 @@ export default class PlayScene extends Phaser.Scene {
   updateQuestMarkers() {
     if (!this.questMarkers) return;
 
+    if (!this.isMainWorldMap()) {
+      Object.values(this.questMarkers).forEach((marker) => marker.text?.setVisible(false));
+      return;
+    }
+
     Object.values(this.questMarkers).forEach((marker) => {
       if (!marker.target?.active || !marker.text?.active) {
         return;
       }
+      marker.text.setVisible(true);
       const bob = Math.sin((this.time.now + marker.offset) / 220) * 4;
       marker.text.setPosition(
         marker.target.x,
@@ -986,6 +992,7 @@ export default class PlayScene extends Phaser.Scene {
   handleDevKeydown(event) {
     if (!this.isDevMode()) return;
     if (!["F2", "F3", "F4", "F6"].includes(event.code)) return;
+    if (event.repeat) return;
 
     event.preventDefault();
     event.stopPropagation();

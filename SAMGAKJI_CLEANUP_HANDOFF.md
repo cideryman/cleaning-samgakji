@@ -216,6 +216,27 @@ This is the single practical work order for the next Codex sessions. Use the det
    - Manual check:
      - In south park, use F6 from Lv.10 to Lv.11. Expected: no full-screen level-up modal, a short toast appears, and movement remains possible.
      - If it still freezes at Lv.11 after this change, capture the browser console. Next likely target is south-park `progressObject` visibility/collider/pathfinding update rather than the level-up modal.
+   - 2026-06-22 third Lv.11 freeze mitigation:
+     - User confirmed the main map can pass Lv.11, but south park still freezes at Lv.11. Console did not show a clear JavaScript exception before the browser became unresponsive.
+     - Added guard against repeated dev-key input: `PlayScene.handleDevKeydown()` now ignores `event.repeat`, so holding F6 cannot rapidly advance several progress levels in one browser key repeat burst.
+     - Strengthened alternate-map level notice cleanup: `SamgakjiProgressSystem.showNonBlockingLevelNotice()` now removes any leftover `.samgakji-levelup-modal`, unblocks world input, and restores `PLAYING` if a stale `CUTSCENE` state remained.
+     - South-park bloom stage changes no longer call `saveCheckpoint()` from `NeighborhoodProgressSystem`; alternate-map visuals are derived from Samgakji level and do not need separate bloom-stage persistence.
+   - Manual check:
+     - Enter south park, tap/press F6 once from Lv.10 to Lv.11. Do not hold F6.
+     - Expected: no lock, no modal, a short toast, movement still works.
+     - If it still freezes, next controlled test should temporarily disable south-park `progressObject` visibility changes entirely. If that stops the freeze, inspect the Lv.11 Tiled object `south_park_progress_rose_02` and its texture/collider metadata.
+   - 2026-06-22 Lv.12 south-park freeze fix:
+     - User confirmed Lv.11 now works, but Lv.11 -> Lv.12 froze only in south park. The main map can pass Lv.11+ normally.
+     - Root cause found: south park has no default `FLOWERBED_ANCHORS`, but Lv.12 maps to south-park Stage 3, the first butterfly stage. `syncButterflies()` used a `while (butterflies.length < targetCount)` loop even when no anchor existed, so `createButterfly()` returned without adding a butterfly and the loop never ended.
+     - Fix: `createButterfly()` now returns success/failure, validates finite coordinates, and `syncButterflies()` breaks the loop if a butterfly cannot be created.
+   - 2026-06-22 tutorial/marker leakage fix:
+     - Report: if the player goes south without finishing the tutorial, tutorial spots, tutorial trash, and NPC question markers can appear in south park.
+     - Fix: `TutorialSystem` now only runs map guides on the main map. On alternate maps it clears tutorial graphics, guide cards, rescue boxes, the tutorial marker, and any active tutorial slime.
+     - Fix: `PlayScene.updateQuestMarkers()` hides quest markers while `currentWorldMapId` is not the main map.
+     - Principle: tutorial and main-quest guidance must be map-scoped. New alternate maps should not inherit main-map tutorial graphics or quest markers unless they explicitly create their own map-specific guide system.
+   - Manual check:
+     - Enter south park before completing the tutorial. Expected: no tutorial yellow spot, no tutorial trash, no tutorial `?` over NPCs.
+     - In south park, use F6 once from Lv.11 to Lv.12. Expected: no freeze; if there are no south-park butterfly anchors, no butterfly appears, but the game remains playable.
 
 3. South park map connection.
    - Current status: `chapter1-south-park-map.json` is loaded by Preload, and the main map has a Tiled-adjustable `south_park_gate` logic point.

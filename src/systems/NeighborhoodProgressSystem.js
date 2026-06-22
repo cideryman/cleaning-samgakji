@@ -128,7 +128,9 @@ export default class NeighborhoodProgressSystem {
 
     if (didAdvance && !silent) {
       this.showStageMessage(nextStage);
-      this.scene.saveCheckpoint?.(`neighborhood_bloom_stage_${nextStage}`);
+      if (this.isMainWorldMap()) {
+        this.scene.saveCheckpoint?.(`neighborhood_bloom_stage_${nextStage}`);
+      }
     }
   }
 
@@ -631,7 +633,9 @@ export default class NeighborhoodProgressSystem {
     this.ensureButterflyAnimation();
 
     while (this.butterflies.length < targetCount) {
-      this.createButterfly(this.butterflies.length);
+      if (!this.createButterfly(this.butterflies.length)) {
+        break;
+      }
     }
   }
 
@@ -647,10 +651,13 @@ export default class NeighborhoodProgressSystem {
 
   createButterfly(index) {
     const anchor = this.flowerbeds[index + 1] || this.flowerbeds[index] || this.flowerbeds[0];
-    if (!anchor) return;
+    if (!anchor) return false;
 
-    const baseX = (anchor.x ?? this.getFlowerbedPoint(FLOWERBED_ANCHORS[index]).x) + Phaser.Math.Between(-16, 22);
-    const baseY = (anchor.y ?? this.getFlowerbedPoint(FLOWERBED_ANCHORS[index]).y) - Phaser.Math.Between(58, 74);
+    const fallbackPoint = this.getFlowerbedPoint(FLOWERBED_ANCHORS[index]);
+    const baseX = (anchor.x ?? fallbackPoint?.x) + Phaser.Math.Between(-16, 22);
+    const baseY = (anchor.y ?? fallbackPoint?.y) - Phaser.Math.Between(58, 74);
+    if (!Number.isFinite(baseX) || !Number.isFinite(baseY)) return false;
+
     const sprite = this.scene.add.sprite(baseX, baseY, "butterfly_idle");
     sprite.setDisplaySize(38, 38);
     sprite.setDepth(this.scene.getWorldDepth(baseY, 0.65));
@@ -668,6 +675,7 @@ export default class NeighborhoodProgressSystem {
     });
 
     this.butterflies.push({ sprite, tween });
+    return true;
   }
 
   showStageMessage(stage) {
