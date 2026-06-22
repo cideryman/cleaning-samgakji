@@ -25,6 +25,8 @@
 - 저장값 추가 시 기존 세이브와 병합 fallback을 둡니다. 예: `Object.assign({}, defaultValue, loadedValue)`.
 - 에셋 경로를 바꿀 때는 `AssetsData.js`, preload, 실제 파일명을 함께 확인합니다.
 - 변경 후 최소 `node --check <수정 파일>`과 `npm.cmd run build`를 실행합니다.
+- 작업이 끝나면 자동 검증만으로 완료 판단하지 말고, 반드시 필요한 수동 검증 항목을 작업 보고와 이 문서에 남깁니다.
+- 특히 맵 전환, 퀘스트 진행, 모바일 터치, 대화/컷신, 저장/이어하기, NPC 동행처럼 실제 플레이 맥락이 필요한 기능은 수동 검증이 필수입니다.
 - Korean dialogue/text files must be saved as UTF-8. Do not convert files to ANSI/CP949.
 - If Korean looks garbled only in PowerShell output, first check the file encoding/editor display before rewriting text; the terminal code page may be the problem, not the file.
 - When editing Korean-heavy files, prefer a UTF-8 aware editor or script and verify with `node --check` plus an in-game/browser check when possible.
@@ -129,8 +131,22 @@ This is the single practical work order for the next Codex sessions. Use the det
      - `CheckpointStorage.applyNpcState()` now restores Sunisuni near Haenaem when loading a checkpoint in `GOING_HOSPITAL` or `GOING_PHARMACY`, instead of forcing the waiting pose.
      - `SunisuniQuestSystem.updateFollower()` now recovers Sunisuni near Haenaem if she becomes more than twice the normal max follow distance away.
      - This keeps the escort from appearing lost after 이어하기 or after path-follow failure, without adding follow logic back into `PlayScene.js`.
+   - 2026-06-22 stuck-follow recovery:
+     - `SunisuniQuestSystem` now tracks Sunisuni's last follow position while escorting.
+     - If she stays far from Haenaem and does not move for about 2.6 seconds, she is recovered to a nearby walkable point around Haenaem.
+     - The tracker resets when Sunisuni is already close enough, when she is intentionally waiting at a red pedestrian light, or when she reaches an intermediate target.
+     - Principle: quest followers should recover from pathfinding/object-block stalls inside their own quest system, not by adding more logic to `PlayScene.js`.
    - Needs manual check: start Sunisuni quest, accept help, walk toward hospital, confirm Sunisuni follows without sliding through props.
    - Also check: save/reload during `GOING_HOSPITAL` or `GOING_PHARMACY`, then confirm Sunisuni appears near Haenaem and resumes following.
+   - 2026-06-22 remaining polish note:
+     - User confirmed Sunisuni follows well overall, but she can look confused near the crosswalk between the hospital/pharmacy storefronts and the road.
+     - Likely cause: the hospital/pharmacy doors, sidewalk, road edge, traffic light/sign props, and crosswalk are too close together, creating a narrow pathfinding bottleneck.
+     - Recommended next fix:
+       - Add Sunisuni-specific Tiled waypoint objects such as `sunisuni_crosswalk_wait_north` and `sunisuni_crosswalk_wait_south`.
+       - During hospital/pharmacy escort, route Sunisuni through these waypoints instead of targeting Haenaem directly near the road.
+       - Reduce or move collision bounds for traffic signs/street lamps near the crosswalk if they block the path too aggressively.
+       - Avoid follower recovery/teleport while Sunisuni is intentionally waiting on or beside the crosswalk; waiting should feel deliberate, not broken.
+     - Design note: this can reinforce the learning goal of walking slowly with an unwell person and crossing at the proper place.
 
 3. Final ending black/dark screen / no progress after mom phone ending.
    - Lower practical urgency because it occurs at the very end, but it is still a progression blocker.

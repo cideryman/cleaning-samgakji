@@ -4,6 +4,8 @@ import { SunisuniQuestState } from "../config/QuestStates.js";
 export default class SunisuniQuestSystem {
   constructor(scene) {
     this.scene = scene;
+    this.lastFollowerPosition = null;
+    this.followerStuckSince = null;
   }
 
   isFollowing() {
@@ -71,6 +73,7 @@ export default class SunisuniQuestSystem {
       scene.showSpeechBubble(scene.sunisuniNpc, "조금만 천천히 가줄래...?", 900);
     }
     if (distance <= GAME_CONFIG.sunisuniFollowDistance) {
+      this.resetFollowerStuckTracker();
       scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
@@ -79,6 +82,7 @@ export default class SunisuniQuestSystem {
     const adjusted = this.adjustTargetForTrafficRules(scene.sunisuniNpc, scene.player.x, scene.player.y);
 
     if (adjusted.waitAtRedLight) {
+      this.resetFollowerStuckTracker();
       scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
@@ -86,6 +90,7 @@ export default class SunisuniQuestSystem {
 
     const adjustedDistance = Phaser.Math.Distance.Between(scene.sunisuniNpc.x, scene.sunisuniNpc.y, adjusted.x, adjusted.y);
     if (adjustedDistance <= 4) {
+      this.resetFollowerStuckTracker();
       scene.npcFollowRouteSystem?.clear("sunisuni_follow");
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
@@ -101,10 +106,12 @@ export default class SunisuniQuestSystem {
       repathMs: GAME_CONFIG.sunisuniFollowRepathMs,
       targetMoveTolerance: GAME_CONFIG.sunisuniFollowTargetMoveTolerance,
     })) {
+      this.recoverIfFollowerIsStuck(distance);
       return;
     }
 
     if (scene.npcFollowRouteSystem) {
+      this.recoverIfFollowerIsStuck(distance);
       scene.stopNpcWalk(scene.sunisuniNpc, "sunisuni");
       return;
     }
@@ -114,7 +121,42 @@ export default class SunisuniQuestSystem {
     const moveY = Math.sin(angle) * Math.min(step, adjustedDistance);
     scene.sunisuniNpc.x += moveX;
     scene.sunisuniNpc.y += moveY;
+    this.recoverIfFollowerIsStuck(distance);
     this.updateDirection(moveX, moveY);
+  }
+
+  resetFollowerStuckTracker() {
+    this.lastFollowerPosition = null;
+    this.followerStuckSince = null;
+  }
+
+  recoverIfFollowerIsStuck(distanceFromPlayer) {
+    const scene = this.scene;
+    const npc = scene.sunisuniNpc;
+    if (!npc?.active || distanceFromPlayer <= GAME_CONFIG.sunisuniFollowDistance) {
+      this.resetFollowerStuckTracker();
+      return;
+    }
+
+    const now = scene.time?.now ?? 0;
+    const current = { x: npc.x, y: npc.y };
+    const moved = this.lastFollowerPosition
+      ? Phaser.Math.Distance.Between(this.lastFollowerPosition.x, this.lastFollowerPosition.y, current.x, current.y)
+      : Infinity;
+
+    if (moved > 2) {
+      this.lastFollowerPosition = current;
+      this.followerStuckSince = null;
+      return;
+    }
+
+    this.lastFollowerPosition = current;
+    this.followerStuckSince ??= now;
+
+    if (now - this.followerStuckSince < 2600) return;
+
+    this.resetFollowerStuckTracker();
+    this.recoverFollowerNearPlayer();
   }
 
   updateDirection(moveX, moveY) {
@@ -140,6 +182,7 @@ export default class SunisuniQuestSystem {
     if (!position) return;
 
     scene.npcFollowRouteSystem?.clear("sunisuni_follow");
+    this.resetFollowerStuckTracker();
     scene.sunisuniNpc.setPosition(position.x, position.y);
     scene.setNpcDirectionTexture(scene.sunisuniNpc, "sunisuni", "down", false);
     scene.showSpeechBubble(scene.sunisuniNpc, "천천히 같이 가요.", 1800);
